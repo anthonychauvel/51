@@ -628,10 +628,10 @@
     const items = CCN_API.search(q, 60);
     const activeIdcc = _ccnSelected ? _ccnSelected.idcc : parseInt(localStorage.getItem('CCN_IDCC') || '0');
     let html = items.map(it => {
-      const isActive = it.idcc === activeIdcc;
-      return `<div class="ccn-item${isActive?' active':''}" onclick="selectCCN(${it.idcc},this)">
-        <div>${it.nom}</div>
-        <div class="ccn-item-idcc">IDCC ${it.idcc} · ${it.groupe}</div>
+      const isActive = it.i === activeIdcc;
+      return `<div class="ccn-item${isActive?' active':''}" onclick="selectCCN(${it.i},this)">
+        <div>${it.n}</div>
+        <div class="ccn-item-idcc">IDCC ${it.i} · ${it.g}</div>
       </div>`;
     }).join('');
     html += `<div class="ccn-item-custom" onclick="toggleCustomForm()">⚙️ Accord d'entreprise / personnalisé…</div>`;
