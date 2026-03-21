@@ -506,7 +506,15 @@ body {
 }
 
 /* ── MODAL ──────────────────────────────────────────────────────── */
-.modal { position: fixed; inset: 0; z-index: 1000; display: flex; align-items: center; justify-content: center; }
+.modal { 
+  position: fixed; 
+  inset: 0; 
+  z-index: 1000; 
+  display: flex; 
+  align-items: center; 
+  justify-content: center;
+  padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
+}
 .modal.hidden { display: none; }
 .modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); }
 .modal-box {
@@ -514,7 +522,7 @@ body {
   background: linear-gradient(135deg, #001428 0%, #000d1a 100%);
   border: 1px solid rgba(0,200,255,0.3);
   padding: var(--gap-l);
-  width: 92%; max-width: 540px; max-height: 88vh; overflow-y: auto;
+  width: 92%; max-width: 540px; max-height: calc(100% - 24px); overflow-y: auto;
   box-shadow: var(--glow-a), 0 40px 80px rgba(0,0,0,.8);
   animation: modal-in .25s ease;
   clip-path: polygon(0 0, calc(100% - 16px) 0, 100% 16px, 100% 100%, 16px 100%, 0 calc(100% - 16px));
