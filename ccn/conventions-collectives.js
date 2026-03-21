@@ -968,6 +968,7 @@ const CCN_API = {
   getRules,
   getGroupeForCCN,
   findCCN,
+  search: (terme, limit = 60) => findCCN(terme).slice(0, limit),
   calculerHS,
   verifierConformite,
   getGroupesDerogatoires,
