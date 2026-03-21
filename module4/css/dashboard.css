@@ -381,12 +381,20 @@
   .panel { padding: 10px; }
   .panel-label { font-size: 8px; margin-bottom: 8px; }
 
-  /* Viewport */
-  #app { overflow-y: auto; height: auto; min-height: 100vh; }
+  /* Viewport - Support Safari iOS */
+  #app { 
+    overflow-y: auto; 
+    height: auto; 
+    min-height: 100dvh;
+    padding-bottom: max(20px, env(safe-area-inset-bottom));
+  }
   .app-main { overflow: visible; height: auto; }
   .view { position: relative; overflow: visible; height: auto; }
   .view.active { opacity: 1; pointer-events: auto; }
-  #view-dashboard { padding: 5px; }
+  #view-dashboard { 
+    padding: 5px; 
+    padding-bottom: max(20px, calc(env(safe-area-inset-bottom) + 20px));
+  }
 }
 
 /* ── RESPONSIVE ACTIONS PANEL ───────────────────────────────────── */
