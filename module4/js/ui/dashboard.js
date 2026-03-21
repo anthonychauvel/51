@@ -423,7 +423,13 @@ class Dashboard {
     const year=raw&&raw.year?raw.year:new Date().getFullYear();
     const el=document.getElementById('footer-year'); if(el) el.textContent='Année '+year;
     const ts=document.getElementById('footer-timestamp'); if(ts) ts.textContent='Analyse : '+new Date().toLocaleTimeString('fr-FR');
-    const cont=document.getElementById('footer-contingent'); if(cont) cont.textContent=`Contingent : ${raw&&raw.m1?Math.round(raw.m1.totalExtra):0}/220h`;
+    const cont=document.getElementById('footer-contingent'); 
+    if(cont) {
+      const ccnRules = (typeof CCN_API !== 'undefined') 
+        ? CCN_API.getGroupeForCCN(parseInt(localStorage.getItem('CCN_IDCC')||'0'))
+        : {contingent: 220};
+      cont.textContent=`Contingent : ${raw&&raw.m1?Math.round(raw.m1.totalExtra):0}/${ccnRules.contingent}h`;
+    }
     const st=document.getElementById('footer-status');
     if(st){
       if(scores.fatigue>=95){st.textContent='● DANGER CRITIQUE';st.className='status-danger';}
