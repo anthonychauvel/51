@@ -208,13 +208,13 @@ function renderSchedulePanel(containerId) {
           { label:'5×8 Soir',   icon:'🔄', start:'13:00', end:'21:00' },
           { label:'5×8 Nuit',   icon:'🔄', start:'21:00', end:'05:00' },
         ].map(p =>
-          \`<button onclick="window._schApplyPreset('\${p.start}','\${p.end}')"
+          `<button onclick="window._schApplyPreset('${p.start}','${p.end}')"
             style="flex:1;min-width:80px;padding:6px 4px;font-family:var(--font-mono);font-size:9px;
             background:rgba(0,10,25,.7);border:1px solid rgba(0,200,255,0.15);
             color:var(--text-dim);cursor:pointer;text-align:center;line-height:1.3;"
-            title="Début \${p.start} → Fin \${p.end}">
-            \${p.icon} \${p.label}<br><span style="font-size:8px;opacity:.6">\${p.start}–\${p.end}</span>
-          </button>\`
+            title="Début ${p.start} → Fin ${p.end}">
+            ${p.icon} ${p.label}<br><span style="font-size:8px;opacity:.6">${p.start}–${p.end}</span>
+          </button>`
         ).join('')}
       </div>
 
