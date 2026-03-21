@@ -408,8 +408,8 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <p>Report précédent : <b id="prevCarry">0.00</b></p>
     <p>Total période : <b id="totalMonth">0.00</b></p>
     <p>Heures à 25 % : <b id="hours25">0.00</b></p>
-    <p>Heures à 50 % : <b id="hours50">0.00</b></p>
-    <p style="font-size:12px;color:#aaa;margin-top:8px">&#x2139;&#xFE0F; Calcul standard : 25% jusqu'à 8h hebdomadaires, puis 50%.</p>
+    <p>Heures à 50 % : <b id="hours50">0.00</p>
+    <p style="font-size:12px;color:#aaa;margin-top:8px" id="calcInfoText"></p>
     <p>Heures payées : <input type="number" id="paidHours" step="0.25"></p>
     <p>Reliquat reporté : <b id="carryOver">0.00</b></p>
   </div>
@@ -798,6 +798,15 @@ function recalc(){
   document.getElementById("hours25").textContent=fmtH(t25);document.getElementById("hours25").dataset.val=t25;
   document.getElementById("hours50").textContent=fmtH(t50);document.getElementById("hours50").dataset.val=t50;
   document.getElementById("totalMonth").textContent=fmtH(ph);document.getElementById("prevCarry").textContent=fmtH(getPreviousCarry(currentKey));document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
+  // Mise à jour du texte d'information sur les taux
+  const infoEl = document.getElementById("calcInfoText");
+  if (infoEl) {
+    if (rules.taux_inter !== null) {
+      infoEl.innerHTML = `ℹ️ CCN ${rules.nom||'personnalisée'} : ${rules.taux1}% jusqu'à ${rules.palier1}h, ${rules.taux_inter}% jusqu'à ${rules.palier1+rules.palier_inter}h, puis ${rules.taux2}%.`;
+    } else {
+      infoEl.innerHTML = `ℹ️ Calcul : ${rules.taux1}% jusqu'à ${rules.palier1}h hebdomadaires, puis ${rules.taux2}%.`;
+    }
+  }
   if(unlocked)calcEuro();
   updateContingent();
 }
