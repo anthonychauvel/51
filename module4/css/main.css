@@ -822,9 +822,9 @@ body {
   body { font-size: 13px; }
 
   /* Header */
-  .app-header { height: 50px; padding: 0 8px; }
+  .app-header { height: 50px; padding: 0 6px; }
   .back-btn   { font-size: 11px; padding: 6px 12px; }
-  .nav-btn    { font-size: 10px; letter-spacing: .06em; padding: 4px 10px; }
+  .nav-btn    { font-size: 10px; letter-spacing: .03em; padding: 4px 6px; }
   .hdr-btn-icon { font-size: 14px; }
   .hdr-btn-lbl  { font-size: 8px; }
   .brand-name   { font-size: 11px; }
@@ -901,7 +901,7 @@ body {
   body { font-size: 14px; }
   .hero-score-num { font-size: 48px; }
   .score-card-val { font-size: 22px; }
-  .nav-btn        { font-size: 9px; padding: 3px 7px; }
+  .nav-btn        { font-size: 9px; padding: 3px 4px; letter-spacing: .03em; }
   .panel          { padding: 10px; }
   .panel-label    { font-size: 9px; }
 }
@@ -918,7 +918,7 @@ body {
 .advice-msg       { font-size: 12px !important; }
 .twin-legend-item { font-size: 11px !important; }
 .hero-bar-label   { font-size: 12px !important; }
-.nav-btn          { font-size: 11px !important; letter-spacing: .06em; }
+.nav-btn          { font-size: 11px !important; letter-spacing: .04em; }
 .abtn-label       { font-size: 10px !important; }
 .abtn-sub         { font-size: 9px  !important; }
 /* GLOBAL BASE SIZES */
