@@ -2335,9 +2335,10 @@ function _getDailyDanger() {
 function _analyzeLegalSituation() {
   try {
     const year      = localStorage.getItem('ACTIVE_YEAR_SUFFIX') || String(new Date().getFullYear());
-    const baseHebdo = 35;  // base légale fixe
-    const baseJour  = 7;   // base légale fixe
-    const contingentMax = 220;
+    const ccnRules  = _kitsuneGetCCN();
+    const baseHebdo = ccnRules.seuil;
+    const baseJour  = ccnRules.seuil / 5;
+    const contingentMax = ccnRules.contingent;
 
     function isoWeekKey(dk) {
       const d = new Date(dk), dow = (d.getDay() + 6) % 7;
@@ -2479,12 +2480,13 @@ function _analyzeLegalSituation() {
 
   } catch(e) {
     console.warn('_analyzeLegalSituation:', e);
+    const fallbackCCN = _kitsuneGetCCN();
     return {
-      daily:  { hasDailyCrit:false, hasDailyRisk:false, maxDayTotal:0, maxDayExtra:0, baseJour:7, daysOver10:0, daysOver12:0 },
+      daily:  { hasDailyCrit:false, hasDailyRisk:false, maxDayTotal:0, maxDayExtra:0, baseJour:fallbackCCN.seuil/5, daysOver10:0, daysOver12:0 },
       weekly: { hasWeekViol:false, hasAvgViol:false, hasWeekAlert:false, maxWeekTotal:0, maxAvg12:0, weeksOver48:0, weeksOver44:0, totalWeeks:0 },
       period: { current:null, lastClosed:null, hasClosure:false, all:[] },
-      annual: { annualOT:0, contingentMax:220, contingentPct:0, contingentRem:220, hasContingentAlert:false, hasContingentDanger:false },
-      globalLevel:'ok', baseHebdo:35, baseJour:7
+      annual: { annualOT:0, contingentMax:fallbackCCN.contingent, contingentPct:0, contingentRem:fallbackCCN.contingent, hasContingentAlert:false, hasContingentDanger:false },
+      globalLevel:'ok', baseHebdo:fallbackCCN.seuil, baseJour:fallbackCCN.seuil/5
     };
   }
 }
