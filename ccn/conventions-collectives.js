@@ -826,7 +826,7 @@ function getCustomConfig() {
  *   maxHebdo     {number}  Durée max hebdo (défaut 48h)
  *   debutSemaine {number}  Jour début semaine : 1=Lun, 2=Mar, 3=Mer,
  *                          4=Jeu, 5=Ven, 6=Sam, 7=Dim (défaut 1)
- *   nom          {string}  Libellé affiché (ex: "Accord Sodise 2024")
+ *   nom          {string}  Libellé affiché (ex: "Accord entreprise 2026")
  */
 function setCustom(config) {
   const base = Object.assign({}, REGLES_HS.DC);
