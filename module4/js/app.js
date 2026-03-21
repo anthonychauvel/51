@@ -92,7 +92,12 @@ document.addEventListener('DOMContentLoaded', function () {
       const el = id => document.getElementById(id);
       if (el('footer-year'))       el('footer-year').textContent       = 'ANNÉE ' + yr;
       if (el('footer-timestamp'))  el('footer-timestamp').textContent  = 'ANALYSE : ' + new Date().toLocaleTimeString('fr-FR');
-      if (el('footer-contingent')) el('footer-contingent').textContent = 'CONTINGENT : ' + Math.round(state.norm._contingentPct || 0) + '/220H';
+      if (el('footer-contingent')) {
+        const ccnRules = (typeof CCN_API !== 'undefined') 
+          ? CCN_API.getGroupeForCCN(parseInt(localStorage.getItem('CCN_IDCC')||'0'))
+          : {contingent: 220};
+        el('footer-contingent').textContent = 'CONTINGENT : ' + Math.round(state.norm._contingentPct || 0) + '/' + ccnRules.contingent + 'H';
+      }
       const statusEl = el('footer-status');
       if (statusEl) {
         const f = state.scores.fatigue;
