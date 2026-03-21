@@ -703,6 +703,10 @@ function getRules(groupeId) {
 
 /** Règles HS d'une CCN par IDCC */
 function getGroupeForCCN(idcc) {
+  // Si IDCC = 0 et qu'une config CUSTOM existe, la retourner
+  if (idcc === 0 && REGLES_HS.CUSTOM && REGLES_HS.CUSTOM.id === 'CUSTOM') {
+    return REGLES_HS.CUSTOM;
+  }
   const e = CCN_ALIASES.find(c => c.i === Number(idcc));
   return getRules(e ? e.g : 'DC');
 }
@@ -986,4 +990,8 @@ const CCN_API = {
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = CCN_API;
-if (typeof window !== 'undefined') window.CCN = CCN_API;
+if (typeof window !== 'undefined') {
+  window.CCN = CCN_API;
+  // Charger la config personnalisée si elle existe
+  loadCustomFromStorage();
+}
