@@ -114,6 +114,7 @@
   overflow: hidden;
   transition: border-color .2s;
   clip-path: polygon(0 0, 100% 0, 100% calc(100% - 8px), calc(100% - 8px) 100%, 0 100%);
+  text-align: center;
 }
 .score-card:hover { border-color: rgba(0,200,255,0.3); }
 .score-card::before {

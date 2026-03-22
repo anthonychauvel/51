@@ -804,6 +804,60 @@ body {
 .hdr-btn--pdf:hover     { border-color: rgba(255,179,0,0.4);  color: var(--amber); }
 .hdr-btn--refresh:hover { border-color: rgba(0,200,255,0.4);  }
 
+/* Toggle sélection des heures */
+.hdr-btn-toggle {
+  transition: all 0.3s ease;
+}
+.hdr-btn-toggle.active {
+  border-color: rgba(0,200,255,0.5) !important;
+  background: rgba(0,200,255,0.1) !important;
+  box-shadow: 0 0 12px rgba(0,200,255,0.3);
+}
+.hdr-btn-toggle:hover {
+  border-color: rgba(0,200,255,0.6);
+  transform: translateY(-1px);
+}
+
+/* Modal overlay amélioré */
+.modal-overlay {
+  position: fixed !important;
+  inset: 0;
+  background: rgba(0,6,15,0.95) !important;
+  backdrop-filter: blur(6px);
+  z-index: 10000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  animation: fadeIn 0.2s ease;
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+.modal-close {
+  background: none;
+  border: none;
+  color: #888;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 0;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.modal-close:hover {
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+}
+
 /* Sur mobile : icône seulement */
 @media (max-width: 600px) {
   .hdr-btn-lbl { display: none; }
