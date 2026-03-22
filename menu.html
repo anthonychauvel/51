@@ -436,6 +436,11 @@
   <div class="title">Fox player</div>
 </div>
 
+<div class="btn" onclick="go('module4')">
+  <img src="images/renard-prediction.png.jpg" loading="lazy" alt="Prédictions">
+  <div class="title">Digital Twin — Prédictions intelligentes</div>
+</div>
+
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
 <button class="info-btn" onclick="reopenWizard()">🔁 Revoir l'aide au choix</button>
 
@@ -500,7 +505,14 @@
   Effectuez des <strong>exports réguliers</strong> (JSON/PDF) pour éviter toute perte de données.
 </div>
 
-<footer>Développé par C. Anthony v3.0.0</footer>
+<footer>
+  <div style="margin-bottom: 8px;">Développé par C. Anthony v3.0.0</div>
+  <div style="font-size: 11px; opacity: 0.7; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
+    <a href="./LICENSE" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">📄 Licence</a>
+    <span style="opacity: 0.5;">•</span>
+    <a href="./privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">🔒 Confidentialité</a>
+  </div>
+</footer>
 
 <script>
   if ("serviceWorker" in navigator) {
