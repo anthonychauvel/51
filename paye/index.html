@@ -407,8 +407,10 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <h3>Récapitulatif</h3>
     <p>Report précédent : <b id="prevCarry">0.00</b></p>
     <p>Total période : <b id="totalMonth">0.00</b></p>
-    <p>Heures à 25 % : <b id="hours25">0.00</b></p>
-    <p>Heures à 50 % : <b id="hours50">0.00</p>
+    <div id="hoursBreakdown">
+      <p>Heures à 25 % : <b id="hours25">0.00</b></p>
+      <p>Heures à 50 % : <b id="hours50">0.00</b></p>
+    </div>
     <p style="font-size:12px;color:#aaa;margin-top:8px" id="calcInfoText"></p>
     <p>Heures payées : <input type="number" id="paidHours" step="0.25"></p>
     <p>Reliquat reporté : <b id="carryOver">0.00</b></p>
@@ -795,8 +797,31 @@ function recalc(){
     const p=calcHsPaliers(hs,rules);
     t25+=p.h1;tInter+=p.hInter;t50+=p.h2;
   });
-  document.getElementById("hours25").textContent=fmtH(t25);document.getElementById("hours25").dataset.val=t25;
-  document.getElementById("hours50").textContent=fmtH(t50);document.getElementById("hours50").dataset.val=t50;
+  
+  // Affichage dynamique selon le nombre de paliers
+  const breakdown = document.getElementById("hoursBreakdown");
+  if (breakdown) {
+    if (rules.taux_inter !== null) {
+      // 3 paliers (ex: HCR)
+      breakdown.innerHTML = `
+        <p>Heures à ${rules.taux1} % : <b id="hours25">${fmtH(t25)}</b></p>
+        <p>Heures à ${rules.taux_inter} % : <b id="hoursInter">${fmtH(tInter)}</b></p>
+        <p>Heures à ${rules.taux2} % : <b id="hours50">${fmtH(t50)}</b></p>
+      `;
+      document.getElementById("hours25").dataset.val=t25;
+      document.getElementById("hoursInter").dataset.val=tInter;
+      document.getElementById("hours50").dataset.val=t50;
+    } else {
+      // 2 paliers (droit commun)
+      breakdown.innerHTML = `
+        <p>Heures à ${rules.taux1} % : <b id="hours25">${fmtH(t25)}</b></p>
+        <p>Heures à ${rules.taux2} % : <b id="hours50">${fmtH(t50)}</b></p>
+      `;
+      document.getElementById("hours25").dataset.val=t25;
+      document.getElementById("hours50").dataset.val=t50;
+    }
+  }
+  
   document.getElementById("totalMonth").textContent=fmtH(ph);document.getElementById("prevCarry").textContent=fmtH(getPreviousCarry(currentKey));document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
   // Mise à jour du texte d'information sur les taux
   const infoEl = document.getElementById("calcInfoText");
@@ -810,7 +835,34 @@ function recalc(){
   if(unlocked)calcEuro();
   updateContingent();
 }
-function calcEuro(){if(!unlocked)return;const rate=Number(document.getElementById("rate").value)||0,c25=Number(document.getElementById("coef25").value)||1.25,c50=Number(document.getElementById("coef50").value)||1.50,cn=Number(document.getElementById("coefNet").value)||1,h25=Number(document.getElementById("hours25").dataset.val)||0,h50=Number(document.getElementById("hours50").dataset.val)||0;const w25=h25*c25,w50=h50*c50,wt=w25+w50,brut=wt*rate,net=brut*cn;document.getElementById("euroResult").textContent=net.toFixed(2)+" €";document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25} = ${fmtH(w25)}<br>${fmtH(h50)} × ${c50} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`}
+function calcEuro(){
+  if(!unlocked)return;
+  const rate=Number(document.getElementById("rate").value)||0;
+  const c25=Number(document.getElementById("coef25").value)||1.25;
+  const c50=Number(document.getElementById("coef50").value)||1.50;
+  const cn=Number(document.getElementById("coefNet").value)||1;
+  const h25=Number(document.getElementById("hours25")?.dataset.val)||0;
+  const h50=Number(document.getElementById("hours50")?.dataset.val)||0;
+  const hInter=Number(document.getElementById("hoursInter")?.dataset.val)||0;
+  
+  const rules=getCCNRules();
+  const cInter=rules.taux_inter?(1+rules.taux_inter/100):0;
+  
+  const w25=h25*c25;
+  const wInter=hInter*cInter;
+  const w50=h50*c50;
+  const wt=w25+wInter+w50;
+  const brut=wt*rate;
+  const net=brut*cn;
+  
+  document.getElementById("euroResult").textContent=net.toFixed(2)+" €";
+  
+  if(rules.taux_inter!==null){
+    document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25.toFixed(2)} = ${fmtH(w25)}<br>${fmtH(hInter)} × ${cInter.toFixed(2)} = ${fmtH(wInter)}<br>${fmtH(h50)} × ${c50.toFixed(2)} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`;
+  }else{
+    document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25.toFixed(2)} = ${fmtH(w25)}<br>${fmtH(h50)} × ${c50.toFixed(2)} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`;
+  }
+}
 function recalcCascade(){
   // Opérer uniquement sur l'exercice actif pour éviter contamination entre années
   const yd=ALL_DATA[currentYear]||{};
