@@ -115,7 +115,26 @@
       <button class="nav-btn" data-view="whatif">SIMULATION</button>
       <button class="nav-btn" data-view="heatmap">CALENDRIER</button>
     </nav>
-    <div class="header-actions"></div>
+    <div class="header-actions">
+      <button class="hdr-btn" onclick="window.location.href='../heures/index.html'" title="Aller au module Annuel (M1)">
+        <div class="hdr-btn-icon">📅</div>
+        <div class="hdr-btn-lbl">ANNUEL</div>
+      </button>
+      <button class="hdr-btn" onclick="window.location.href='../paye/index.html'" title="Aller au module Mensuel (M2)">
+        <div class="hdr-btn-icon">💰</div>
+        <div class="hdr-btn-lbl">MENSUEL</div>
+      </button>
+      <button class="hdr-btn" onclick="window.location.href='../fox/index.html'" title="Aller au module Fox (M3)">
+        <div class="hdr-btn-icon">🦊</div>
+        <div class="hdr-btn-lbl">FOX</div>
+      </button>
+      
+      <!-- Toggle sélection heures -->
+      <button class="hdr-btn hdr-btn-toggle" id="toggle-selection" onclick="toggleHourSelection()" title="Activer/Désactiver la sélection des heures dans le calendrier">
+        <div class="hdr-btn-icon">✏️</div>
+        <div class="hdr-btn-lbl" id="toggle-selection-label">SAISIE OFF</div>
+      </button>
+    </div>
   </header>
 
   <main class="app-main">
@@ -390,6 +409,249 @@ document.addEventListener('DOMContentLoaded', function(){
     showApp();
   }
 });
+
+// ═══════════════════════════════════════════════════════════════
+// TOGGLE SÉLECTION DES HEURES
+// ═══════════════════════════════════════════════════════════════
+
+let hourSelectionEnabled = false;
+
+function initHourSelection() {
+  // Charger l'état depuis localStorage
+  const saved = localStorage.getItem('M4_HOUR_SELECTION_ENABLED');
+  hourSelectionEnabled = saved === 'true';
+  updateToggleUI();
+  updateHeatmapInteraction();
+}
+
+function toggleHourSelection() {
+  hourSelectionEnabled = !hourSelectionEnabled;
+  localStorage.setItem('M4_HOUR_SELECTION_ENABLED', hourSelectionEnabled);
+  updateToggleUI();
+  updateHeatmapInteraction();
+  
+  // Notification
+  DTE.UI.notify(
+    hourSelectionEnabled 
+      ? '✏️ Saisie activée : cliquez sur les jours du calendrier pour saisir vos heures'
+      : '🔒 Saisie désactivée : le calendrier est en mode lecture seule',
+    hourSelectionEnabled ? 'success' : 'info'
+  );
+}
+
+function updateToggleUI() {
+  const btn = document.getElementById('toggle-selection');
+  const label = document.getElementById('toggle-selection-label');
+  
+  if (btn && label) {
+    if (hourSelectionEnabled) {
+      btn.classList.add('active');
+      btn.style.borderColor = 'rgba(0,200,255,0.5)';
+      btn.style.background = 'rgba(0,200,255,0.1)';
+      label.textContent = 'SAISIE ON';
+      label.style.color = '#00c8ff';
+    } else {
+      btn.classList.remove('active');
+      btn.style.borderColor = 'rgba(255,255,255,0.1)';
+      btn.style.background = 'rgba(0,0,0,0.3)';
+      label.textContent = 'SAISIE OFF';
+      label.style.color = '#888';
+    }
+  }
+}
+
+function updateHeatmapInteraction() {
+  // Ajouter ou retirer les événements de clic sur les cellules du calendrier
+  const container = document.getElementById('heatmap-container');
+  if (!container) return;
+  
+  // Retirer tous les anciens listeners
+  const oldCells = container.querySelectorAll('.heatmap-day-cell[data-clickable="true"]');
+  oldCells.forEach(cell => {
+    const clone = cell.cloneNode(true);
+    cell.parentNode.replaceChild(clone, cell);
+    clone.removeAttribute('data-clickable');
+  });
+  
+  if (hourSelectionEnabled) {
+    // Ajouter les nouveaux listeners
+    const cells = container.querySelectorAll('.heatmap-day-cell');
+    cells.forEach(cell => {
+      const dateKey = cell.dataset.date;
+      if (!dateKey) return;
+      
+      cell.setAttribute('data-clickable', 'true');
+      cell.style.cursor = 'pointer';
+      cell.style.transition = 'all 0.2s';
+      
+      cell.addEventListener('mouseenter', () => {
+        cell.style.transform = 'scale(1.1)';
+        cell.style.boxShadow = '0 0 8px rgba(0,200,255,0.5)';
+      });
+      
+      cell.addEventListener('mouseleave', () => {
+        cell.style.transform = 'scale(1)';
+        cell.style.boxShadow = 'none';
+      });
+      
+      cell.addEventListener('click', () => {
+        openHourInputModal(dateKey);
+      });
+    });
+  } else {
+    // Désactiver l'interaction
+    const cells = container.querySelectorAll('.heatmap-day-cell');
+    cells.forEach(cell => {
+      cell.style.cursor = 'default';
+      cell.style.transform = 'scale(1)';
+      cell.style.boxShadow = 'none';
+    });
+  }
+}
+
+function openHourInputModal(dateKey) {
+  if (!hourSelectionEnabled) return;
+  
+  // Créer le modal de saisie
+  const modal = document.createElement('div');
+  modal.className = 'modal-overlay';
+  modal.innerHTML = `
+    <div class="modal" style="max-width: 400px;">
+      <div class="modal-header">
+        <h2>✏️ Saisir les heures</h2>
+        <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">✕</button>
+      </div>
+      <div class="modal-body">
+        <div style="margin-bottom: 16px;">
+          <div style="color: #00c8ff; font-weight: 700; margin-bottom: 8px;">📅 Date : ${formatDateKey(dateKey)}</div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: block; color: #aaa; font-size: 12px; margin-bottom: 4px;">Heures supplémentaires</label>
+          <input type="number" id="input-hours-${dateKey}" step="0.25" min="0" max="24" 
+                 style="width: 100%; padding: 10px; background: rgba(255,255,255,0.05); border: 1px solid rgba(0,200,255,0.3); 
+                        border-radius: 4px; color: #fff; font-size: 16px;"
+                 placeholder="Ex: 2.5"
+                 value="${getCurrentHours(dateKey)}">
+          <div style="color: #666; font-size: 11px; margin-top: 4px;">
+            💡 Vous pouvez utiliser des décimales (ex: 2.5 = 2h30)
+          </div>
+        </div>
+        
+        <div style="margin-bottom: 16px;">
+          <label style="display: flex; align-items: center; gap: 8px; cursor: pointer;">
+            <input type="checkbox" id="input-absent-${dateKey}" ${isAbsent(dateKey) ? 'checked' : ''}
+                   style="width: 18px; height: 18px; cursor: pointer;">
+            <span style="color: #aaa;">Jour d'absence / repos</span>
+          </label>
+        </div>
+        
+        <div style="display: flex; gap: 8px;">
+          <button onclick="saveHourInput('${dateKey}')" 
+                  style="flex: 2; padding: 12px; background: linear-gradient(135deg, #00c8ff, #0095cc); 
+                         border: none; border-radius: 4px; color: #fff; font-weight: 700; cursor: pointer;">
+            ✅ Enregistrer
+          </button>
+          <button onclick="deleteHourInput('${dateKey}')" 
+                  style="flex: 1; padding: 12px; background: rgba(255,34,68,0.2); border: 1px solid rgba(255,34,68,0.3);
+                         border-radius: 4px; color: #ff2244; font-weight: 700; cursor: pointer;">
+            🗑️ Effacer
+          </button>
+        </div>
+      </div>
+    </div>
+  `;
+  
+  document.body.appendChild(modal);
+  
+  // Focus sur l'input
+  setTimeout(() => {
+    document.getElementById(`input-hours-${dateKey}`)?.focus();
+  }, 100);
+}
+
+function formatDateKey(dateKey) {
+  const [y, m, d] = dateKey.split('-');
+  const months = ['janvier','février','mars','avril','mai','juin','juillet','août','septembre','octobre','novembre','décembre'];
+  return `${parseInt(d)} ${months[parseInt(m)-1]} ${y}`;
+}
+
+function getCurrentHours(dateKey) {
+  // Charger depuis M1
+  const m1data = JSON.parse(localStorage.getItem('M1_DAYS') || '{}');
+  const entry = m1data[dateKey];
+  return entry && !entry.absent ? (entry.extra || 0) : 0;
+}
+
+function isAbsent(dateKey) {
+  const m1data = JSON.parse(localStorage.getItem('M1_DAYS') || '{}');
+  const entry = m1data[dateKey];
+  return entry && entry.absent;
+}
+
+function saveHourInput(dateKey) {
+  const hoursInput = document.getElementById(`input-hours-${dateKey}`);
+  const absentInput = document.getElementById(`input-absent-${dateKey}`);
+  
+  if (!hoursInput || !absentInput) return;
+  
+  const hours = parseFloat(hoursInput.value) || 0;
+  const absent = absentInput.checked;
+  
+  // Sauvegarder dans M1
+  const m1data = JSON.parse(localStorage.getItem('M1_DAYS') || '{}');
+  
+  if (absent) {
+    m1data[dateKey] = { extra: 0, recup: 0, absent: true };
+  } else if (hours > 0) {
+    m1data[dateKey] = { extra: hours, recup: 0, absent: false };
+  } else {
+    delete m1data[dateKey];
+  }
+  
+  localStorage.setItem('M1_DAYS', JSON.stringify(m1data));
+  
+  // Fermer le modal
+  document.querySelector('.modal-overlay')?.remove();
+  
+  // Recharger l'affichage
+  if (typeof DTE !== 'undefined' && DTE.App && DTE.App.refresh) {
+    DTE.App.refresh();
+  }
+  
+  DTE.UI.notify('✅ Heures enregistrées', 'success');
+}
+
+function deleteHourInput(dateKey) {
+  if (!confirm('Supprimer les données de ce jour ?')) return;
+  
+  const m1data = JSON.parse(localStorage.getItem('M1_DAYS') || '{}');
+  delete m1data[dateKey];
+  localStorage.setItem('M1_DAYS', JSON.stringify(m1data));
+  
+  document.querySelector('.modal-overlay')?.remove();
+  
+  if (typeof DTE !== 'undefined' && DTE.App && DTE.App.refresh) {
+    DTE.App.refresh();
+  }
+  
+  DTE.UI.notify('🗑️ Données supprimées', 'info');
+}
+
+// Initialiser au chargement
+document.addEventListener('DOMContentLoaded', () => {
+  initHourSelection();
+  
+  // Observer les changements de vue pour réactiver les listeners
+  const observer = new MutationObserver(() => {
+    if (document.getElementById('heatmap-container')) {
+      setTimeout(updateHeatmapInteraction, 100);
+    }
+  });
+  
+  observer.observe(document.body, { childList: true, subtree: true });
+});
+
 </script>
 
 </body>
