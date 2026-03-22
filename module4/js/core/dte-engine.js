@@ -197,7 +197,17 @@ function cortisolModel(weeklyH, variabSigma, cumulWeeks) {
  */
 function readSchedule(dateKey) {
   const defaults = { startH: 9, endH: 17, commuteH: 0, regimeType: 'standard' };
+  
+  // Vérifier si le suivi des horaires est activé
+  const scheduleEnabled = localStorage.getItem('M4_SCHEDULE_ENABLED') !== 'false';
+  if (!scheduleEnabled) {
+    // Si désactivé, renvoyer des valeurs neutres qui n'impactent pas les scores
+    return { startH: 9, endH: 17, commuteH: 0, regimeType: 'standard' };
+  }
+  
   let profile = { ...defaults };
+  
+  // 1. Charger le profil global
   try {
     const s = localStorage.getItem('DTE_SETTINGS');
     if (s) {
@@ -208,7 +218,41 @@ function readSchedule(dateKey) {
       if (p.regimeType)             profile.regimeType = p.regimeType;
     }
   } catch(_) {}
-  // Override par jour
+  
+  // 2. Appliquer les horaires du jour de semaine si activés
+  if (dateKey) {
+    const weekScheduleEnabled = localStorage.getItem('DTE_WEEK_SCHEDULE_ENABLED') === 'true';
+    if (weekScheduleEnabled) {
+      try {
+        const weekSchedule = JSON.parse(localStorage.getItem('DTE_WEEK_SCHEDULE') || '{}');
+        const [y, m, d] = dateKey.split('-').map(Number);
+        const date = new Date(y, m - 1, d);
+        const dow = date.getDay(); // 0=dimanche, 1=lundi, etc.
+        
+        if (weekSchedule[dow]) {
+          const daySchedule = weekSchedule[dow];
+          if (daySchedule.startH !== undefined) profile.startH = parseFloat(daySchedule.startH);
+          if (daySchedule.endH !== undefined) profile.endH = parseFloat(daySchedule.endH);
+          // Recalculer le régime
+          const passeMinuit = profile.endH < profile.startH;
+          let nightH = 0;
+          if (passeMinuit) {
+            nightH = (24 - Math.max(21, profile.startH)) + Math.min(6, profile.endH);
+          } else {
+            if (profile.startH < 6)  nightH += Math.min(profile.endH, 6) - profile.startH;
+            if (profile.endH   > 21) nightH += profile.endH - Math.max(profile.startH, 21);
+          }
+          nightH = Math.max(0, nightH);
+          if (nightH >= 3)  profile.regimeType = 'nuit_complete';
+          else if (nightH >= 1) profile.regimeType = 'nuit_partielle';
+          else if (profile.endH > 21 || profile.startH < 6) profile.regimeType = 'decale';
+          else profile.regimeType = 'standard';
+        }
+      } catch(_) {}
+    }
+  }
+  
+  // 3. Override par jour spécifique (priorité maximale)
   if (dateKey) {
     try {
       const year = dateKey.slice(0, 4);
@@ -222,6 +266,7 @@ function readSchedule(dateKey) {
       }
     } catch(_) {}
   }
+  
   return profile;
 }
 
