@@ -101,7 +101,7 @@ window._fox_pre = (function() {
 
 <!-- ZONE PRINCIPALE -->
 <!-- ── Vue PRO (analytics) ─────────────────────────── -->
-<div id="vue-pro" style="display:none;position:fixed;inset:0;z-index:10000;background:#06080f;overflow-y:auto;padding:0;padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;font-family:inherit;color:#e0e0e0;"></div>
+<div id="vue-pro" style="display:none;position:fixed;inset:0;z-index:10000;background:#06080f;overflow-y:auto;padding:0;padding-bottom:env(safe-area-inset-bottom,0px);box-sizing:border-box;font-family:inherit;color:#ffffff !important;"></div>
 
 <div id="gaming-main">
 
@@ -414,6 +414,14 @@ window._fox_pre = (function() {
 
 
 <style>
+/* Vue PRO - Forcer texte blanc pour meilleure lisibilité */
+#vue-pro, #vue-pro * {
+  color: #ffffff !important;
+}
+#vue-pro h1, #vue-pro h2, #vue-pro h3, #vue-pro h4 {
+  color: #00c8ff !important;
+}
+
 /* Animations récompenses */
 @keyframes badgeUnlock {
   0%  { transform: scale(0.3) rotate(-15deg); opacity: 0; }
@@ -14724,6 +14732,11 @@ function buildBadgeStats() {
           <div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:11px;padding:13px 14px;">
             <div style="color:#78909C;font-weight:700;font-size:0.85rem;margin-bottom:4px;">📈 Historique et tendances</div>
             <div style="color:#455A64;font-size:0.8rem;line-height:1.6;">Graphique mensuel, historique multi-années, patterns de surcharge détectés.</div>
+          </div>
+        </div>
+        <div style="background:rgba(0,200,255,0.08);border-left:3px solid #00c8ff;padding:12px;border-radius:8px;margin-bottom:16px;">
+          <div style="color:#00c8ff;font-size:0.8rem;line-height:1.6;">
+            <strong>💡 Mode PRO recommandé si :</strong> Le mode RPG (badges, récompenses) ne vous intéresse pas, mais vous voulez quand même l'analyse juridique et les conseils pratiques. Toutes les fonctionnalités d'analyse sont identiques, sans les éléments ludiques.
           </div>
         </div>
         <div style="color:#2D3F4A;font-size:0.7rem;margin-bottom:16px;line-height:1.6;">Vous pouvez basculer entre les deux modes à tout moment via le bouton 📊 PRO dans le menu.</div>
