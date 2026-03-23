@@ -703,6 +703,10 @@ function getRules(groupeId) {
 
 /** Règles HS d'une CCN par IDCC */
 function getGroupeForCCN(idcc) {
+  // Si IDCC = 0 et qu'une config CUSTOM existe, la retourner
+  if (idcc === 0 && REGLES_HS.CUSTOM && REGLES_HS.CUSTOM.id === 'CUSTOM') {
+    return REGLES_HS.CUSTOM;
+  }
   const e = CCN_ALIASES.find(c => c.i === Number(idcc));
   return getRules(e ? e.g : 'DC');
 }
@@ -822,7 +826,7 @@ function getCustomConfig() {
  *   maxHebdo     {number}  Durée max hebdo (défaut 48h)
  *   debutSemaine {number}  Jour début semaine : 1=Lun, 2=Mar, 3=Mer,
  *                          4=Jeu, 5=Ven, 6=Sam, 7=Dim (défaut 1)
- *   nom          {string}  Libellé affiché (ex: "Accord Sodise 2024")
+ *   nom          {string}  Libellé affiché (ex: "Accord entreprise 2026")
  */
 function setCustom(config) {
   const base = Object.assign({}, REGLES_HS.DC);
@@ -968,6 +972,7 @@ const CCN_API = {
   getRules,
   getGroupeForCCN,
   findCCN,
+  search: (terme, limit = 60) => findCCN(terme).slice(0, limit),
   calculerHS,
   verifierConformite,
   getGroupesDerogatoires,
@@ -985,4 +990,9 @@ const CCN_API = {
 };
 
 if (typeof module !== 'undefined' && module.exports) module.exports = CCN_API;
-if (typeof window !== 'undefined') window.CCN = CCN_API;
+if (typeof window !== 'undefined') {
+  window.CCN = REGLES_HS;  // Export des données CCN (DC, HCR, GD, etc.)
+  window.CCN_API = CCN_API;  // Export des fonctions API
+  // Charger la config personnalisée si elle existe
+  loadCustomFromStorage();
+}
