@@ -191,10 +191,11 @@
   }
 
   // ── Historique multi-années ──────────────────────────────────────
-  function renderHistory() {
+  function renderHistory(contingent) {
+    contingent = contingent || 220; // Fallback
     var yrs = getAllYears(); if (!yrs.length) return '<div style="color:#37474F;font-size:0.8rem;">Aucun historique disponible.</div>';
     return yrs.reverse().map(function(yr) {
-      var a = calcAnnual(yr); var pct = Math.min(Math.round(a.total/220*100), 100);
+      var a = calcAnnual(yr); var pct = Math.min(Math.round(a.total/contingent*100), 100);
       var col = pct >= 100 ? '#EF5350' : pct >= 75 ? '#FFA726' : pct > 0 ? '#546E7A' : '#1C2B35';
       return '<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04);">'
         + '<div style="font-size:0.8rem;color:#546E7A;font-weight:600;min-width:34px;">' + yr + '</div>'
@@ -244,10 +245,15 @@
     var el = document.getElementById('vue-pro'); if (!el) return;
     var yr     = getYear();
     
-    // Récupérer le contingent selon CCN
-    var settings = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
-    var ccnData = window.CCN ? window.CCN[settings.ccn || 'DROIT_COMMUN'] : null;
-    var contingent = (ccnData && ccnData.contingent) || 220;
+    // Récupérer le contingent selon CCN (même logique que _kitsuneGetCCN)
+    var contingent = 220; // Fallback
+    if (typeof CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
+      var idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
+      var groupeName = CCN_API.getGroupeForCCN(idcc);
+      if (groupeName && window.CCN[groupeName]) {
+        contingent = window.CCN[groupeName].contingent || 220;
+      }
+    }
     
     var annual = calcAnnual(yr);
     var today  = calcToday(yr);
@@ -379,7 +385,7 @@
       // ══ HISTORIQUE ANNUEL ══════════════════════════════════════
       + section('Historique annuel',
           '<div style="background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px;padding:13px;">'
-          + renderHistory()
+          + renderHistory(contingent)
           + '<div style="font-size:0.6rem;color:#1C2B35;margin-top:8px;">Plafond légal ' + contingent + 'h/an · Rouge = dépassement</div>'
           + '</div>'
       )
