@@ -947,7 +947,7 @@ function _kitsuneGetCCN() {
   }
   
   // Récupérer le nom du groupe depuis l'IDCC
-  const groupeName = CCN_API.getGroupeForCCN(idcc);
+  const groupeName = window.CCN_API.getGroupeForCCN(idcc);
   console.log('[_kitsuneGetCCN] Groupe pour IDCC', idcc, ':', groupeName);
   
   if (!groupeName) {
