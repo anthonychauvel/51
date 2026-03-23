@@ -923,15 +923,47 @@ function _getKitsuneHistoryContext() {
 
 // ── Helper CCN pour messages dynamiques ──────────────────────
 function _kitsuneGetCCN() {
-  if (typeof CCN_API === 'undefined' || typeof window.CCN === 'undefined') {
-    return { contingent: 220, seuil: 35, taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, nom: null };
+  // Fallback par défaut
+  const defaultCCN = { contingent: 220, seuil: 35, taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, nom: null };
+  
+  // Vérifier que CCN_API et window.CCN existent
+  if (typeof CCN_API === 'undefined') {
+    console.warn('[_kitsuneGetCCN] CCN_API non défini - retour fallback');
+    return defaultCCN;
   }
+  if (typeof window.CCN === 'undefined') {
+    console.warn('[_kitsuneGetCCN] window.CCN non défini - retour fallback');
+    return defaultCCN;
+  }
+  
+  // Récupérer l'IDCC depuis localStorage
   const idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
-  const groupeName = CCN_API.getGroupeForCCN(idcc);
-  if (groupeName && window.CCN[groupeName]) {
-    return window.CCN[groupeName];
+  console.log('[_kitsuneGetCCN] IDCC lu depuis localStorage:', idcc);
+  
+  // Si IDCC = 0 (pas de CCN sélectionnée), retourner droit commun
+  if (idcc === 0) {
+    console.log('[_kitsuneGetCCN] IDCC=0 - retour DROIT_COMMUN');
+    return window.CCN.DROIT_COMMUN || defaultCCN;
   }
-  return { contingent: 220, seuil: 35, taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, nom: null };
+  
+  // Récupérer le nom du groupe depuis l'IDCC
+  const groupeName = CCN_API.getGroupeForCCN(idcc);
+  console.log('[_kitsuneGetCCN] Groupe pour IDCC', idcc, ':', groupeName);
+  
+  if (!groupeName) {
+    console.warn('[_kitsuneGetCCN] Aucun groupe trouvé pour IDCC', idcc);
+    return defaultCCN;
+  }
+  
+  // Récupérer les données du groupe
+  const ccnData = window.CCN[groupeName];
+  if (!ccnData) {
+    console.warn('[_kitsuneGetCCN] Groupe', groupeName, 'non trouvé dans window.CCN');
+    return defaultCCN;
+  }
+  
+  console.log('[_kitsuneGetCCN] CCN chargée:', groupeName, ccnData);
+  return ccnData;
 }
 function _kitsuneFormatMsg(msg, h) {
   const r = _kitsuneGetCCN();
