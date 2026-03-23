@@ -942,7 +942,17 @@ function loadYearData(y){return JSON.parse(localStorage.getItem(kData(y))||"{}")
 function saveYearData(y,d){localStorage.setItem(kData(y),JSON.stringify(d))}
 
 /* PARAMS € */
-["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def={rate:10,coef25:1.25,coefInter:1.10,coef50:1.50,coefNet:0.93}[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
+// Définir les coefficients par défaut selon la CCN
+const rules = getCCNRules();
+let defaultCoefs;
+if (rules.taux_inter !== null) {
+  // HCR : 3 paliers (10%, 20%, 50%)
+  defaultCoefs = {rate:10, coef25:1.10, coefInter:1.20, coef50:1.50, coefNet:0.93};
+} else {
+  // Droit commun : 2 paliers (25%, 50%)
+  defaultCoefs = {rate:10, coef25:1.25, coefInter:1.10, coef50:1.50, coefNet:0.93};
+}
+["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def=defaultCoefs[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
