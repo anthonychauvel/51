@@ -2902,9 +2902,8 @@ function initGlossaire() {
   // Créer le switch de mode
   createModeSwitch();
   
-  // NE PLUS transformer les termes en liens cliquables
-  // Les termes sont remplacés silencieusement par applyMode()
-  // wrapTermesGlossaire();
+  // Transformer les termes en éléments cliquables SANS soulignement
+  wrapTermesGlossaire();
   
   // Injecter les styles
   injectGlossaireStyles();
