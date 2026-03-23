@@ -420,11 +420,11 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <h3>&#x1F4B0; Valeur €</h3>
     <div id="euroBox" class="blur">
       <label>Taux horaire (€)</label><input type="number" id="rate">
-      <label>Coef 25 %</label><input type="number" id="coef25">
+      <label id="coef25Label">Coef 25 %</label><input type="number" id="coef25">
       <div id="coefInterContainer" style="display:none;">
         <label id="coefInterLabel">Coef 10 %</label><input type="number" id="coefInter">
       </div>
-      <label>Coef 50 %</label><input type="number" id="coef50">
+      <label id="coef50Label">Coef 50 %</label><input type="number" id="coef50">
       <label>Coef brut &#x2192; net</label><input type="number" id="coefNet">
       <p><b id="euroResult">0.00 €</b></p>
       <p id="euroDetail" style="font-size:12px;color:#aaa;margin-top:8px"></p>
@@ -806,6 +806,8 @@ function recalc(){
   const breakdown = document.getElementById("hoursBreakdown");
   const coefInterContainer = document.getElementById("coefInterContainer");
   const coefInterLabel = document.getElementById("coefInterLabel");
+  const coef25Label = document.getElementById("coef25Label");
+  const coef50Label = document.getElementById("coef50Label");
   
   if (breakdown) {
     if (rules.taux_inter !== null) {
@@ -826,6 +828,14 @@ function recalc(){
           coefInterLabel.textContent = `Coef ${rules.taux_inter} %`;
         }
       }
+      
+      // Mettre à jour les labels des coefficients
+      if (coef25Label) {
+        coef25Label.textContent = `Coef ${rules.taux1} %`;
+      }
+      if (coef50Label) {
+        coef50Label.textContent = `Coef ${rules.taux2} %`;
+      }
     } else {
       // 2 paliers (droit commun)
       breakdown.innerHTML = `
@@ -838,6 +848,14 @@ function recalc(){
       // Cacher le champ coefInter
       if (coefInterContainer) {
         coefInterContainer.style.display = 'none';
+      }
+      
+      // Restaurer les labels par défaut
+      if (coef25Label) {
+        coef25Label.textContent = `Coef ${rules.taux1} %`;
+      }
+      if (coef50Label) {
+        coef50Label.textContent = `Coef ${rules.taux2} %`;
       }
     }
   }
@@ -1482,32 +1500,20 @@ function showSaveFeedback(dayNum){
 function updateContingent(){
   const rules=getCCNRules();
   const LIMIT=rules.contingent;
+  
+  // Dans M2, les heures saisies sont DÉJÀ des heures supplémentaires
+  // On doit juste additionner toutes les HS de l'année
   let total=0;
-  // Contingent = uniquement l'exercice actif (currentYear)
   const yd=ALL_DATA[currentYear]||{};
-  Object.values(yd).forEach(m=>{
-    const wm={};
-    Object.entries(m.days||{}).forEach(([d,h])=>{
-      const date=new Date(currentYear,0,1);// approximation — on accumule juste les HS
-      total+=Math.max(0,h-rules.seuil/5); // approximation journalière
-    });
-  });
-  // Recalcul exact par semaines
-  total=0;
-  const allYearDays=[];
+  
+  // Parcourir tous les mois de l'année
   Object.entries(yd).forEach(([mk,m])=>{
+    if(!/^\d{4}-\d{2}$/.test(mk)) return; // Ignorer les clés non-mois
     Object.entries(m.days||{}).forEach(([d,h])=>{
-      const[y,mo]=mk.split("-").map(Number);
-      allYearDays.push({date:new Date(y,mo-1,d),h});
+      total+=h; // Les heures sont déjà des HS, on additionne directement
     });
   });
-  const wm={};
-  allYearDays.forEach(({date,h})=>{
-    const dw=date.getDay()||7;const mon=new Date(date);mon.setDate(date.getDate()-dw+1);
-    const k=mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0");
-    wm[k]=(wm[k]||0)+h;
-  });
-  Object.values(wm).forEach(wh=>{ total+=Math.max(0,wh-rules.seuil); });
+  
   const pct=Math.min(100,total/LIMIT*100);
   const fill=document.getElementById("contingentFill");
   const txt=document.getElementById("contingentText");
