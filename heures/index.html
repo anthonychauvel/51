@@ -554,9 +554,9 @@ const DAILY_WORK_HOURS=7,ALLOW_RECUP_FREE=true;
 
 /* ── CCN : règles actives ── */
 function getCCNRules() {
-  if (typeof CCN_API !== 'undefined') {
+  if (typeof window.CCN_API !== 'undefined') {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-    return CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
+    return window.CCN_API.getGroupeForCCN(idcc) || window.CCN_API.getGroupeForCCN(0);
   }
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
@@ -714,7 +714,7 @@ function calculate(){
   const pEnd=new Date(period.end);pEnd.setHours(0,0,0,0);
   // Fériés automatiques : appliqués selon règles CCN (feriesChomes)
   if(AUTO_FERIE){
-    const _fr=typeof CCN_API!=='undefined'?CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
+    const _fr=typeof window.CCN_API!=='undefined'?window.CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
     Object.entries(specialDays).forEach(([date,type])=>{
       if(type!=='ferie')return;
       // Si la CCN ne chôme que le 1er mai, ignorer les autres fériés
@@ -885,7 +885,7 @@ function updateContingent(){
   // sur l'ensemble de l'exercice (toutes les périodes)
   const weeks={},absences={};
   if(AUTO_FERIE){
-    const _fr2=typeof CCN_API!=='undefined'?CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
+    const _fr2=typeof window.CCN_API!=='undefined'?window.CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
     Object.entries(specialDays).forEach(([date,type])=>{
       if(type!=="ferie")return;
       if(_fr2.seul1erMaiChome && !date.endsWith('-05-01'))return;
@@ -1184,7 +1184,7 @@ function calcPeriodWeeks(pStart,pEnd){
   let wks={},abs={},rec={};
   // Auto-férié — selon règles fériés CCN
   if(AUTO_FERIE){
-    const _fr3=typeof CCN_API!=='undefined'?CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
+    const _fr3=typeof window.CCN_API!=='undefined'?window.CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
     Object.entries(specialDays).forEach(([date,type])=>{
       if(type!=="ferie")return;
       if(_fr3.seul1erMaiChome && !date.endsWith('-05-01'))return;
