@@ -286,17 +286,35 @@ body {
 /* ── HEADER ─────────────────────────────────────────────────────── */
 .app-header {
   display: flex;
-  align-items: center;
-  gap: var(--gap);
+  flex-direction: column;
+  gap: 0;
   padding: 0 var(--gap-l);
   padding-top: max(0px, env(safe-area-inset-top));
-  height: calc(48px + env(safe-area-inset-top, 0px));
+  min-height: calc(88px + env(safe-area-inset-top, 0px));
   background: linear-gradient(90deg, var(--void) 0%, var(--deep) 50%, var(--void) 100%);
   border-bottom: 1px solid rgba(0,200,255,0.2);
   flex-shrink: 0;
   z-index: 200;
   position: sticky;
   top: 0;
+}
+
+.header-row-1 {
+  display: flex;
+  align-items: center;
+  gap: var(--gap);
+  height: 48px;
+  width: 100%;
+}
+
+.header-row-2 {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--gap);
+  height: 40px;
+  width: 100%;
+  border-top: 1px solid rgba(0,200,255,0.1);
 }
 
 /* Animated header line */
@@ -516,7 +534,7 @@ body {
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .modal.hidden { display: none; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); }
+.modal-overlay { position: fixed; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; }
 .modal-box {
   position: relative;
   background: linear-gradient(135deg, #001428 0%, #000d1a 100%);
@@ -803,60 +821,6 @@ body {
 .hdr-btn--ai:hover      { border-color: rgba(176,106,255,0.4); color: #b06aff; }
 .hdr-btn--pdf:hover     { border-color: rgba(255,179,0,0.4);  color: var(--amber); }
 .hdr-btn--refresh:hover { border-color: rgba(0,200,255,0.4);  }
-
-/* Toggle sélection des heures */
-.hdr-btn-toggle {
-  transition: all 0.3s ease;
-}
-.hdr-btn-toggle.active {
-  border-color: rgba(0,200,255,0.5) !important;
-  background: rgba(0,200,255,0.1) !important;
-  box-shadow: 0 0 12px rgba(0,200,255,0.3);
-}
-.hdr-btn-toggle:hover {
-  border-color: rgba(0,200,255,0.6);
-  transform: translateY(-1px);
-}
-
-/* Modal overlay amélioré */
-.modal-overlay {
-  position: fixed !important;
-  inset: 0;
-  background: rgba(0,6,15,0.95) !important;
-  backdrop-filter: blur(6px);
-  z-index: 10000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  animation: fadeIn 0.2s ease;
-}
-
-@keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
-}
-
-.modal-close {
-  background: none;
-  border: none;
-  color: #888;
-  font-size: 24px;
-  cursor: pointer;
-  padding: 0;
-  width: 32px;
-  height: 32px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  border-radius: 4px;
-  transition: all 0.2s;
-}
-
-.modal-close:hover {
-  background: rgba(255,255,255,0.1);
-  color: #fff;
-}
 
 /* Sur mobile : icône seulement */
 @media (max-width: 600px) {
