@@ -555,10 +555,6 @@
     <a href="#" onclick="openLicensePopup(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">📄 Licence</a>
     <span style="opacity: 0.5;">•</span>
     <a href="#" onclick="openPrivacyPopup(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">🔒 Confidentialité</a>
-    <span style="opacity: 0.5;">•</span>
-    <a href="#" onclick="openGlossaireModal(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">📚 Glossaire</a>
-    <span style="opacity: 0.5;">•</span>
-    <a href="#" onclick="toggleMode(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">🎓 <span id="modeLabel">Mode Débutant</span></a>
   </div>
 </footer>
 
@@ -898,41 +894,8 @@ SOFTWARE.
     closeCCNModal();
   }
 
-  // =====================
-  // GLOSSAIRE
-  // =====================
-  function openGlossaireModal() {
-    alert('📚 Glossaire disponible dans chaque module (M1, M2, M3)\n\nSurvole les termes techniques pour voir leur définition.');
-  }
+  window.addEventListener('DOMContentLoaded', initCCNBadge);
 
-  // =====================
-  // MODE DÉBUTANT/EXPERT
-  // =====================
-  function toggleMode() {
-    const currentMode = selectedGlossaireMode;
-    const newMode = currentMode === 'debutant' ? 'expert' : 'debutant';
-    selectedGlossaireMode = newMode;
-    localStorage.setItem('GLOSSAIRE_MODE', newMode);
-    
-    const label = document.getElementById('modeLabel');
-    if (label) {
-      label.textContent = newMode === 'debutant' ? 'Mode Débutant' : 'Mode Expert';
-    }
-    
-    alert(`✅ Mode ${newMode === 'debutant' ? 'Débutant' : 'Expert'} activé\n\nLe vocabulaire sera adapté dans tous les modules.`);
-  }
-
-  window.addEventListener('DOMContentLoaded', function() {
-    initCCNBadge();
-    
-    // Initialiser le label du mode
-    const savedMode = localStorage.getItem('GLOSSAIRE_MODE') || 'debutant';
-    selectedGlossaireMode = savedMode;
-    const label = document.getElementById('modeLabel');
-    if (label) {
-      label.textContent = savedMode === 'debutant' ? 'Mode Débutant' : 'Mode Expert';
-    }
-  });
 </script>
 
 <!-- Glossaire mode débutant/expert -->
