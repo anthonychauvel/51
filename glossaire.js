@@ -1496,8 +1496,1054 @@ const GLOSSAIRE = {
     expert: "astreinte médicale",
     def: "Période où le médecin/infirmier doit être joignable pour intervenir. Indemnisée même sans intervention.",
     exemple: "Astreinte nuit : à domicile mais dispo si appel urgence"
+  },
+  
+  // ═══════════════════════════════════════════════════════════════
+  // SANTÉ ET BIEN-ÊTRE M3/M4 (40 termes)
+  // ═══════════════════════════════════════════════════════════════
+  
+  "burn-out": {
+    simple: "épuisement au travail",
+    expert: "burn-out",
+    def: "Épuisement professionnel causé par un stress chronique. Symptômes : fatigue intense, démotivation, troubles du sommeil.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "épuisement professionnel": {
+    simple: "très fatigué par le travail",
+    expert: "épuisement professionnel",
+    def: "État de fatigue extrême lié au travail. Peut mener au burn-out si non traité.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "fatigue chronique": {
+    simple: "toujours fatigué",
+    expert: "fatigue chronique",
+    def: "Fatigue persistante qui ne disparaît pas avec le repos. Signal d'alerte de surcharge.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "récupération": {
+    simple: "se reposer pour retrouver de l'énergie",
+    expert: "récupération",
+    def: "Processus de repos permettant au corps et à l'esprit de retrouver leurs capacités. Essentiel après effort prolongé.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "stress chronique": {
+    simple: "stress permanent",
+    expert: "stress chronique",
+    def: "État de tension prolongé qui épuise les ressources du corps. Facteur de risque majeur de burn-out.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "charge mentale": {
+    simple: "pression psychologique",
+    expert: "charge mentale",
+    def: "Poids psychologique lié à la responsabilité, l'organisation, les décisions. S'accumule au fil du temps.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "troubles du sommeil": {
+    simple: "problèmes pour dormir",
+    expert: "troubles du sommeil",
+    def: "Difficultés à s'endormir, réveils fréquents, sommeil non réparateur. Signe de stress ou surcharge.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "insomnie": {
+    simple: "ne pas arriver à dormir",
+    expert: "insomnie",
+    def: "Impossibilité de dormir suffisamment malgré l'opportunité. Souvent liée au stress professionnel.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "anxiété": {
+    simple: "inquiétude constante",
+    expert: "anxiété",
+    def: "État d'inquiétude excessive et persistante. Peut être causée par la surcharge de travail.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "dépression": {
+    simple: "tristesse profonde durable",
+    expert: "dépression",
+    def: "État de tristesse intense et durable affectant le quotidien. Peut résulter d'un burn-out non traité.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "charge de travail": {
+    simple: "quantité de travail à faire",
+    expert: "charge de travail",
+    def: "Volume et intensité du travail à accomplir. Une surcharge répétée mène à l'épuisement.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "surcharge": {
+    simple: "trop de travail",
+    expert: "surcharge",
+    def: "Quantité de travail excessive par rapport aux capacités ou au temps disponible.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "symptômes": {
+    simple: "signes de problème",
+    expert: "symptômes",
+    def: "Manifestations visibles d'un problème de santé. Ex: fatigue, irritabilité, troubles du sommeil.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "prévention": {
+    simple: "éviter les problèmes",
+    expert: "prévention",
+    def: "Actions pour éviter qu'un problème de santé n'apparaisse. Mieux vaut prévenir que guérir.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "résilience": {
+    simple: "capacité à tenir le coup",
+    expert: "résilience",
+    def: "Capacité à résister au stress et à se remettre des difficultés. Se développe avec le temps.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "équilibre vie-travail": {
+    simple: "bien séparer travail et perso",
+    expert: "équilibre vie-travail",
+    def: "Juste répartition entre temps professionnel et temps personnel. Essentiel pour la santé mentale.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "déconnexion": {
+    simple: "couper avec le travail",
+    expert: "déconnexion",
+    def: "Droit de ne pas être contacté en dehors des heures de travail. Protégé par la loi.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "médecine du travail": {
+    simple: "médecin pour les problèmes liés au travail",
+    expert: "médecine du travail",
+    def: "Service médical qui surveille la santé des salariés. Consulter en cas de surcharge ou stress.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "visite médicale": {
+    simple: "rendez-vous avec médecin du travail",
+    expert: "visite médicale",
+    def: "Examen obligatoire par le médecin du travail. Peut détecter les risques professionnels.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "arrêt de travail": {
+    simple: "arrêt maladie",
+    expert: "arrêt de travail",
+    def: "Prescription médicale interdisant temporairement de travailler. Nécessaire en cas d'épuisement sévère.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "inaptitude": {
+    simple: "ne plus pouvoir faire son travail",
+    expert: "inaptitude",
+    def: "Impossibilité médicale de continuer son poste. Déclarée par le médecin du travail.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "reclassement": {
+    simple: "changer de poste pour raisons médicales",
+    expert: "reclassement",
+    def: "Changement de poste suite à une inaptitude. L'employeur doit chercher un poste adapté.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "adaptation du poste": {
+    simple: "modifier le travail pour qu'il soit faisable",
+    expert: "adaptation du poste",
+    def: "Modifications du travail pour préserver la santé. Horaires, charge, conditions.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "alerte précoce": {
+    simple: "signaux d'alarme",
+    expert: "alerte précoce",
+    def: "Premiers signes de surcharge ou épuisement. Fatigue persistante, irritabilité, démotivation.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "signaux faibles": {
+    simple: "petits signes avant-coureurs",
+    expert: "signaux faibles",
+    def: "Indicateurs subtils de problèmes à venir. Retards, erreurs, absences courtes répétées.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "seuil critique": {
+    simple: "point de non-retour",
+    expert: "seuil critique",
+    def: "Niveau de charge au-delà duquel le risque pour la santé devient important. À surveiller.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "zone de danger": {
+    simple: "situation très risquée",
+    expert: "zone de danger",
+    def: "Niveau d'alerte maximal. Action immédiate nécessaire pour protéger la santé.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "récupération active": {
+    simple: "se reposer en faisant des choses agréables",
+    expert: "récupération active",
+    def: "Repos par des activités plaisantes et légères. Plus efficace que l'inactivité totale.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "hygiène de vie": {
+    simple: "bonnes habitudes santé",
+    expert: "hygiène de vie",
+    def: "Ensemble des bonnes pratiques : sommeil, alimentation, activité physique. Protège du stress.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "rythme circadien": {
+    simple: "horloge biologique",
+    expert: "rythme circadien",
+    def: "Cycle naturel de 24h du corps (veille-sommeil). Perturbé par les horaires décalés.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "sommeil réparateur": {
+    simple: "sommeil qui repose vraiment",
+    expert: "sommeil réparateur",
+    def: "Sommeil de qualité permettant une vraie récupération. Essentiel après journées chargées.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "dette de sommeil": {
+    simple: "manque de sommeil accumulé",
+    expert: "dette de sommeil",
+    def: "Déficit cumulé d'heures de sommeil. Se rattrape difficilement et affecte les performances.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "vigilance": {
+    simple: "attention et concentration",
+    expert: "vigilance",
+    def: "Capacité à rester attentif et concentré. Diminue avec la fatigue et les longues journées.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "somnolence": {
+    simple: "envie de dormir",
+    expert: "somnolence",
+    def: "Difficulté à rester éveillé. Dangereuse au travail (accidents). Signe de dette de sommeil.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "accident du travail": {
+    simple: "blessure au travail",
+    expert: "accident du travail",
+    def: "Événement soudain causant une blessure pendant le travail. Lié à la fatigue dans 20% des cas.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "risque professionnel": {
+    simple: "danger lié au travail",
+    expert: "risque professionnel",
+    def: "Danger pouvant causer un accident ou une maladie. La surcharge en fait partie.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "troubles musculo-squelettiques": {
+    simple: "douleurs muscles et articulations",
+    expert: "troubles musculo-squelettiques",
+    def: "Douleurs des muscles, tendons, articulations. Souvent liées à la posture et au stress.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "TMS": {
+    simple: "douleurs du corps",
+    expert: "TMS",
+    def: "Abréviation de Troubles Musculo-Squelettiques. Première cause de maladie professionnelle.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "ergonomie": {
+    simple: "adaptation du poste pour le confort",
+    expert: "ergonomie",
+    def: "Science de l'adaptation du travail à l'humain. Bonne ergonomie = moins de fatigue.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "conditions de travail": {
+    simple: "environnement et organisation du travail",
+    expert: "conditions de travail",
+    def: "Ensemble des éléments affectant le travail : horaires, charge, ambiance, matériel.",
+    categorie: "Santé et bien-être"
+  },
+  
+  // ═══════════════════════════════════════════════════════════════
+  // JURIDIQUE AVANCÉ (40 termes)
+  // ═══════════════════════════════════════════════════════════════
+  
+  "COR": {
+    simple: "repos obligatoire en compensation",
+    expert: "COR",
+    def: "Contrepartie Obligatoire en Repos. Repos dû au-delà du contingent annuel. 50% ou 100% selon l'entreprise.",
+    categorie: "Droit et juridique"
+  },
+  
+  "contrepartie obligatoire en repos": {
+    simple: "repos que l'employeur doit donner",
+    expert: "contrepartie obligatoire en repos",
+    def: "Repos auquel tu as droit au-delà du contingent annuel d'heures sup. Obligatoire par la loi.",
+    categorie: "Droit et juridique"
+  },
+  
+  "amplitude": {
+    simple: "durée totale de la journée",
+    expert: "amplitude",
+    def: "Temps écoulé entre le début et la fin de la journée de travail, pauses incluses. Maximum 13h.",
+    categorie: "Droit et juridique"
+  },
+  
+  "amplitude journalière": {
+    simple: "longueur de la journée de travail",
+    expert: "amplitude journalière",
+    def: "Durée entre l'arrivée et le départ. Limitée à 13h par jour (pauses comprises).",
+    categorie: "Droit et juridique"
+  },
+  
+  "dérogation": {
+    simple: "exception à la règle",
+    expert: "dérogation",
+    def: "Autorisation de ne pas respecter une règle légale. Nécessite un accord ou l'inspection du travail.",
+    categorie: "Droit et juridique"
+  },
+  
+  "inspection du travail": {
+    simple: "service d'information et contrôle",
+    expert: "inspection du travail",
+    def: "Service public qui informe et contrôle l'application du droit du travail. Conseille employeurs et salariés.",
+    categorie: "Droit et juridique"
+  },
+  
+  "inspecteur du travail": {
+    simple: "agent de contrôle",
+    expert: "inspecteur du travail",
+    def: "Agent public qui veille à l'application du droit du travail. Conseille et contrôle les deux parties.",
+    categorie: "Droit et juridique"
+  },
+  
+  "mise en demeure": {
+    simple: "demande officielle de mise en conformité",
+    expert: "mise en demeure",
+    def: "Demande formelle de corriger une non-conformité constatée. Étape avant sanction éventuelle.",
+    categorie: "Droit et juridique"
+  },
+  
+  "procès-verbal": {
+    simple: "constat officiel",
+    expert: "procès-verbal",
+    def: "Document officiel constatant une situation. Sert de base à d'éventuelles suites juridiques.",
+    categorie: "Droit et juridique"
+  },
+  
+  "infraction": {
+    simple: "non-conformité",
+    expert: "infraction",
+    def: "Non-respect d'une règle du droit du travail. Peut concerner employeur ou salarié selon les cas.",
+    categorie: "Droit et juridique"
+  },
+  
+  "sanction": {
+    simple: "mesure corrective",
+    expert: "sanction",
+    def: "Mesure appliquée en cas de non-respect des règles. Vise à rétablir la conformité.",
+    categorie: "Droit et juridique"
+  },
+  
+  "amende": {
+    simple: "somme à payer",
+    expert: "amende",
+    def: "Sanction financière en cas de non-conformité au code du travail. Montant selon la situation.",
+    categorie: "Droit et juridique"
+  },
+  
+  "réclamation": {
+    simple: "demande officielle",
+    expert: "réclamation",
+    def: "Demande officielle concernant l'application des règles. Peut émaner du salarié ou de l'employeur.",
+    categorie: "Droit et juridique"
+  },
+  
+  "litige": {
+    simple: "conflit juridique",
+    expert: "litige",
+    def: "Désaccord sur l'application du contrat ou du droit du travail. Peut mener aux prud'hommes.",
+    categorie: "Droit et juridique"
+  },
+  
+  "prud'hommes": {
+    simple: "tribunal du travail",
+    expert: "prud'hommes",
+    def: "Juridiction qui juge les conflits entre salariés et employeurs. Gratuit et accessible.",
+    categorie: "Droit et juridique"
+  },
+  
+  "conseil de prud'hommes": {
+    simple: "tribunal pour conflits travail",
+    expert: "conseil de prud'hommes",
+    def: "Tribunal spécialisé dans les litiges du travail. Composé de juges salariés et employeurs.",
+    categorie: "Droit et juridique"
+  },
+  
+  "saisine": {
+    simple: "dépôt de plainte au tribunal",
+    expert: "saisine",
+    def: "Action de saisir le conseil de prud'hommes. Première étape d'un recours judiciaire.",
+    categorie: "Droit et juridique"
+  },
+  
+  "conciliation": {
+    simple: "tentative d'arrangement à l'amiable",
+    expert: "conciliation",
+    def: "Phase où les prud'hommes tentent un accord amiable. Obligatoire avant jugement.",
+    categorie: "Droit et juridique"
+  },
+  
+  "jugement": {
+    simple: "décision du tribunal",
+    expert: "jugement",
+    def: "Décision finale du conseil de prud'hommes. Tranche le litige après examen des faits et des arguments.",
+    categorie: "Droit et juridique"
+  },
+  
+  "indemnités": {
+    simple: "sommes en compensation",
+    expert: "indemnités",
+    def: "Sommes d'argent versées pour compenser un préjudice. Montant fixé par le juge.",
+    categorie: "Droit et juridique"
+  },
+  
+  "dommages et intérêts": {
+    simple: "réparation financière",
+    expert: "dommages et intérêts",
+    def: "Somme versée pour réparer un préjudice. Décidée par le juge après examen des faits.",
+    categorie: "Droit et juridique"
+  },
+  
+  "préjudice": {
+    simple: "dommage subi",
+    expert: "préjudice",
+    def: "Dommage subi nécessitant réparation. Peut être moral, physique ou financier.",
+    categorie: "Droit et juridique"
+  },
+  
+  "rappel de salaire": {
+    simple: "paiement rétroactif",
+    expert: "rappel de salaire",
+    def: "Paiement rétroactif d'éléments de salaire. Prescription: 3 ans en droit du travail.",
+    categorie: "Droit et juridique"
+  },
+  
+  "prescription": {
+    simple: "délai légal",
+    expert: "prescription",
+    def: "Délai légal pour exercer un recours. Varie selon la nature de la demande.",
+    categorie: "Droit et juridique"
+  },
+  
+  "preuve": {
+    simple: "élément de démonstration",
+    expert: "preuve",
+    def: "Élément démontrant un fait. Documents, témoignages, enregistrements. Essentiel en justice.",
+    categorie: "Droit et juridique"
+  },
+  
+  "charge de la preuve": {
+    simple: "qui doit prouver",
+    expert: "charge de la preuve",
+    def: "Obligation de prouver ce qu'on affirme. Répartie selon les faits entre les deux parties.",
+    categorie: "Droit et juridique"
+  },
+  
+  "présomption": {
+    simple: "considéré comme vrai sauf preuve contraire",
+    expert: "présomption",
+    def: "Fait considéré comme vrai jusqu'à preuve du contraire. Ex: présomption de travail effectif.",
+    categorie: "Droit et juridique"
+  },
+  
+  "badgeuse": {
+    simple: "système d'enregistrement des heures",
+    expert: "badgeuse",
+    def: "Appareil enregistrant les entrées/sorties. Preuve du temps de travail si accessible au salarié.",
+    categorie: "Droit et juridique"
+  },
+  
+  "pointeuse": {
+    simple: "machine pour pointer les heures",
+    expert: "pointeuse",
+    def: "Système d'enregistrement des horaires. Peut servir de preuve des heures travaillées.",
+    categorie: "Droit et juridique"
+  },
+  
+  "relevé d'heures": {
+    simple: "liste des heures travaillées",
+    expert: "relevé d'heures",
+    def: "Document récapitulant les heures effectuées. Peut être auto-déclaratif si pas de badgeuse.",
+    categorie: "Droit et juridique"
+  },
+  
+  "auto-déclaration": {
+    simple: "noter soi-même ses heures",
+    expert: "auto-déclaration",
+    def: "Fait de noter soi-même ses heures de travail. Valable juridiquement si non contestée.",
+    categorie: "Droit et juridique"
+  },
+  
+  "registre": {
+    simple: "cahier officiel",
+    expert: "registre",
+    def: "Document officiel tenu par l'employeur. Ex: registre des heures, registre du personnel.",
+    categorie: "Droit et juridique"
+  },
+  
+  "document unique": {
+    simple: "liste des risques au travail",
+    expert: "document unique",
+    def: "Document obligatoire listant tous les risques professionnels. Doit inclure les risques psychosociaux.",
+    categorie: "Droit et juridique"
+  },
+  
+  "DUERP": {
+    simple: "liste officielle des dangers",
+    expert: "DUERP",
+    def: "Document Unique d'Évaluation des Risques Professionnels. Obligatoire dans toute entreprise.",
+    categorie: "Droit et juridique"
+  },
+  
+  "risques psychosociaux": {
+    simple: "dangers pour la santé mentale",
+    expert: "risques psychosociaux",
+    def: "Risques liés au stress, harcèlement, surcharge. Doivent être dans le document unique.",
+    categorie: "Droit et juridique"
+  },
+  
+  "RPS": {
+    simple: "dangers santé mentale",
+    expert: "RPS",
+    def: "Abréviation de Risques PsychoSociaux. Stress, burn-out, harcèlement, violence.",
+    categorie: "Droit et juridique"
+  },
+  
+  "obligation de sécurité": {
+    simple: "devoir légal de protection",
+    expert: "obligation de sécurité",
+    def: "Obligation légale de protéger la santé physique et mentale. Inscrite dans le code du travail.",
+    categorie: "Droit et juridique"
+  },
+  
+  "faute inexcusable": {
+    simple: "manquement grave à la sécurité",
+    expert: "faute inexcusable",
+    def: "Manquement grave à l'obligation de sécurité ayant causé un dommage. Notion juridique définie par la loi.",
+    categorie: "Droit et juridique"
+  },
+  
+  // ═══════════════════════════════════════════════════════════════
+  // TERMES SCIENTIFIQUES (40 termes)
+  // ═══════════════════════════════════════════════════════════════
+  
+  "biométrique": {
+    simple: "mesure du corps",
+    expert: "biométrique",
+    def: "Relatif à la mesure des données biologiques. Ex: rythme cardiaque, sommeil, fatigue.",
+    categorie: "Outils et modules"
+  },
+  
+  "physiologique": {
+    simple: "du corps et son fonctionnement",
+    expert: "physiologique",
+    def: "Relatif au fonctionnement normal du corps humain. Ex: besoin de sommeil, récupération.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "cognitif": {
+    simple: "mental et réflexion",
+    expert: "cognitif",
+    def: "Relatif aux capacités mentales : mémoire, attention, concentration, raisonnement.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "psychologique": {
+    simple: "mental et émotionnel",
+    expert: "psychologique",
+    def: "Relatif à l'esprit, aux émotions, au comportement. La surcharge affecte le psychologique.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "neurologique": {
+    simple: "du système nerveux",
+    expert: "neurologique",
+    def: "Relatif au système nerveux et au cerveau. Le stress chronique a des impacts neurologiques.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "hormonal": {
+    simple: "des hormones",
+    expert: "hormonal",
+    def: "Relatif aux hormones. Le stress perturbe l'équilibre hormonal (cortisol, adrénaline).",
+    categorie: "Santé et bien-être"
+  },
+  
+  "cortisol": {
+    simple: "hormone du stress",
+    expert: "cortisol",
+    def: "Hormone produite en cas de stress. Taux élevé prolongé = risque pour la santé.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "adrénaline": {
+    simple: "hormone de l'action",
+    expert: "adrénaline",
+    def: "Hormone libérée en situation de stress aigu. Augmente vigilance et rythme cardiaque.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "dopamine": {
+    simple: "hormone du plaisir",
+    expert: "dopamine",
+    def: "Hormone de la motivation et du plaisir. Baisse en cas d'épuisement professionnel.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "sérotonine": {
+    simple: "hormone du bien-être",
+    expert: "sérotonine",
+    def: "Hormone régulant l'humeur et le sommeil. Chute en cas de stress chronique.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "métabolisme": {
+    simple: "fonctionnement du corps",
+    expert: "métabolisme",
+    def: "Ensemble des réactions chimiques du corps. Perturbé par manque de sommeil et stress.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "homéostasie": {
+    simple: "équilibre du corps",
+    expert: "homéostasie",
+    def: "Capacité du corps à maintenir un équilibre stable. Perturbée par surcharge chronique.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "système immunitaire": {
+    simple: "défenses du corps",
+    expert: "système immunitaire",
+    def: "Défenses naturelles contre les maladies. Affaibli par stress et manque de repos.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "inflammation": {
+    simple: "réaction du corps à une agression",
+    expert: "inflammation",
+    def: "Réaction de défense du corps. Stress chronique = inflammation chronique = maladies.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "oxygénation": {
+    simple: "apport d'oxygène",
+    expert: "oxygénation",
+    def: "Apport d'oxygène aux cellules. Réduite par stress et fatigue. Améliorée par pauses.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "fréquence cardiaque": {
+    simple: "vitesse des battements du cœur",
+    expert: "fréquence cardiaque",
+    def: "Nombre de battements du cœur par minute. Augmente avec stress et fatigue.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "variabilité cardiaque": {
+    simple: "variation du rythme cardiaque",
+    expert: "variabilité cardiaque",
+    def: "Variation naturelle entre battements. Bonne variabilité = bonne récupération.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "tension artérielle": {
+    simple: "pression du sang",
+    expert: "tension artérielle",
+    def: "Pression du sang dans les artères. Augmente avec stress chronique (hypertension).",
+    categorie: "Santé et bien-être"
+  },
+  
+  "glycémie": {
+    simple: "taux de sucre dans le sang",
+    expert: "glycémie",
+    def: "Concentration de glucose dans le sang. Perturbée par stress et manque de sommeil.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "hypertension": {
+    simple: "tension trop élevée",
+    expert: "hypertension",
+    def: "Tension artérielle anormalement haute. Facteur de risque lié au stress professionnel.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "neurotransmetteur": {
+    simple: "messager chimique du cerveau",
+    expert: "neurotransmetteur",
+    def: "Molécule transmettant l'information entre neurones. Ex: dopamine, sérotonine.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "synapse": {
+    simple: "connexion entre neurones",
+    expert: "synapse",
+    def: "Point de contact entre deux neurones. Affectée par stress et manque de sommeil.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "plasticité cérébrale": {
+    simple: "capacité du cerveau à s'adapter",
+    expert: "plasticité cérébrale",
+    def: "Capacité du cerveau à se réorganiser. Réduite par surcharge et fatigue chronique.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "charge cognitive": {
+    simple: "effort mental demandé",
+    expert: "charge cognitive",
+    def: "Quantité d'informations à traiter mentalement. Trop élevée = erreurs et fatigue.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "saturation cognitive": {
+    simple: "cerveau trop plein",
+    expert: "saturation cognitive",
+    def: "État où le cerveau ne peut plus traiter d'informations. Nécessite pause immédiate.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "charge allostatique": {
+    simple: "usure du corps par le stress",
+    expert: "charge allostatique",
+    def: "Accumulation des effets du stress sur le corps. Plus elle est élevée, plus le risque santé.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "réponse au stress": {
+    simple: "réaction du corps face au stress",
+    expert: "réponse au stress",
+    def: "Ensemble des réactions du corps face à une situation stressante. Normale si ponctuelle.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "adaptation": {
+    simple: "ajustement à la situation",
+    expert: "adaptation",
+    def: "Capacité à s'ajuster aux contraintes. Limitée si stress prolongé ou trop intense.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "syndrome d'adaptation": {
+    simple: "réaction progressive au stress prolongé",
+    expert: "syndrome d'adaptation",
+    def: "Réponse du corps au stress prolongé en 3 phases : alarme, résistance, épuisement.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "phase d'alarme": {
+    simple: "première réaction au stress",
+    expert: "phase d'alarme",
+    def: "Première réaction au stress : vigilance accrue, énergie mobilisée. Normale et temporaire.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "phase de résistance": {
+    simple: "adaptation au stress continu",
+    expert: "phase de résistance",
+    def: "Corps s'adapte au stress prolongé. Peut durer, mais épuise les réserves.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "phase d'épuisement": {
+    simple: "corps à bout de forces",
+    expert: "phase d'épuisement",
+    def: "Réserves épuisées, corps ne peut plus s'adapter. Risque de burn-out et maladies.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "réserves énergétiques": {
+    simple: "énergie disponible du corps",
+    expert: "réserves énergétiques",
+    def: "Stock d'énergie du corps. Se vident avec surcharge, se rechargent par repos.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "capacité de récupération": {
+    simple: "vitesse à récupérer",
+    expert: "capacité de récupération",
+    def: "Vitesse à laquelle le corps se remet d'un effort. Diminue avec surcharge répétée.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "seuil de tolérance": {
+    simple: "limite supportable",
+    expert: "seuil de tolérance",
+    def: "Niveau maximum de charge supportable. Varie selon les personnes et le contexte.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "facteur de risque": {
+    simple: "élément augmentant le danger",
+    expert: "facteur de risque",
+    def: "Élément augmentant la probabilité d'un problème. Ex: heures excessives = facteur de burn-out.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "facteur protecteur": {
+    simple: "élément qui protège",
+    expert: "facteur protecteur",
+    def: "Élément réduisant les risques. Ex: bon sommeil, sport, soutien social.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "indicateur précoce": {
+    simple: "signal d'alerte précoce",
+    expert: "indicateur précoce",
+    def: "Signal permettant de détecter un problème avant qu'il ne s'aggrave.",
+    categorie: "Santé et bien-être"
+  },
+  
+  "biomarqueur": {
+    simple: "mesure biologique",
+    expert: "biomarqueur",
+    def: "Mesure biologique indiquant un état. Ex: taux de cortisol = marqueur de stress.",
+    categorie: "Santé et bien-être"
+  },
+  
+  // ═══════════════════════════════════════════════════════════════
+  // TERMES M3/M4 SPÉCIFIQUES (30 termes)
+  // ═══════════════════════════════════════════════════════════════
+  
+  "prédiction": {
+    simple: "estimation future",
+    expert: "prédiction",
+    def: "Estimation de l'évolution future basée sur les données passées. Aide à anticiper les risques.",
+    categorie: "Outils et modules"
+  },
+  
+  "simulation": {
+    simple: "test de scénario",
+    expert: "simulation",
+    def: "Test de différents scénarios futurs. Permet de voir l'impact de tes choix.",
+    categorie: "Outils et modules"
+  },
+  
+  "scénario": {
+    simple: "situation possible",
+    expert: "scénario",
+    def: "Situation future possible. FOX analyse 600+ scénarios de charge de travail.",
+    categorie: "Outils et modules"
+  },
+  
+  "heatmap": {
+    simple: "carte de chaleur",
+    expert: "heatmap",
+    def: "Carte colorée montrant les zones de risque. Rouge = danger, vert = OK.",
+    categorie: "Outils et modules"
+  },
+  
+  "calendrier prédictif": {
+    simple: "calendrier du futur",
+    expert: "calendrier prédictif",
+    def: "Calendrier montrant les risques futurs selon ton rythme actuel.",
+    categorie: "Outils et modules"
+  },
+  
+  "score de risque": {
+    simple: "note du danger",
+    expert: "score de risque",
+    def: "Note de 0 à 100 indiquant le niveau de risque. Plus c'est élevé, plus c'est dangereux.",
+    categorie: "Outils et modules"
+  },
+  
+  "score burn-out": {
+    simple: "note d'épuisement",
+    expert: "score burn-out",
+    def: "Indicateur de risque d'épuisement professionnel. Calculé d'après heures et récupération.",
+    categorie: "Outils et modules"
+  },
+  
+  "score énergie": {
+    simple: "jauge de forme",
+    expert: "score énergie",
+    def: "Indicateur de vitalité. Diminue avec surcharge, augmente avec repos.",
+    categorie: "Outils et modules"
+  },
+  
+  "digital twin": {
+    simple: "jumeau numérique",
+    expert: "digital twin",
+    def: "Copie numérique de ton rythme de travail. Permet de simuler l'impact des changements.",
+    categorie: "Outils et modules"
+  },
+  
+  "jumeau numérique": {
+    simple: "double virtuel",
+    expert: "jumeau numérique",
+    def: "Modèle virtuel de ta situation. Utilisé pour prédire l'évolution de ta charge.",
+    categorie: "Outils et modules"
+  },
+  
+  "modélisation": {
+    simple: "représentation simplifiée",
+    expert: "modélisation",
+    def: "Représentation simplifiée de la réalité permettant des calculs et prédictions.",
+    categorie: "Outils et modules"
+  },
+  
+  "algorithme": {
+    simple: "méthode de calcul",
+    expert: "algorithme",
+    def: "Suite d'instructions pour résoudre un problème. FOX utilise des algorithmes pour prédire.",
+    categorie: "Outils et modules"
+  },
+  
+  "intelligence artificielle": {
+    simple: "ordinateur qui apprend",
+    expert: "intelligence artificielle",
+    def: "Système informatique capable d'apprendre et de s'adapter. Utilisé pour les prédictions.",
+    categorie: "Outils et modules"
+  },
+  
+  "IA": {
+    simple: "ordinateur intelligent",
+    expert: "IA",
+    def: "Abréviation d'Intelligence Artificielle. Système qui analyse et prédit.",
+    categorie: "Outils et modules"
+  },
+  
+  "analyse prédictive": {
+    simple: "étude du futur probable",
+    expert: "analyse prédictive",
+    def: "Technique utilisant les données passées pour prévoir l'avenir. Base de FOX.",
+    categorie: "Outils et modules"
+  },
+  
+  "tendance": {
+    simple: "direction de l'évolution",
+    expert: "tendance",
+    def: "Direction générale de l'évolution. Ex: tendance à la hausse des heures sup.",
+    categorie: "Outils et modules"
+  },
+  
+  "projection": {
+    simple: "estimation future",
+    expert: "projection",
+    def: "Estimation de l'évolution future en prolongeant la tendance actuelle.",
+    categorie: "Outils et modules"
+  },
+  
+  "extrapolation": {
+    simple: "prolonger la courbe",
+    expert: "extrapolation",
+    def: "Méthode de prédiction prolongeant la tendance observée vers le futur.",
+    categorie: "Outils et modules"
+  },
+  
+  "corrélation": {
+    simple: "lien entre deux choses",
+    expert: "corrélation",
+    def: "Relation entre deux variables. Ex: plus d'heures = plus de risque burn-out.",
+    categorie: "Outils et modules"
+  },
+  
+  "régression": {
+    simple: "calcul de tendance",
+    expert: "régression",
+    def: "Méthode statistique pour calculer une tendance et faire des prédictions.",
+    categorie: "Outils et modules"
+  },
+  
+  "seuil d'alerte": {
+    simple: "niveau qui déclenche l'alarme",
+    expert: "seuil d'alerte",
+    def: "Valeur critique déclenchant une alerte. Ex: 75% du contingent = alerte orange.",
+    categorie: "Outils et modules"
+  },
+  
+  "zone de confort": {
+    simple: "situation sans risque",
+    expert: "zone de confort",
+    def: "Plage de charge de travail sans risque pour la santé. Zone verte dans FOX.",
+    categorie: "Outils et modules"
+  },
+  
+  "zone d'alerte": {
+    simple: "situation à surveiller",
+    expert: "zone d'alerte",
+    def: "Niveau de charge nécessitant vigilance. Zone orange dans FOX.",
+    categorie: "Outils et modules"
+  },
+  
+  "zone critique": {
+    simple: "situation dangereuse",
+    expert: "zone critique",
+    def: "Niveau de charge dangereux nécessitant action immédiate. Zone rouge dans FOX.",
+    categorie: "Outils et modules"
+  },
+  
+  "dashboard": {
+    simple: "tableau de bord",
+    expert: "dashboard",
+    def: "Écran récapitulatif montrant les indicateurs principaux d'un coup d'œil.",
+    categorie: "Outils et modules"
+  },
+  
+  "indicateur": {
+    simple: "mesure de suivi",
+    expert: "indicateur",
+    def: "Mesure permettant de suivre l'évolution d'une situation. Ex: score burn-out.",
+    categorie: "Outils et modules"
+  },
+  
+  "KPI": {
+    simple: "indicateur clé",
+    expert: "KPI",
+    def: "Key Performance Indicator. Indicateur principal de performance ou de risque.",
+    categorie: "Outils et modules"
+  },
+  
+  "visualisation": {
+    simple: "affichage visuel des données",
+    expert: "visualisation",
+    def: "Représentation graphique des données. Graphiques, cartes, courbes.",
+    categorie: "Outils et modules"
+  },
+  
+  "graphique": {
+    simple: "dessin des chiffres",
+    expert: "graphique",
+    def: "Représentation visuelle de données chiffrées. Courbes, barres, camemberts.",
+    categorie: "Outils et modules"
+  },
+  
+  "courbe": {
+    simple: "ligne montrant l'évolution",
+    expert: "courbe",
+    def: "Ligne montrant l'évolution d'une valeur dans le temps. Ex: courbe des heures sup.",
+    categorie: "Outils et modules"
   }
 };
+
 
 // ═══════════════════════════════════════════════════════════════
 // GESTION DU MODE
