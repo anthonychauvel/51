@@ -534,7 +534,7 @@ body {
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .modal.hidden { display: none; }
-.modal-overlay { position: fixed; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); z-index: 10000; display: flex; align-items: center; justify-content: center; }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); }
 .modal-box {
   position: relative;
   background: linear-gradient(135deg, #001428 0%, #000d1a 100%);
