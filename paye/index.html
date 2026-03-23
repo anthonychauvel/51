@@ -407,11 +407,9 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <h3>Récapitulatif</h3>
     <p>Report précédent : <b id="prevCarry">0.00</b></p>
     <p>Total période : <b id="totalMonth">0.00</b></p>
-    <div id="hoursBreakdown">
-      <p>Heures à 25 % : <b id="hours25">0.00</b></p>
-      <p>Heures à 50 % : <b id="hours50">0.00</b></p>
-    </div>
-    <p style="font-size:12px;color:#aaa;margin-top:8px" id="calcInfoText"></p>
+    <p>Heures à 25 % : <b id="hours25">0.00</b></p>
+    <p>Heures à 50 % : <b id="hours50">0.00</b></p>
+    <p style="font-size:12px;color:#aaa;margin-top:8px">&#x2139;&#xFE0F; Calcul standard : 25% jusqu'à 8h hebdomadaires, puis 50%.</p>
     <p>Heures payées : <input type="number" id="paidHours" step="0.25"></p>
     <p>Reliquat reporté : <b id="carryOver">0.00</b></p>
   </div>
@@ -420,11 +418,8 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <h3>&#x1F4B0; Valeur €</h3>
     <div id="euroBox" class="blur">
       <label>Taux horaire (€)</label><input type="number" id="rate">
-      <label id="coef25Label">Coef 25 %</label><input type="number" id="coef25">
-      <div id="coefInterContainer" style="display:none;">
-        <label id="coefInterLabel">Coef 10 %</label><input type="number" id="coefInter">
-      </div>
-      <label id="coef50Label">Coef 50 %</label><input type="number" id="coef50">
+      <label>Coef 25 %</label><input type="number" id="coef25">
+      <label>Coef 50 %</label><input type="number" id="coef50">
       <label>Coef brut &#x2192; net</label><input type="number" id="coefNet">
       <p><b id="euroResult">0.00 €</b></p>
       <p id="euroDetail" style="font-size:12px;color:#aaa;margin-top:8px"></p>
@@ -547,12 +542,9 @@ const STORAGE_PREFIX="CA_HS_TRACKER_V1",APP_VERSION="1.5.0",SNAP_KEY=`${STORAGE_
 
 /* ── CCN : règles actives ── */
 function getCCNRules() {
-  if (typeof CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
+  if (typeof CCN_API !== 'undefined') {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-    const groupeName = CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
-    if (groupeName && window.CCN[groupeName]) {
-      return window.CCN[groupeName];
-    }
+    return CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
   }
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
@@ -767,7 +759,7 @@ function setM2SaisieMode(mode){
   document.getElementById('m2ModeWorked').classList.toggle('active',mode==='worked');
   document.getElementById('m2SaisieHS').style.display=mode==='hs'?'':'none';
   document.getElementById('m2SaisieWorked').style.display=mode==='worked'?'':'none';
-  if(mode==='worked'){document.getElementById('m2WorkedHours').value='';document.getElementById('m2WorkedResult').textContent='';}
+  if(mode==='worked'){document.getElementById('m2WorkedHours').value='';document.getElementById('m2WorkedResult').textContent='';document.getElementById('m2WorkedHours').focus();}
 }
 function getM2BaseJour(){const r=getCCNRules();return r.seuil/5;}
 function calcM2FromWorked(){
@@ -799,111 +791,17 @@ function recalc(){
   let t25=0,tInter=0,t50=0,ph=0;
   Object.values(weeks).forEach(wh=>{
     ph+=wh;
-    // Les heures saisies sont DÉJÀ des heures supplémentaires (comme M1)
-    const hs = wh;
+    const hs=Math.max(0,wh-rules.seuil);
     const p=calcHsPaliers(hs,rules);
     t25+=p.h1;tInter+=p.hInter;t50+=p.h2;
   });
-  
-  // Affichage dynamique selon le nombre de paliers
-  const breakdown = document.getElementById("hoursBreakdown");
-  const coefInterContainer = document.getElementById("coefInterContainer");
-  const coefInterLabel = document.getElementById("coefInterLabel");
-  const coef25Label = document.getElementById("coef25Label");
-  const coef50Label = document.getElementById("coef50Label");
-  
-  if (breakdown) {
-    if (rules.taux_inter !== null) {
-      // 3 paliers (ex: HCR)
-      breakdown.innerHTML = `
-        <p>Heures à ${rules.taux1} % : <b id="hours25">${fmtH(t25)}</b></p>
-        <p>Heures à ${rules.taux_inter} % : <b id="hoursInter">${fmtH(tInter)}</b></p>
-        <p>Heures à ${rules.taux2} % : <b id="hours50">${fmtH(t50)}</b></p>
-      `;
-      document.getElementById("hours25").dataset.val=t25;
-      document.getElementById("hoursInter").dataset.val=tInter;
-      document.getElementById("hours50").dataset.val=t50;
-      
-      // Afficher le champ coefInter
-      if (coefInterContainer) {
-        coefInterContainer.style.display = 'block';
-        if (coefInterLabel) {
-          coefInterLabel.textContent = `Coef ${rules.taux_inter} %`;
-        }
-      }
-      
-      // Mettre à jour les labels des coefficients
-      if (coef25Label) {
-        coef25Label.textContent = `Coef ${rules.taux1} %`;
-      }
-      if (coef50Label) {
-        coef50Label.textContent = `Coef ${rules.taux2} %`;
-      }
-    } else {
-      // 2 paliers (droit commun)
-      breakdown.innerHTML = `
-        <p>Heures à ${rules.taux1} % : <b id="hours25">${fmtH(t25)}</b></p>
-        <p>Heures à ${rules.taux2} % : <b id="hours50">${fmtH(t50)}</b></p>
-      `;
-      document.getElementById("hours25").dataset.val=t25;
-      document.getElementById("hours50").dataset.val=t50;
-      
-      // Cacher le champ coefInter
-      if (coefInterContainer) {
-        coefInterContainer.style.display = 'none';
-      }
-      
-      // Restaurer les labels par défaut
-      if (coef25Label) {
-        coef25Label.textContent = `Coef ${rules.taux1} %`;
-      }
-      if (coef50Label) {
-        coef50Label.textContent = `Coef ${rules.taux2} %`;
-      }
-    }
-  }
-  
+  document.getElementById("hours25").textContent=fmtH(t25);document.getElementById("hours25").dataset.val=t25;
+  document.getElementById("hours50").textContent=fmtH(t50);document.getElementById("hours50").dataset.val=t50;
   document.getElementById("totalMonth").textContent=fmtH(ph);document.getElementById("prevCarry").textContent=fmtH(getPreviousCarry(currentKey));document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
-  // Mise à jour du texte d'information sur les taux
-  const infoEl = document.getElementById("calcInfoText");
-  if (infoEl) {
-    if (rules.taux_inter !== null) {
-      infoEl.innerHTML = `ℹ️ CCN ${rules.nom||'personnalisée'} : ${rules.taux1}% jusqu'à ${rules.palier1}h, ${rules.taux_inter}% jusqu'à ${rules.palier1+rules.palier_inter}h, puis ${rules.taux2}%.`;
-    } else {
-      infoEl.innerHTML = `ℹ️ Calcul : ${rules.taux1}% jusqu'à ${rules.palier1}h hebdomadaires, puis ${rules.taux2}%.`;
-    }
-  }
   if(unlocked)calcEuro();
   updateContingent();
 }
-function calcEuro(){
-  if(!unlocked)return;
-  const rate=Number(document.getElementById("rate").value)||0;
-  const c25=Number(document.getElementById("coef25").value)||1.25;
-  const cInter=Number(document.getElementById("coefInter")?.value)||1.10;
-  const c50=Number(document.getElementById("coef50").value)||1.50;
-  const cn=Number(document.getElementById("coefNet").value)||1;
-  const h25=Number(document.getElementById("hours25")?.dataset.val)||0;
-  const h50=Number(document.getElementById("hours50")?.dataset.val)||0;
-  const hInter=Number(document.getElementById("hoursInter")?.dataset.val)||0;
-  
-  const rules=getCCNRules();
-  
-  const w25=h25*c25;
-  const wInter=hInter*cInter;
-  const w50=h50*c50;
-  const wt=w25+wInter+w50;
-  const brut=wt*rate;
-  const net=brut*cn;
-  
-  document.getElementById("euroResult").textContent=net.toFixed(2)+" €";
-  
-  if(rules.taux_inter!==null){
-    document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25.toFixed(2)} = ${fmtH(w25)}<br>${fmtH(hInter)} × ${cInter.toFixed(2)} = ${fmtH(wInter)}<br>${fmtH(h50)} × ${c50.toFixed(2)} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`;
-  }else{
-    document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25.toFixed(2)} = ${fmtH(w25)}<br>${fmtH(h50)} × ${c50.toFixed(2)} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`;
-  }
-}
+function calcEuro(){if(!unlocked)return;const rate=Number(document.getElementById("rate").value)||0,c25=Number(document.getElementById("coef25").value)||1.25,c50=Number(document.getElementById("coef50").value)||1.50,cn=Number(document.getElementById("coefNet").value)||1,h25=Number(document.getElementById("hours25").dataset.val)||0,h50=Number(document.getElementById("hours50").dataset.val)||0;const w25=h25*c25,w50=h50*c50,wt=w25+w50,brut=wt*rate,net=brut*cn;document.getElementById("euroResult").textContent=net.toFixed(2)+" €";document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25} = ${fmtH(w25)}<br>${fmtH(h50)} × ${c50} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`}
 function recalcCascade(){
   // Opérer uniquement sur l'exercice actif pour éviter contamination entre années
   const yd=ALL_DATA[currentYear]||{};
@@ -945,17 +843,7 @@ function loadYearData(y){return JSON.parse(localStorage.getItem(kData(y))||"{}")
 function saveYearData(y,d){localStorage.setItem(kData(y),JSON.stringify(d))}
 
 /* PARAMS € */
-// Définir les coefficients par défaut selon la CCN
-const rules = getCCNRules();
-let defaultCoefs;
-if (rules.taux_inter !== null) {
-  // HCR : 3 paliers (10%, 20%, 50%)
-  defaultCoefs = {rate:10, coef25:1.10, coefInter:1.20, coef50:1.50, coefNet:0.93};
-} else {
-  // Droit commun : 2 paliers (25%, 50%)
-  defaultCoefs = {rate:10, coef25:1.25, coefInter:1.10, coef50:1.50, coefNet:0.93};
-}
-["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def=defaultCoefs[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
+["rate","coef25","coef50","coefNet"].forEach(id=>{const def={rate:10,coef25:1.25,coef50:1.50,coefNet:0.93}[id],inp=document.getElementById(id);inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}});
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
@@ -1126,10 +1014,7 @@ function pdfDayTable(pdf, startY, allDays, inclSansHeures, inclSemaines){
       pdf.setFontSize(8);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
       pdf.text(pdfStr("Sous-total S "+weekKey),C.DATE,curY);
       pdf.text(pdfStr(fmtH(weekTotal)),C.H,curY);
-      const _rPDF=getCCNRules();
-      // Les heures saisies sont DÉJÀ des heures supplémentaires
-      const _hsPDF=weekTotal;
-      const _pPDF=calcHsPaliers(_hsPDF,_rPDF);
+      const _rPDF=getCCNRules(),_hsPDF=weekTotal,_pPDF=calcHsPaliers(_hsPDF,_rPDF);
       const _lbl=_rPDF.taux_inter?`${_rPDF.taux1}%: ${fmtH(_pPDF.h1)} / ${_rPDF.taux_inter}%: ${fmtH(_pPDF.hInter)} / ${_rPDF.taux2}%: ${fmtH(_pPDF.h2)}`:`${_rPDF.taux1}%: ${fmtH(_pPDF.h1)}  ${_rPDF.taux2}%: ${fmtH(_pPDF.h2)}`;
       pdf.text(pdfStr(_lbl),C.SEMAINE,curY);
       pdf.setTextColor(0,0,0);pdf.setFont(undefined,"normal");
@@ -1162,10 +1047,7 @@ function pdfDayTable(pdf, startY, allDays, inclSansHeures, inclSemaines){
     pdf.rect(PDF_MARGIN,curY-4,PDF_W-PDF_MARGIN*2,PDF_LINE,"F");
     pdf.setFontSize(8);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
     pdf.text(pdfStr("Sous-total S "+weekKey),PDF_MARGIN+1,curY);
-    const _rPDF2=getCCNRules();
-    // Les heures saisies sont DÉJÀ des heures supplémentaires
-    const _hsPDF2=weekTotal;
-    const _pPDF2=calcHsPaliers(_hsPDF2,_rPDF2);
+    const _rPDF2=getCCNRules(),_hsPDF2=weekTotal,_pPDF2=calcHsPaliers(_hsPDF2,_rPDF2);
     const C2={DATE:PDF_MARGIN+1,JOUR:PDF_MARGIN+40,H:PDF_MARGIN+58,SEMAINE:PDF_MARGIN+80,CUM:PDF_MARGIN+110};
     const _lbl2=_rPDF2.taux_inter?`${_rPDF2.taux1}%: ${fmtH(_pPDF2.h1)} / ${_rPDF2.taux_inter}%: ${fmtH(_pPDF2.hInter)} / ${_rPDF2.taux2}%: ${fmtH(_pPDF2.h2)}`:`${_rPDF2.taux1}%: ${fmtH(_pPDF2.h1)}  ${_rPDF2.taux2}%: ${fmtH(_pPDF2.h2)}`;
     pdf.text(pdfStr(fmtH(weekTotal)),C2.H,curY);
@@ -1214,8 +1096,7 @@ function calcWeeks(allDays){
   });
   let h25=0,hInter=0,h50=0;
   Object.values(wm).forEach(wh=>{
-    // Les heures saisies sont DÉJÀ des heures supplémentaires (comme dans recalc())
-    const hs = wh;
+    const hs=Math.max(0,wh-rules.seuil);
     const p=calcHsPaliers(hs,rules);
     h25+=p.h1;hInter+=p.hInter;h50+=p.h2;
   });
@@ -1274,35 +1155,7 @@ function generateAnnualPDF(){
   const inclDetail=document.getElementById("aOptDetail").checked;
   const yearStr=String(y);
   const pdf=pdfBuildBase();
-  
-  // Récupérer les règles CCN pour adapter les colonnes
-  const globalRules = getCCNRules();
-  const has3Tiers = globalRules.taux_inter !== null;
-  
-  // Définir les colonnes selon le nombre de paliers
-  let C;
-  if (has3Tiers) {
-    C = {
-      MOIS: PDF_MARGIN+1,
-      PERIODE: PDF_MARGIN+28,
-      TOTAL: PDF_MARGIN+74,
-      H1: PDF_MARGIN+90,
-      HINTER: PDF_MARGIN+106,
-      H2: PDF_MARGIN+122,
-      PAYE: PDF_MARGIN+138,
-      CARRY: PDF_MARGIN+154
-    };
-  } else {
-    C = {
-      MOIS: PDF_MARGIN+1,
-      PERIODE: PDF_MARGIN+28,
-      TOTAL: PDF_MARGIN+82,
-      H1: PDF_MARGIN+100,
-      H2: PDF_MARGIN+116,
-      PAYE: PDF_MARGIN+132,
-      CARRY: PDF_MARGIN+152
-    };
-  }
+  const C={MOIS:PDF_MARGIN+1,PERIODE:PDF_MARGIN+28,TOTAL:PDF_MARGIN+82,H25:PDF_MARGIN+100,H50:PDF_MARGIN+116,PAYE:PDF_MARGIN+132,CARRY:PDF_MARGIN+152};
 
   let curY=pdfHeader(pdf,
     `Bilan annuel – Heures supplémentaires ${y}`,
@@ -1310,7 +1163,7 @@ function generateAnnualPDF(){
   );
 
   // Calcul annuel global
-  let annualTotal=0,annualPaid=0,annualH1=0,annualHInter=0,annualH2=0;
+  let annualTotal=0,annualPaid=0,annualH25=0,annualH50=0;
   const monthsData=[];
   for(let mi=0;mi<12;mi++){
     const mk=`${y}-${String(mi+1).padStart(2,"0")}`;
@@ -1321,43 +1174,26 @@ function generateAnnualPDF(){
     const{h25,hInter:hInterA,h50,rules:aRules}=calcWeeks(allDays);
     const paid=md.paid||0;
     const carry=md.carry||0;
-    annualTotal+=total;annualPaid+=paid;annualH1+=h25;annualHInter+=(hInterA||0);annualH2+=h50;
+    annualTotal+=total;annualPaid+=paid;annualH25+=h25;annualH50+=h50;
     monthsData.push({mk,start,end,total,h25,hInter:hInterA||0,h50,paid,carry,allDays,aRules});
   }
 
-  // Bloc récap global avec labels dynamiques
-  const recapLines = [
-    ["Total heures", fmtH(annualTotal)],
-    ["Total payées", fmtH(annualPaid)],
-    ["Total à " + globalRules.taux1 + "%", fmtH(annualH1)],
-  ];
-  if (has3Tiers) {
-    recapLines.push(["Total à " + globalRules.taux_inter + "%", fmtH(annualHInter)]);
-  }
-  recapLines.push(
-    ["Total à " + globalRules.taux2 + "%", fmtH(annualH2)],
-    ["Reliquat final", fmtH(monthsData[11]?.carry||0)],
-    ["Mois avec heures", monthsData.filter(m=>m.total>0).length+" mois"]
-  );
-  curY=pdfRecapBlock(pdf, curY, recapLines);
+  // Bloc récap global
+  curY=pdfRecapBlock(pdf,curY,[
+    ["Total heures",fmtH(annualTotal)],
+    ["Total payées",fmtH(annualPaid)],
+    ["Total à 25%",fmtH(annualH25)],
+    ["Total à 50%",fmtH(annualH50)],
+    ["Reliquat final",fmtH(monthsData[11]?.carry||0)],
+    ["Mois avec heures",monthsData.filter(m=>m.total>0).length+" mois"],
+  ]);
 
-  // Tableau mensuel avec headers dynamiques
+  // Tableau mensuel
   function drawMonthTableHeader(y2){
-    const headers = [
-      ["Mois", C.MOIS],
-      ["Période", C.PERIODE],
-      ["Total h", C.TOTAL],
-      [globalRules.taux1+"%", C.H1],
-    ];
-    if (has3Tiers) {
-      headers.push([globalRules.taux_inter+"%", C.HINTER]);
-    }
-    headers.push(
-      [globalRules.taux2+"%", C.H2],
-      ["Payées", C.PAYE],
-      ["Reliquat", C.CARRY]
-    );
-    return pdfTableHeader(pdf, y2, headers);
+    return pdfTableHeader(pdf,y2,[
+      ["Mois",C.MOIS],["Période",C.PERIODE],["Total h",C.TOTAL],
+      ["25%",C.H25],["50%",C.H50],["Payées",C.PAYE],["Reliquat",C.CARRY]
+    ]);
   }
   function chkAnn(n=PDF_LINE){
     if(curY+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();curY=15;curY=drawMonthTableHeader(curY);}
@@ -1365,8 +1201,8 @@ function generateAnnualPDF(){
 
   curY=drawMonthTableHeader(curY);
 
-  let qTotal=0,qPaid=0,qH1=0,qHInter=0,qH2=0;
-  monthsData.forEach(({mk,start,end,total,h25,hInter,h50,paid,carry},mi)=>{
+  let qTotal=0,qPaid=0,qH25=0,qH50=0;
+  monthsData.forEach(({mk,start,end,total,h25,h50,paid,carry},mi)=>{
     const qi=Math.floor(mi/3)+1;
     chkAnn();
 
@@ -1378,18 +1214,15 @@ function generateAnnualPDF(){
     pdf.text(pdfStr(MOIS_NOMS[mi].slice(0),4)+".",C.MOIS,curY);
     pdf.text(pdfStr(periodeStr),C.PERIODE,curY);
     pdf.text(pdfStr(total>0?fmtH(total):"—"),C.TOTAL,curY);
-    pdf.text(pdfStr(h25>0?fmtH(h25):"—"),C.H1,curY);
-    if (has3Tiers) {
-      pdf.text(pdfStr(hInter>0?fmtH(hInter):"—"),C.HINTER,curY);
-    }
-    pdf.text(pdfStr(h50>0?fmtH(h50):"—"),C.H2,curY);
+    pdf.text(pdfStr(h25>0?fmtH(h25):"—"),C.H25,curY);
+    pdf.text(pdfStr(h50>0?fmtH(h50):"—"),C.H50,curY);
     pdf.text(pdfStr(paid>0?fmtH(paid):"—"),C.PAYE,curY);
     pdf.text(pdfStr(fmtH(carry)),C.CARRY,curY);
     pdf.setDrawColor(230,230,230);pdf.line(PDF_MARGIN,curY+2,PDF_W-PDF_MARGIN,curY+2);
     pdf.setFont(undefined,"normal");pdf.setTextColor(0,0,0);
     curY+=PDF_LINE;
 
-    qTotal+=total;qPaid+=paid;qH1+=h25;qHInter+=hInter;qH2+=h50;
+    qTotal+=total;qPaid+=paid;qH25+=h25;qH50+=h50;
 
     // Sous-total trimestriel
     if(inclQuarter&&(mi+1)%3===0){
@@ -1398,14 +1231,11 @@ function generateAnnualPDF(){
       pdf.setFontSize(8.5);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
       pdf.text(pdfStr(`T${qi} – Sous-total`),C.MOIS,curY);
       pdf.text(pdfStr(qTotal.toFixed(2)),C.TOTAL,curY);
-      pdf.text(pdfStr(qH1.toFixed(2)),C.H1,curY);
-      if (has3Tiers) {
-        pdf.text(pdfStr(qHInter.toFixed(2)),C.HINTER,curY);
-      }
-      pdf.text(pdfStr(qH2.toFixed(2)),C.H2,curY);
+      pdf.text(pdfStr(qH25.toFixed(2)),C.H25,curY);
+      pdf.text(pdfStr(qH50.toFixed(2)),C.H50,curY);
       pdf.text(pdfStr(qPaid.toFixed(2)),C.PAYE,curY);
       pdf.setTextColor(0,0,0);pdf.setFont(undefined,"normal");
-      curY+=PDF_LINE+2;qTotal=0;qPaid=0;qH1=0;qHInter=0;qH2=0;
+      curY+=PDF_LINE+2;qTotal=0;qPaid=0;qH25=0;qH50=0;
     }
   });
 
@@ -1571,20 +1401,32 @@ function showSaveFeedback(dayNum){
 function updateContingent(){
   const rules=getCCNRules();
   const LIMIT=rules.contingent;
-  
-  // Dans M2, les heures saisies sont DÉJÀ des heures supplémentaires
-  // On doit juste additionner toutes les HS de l'année
   let total=0;
+  // Contingent = uniquement l'exercice actif (currentYear)
   const yd=ALL_DATA[currentYear]||{};
-  
-  // Parcourir tous les mois de l'année
-  Object.entries(yd).forEach(([mk,m])=>{
-    if(!/^\d{4}-\d{2}$/.test(mk)) return; // Ignorer les clés non-mois
+  Object.values(yd).forEach(m=>{
+    const wm={};
     Object.entries(m.days||{}).forEach(([d,h])=>{
-      total+=h; // Les heures sont déjà des HS, on additionne directement
+      const date=new Date(currentYear,0,1);// approximation — on accumule juste les HS
+      total+=Math.max(0,h-rules.seuil/5); // approximation journalière
     });
   });
-  
+  // Recalcul exact par semaines
+  total=0;
+  const allYearDays=[];
+  Object.entries(yd).forEach(([mk,m])=>{
+    Object.entries(m.days||{}).forEach(([d,h])=>{
+      const[y,mo]=mk.split("-").map(Number);
+      allYearDays.push({date:new Date(y,mo-1,d),h});
+    });
+  });
+  const wm={};
+  allYearDays.forEach(({date,h})=>{
+    const dw=date.getDay()||7;const mon=new Date(date);mon.setDate(date.getDate()-dw+1);
+    const k=mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0");
+    wm[k]=(wm[k]||0)+h;
+  });
+  Object.values(wm).forEach(wh=>{ total+=Math.max(0,wh-rules.seuil); });
   const pct=Math.min(100,total/LIMIT*100);
   const fill=document.getElementById("contingentFill");
   const txt=document.getElementById("contingentText");
@@ -1788,9 +1630,6 @@ function closeTip(){
   document.body.style.overflow='';
 }
 </script>
-
-<!-- Glossaire mode débutant/expert -->
-<script src="../glossaire.js"></script>
 
 </body>
 </html>
