@@ -105,29 +105,33 @@
 <div id="app" style="display:flex;">
 
   <header class="app-header">
-    <div class="header-brand">
-      <button class="back-btn" id="btn-back" title="Retourner au module précédent">&#8592; RETOUR</button>
+    <div class="header-row-1">
+      <div class="header-brand">
+        <button class="back-btn" id="btn-back" title="Retourner au module précédent">&#8592; RETOUR</button>
+      </div>
+      <nav class="header-nav">
+        <button class="nav-btn active" data-view="dashboard">MON ÉTAT</button>
+        <button class="nav-btn" data-view="predictions">PRÉVISIONS</button>
+        <button class="nav-btn" data-view="schedule">HORAIRES</button>
+        <button class="nav-btn" data-view="whatif">SIMULATION</button>
+        <button class="nav-btn" data-view="heatmap">CALENDRIER</button>
+      </nav>
     </div>
-    <nav class="header-nav">
-      <button class="nav-btn active" data-view="dashboard">MON ÉTAT</button>
-      <button class="nav-btn" data-view="predictions">PRÉVISIONS</button>
-      <button class="nav-btn" data-view="schedule">HORAIRES</button>
-      <button class="nav-btn" data-view="whatif">SIMULATION</button>
-      <button class="nav-btn" data-view="heatmap">CALENDRIER</button>
-    </nav>
-    <div class="header-actions">
-      <button class="hdr-btn" onclick="window.location.href='../heures/index.html'" title="Aller au module Annuel (M1)">
-        <div class="hdr-btn-icon">📅</div>
-        <div class="hdr-btn-lbl">ANNUEL</div>
-      </button>
-      <button class="hdr-btn" onclick="window.location.href='../paye/index.html'" title="Aller au module Mensuel (M2)">
-        <div class="hdr-btn-icon">💰</div>
-        <div class="hdr-btn-lbl">MENSUEL</div>
-      </button>
-      <button class="hdr-btn" onclick="window.location.href='../fox/index.html'" title="Aller au module Fox (M3)">
-        <div class="hdr-btn-icon">🦊</div>
-        <div class="hdr-btn-lbl">FOX</div>
-      </button>
+    <div class="header-row-2">
+      <div class="header-actions">
+        <button class="hdr-btn" onclick="window.location.href='../heures/index.html'" title="Aller au module Annuel (M1)">
+          <div class="hdr-btn-icon">📅</div>
+          <div class="hdr-btn-lbl">ANNUEL</div>
+        </button>
+        <button class="hdr-btn" onclick="window.location.href='../paye/index.html'" title="Aller au module Mensuel (M2)">
+          <div class="hdr-btn-icon">💰</div>
+          <div class="hdr-btn-lbl">MENSUEL</div>
+        </button>
+        <button class="hdr-btn" onclick="window.location.href='../fox/index.html'" title="Aller au module Fox (M3)">
+          <div class="hdr-btn-icon">🦊</div>
+          <div class="hdr-btn-lbl">FOX</div>
+        </button>
+      </div>
     </div>
   </header>
 
