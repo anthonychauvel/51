@@ -992,6 +992,7 @@ const CCN_API = {
 if (typeof module !== 'undefined' && module.exports) module.exports = CCN_API;
 if (typeof window !== 'undefined') {
   window.CCN = CCN_API;
+  window.CCN_API = CCN_API;  // Export aussi sous CCN_API pour compatibilité
   // Charger la config personnalisée si elle existe
   loadCustomFromStorage();
 }
