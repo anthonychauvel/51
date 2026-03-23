@@ -1575,8 +1575,7 @@ function updateContingent(){
   // Dans M2, les heures saisies sont DÉJÀ des heures supplémentaires
   // On doit juste additionner toutes les HS de l'année
   let total=0;
-  const year=getYearFromMonth(currentKey);
-  const yd=ALL_DATA[year]||{};
+  const yd=ALL_DATA[currentYear]||{};
   
   // Parcourir tous les mois de l'année
   Object.entries(yd).forEach(([mk,m])=>{
