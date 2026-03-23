@@ -1736,6 +1736,7 @@ function showModeConfirmation(mode) {
 function createModeSwitch() {
   const switchHTML = `
     <div class="mode-switch-container">
+      <button class="glossaire-btn" onclick="openGlossaireModal()" title="Ouvrir le glossaire complet">📚 GLOSSAIRE</button>
       <label class="mode-switch-label">
         <span class="mode-text">🎓 Débutant</span>
         <input type="checkbox" id="mode-switch" onchange="toggleMode()">
@@ -1757,6 +1758,51 @@ function toggleMode() {
   const newMode = currentMode === 'debutant' ? 'expert' : 'debutant';
   setMode(newMode);
   showModeConfirmation(newMode);
+}
+
+function openGlossaireModal() {
+  // Créer le modal du glossaire complet
+  const modal = document.createElement('div');
+  modal.className = 'glossaire-popup';
+  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  
+  // Organiser les termes par catégorie
+  const categories = {
+    'Heures de travail': [],
+    'Paie et salaire': [],
+    'Droit et juridique': [],
+    'Santé et bien-être': [],
+    'Outils et modules': [],
+    'Secteurs spécifiques': []
+  };
+  
+  Object.entries(GLOSSAIRE).forEach(([terme, data]) => {
+    const cat = data.categorie || 'Autres';
+    if (!categories[cat]) categories[cat] = [];
+    categories[cat].push({ terme, ...data });
+  });
+  
+  let content = '<div class="glossaire-popup-content" style="max-width:700px;max-height:80vh;overflow-y:auto;">';
+  content += '<button class="glossaire-close" onclick="this.closest(\'.glossaire-popup\').remove()">✕</button>';
+  content += '<h2 style="color:#00c8ff;margin-bottom:20px;">📚 Glossaire complet</h2>';
+  
+  Object.entries(categories).forEach(([cat, termes]) => {
+    if (termes.length === 0) return;
+    content += `<h3 style="color:#00c8ff;font-size:14px;margin-top:20px;margin-bottom:10px;">${cat} (${termes.length})</h3>`;
+    termes.sort((a, b) => a.terme.localeCompare(b.terme));
+    termes.forEach(({ terme, debutant, expert, def }) => {
+      const title = debutant || terme;
+      const explanation = def || expert || '';
+      content += `<div style="margin-bottom:12px;padding:8px;background:rgba(0,200,255,0.05);border-left:2px solid rgba(0,200,255,0.3);border-radius:4px;">`;
+      content += `<div style="font-weight:bold;color:#00c8ff;margin-bottom:4px;">${title}</div>`;
+      content += `<div style="font-size:12px;color:#ccc;">${explanation}</div>`;
+      content += `</div>`;
+    });
+  });
+  
+  content += '</div>';
+  modal.innerHTML = content;
+  document.body.appendChild(modal);
 }
 
 // ═══════════════════════════════════════════════════════════════
@@ -1798,10 +1844,11 @@ function wrapTermesGlossaire() {
 // INITIALISATION
 // ═══════════════════════════════════════════════════════════════
 function initGlossaire() {
-  // Afficher le tutoriel si première visite
-  if (isFirstVisit()) {
-    setTimeout(showTutorial, 500);
-  }
+  // NE PLUS afficher le tutoriel automatiquement
+  // Le wizard est maintenant dans le menu principal uniquement
+  // if (isFirstVisit()) {
+  //   setTimeout(showTutorial, 500);
+  // }
   
   // Appliquer le mode actuel
   applyMode();
@@ -1809,8 +1856,9 @@ function initGlossaire() {
   // Créer le switch de mode
   createModeSwitch();
   
-  // Transformer les termes du glossaire
-  wrapTermesGlossaire();
+  // NE PLUS transformer les termes en liens cliquables
+  // Les termes sont remplacés silencieusement par applyMode()
+  // wrapTermesGlossaire();
   
   // Injecter les styles
   injectGlossaireStyles();
@@ -1822,16 +1870,19 @@ function initGlossaire() {
 function injectGlossaireStyles() {
   const style = document.createElement('style');
   style.textContent = `
-    /* Termes du glossaire */
+    /* Termes du glossaire - DÉSACTIVÉ (pas de soulignement) */
+    /*
     .terme-glossaire {
-      border-bottom: 1px dotted rgba(0,200,255,0.5);
+      border-bottom: 1px solid rgba(0,200,255,0.3);
       cursor: help;
       transition: all 0.2s;
     }
     .terme-glossaire:hover {
-      border-bottom-color: rgba(0,200,255,1);
+      border-bottom-color: rgba(0,200,255,0.8);
       color: #00c8ff;
+      background: rgba(0,200,255,0.05);
     }
+    */
     
     /* Popup de définition */
     .glossaire-popup {
@@ -1900,7 +1951,24 @@ function injectGlossaireStyles() {
     .mode-switch-container {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 12px;
+    }
+    .glossaire-btn {
+      background: rgba(0,200,255,0.1);
+      border: 1px solid rgba(0,200,255,0.3);
+      color: #00c8ff;
+      padding: 6px 12px;
+      border-radius: 6px;
+      font-size: 11px;
+      font-weight: bold;
+      cursor: pointer;
+      transition: all 0.2s;
+      white-space: nowrap;
+    }
+    .glossaire-btn:hover {
+      background: rgba(0,200,255,0.2);
+      border-color: rgba(0,200,255,0.5);
+      transform: translateY(-1px);
     }
     .mode-switch-label {
       display: flex;
@@ -2063,30 +2131,35 @@ function injectGlossaireStyles() {
     .mode-confirmation {
       position: fixed;
       top: 20px;
-      right: 20px;
+      left: 50%;
+      transform: translateX(-50%);
       background: rgba(0,200,255,0.9);
       color: #000;
       padding: 16px 24px;
       border-radius: 8px;
       font-weight: bold;
       z-index: 10001;
-      animation: slideIn 0.3s;
+      animation: slideDown 0.3s;
+      text-align: center;
+      max-width: 90%;
     }
     @keyframes fadeIn {
       from { opacity: 0; }
       to { opacity: 1; }
     }
-    @keyframes slideIn {
-      from { transform: translateX(400px); }
-      to { transform: translateX(0); }
+    @keyframes slideDown {
+      from { transform: translateX(-50%) translateY(-100px); opacity: 0; }
+      to { transform: translateX(-50%) translateY(0); opacity: 1; }
     }
     
-    /* Mode débutant : mettre en avant les termes cliquables */
+    /* Mode débutant : mettre en avant les termes cliquables - DÉSACTIVÉ */
+    /*
     .mode-debutant .terme-glossaire {
       background: rgba(0,200,255,0.05);
       padding: 0 4px;
       border-radius: 2px;
     }
+    */
     
     /* Responsive mobile */
     @media (max-width: 600px) {

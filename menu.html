@@ -323,8 +323,53 @@
       <button class="wiz-btn primary" onclick="goStep(2)" style="margin-top:10px">Commencer →</button>
     </div>
 
-    <!-- Étape 2 : Quelle situation ? -->
+    <!-- Étape 2 : CCN + Mode -->
     <div class="wiz-step" id="wStep2">
+      <h2>⚙️ Configuration</h2>
+      
+      <div style="margin-bottom:20px;">
+        <h3 style="font-size:14px;margin-bottom:8px;">⚖️ Ta convention collective</h3>
+        <p style="font-size:12px;color:#666;margin-bottom:12px;">
+          Les règles sur les heures supplémentaires varient selon ton secteur d'activité.
+        </p>
+        <div style="display:grid;gap:8px;">
+          <button class="wiz-btn secondary" onclick="wizChooseCCN('search')" style="text-align:left;padding:10px;">
+            🔍 <strong>Je connais ma CCN</strong><br>
+            <span style="font-size:11px;opacity:0.7;">Hôtellerie, BTP, Commerce, etc.</span>
+          </button>
+          <button class="wiz-btn secondary" onclick="wizChooseCCN('default')" style="text-align:left;padding:10px;">
+            📋 <strong>Droit commun</strong><br>
+            <span style="font-size:11px;opacity:0.7;">Règles de base (35h, 220h/an)</span>
+          </button>
+          <button class="wiz-btn secondary" onclick="wizChooseCCN('custom')" style="text-align:left;padding:10px;">
+            ⚙️ <strong>Accord personnalisé</strong><br>
+            <span style="font-size:11px;opacity:0.7;">Configuration sur mesure</span>
+          </button>
+        </div>
+      </div>
+      
+      <div>
+        <h3 style="font-size:14px;margin-bottom:8px;">🔧 Simplifier le vocabulaire ?</h3>
+        <p style="font-size:12px;color:#666;margin-bottom:12px;">
+          Préférez-vous un vocabulaire simplifié ou les termes techniques ?
+        </p>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+          <button class="wiz-btn" id="wizModeDebutant" onclick="wizChooseMode('debutant')" style="background:rgba(0,200,255,0.1);border:2px solid rgba(0,200,255,0.3);">
+            🎓 Débutant<br>
+            <span style="font-size:10px;">Vocabulaire simplifié</span>
+          </button>
+          <button class="wiz-btn" id="wizModeExpert" onclick="wizChooseMode('expert')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+            ⚡ Expert<br>
+            <span style="font-size:10px;">Termes techniques</span>
+          </button>
+        </div>
+      </div>
+      
+      <button class="wiz-btn primary" onclick="goStep(3)" style="margin-top:20px">Continuer →</button>
+    </div>
+
+    <!-- Étape 3 : Quelle situation ? -->
+    <div class="wiz-step" id="wStep3">
       <h2>🎯 Votre situation</h2>
       <p style="text-align:center;color:#555;font-size:13px;margin-bottom:4px">
         Comment sont payées vos heures supplémentaires ?
@@ -371,14 +416,14 @@
         </button>
       </div>
 
-      <button class="wiz-btn secondary" onclick="goStep(3)" style="margin-top:16px">
+      <button class="wiz-btn secondary" onclick="goStep(4)" style="margin-top:16px">
         Je veux voir les deux outils →
       </button>
       <p class="legal-note">Vous pourrez changer d'outil à tout moment depuis ce menu.</p>
     </div>
 
-    <!-- Étape 3 : Voir les deux -->
-    <div class="wiz-step" id="wStep3">
+    <!-- Étape 4 : Voir les deux -->
+    <div class="wiz-step" id="wStep4">
       <h2>✅ Tout est prêt</h2>
       <p style="text-align:center;font-size:13px;color:#555">
         Les deux simulateurs sont accessibles depuis le menu principal.
@@ -437,7 +482,6 @@
 </div>
 
 <div class="btn" onclick="go('module4')">
-  <img src="images/renard-prediction.png.jpg" loading="lazy" alt="Prédictions">
   <div class="title">Digital Twin — Prédictions intelligentes</div>
 </div>
 
@@ -508,9 +552,9 @@
 <footer>
   <div style="margin-bottom: 8px;">Développé par C. Anthony v3.0.0</div>
   <div style="font-size: 11px; opacity: 0.7; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-    <a href="./LICENSE" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">📄 Licence</a>
+    <a href="#" onclick="openLicensePopup(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">📄 Licence</a>
     <span style="opacity: 0.5;">•</span>
-    <a href="./privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none;">🔒 Confidentialité</a>
+    <a href="#" onclick="openPrivacyPopup(); return false;" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">🔒 Confidentialité</a>
   </div>
 </footer>
 
@@ -546,12 +590,58 @@
   }
 
   let selectedMode = null;
+  let selectedGlossaireMode = 'debutant'; // Par défaut débutant
+
+  function wizChooseCCN(choice) {
+    if (choice === 'search') {
+      // Ouvrir le modal CCN
+      if (typeof openCCNModal === 'function') {
+        openCCNModal();
+      }
+    } else if (choice === 'default') {
+      // Droit commun (IDCC=0)
+      localStorage.removeItem('CCN_IDCC');
+      localStorage.removeItem('CCN_NOM');
+      localStorage.removeItem('CCN_CUSTOM');
+    } else if (choice === 'custom') {
+      // Ouvrir le formulaire personnalisé
+      if (typeof openCCNModal === 'function') {
+        openCCNModal();
+        setTimeout(() => {
+          if (typeof toggleCustomForm === 'function') toggleCustomForm();
+        }, 300);
+      }
+    }
+  }
+
+  function wizChooseMode(mode) {
+    selectedGlossaireMode = mode;
+    // Sauvegarder dans localStorage pour le glossaire
+    localStorage.setItem('GLOSSAIRE_MODE', mode);
+    
+    // Mettre à jour l'UI
+    const btnDebutant = document.getElementById('wizModeDebutant');
+    const btnExpert = document.getElementById('wizModeExpert');
+    if (btnDebutant && btnExpert) {
+      if (mode === 'debutant') {
+        btnDebutant.style.background = 'rgba(0,200,255,0.2)';
+        btnDebutant.style.border = '2px solid rgba(0,200,255,0.5)';
+        btnExpert.style.background = 'rgba(255,255,255,0.05)';
+        btnExpert.style.border = '1px solid rgba(255,255,255,0.1)';
+      } else {
+        btnExpert.style.background = 'rgba(0,200,255,0.2)';
+        btnExpert.style.border = '2px solid rgba(0,200,255,0.5)';
+        btnDebutant.style.background = 'rgba(255,255,255,0.05)';
+        btnDebutant.style.border = '1px solid rgba(255,255,255,0.1)';
+      }
+    }
+  }
 
   function goStep(n) {
     document.querySelectorAll(".wiz-step").forEach(el => el.classList.remove("active"));
     document.getElementById("wStep" + n).classList.add("active");
-    const prog = { 1: "33%", 2: "66%", 3: "100%" };
-    document.getElementById("wizProg").style.width = prog[n] || "33%";
+    const prog = { 1: "25%", 2: "50%", 3: "75%", 4: "100%" };
+    document.getElementById("wizProg").style.width = prog[n] || "25%";
   }
 
   function selectMode(mode) {
@@ -591,6 +681,95 @@
 
   function closePresentation() {
     document.getElementById("presentationPopup").style.display = "none";
+    unlockScroll();
+  }
+
+  function openLicensePopup() {
+    const popup = document.createElement('div');
+    popup.id = 'license-popup';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    popup.innerHTML = `
+      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h2 style="color:#00c8ff;margin:0;">📄 Licence MIT</h2>
+          <button onclick="closeLicensePopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        <div style="color:#fff;line-height:1.8;white-space:pre-wrap;font-family:monospace;font-size:13px;">
+MIT License
+
+Copyright (c) 2024 Anthony Chauvel
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+The above copyright notice and this permission notice shall be included in all
+copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+    lockScroll();
+  }
+
+  function closeLicensePopup() {
+    const popup = document.getElementById('license-popup');
+    if (popup) popup.remove();
+    unlockScroll();
+  }
+
+  function openPrivacyPopup() {
+    const popup = document.createElement('div');
+    popup.id = 'privacy-popup';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    popup.innerHTML = `
+      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+          <h2 style="color:#00c8ff;margin:0;">🔒 Politique de confidentialité</h2>
+          <button onclick="closePrivacyPopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+        </div>
+        <div style="color:#fff;line-height:1.8;">
+          <h3 style="color:#00c8ff;">1. Collecte de données</h3>
+          <p>Simulheures est une application 100% locale. Aucune donnée n'est collectée, transmise ou stockée sur des serveurs externes.</p>
+          
+          <h3 style="color:#00c8ff;">2. Stockage local</h3>
+          <p>Toutes vos données (heures supplémentaires, CCN, horaires) sont stockées uniquement sur votre appareil via localStorage. Aucun cloud, aucun serveur.</p>
+          
+          <h3 style="color:#00c8ff;">3. Sécurité</h3>
+          <p>Vos données restent privées et sous votre contrôle. Elles ne quittent jamais votre appareil.</p>
+          
+          <h3 style="color:#00c8ff;">4. Cookies</h3>
+          <p>Aucun cookie de tracking. L'application utilise uniquement localStorage pour sauvegarder vos préférences localement.</p>
+          
+          <h3 style="color:#00c8ff;">5. Partage de données</h3>
+          <p>Aucune donnée n'est partagée avec des tiers. L'application fonctionne 100% offline.</p>
+          
+          <h3 style="color:#00c8ff;">6. Vos droits</h3>
+          <p>Vous pouvez supprimer toutes vos données à tout moment en effaçant les données de l'application dans les paramètres de votre navigateur.</p>
+          
+          <h3 style="color:#00c8ff;">7. Contact</h3>
+          <p>Pour toute question : anthony.chauvel@example.com</p>
+        </div>
+      </div>
+    `;
+    document.body.appendChild(popup);
+    lockScroll();
+  }
+
+  function closePrivacyPopup() {
+    const popup = document.getElementById('privacy-popup');
+    if (popup) popup.remove();
     unlockScroll();
   }
 
