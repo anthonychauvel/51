@@ -547,13 +547,24 @@ const STORAGE_PREFIX="CA_HS_TRACKER_V1",APP_VERSION="1.5.0",SNAP_KEY=`${STORAGE_
 
 /* ── CCN : règles actives ── */
 function getCCNRules() {
-  if (typeof window.CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
+  console.log('[M2 getCCNRules] Début');
+  console.log('[M2] window.CCN_API:', typeof window.CCN_API);
+  console.log('[M2] window.CCN:', typeof window.CCN);
+  
+  if (typeof window.CCN_API !== 'undefined') {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-    const groupeName = window.CCN_API.getGroupeForCCN(idcc) || window.CCN_API.getGroupeForCCN(0);
-    if (groupeName && window.CCN[groupeName]) {
-      return window.CCN[groupeName];
+    console.log('[M2] IDCC lu:', idcc);
+    
+    const rules = window.CCN_API.getGroupeForCCN(idcc);
+    console.log('[M2] Rules retournées:', rules);
+    
+    if (rules && rules.taux1) {
+      console.log('[M2] ✅ CCN chargée:', rules.nom || 'Sans nom', '- taux1:', rules.taux1, '%, contingent:', rules.contingent, 'h');
+      return rules;
     }
   }
+  
+  console.log('[M2] ❌ Fallback droit commun');
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
 function calcHsPaliers(hs, rules) {
