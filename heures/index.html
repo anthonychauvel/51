@@ -526,7 +526,7 @@ function setSaisieMode(mode){
   document.getElementById('modeWorked').classList.toggle('active',mode==='worked');
   document.getElementById('saisieHS').style.display=mode==='hs'?'':'none';
   document.getElementById('saisieWorked').style.display=mode==='worked'?'':'none';
-  if(mode==='worked'){document.getElementById('workedHours').value='';document.getElementById('workedResult').textContent='';document.getElementById('workedHours').focus();}
+  if(mode==='worked'){document.getElementById('workedHours').value='';document.getElementById('workedResult').textContent='';}
 }
 function getBaseJour(){const r=getCCNRules();return r.seuil/5;}
 function calcFromWorked(){
