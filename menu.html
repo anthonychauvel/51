@@ -812,11 +812,11 @@ SOFTWARE.
 
   function ccnSearch(q) {
     const results = document.getElementById('ccn-results');
-    if (typeof window.CCN_API === 'undefined') {
+    if (typeof CCN_API === 'undefined') {
       results.innerHTML = '<div style="padding:12px;color:#c00;font-size:13px">❌ Fichier CCN non chargé</div>';
       return;
     }
-    const items = window.CCN_API.search(q, 60);
+    const items = CCN_API.search(q, 60);
     const activeIdcc = _ccnSelected ? _ccnSelected.idcc : parseInt(localStorage.getItem('CCN_IDCC') || '0');
     let html = items.map(it => {
       const isActive = it.i === activeIdcc;
@@ -879,11 +879,11 @@ SOFTWARE.
       const debutSemaine = parseInt(document.getElementById('cc-debut').value) || 1;
       if (seuil < 35)  { alert('⚠️ Le seuil ne peut pas être inférieur à 35h'); return; }
       if (taux1 < 10)  { alert('⚠️ Taux minimum légal : 10% (Art. L3121-33)'); return; }
-      window.CCN_API.setCustom({ nom, seuil, taux1, palier1, taux_inter, palier_inter, taux2, contingent, debutSemaine });
+      CCN_API.setCustom({ nom, seuil, taux1, palier1, taux_inter, palier_inter, taux2, contingent, debutSemaine });
       localStorage.removeItem('CCN_IDCC');
       localStorage.setItem('CCN_NOM', nom);
     } else if (_ccnSelected) {
-      window.CCN_API.resetCustom();
+      CCN_API.resetCustom();
       localStorage.setItem('CCN_IDCC', _ccnSelected.idcc);
       localStorage.setItem('CCN_NOM', _ccnSelected.nom);
     } else {
@@ -895,7 +895,6 @@ SOFTWARE.
   }
 
   window.addEventListener('DOMContentLoaded', initCCNBadge);
-
 </script>
 
 <!-- Glossaire mode débutant/expert -->
