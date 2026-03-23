@@ -421,6 +421,9 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <div id="euroBox" class="blur">
       <label>Taux horaire (€)</label><input type="number" id="rate">
       <label>Coef 25 %</label><input type="number" id="coef25">
+      <div id="coefInterContainer" style="display:none;">
+        <label id="coefInterLabel">Coef 10 %</label><input type="number" id="coefInter">
+      </div>
       <label>Coef 50 %</label><input type="number" id="coef50">
       <label>Coef brut &#x2192; net</label><input type="number" id="coefNet">
       <p><b id="euroResult">0.00 €</b></p>
@@ -761,7 +764,7 @@ function setM2SaisieMode(mode){
   document.getElementById('m2ModeWorked').classList.toggle('active',mode==='worked');
   document.getElementById('m2SaisieHS').style.display=mode==='hs'?'':'none';
   document.getElementById('m2SaisieWorked').style.display=mode==='worked'?'':'none';
-  if(mode==='worked'){document.getElementById('m2WorkedHours').value='';document.getElementById('m2WorkedResult').textContent='';document.getElementById('m2WorkedHours').focus();}
+  if(mode==='worked'){document.getElementById('m2WorkedHours').value='';document.getElementById('m2WorkedResult').textContent='';}
 }
 function getM2BaseJour(){const r=getCCNRules();return r.seuil/5;}
 function calcM2FromWorked(){
@@ -793,13 +796,17 @@ function recalc(){
   let t25=0,tInter=0,t50=0,ph=0;
   Object.values(weeks).forEach(wh=>{
     ph+=wh;
-    const hs=Math.max(0,wh-rules.seuil);
+    // Les heures saisies sont DÉJÀ des heures supplémentaires (comme M1)
+    const hs = wh;
     const p=calcHsPaliers(hs,rules);
     t25+=p.h1;tInter+=p.hInter;t50+=p.h2;
   });
   
   // Affichage dynamique selon le nombre de paliers
   const breakdown = document.getElementById("hoursBreakdown");
+  const coefInterContainer = document.getElementById("coefInterContainer");
+  const coefInterLabel = document.getElementById("coefInterLabel");
+  
   if (breakdown) {
     if (rules.taux_inter !== null) {
       // 3 paliers (ex: HCR)
@@ -811,6 +818,14 @@ function recalc(){
       document.getElementById("hours25").dataset.val=t25;
       document.getElementById("hoursInter").dataset.val=tInter;
       document.getElementById("hours50").dataset.val=t50;
+      
+      // Afficher le champ coefInter
+      if (coefInterContainer) {
+        coefInterContainer.style.display = 'block';
+        if (coefInterLabel) {
+          coefInterLabel.textContent = `Coef ${rules.taux_inter} %`;
+        }
+      }
     } else {
       // 2 paliers (droit commun)
       breakdown.innerHTML = `
@@ -819,6 +834,11 @@ function recalc(){
       `;
       document.getElementById("hours25").dataset.val=t25;
       document.getElementById("hours50").dataset.val=t50;
+      
+      // Cacher le champ coefInter
+      if (coefInterContainer) {
+        coefInterContainer.style.display = 'none';
+      }
     }
   }
   
@@ -839,6 +859,7 @@ function calcEuro(){
   if(!unlocked)return;
   const rate=Number(document.getElementById("rate").value)||0;
   const c25=Number(document.getElementById("coef25").value)||1.25;
+  const cInter=Number(document.getElementById("coefInter")?.value)||1.10;
   const c50=Number(document.getElementById("coef50").value)||1.50;
   const cn=Number(document.getElementById("coefNet").value)||1;
   const h25=Number(document.getElementById("hours25")?.dataset.val)||0;
@@ -846,7 +867,6 @@ function calcEuro(){
   const hInter=Number(document.getElementById("hoursInter")?.dataset.val)||0;
   
   const rules=getCCNRules();
-  const cInter=rules.taux_inter?(1+rules.taux_inter/100):0;
   
   const w25=h25*c25;
   const wInter=hInter*cInter;
@@ -904,7 +924,7 @@ function loadYearData(y){return JSON.parse(localStorage.getItem(kData(y))||"{}")
 function saveYearData(y,d){localStorage.setItem(kData(y),JSON.stringify(d))}
 
 /* PARAMS € */
-["rate","coef25","coef50","coefNet"].forEach(id=>{const def={rate:10,coef25:1.25,coef50:1.50,coefNet:0.93}[id],inp=document.getElementById(id);inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}});
+["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def={rate:10,coef25:1.25,coefInter:1.10,coef50:1.50,coefNet:0.93}[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
