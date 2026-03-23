@@ -991,8 +991,8 @@ const CCN_API = {
 
 if (typeof module !== 'undefined' && module.exports) module.exports = CCN_API;
 if (typeof window !== 'undefined') {
-  window.CCN = CCN_API;
-  window.CCN_API = CCN_API;  // Export aussi sous CCN_API pour compatibilité
+  window.CCN = REGLES_HS;  // Export des données CCN (DC, HCR, GD, etc.)
+  window.CCN_API = CCN_API;  // Export des fonctions API
   // Charger la config personnalisée si elle existe
   loadCustomFromStorage();
 }
