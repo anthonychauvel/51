@@ -1462,17 +1462,32 @@ function exportAnnualPDF(){
     periodResults.push({idx,start,end,weekRows,t25,t50,tInter:tInterA||0,tR,tExtra,tAbs,rp,net});
   });
 
-  // Récap global
-  y=pdfRecapBox(pdf,y,[
-    ["Nombre de périodes",periodResults.length],
-    ["Total heures supplémentaires",fmtH(annualExtra)],
-    ["Total à 25%",fmtH(annualH25)],
-    ["Total à 50%",fmtH(annualH50)],
-    ["Total récupérations",fmtH(annualR)],
-    ["Solde annuel net",fmtH(annualNet)],
-    ["Estimation €",(annualNet*annualRate).toFixed(2)+" €"],
-    ["Taux horaire",annualRate+" €/h"],
-  ]);
+  // Récap global - tableau dynamique selon paliers
+  const recapLines = [
+    ["Nombre de périodes", periodResults.length],
+    ["Total heures supplémentaires", fmtH(annualExtra)],
+  ];
+  
+  if (aRules.taux_inter) {
+    // HCR : 3 paliers
+    recapLines.push([`Total à ${aRules.taux1}%`, fmtH(annualH25)]);
+    // TODO: stocker tInter séparément dans le calcul annuel
+    recapLines.push([`Total à ${aRules.taux_inter}%`, "0h"]);
+    recapLines.push([`Total à ${aRules.taux2}%`, fmtH(annualH50)]);
+  } else {
+    // Droit commun : 2 paliers
+    recapLines.push([`Total à ${aRules.taux1}%`, fmtH(annualH25)]);
+    recapLines.push([`Total à ${aRules.taux2}%`, fmtH(annualH50)]);
+  }
+  
+  recapLines.push(
+    ["Total récupérations", fmtH(annualR)],
+    ["Solde annuel net", fmtH(annualNet)],
+    ["Estimation €", (annualNet*annualRate).toFixed(2)+" €"],
+    ["Taux horaire", annualRate+" €/h"]
+  );
+  
+  y=pdfRecapBox(pdf, y, recapLines);
 
   // Tableau synthèse des périodes
   const CP={IDX:PDF_M+1,DATES:PDF_M+14,EXTRA:PDF_M+82,H25:PDF_M+100,H50:PDF_M+118,REC:PDF_M+136,NET:PDF_M+154};
