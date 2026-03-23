@@ -364,8 +364,18 @@ class ModuleReaderPro extends ModuleReader {
     });
 
     // Récupérer les règles CCN depuis localStorage
-    const settings = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
-    const ccn = window.CCN ? window.CCN[settings.ccn || 'DROIT_COMMUN'] : null;
+    const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
+    console.log('[FOX module-reader] IDCC lu:', idcc);
+    
+    let groupeName = 'DC'; // Par défaut droit commun
+    if (typeof window.CCN_API !== 'undefined' && idcc !== 0) {
+      groupeName = window.CCN_API.getGroupeForCCN(idcc) || 'DC';
+      console.log('[FOX module-reader] Groupe pour IDCC', idcc, ':', groupeName);
+    }
+    
+    const ccn = window.CCN ? window.CCN[groupeName] : null;
+    console.log('[FOX module-reader] CCN chargée:', ccn);
+    
     const rules = ccn || { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50 };
 
     // Calcul hs25/hsInter/hs50 par semaine, ventilation par mois proportionnelle
