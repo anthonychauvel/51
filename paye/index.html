@@ -547,9 +547,9 @@ const STORAGE_PREFIX="CA_HS_TRACKER_V1",APP_VERSION="1.5.0",SNAP_KEY=`${STORAGE_
 
 /* ── CCN : règles actives ── */
 function getCCNRules() {
-  if (typeof CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
+  if (typeof window.CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-    const groupeName = CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
+    const groupeName = window.CCN_API.getGroupeForCCN(idcc) || window.CCN_API.getGroupeForCCN(0);
     if (groupeName && window.CCN[groupeName]) {
       return window.CCN[groupeName];
     }
