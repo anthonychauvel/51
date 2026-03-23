@@ -547,9 +547,12 @@ const STORAGE_PREFIX="CA_HS_TRACKER_V1",APP_VERSION="1.5.0",SNAP_KEY=`${STORAGE_
 
 /* ── CCN : règles actives ── */
 function getCCNRules() {
-  if (typeof CCN_API !== 'undefined') {
+  if (typeof CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-    return CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
+    const groupeName = CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
+    if (groupeName && window.CCN[groupeName]) {
+      return window.CCN[groupeName];
+    }
   }
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
@@ -1123,7 +1126,10 @@ function pdfDayTable(pdf, startY, allDays, inclSansHeures, inclSemaines){
       pdf.setFontSize(8);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
       pdf.text(pdfStr("Sous-total S "+weekKey),C.DATE,curY);
       pdf.text(pdfStr(fmtH(weekTotal)),C.H,curY);
-      const _rPDF=getCCNRules(),_hsPDF=Math.max(0,weekTotal-_rPDF.seuil),_pPDF=calcHsPaliers(_hsPDF,_rPDF);
+      const _rPDF=getCCNRules();
+      // Les heures saisies sont DÉJÀ des heures supplémentaires
+      const _hsPDF=weekTotal;
+      const _pPDF=calcHsPaliers(_hsPDF,_rPDF);
       const _lbl=_rPDF.taux_inter?`${_rPDF.taux1}%: ${fmtH(_pPDF.h1)} / ${_rPDF.taux_inter}%: ${fmtH(_pPDF.hInter)} / ${_rPDF.taux2}%: ${fmtH(_pPDF.h2)}`:`${_rPDF.taux1}%: ${fmtH(_pPDF.h1)}  ${_rPDF.taux2}%: ${fmtH(_pPDF.h2)}`;
       pdf.text(pdfStr(_lbl),C.SEMAINE,curY);
       pdf.setTextColor(0,0,0);pdf.setFont(undefined,"normal");
@@ -1156,7 +1162,10 @@ function pdfDayTable(pdf, startY, allDays, inclSansHeures, inclSemaines){
     pdf.rect(PDF_MARGIN,curY-4,PDF_W-PDF_MARGIN*2,PDF_LINE,"F");
     pdf.setFontSize(8);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
     pdf.text(pdfStr("Sous-total S "+weekKey),PDF_MARGIN+1,curY);
-    const _rPDF2=getCCNRules(),_hsPDF2=Math.max(0,weekTotal-_rPDF2.seuil),_pPDF2=calcHsPaliers(_hsPDF2,_rPDF2);
+    const _rPDF2=getCCNRules();
+    // Les heures saisies sont DÉJÀ des heures supplémentaires
+    const _hsPDF2=weekTotal;
+    const _pPDF2=calcHsPaliers(_hsPDF2,_rPDF2);
     const C2={DATE:PDF_MARGIN+1,JOUR:PDF_MARGIN+40,H:PDF_MARGIN+58,SEMAINE:PDF_MARGIN+80,CUM:PDF_MARGIN+110};
     const _lbl2=_rPDF2.taux_inter?`${_rPDF2.taux1}%: ${fmtH(_pPDF2.h1)} / ${_rPDF2.taux_inter}%: ${fmtH(_pPDF2.hInter)} / ${_rPDF2.taux2}%: ${fmtH(_pPDF2.h2)}`:`${_rPDF2.taux1}%: ${fmtH(_pPDF2.h1)}  ${_rPDF2.taux2}%: ${fmtH(_pPDF2.h2)}`;
     pdf.text(pdfStr(fmtH(weekTotal)),C2.H,curY);
@@ -1205,7 +1214,8 @@ function calcWeeks(allDays){
   });
   let h25=0,hInter=0,h50=0;
   Object.values(wm).forEach(wh=>{
-    const hs=Math.max(0,wh-rules.seuil);
+    // Les heures saisies sont DÉJÀ des heures supplémentaires (comme dans recalc())
+    const hs = wh;
     const p=calcHsPaliers(hs,rules);
     h25+=p.h1;hInter+=p.hInter;h50+=p.h2;
   });
@@ -1264,7 +1274,35 @@ function generateAnnualPDF(){
   const inclDetail=document.getElementById("aOptDetail").checked;
   const yearStr=String(y);
   const pdf=pdfBuildBase();
-  const C={MOIS:PDF_MARGIN+1,PERIODE:PDF_MARGIN+28,TOTAL:PDF_MARGIN+82,H25:PDF_MARGIN+100,H50:PDF_MARGIN+116,PAYE:PDF_MARGIN+132,CARRY:PDF_MARGIN+152};
+  
+  // Récupérer les règles CCN pour adapter les colonnes
+  const globalRules = getCCNRules();
+  const has3Tiers = globalRules.taux_inter !== null;
+  
+  // Définir les colonnes selon le nombre de paliers
+  let C;
+  if (has3Tiers) {
+    C = {
+      MOIS: PDF_MARGIN+1,
+      PERIODE: PDF_MARGIN+28,
+      TOTAL: PDF_MARGIN+74,
+      H1: PDF_MARGIN+90,
+      HINTER: PDF_MARGIN+106,
+      H2: PDF_MARGIN+122,
+      PAYE: PDF_MARGIN+138,
+      CARRY: PDF_MARGIN+154
+    };
+  } else {
+    C = {
+      MOIS: PDF_MARGIN+1,
+      PERIODE: PDF_MARGIN+28,
+      TOTAL: PDF_MARGIN+82,
+      H1: PDF_MARGIN+100,
+      H2: PDF_MARGIN+116,
+      PAYE: PDF_MARGIN+132,
+      CARRY: PDF_MARGIN+152
+    };
+  }
 
   let curY=pdfHeader(pdf,
     `Bilan annuel – Heures supplémentaires ${y}`,
@@ -1272,7 +1310,7 @@ function generateAnnualPDF(){
   );
 
   // Calcul annuel global
-  let annualTotal=0,annualPaid=0,annualH25=0,annualH50=0;
+  let annualTotal=0,annualPaid=0,annualH1=0,annualHInter=0,annualH2=0;
   const monthsData=[];
   for(let mi=0;mi<12;mi++){
     const mk=`${y}-${String(mi+1).padStart(2,"0")}`;
@@ -1283,26 +1321,43 @@ function generateAnnualPDF(){
     const{h25,hInter:hInterA,h50,rules:aRules}=calcWeeks(allDays);
     const paid=md.paid||0;
     const carry=md.carry||0;
-    annualTotal+=total;annualPaid+=paid;annualH25+=h25;annualH50+=h50;
+    annualTotal+=total;annualPaid+=paid;annualH1+=h25;annualHInter+=(hInterA||0);annualH2+=h50;
     monthsData.push({mk,start,end,total,h25,hInter:hInterA||0,h50,paid,carry,allDays,aRules});
   }
 
-  // Bloc récap global
-  curY=pdfRecapBlock(pdf,curY,[
-    ["Total heures",fmtH(annualTotal)],
-    ["Total payées",fmtH(annualPaid)],
-    ["Total à 25%",fmtH(annualH25)],
-    ["Total à 50%",fmtH(annualH50)],
-    ["Reliquat final",fmtH(monthsData[11]?.carry||0)],
-    ["Mois avec heures",monthsData.filter(m=>m.total>0).length+" mois"],
-  ]);
+  // Bloc récap global avec labels dynamiques
+  const recapLines = [
+    ["Total heures", fmtH(annualTotal)],
+    ["Total payées", fmtH(annualPaid)],
+    ["Total à " + globalRules.taux1 + "%", fmtH(annualH1)],
+  ];
+  if (has3Tiers) {
+    recapLines.push(["Total à " + globalRules.taux_inter + "%", fmtH(annualHInter)]);
+  }
+  recapLines.push(
+    ["Total à " + globalRules.taux2 + "%", fmtH(annualH2)],
+    ["Reliquat final", fmtH(monthsData[11]?.carry||0)],
+    ["Mois avec heures", monthsData.filter(m=>m.total>0).length+" mois"]
+  );
+  curY=pdfRecapBlock(pdf, curY, recapLines);
 
-  // Tableau mensuel
+  // Tableau mensuel avec headers dynamiques
   function drawMonthTableHeader(y2){
-    return pdfTableHeader(pdf,y2,[
-      ["Mois",C.MOIS],["Période",C.PERIODE],["Total h",C.TOTAL],
-      ["25%",C.H25],["50%",C.H50],["Payées",C.PAYE],["Reliquat",C.CARRY]
-    ]);
+    const headers = [
+      ["Mois", C.MOIS],
+      ["Période", C.PERIODE],
+      ["Total h", C.TOTAL],
+      [globalRules.taux1+"%", C.H1],
+    ];
+    if (has3Tiers) {
+      headers.push([globalRules.taux_inter+"%", C.HINTER]);
+    }
+    headers.push(
+      [globalRules.taux2+"%", C.H2],
+      ["Payées", C.PAYE],
+      ["Reliquat", C.CARRY]
+    );
+    return pdfTableHeader(pdf, y2, headers);
   }
   function chkAnn(n=PDF_LINE){
     if(curY+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();curY=15;curY=drawMonthTableHeader(curY);}
@@ -1310,8 +1365,8 @@ function generateAnnualPDF(){
 
   curY=drawMonthTableHeader(curY);
 
-  let qTotal=0,qPaid=0,qH25=0,qH50=0;
-  monthsData.forEach(({mk,start,end,total,h25,h50,paid,carry},mi)=>{
+  let qTotal=0,qPaid=0,qH1=0,qHInter=0,qH2=0;
+  monthsData.forEach(({mk,start,end,total,h25,hInter,h50,paid,carry},mi)=>{
     const qi=Math.floor(mi/3)+1;
     chkAnn();
 
@@ -1323,15 +1378,18 @@ function generateAnnualPDF(){
     pdf.text(pdfStr(MOIS_NOMS[mi].slice(0),4)+".",C.MOIS,curY);
     pdf.text(pdfStr(periodeStr),C.PERIODE,curY);
     pdf.text(pdfStr(total>0?fmtH(total):"—"),C.TOTAL,curY);
-    pdf.text(pdfStr(h25>0?fmtH(h25):"—"),C.H25,curY);
-    pdf.text(pdfStr(h50>0?fmtH(h50):"—"),C.H50,curY);
+    pdf.text(pdfStr(h25>0?fmtH(h25):"—"),C.H1,curY);
+    if (has3Tiers) {
+      pdf.text(pdfStr(hInter>0?fmtH(hInter):"—"),C.HINTER,curY);
+    }
+    pdf.text(pdfStr(h50>0?fmtH(h50):"—"),C.H2,curY);
     pdf.text(pdfStr(paid>0?fmtH(paid):"—"),C.PAYE,curY);
     pdf.text(pdfStr(fmtH(carry)),C.CARRY,curY);
     pdf.setDrawColor(230,230,230);pdf.line(PDF_MARGIN,curY+2,PDF_W-PDF_MARGIN,curY+2);
     pdf.setFont(undefined,"normal");pdf.setTextColor(0,0,0);
     curY+=PDF_LINE;
 
-    qTotal+=total;qPaid+=paid;qH25+=h25;qH50+=h50;
+    qTotal+=total;qPaid+=paid;qH1+=h25;qHInter+=hInter;qH2+=h50;
 
     // Sous-total trimestriel
     if(inclQuarter&&(mi+1)%3===0){
@@ -1340,11 +1398,14 @@ function generateAnnualPDF(){
       pdf.setFontSize(8.5);pdf.setFont(undefined,"bold");pdf.setTextColor(...PDF_ACCENT);
       pdf.text(pdfStr(`T${qi} – Sous-total`),C.MOIS,curY);
       pdf.text(pdfStr(qTotal.toFixed(2)),C.TOTAL,curY);
-      pdf.text(pdfStr(qH25.toFixed(2)),C.H25,curY);
-      pdf.text(pdfStr(qH50.toFixed(2)),C.H50,curY);
+      pdf.text(pdfStr(qH1.toFixed(2)),C.H1,curY);
+      if (has3Tiers) {
+        pdf.text(pdfStr(qHInter.toFixed(2)),C.HINTER,curY);
+      }
+      pdf.text(pdfStr(qH2.toFixed(2)),C.H2,curY);
       pdf.text(pdfStr(qPaid.toFixed(2)),C.PAYE,curY);
       pdf.setTextColor(0,0,0);pdf.setFont(undefined,"normal");
-      curY+=PDF_LINE+2;qTotal=0;qPaid=0;qH25=0;qH50=0;
+      curY+=PDF_LINE+2;qTotal=0;qPaid=0;qH1=0;qHInter=0;qH2=0;
     }
   });
 
