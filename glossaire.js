@@ -2623,7 +2623,7 @@ function showDefinition(terme) {
   popup.className = 'glossaire-popup';
   popup.innerHTML = `
     <div class="glossaire-popup-content">
-      <button class="glossaire-close" onclick="this.parentElement.parentElement.remove()">×</button>
+      <button class="glossaire-close">×</button>
       <h3>${entry.expert}</h3>
       ${mode === 'debutant' ? `<p class="glossaire-simple">💡 En simple : <b>${entry.simple}</b></p>` : ''}
       <p class="glossaire-def">${entry.def}</p>
@@ -2633,16 +2633,46 @@ function showDefinition(terme) {
   
   document.body.appendChild(popup);
   
+  // Event listener pour bouton X
+  const closeBtn = popup.querySelector('.glossaire-close');
+  if (closeBtn) {
+    closeBtn.addEventListener('click', () => {
+      console.log('[Glossaire] Bouton X cliqué');
+      closePopup();
+    });
+  }
+  
+  // Fonction de fermeture sécurisée
+  const closePopup = () => {
+    try {
+      console.log('[Glossaire] Fermeture popup');
+      // Supprimer les event listeners d'abord
+      popup.removeEventListener('click', clickHandler);
+      document.removeEventListener('keydown', escHandler);
+      // Puis supprimer l'élément
+      if (popup && popup.parentElement) {
+        popup.remove();
+        console.log('[Glossaire] ✅ Popup fermée');
+      }
+    } catch (err) {
+      console.error('[Glossaire] ❌ Erreur fermeture:', err);
+    }
+  };
+  
   // Fermer en cliquant à l'extérieur
-  popup.addEventListener('click', (e) => {
-    if (e.target === popup) popup.remove();
-  });
+  const clickHandler = (e) => {
+    if (e.target === popup) {
+      console.log('[Glossaire] Clic extérieur détecté');
+      closePopup();
+    }
+  };
+  popup.addEventListener('click', clickHandler);
   
   // Fermer avec Escape
   const escHandler = (e) => {
     if (e.key === 'Escape') {
-      popup.remove();
-      document.removeEventListener('keydown', escHandler);
+      console.log('[Glossaire] Touche Escape détectée');
+      closePopup();
     }
   };
   document.addEventListener('keydown', escHandler);
@@ -2793,7 +2823,14 @@ function createModeSwitch() {
   `;
   
   // Insérer dans le header ou menu
-  const targetContainer = document.querySelector('.header-actions') || document.querySelector('nav') || document.body;
+  // Cherche d'abord .topbar (M2), puis .header-actions, puis nav, puis body
+  const targetContainer = document.querySelector('.topbar') || 
+                         document.querySelector('.header-actions') || 
+                         document.querySelector('nav') || 
+                         document.body;
+  
+  console.log('[Glossaire] Container trouvé:', targetContainer.className || 'body');
+  
   const div = document.createElement('div');
   div.innerHTML = switchHTML;
   targetContainer.appendChild(div.firstElementChild);
@@ -2998,6 +3035,13 @@ function injectGlossaireStyles() {
       align-items: center;
       gap: 12px;
     }
+    
+    /* Quand dans .topbar de M2 */
+    .topbar .mode-switch-container {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    
     .glossaire-btn {
       background: rgba(0,200,255,0.1);
       border: 1px solid rgba(0,200,255,0.3);
