@@ -175,12 +175,30 @@ function musculoRisk(weeklyH, cumulMonths, consec) {
  *   - À 10 sem : saturation HPA → factor 2.50 (cortisol fixe même WE)
  *   - Pente : (2.50-1) / 10 = 0.15/semaine → min(2.5, 1 + cumW×0.15)
  */
-function cortisolModel(weeklyH, variabSigma, cumulWeeks) {
+function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays) {
   const loadF    = Math.max(0, (weeklyH - D.H_OPTIMAL) / (D.H_CV - D.H_OPTIMAL));
   const variabF  = Math.min(1, variabSigma / 8);
   // Saturation HPA à ~10 semaines — Thompson 2022 + ANACT
   const chronicF = Math.min(2.5, 1 + cumulWeeks * 0.15);
-  return Math.min(1, (loadF * 0.55 + variabF * 0.45) * chronicF);
+
+  // ── DÉCROISSANCE BIOLOGIQUE EN REPOS (Sonnentag 2003 + INRS) ─────────────
+  // Le cortisol décroit exponentiellement pendant le repos actif.
+  // Sonnentag 2003 : "psychological detachment" = mécanisme clé de récupération.
+  // Demi-vie cortisol en repos : ~3-4 jours (INRS 2014, Pruessner et al. 1997).
+  // Avec 7j de repos complet : retour à ~50% du niveau chronique (exp(-0.693*7/4)=0.29).
+  // IMPORTANT : le repos ne ramène pas le biologique à 0 immédiatement —
+  //   il réduit la charge active mais les traces épigénétiques restent (Thompson 2022).
+  let restDecay = 1.0;
+  if (consecRestDays >= 1) {
+    // Demi-vie biologique ~4 jours → decay exponentiel
+    // 1j=0.84, 3j=0.60, 7j=0.30, 14j=0.09 (presque récupéré)
+    const halfLife = 4.0; // jours
+    restDecay = Math.exp(-Math.log(2) * consecRestDays / halfLife);
+    // Plancher : même après 3 semaines, la trace biologique ne descend pas sous 8%
+    restDecay = Math.max(0.08, restDecay);
+  }
+
+  return Math.min(1, (loadF * 0.55 + variabF * 0.45) * chronicF * restDecay);
 }
 
 /**
@@ -252,6 +270,28 @@ function readSchedule(dateKey) {
     }
   }
   
+  // 2b. Roulement de semaines (rotation) — priorité après horaire par jour, avant override
+  if (dateKey) {
+    try {
+      const rotEnabled = localStorage.getItem('DTE_WEEK_ROTATION_ENABLED') === 'true';
+      if (rotEnabled) {
+        const rotation = JSON.parse(localStorage.getItem('DTE_WEEK_ROTATION') || '[]');
+        if (rotation.length > 0) {
+          const anchor = localStorage.getItem('DTE_WEEK_ROTATION_ANCHOR') || dateKey;
+          const anchorD = new Date(anchor + 'T00:00:00');
+          const targetD = new Date(dateKey + 'T00:00:00');
+          const diffWeeks = Math.floor(Math.round((targetD - anchorD) / 86400000) / 7);
+          const weekIdx = ((diffWeeks % rotation.length) + rotation.length) % rotation.length;
+          const rotWeek = rotation[weekIdx];
+          if (rotWeek) {
+            profile.startH = parseFloat(rotWeek.startH);
+            profile.endH   = parseFloat(rotWeek.endH);
+          }
+        }
+      }
+    } catch(_) {}
+  }
+
   // 3. Override par jour spécifique (priorité maximale)
   if (dateKey) {
     try {
@@ -741,6 +781,23 @@ class DTEEngine {
 
     const cumulMonths = cumulWeeks / 4.33;
 
+    // ── JOURS DE REPOS CONSÉCUTIFS (depuis aujourd'hui en remontant) ──────────
+    // Compte les jours ouvrés successifs SANS heures travaillées (vacances, absences, fériés,
+    // week-ends) — signal biologique de décharge cortisolique (Sonnentag 2003, INRS 2014).
+    let consecRestDays = 0;
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      const isVac   = vacances[k];
+      const isFerie = specialDays[k] === 'ferie';
+      const dow     = d.getDay();
+      const isWE    = dow === 0 || dow === 6;
+      const hasWork = e && (e.extra > 0) && !isWE;
+      if (hasWork) break; // dès qu'un jour de travail est trouvé → stop
+      consecRestDays++;
+    }
+
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
     // Exclut la semaine courante si incomplète (< 3 jours) pour éviter sigma artificiel
     const weekTotals = [];
@@ -795,9 +852,9 @@ class DTEEngine {
     const overRatio = allDays.length ? overCount / allDays.length : 0;
 
     // Contingent
-    const contingentPct = (m1.totalExtra / D.CONTINGENT_MAX) * 100;
+    const contingentPct = (m1.netOvertime / D.CONTINGENT_MAX) * 100;
     // RCO — Art. L3121-38
-    const rcoDepassement = Math.max(0, m1.totalExtra - D.CONTINGENT_MAX);
+    const rcoDepassement = Math.max(0, m1.netOvertime - D.CONTINGENT_MAX);
     const rcoH50  = rcoDepassement * 0.5;
     const rcoH100 = rcoDepassement;
 
@@ -824,6 +881,7 @@ class DTEEngine {
       _consecOT:      consecOT,
       _cumulWeeks:    cumulWeeks,
       _cumulMonths:   cumulMonths,
+      _consecRestDays: consecRestDays,
       _sigma:         sigma,
       _contingentPct: contingentPct,
       _rcoDepassement: rcoDepassement,
@@ -961,9 +1019,13 @@ class DTEEngine {
     //   Nuit partielle : ×1.20 (mélatonine partiellement supprimée, INRS)
     //   Décalé tard    : ×1.10 (dette sommeil mécanique, ANACT)
     const nightFactor = norm._nightFactor || 1.0;
-    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW);
+    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, norm._consecRestDays || 0);
     const stressExt   = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
-    const stress      = Math.max(0, Math.min(1, cortisolS * 0.65 * nightFactor + stressExt));
+
+    // Pondération check-in subjectif : si l'utilisateur déclare "stress léger" en vacances,
+    // c'est un signal biologique réel (Sonnentag 2003 : le détachement vécu atténue le cortisol)
+    const checkinStressFactor = checkinBoost.stress < 0 ? 0.75 : 1.0;
+    const stress      = Math.max(0, Math.min(1, cortisolS * 0.65 * nightFactor * checkinStressFactor + stressExt + checkinBoost.stress));
 
     // ── PERFORMANCE (Pencavel 2014, Stanford) ────────────────────
     const perfPencavel = pencavelPerf(weeklyH);
@@ -974,10 +1036,27 @@ class DTEEngine {
     const perfStr      = stress  * 0.10;
     const perf         = Math.max(0.05, Math.min(1, perfPencavel * (1 - cogDeg * 0.3) * (1 - perfFat) - perfStr + perfMotiv));
 
-    // ── RÉCUPÉRATION ─────────────────────────────────────────────
-    // Nuit : récupération weekend dégradée (sommeil diurne = 70% — INRS)
+    // ── RÉCUPÉRATION (Sonnentag 2003 + INRS + Thompson 2022) ─────────────────
+    // La récupération est un processus ACTIF, pas une simple absence de fatigue.
+    // Sonnentag 2003 : le "detachment" psychologique pendant le repos = facteur clé.
+    // Pendant les vacances avec bon sommeil → recharge accélérée (×2 vs weekend normal).
+    // Base de récupération : D.RECOVERY_WE = 0.045/jour
     const recNightPenalty = norm._isNight ? 0.15 : norm._isNightPartial ? 0.08 : 0;
-    const recovery = Math.max(0.02, Math.min(1, D.RECOVERY_WE - fatigue * 0.40 - (cumW / 30) * 0.20 - recNightPenalty));
+    const consecRest = norm._consecRestDays || 0;
+
+    // Bonus de récupération active : Sonnentag 2003 — le détachement RÉEL pendant le repos
+    // ajoute une recharge biologique qui s'accumule avec les jours consécutifs de repos.
+    // 0j=0, 1j=+0.04, 3j=+0.10, 7j=+0.22, 14j=+0.32 (diminishing returns)
+    const sonnentagRestBonus = Math.min(0.35, consecRest * 0.032 * Math.pow(0.88, consecRest / 3));
+
+    // Checkin "bon sommeil" (sleep=4 = excellent) : Thompson 2022 → cortisol nocturne normalisé
+    const recovery = Math.max(0.04, Math.min(1,
+      D.RECOVERY_WE
+      - fatigue * 0.40
+      - (cumW / 30) * 0.20
+      - recNightPenalty
+      + sonnentagRestBonus
+    ));
 
     // ── RISQUE ERREUR (Pencavel + fatigue + INRS) ────────────────
     const errRisk = Math.max(0, Math.min(1, (1 - perf) * 0.35 + fatigue * 0.50 + stress * 0.15));
@@ -994,11 +1073,20 @@ class DTEEngine {
 
     // Appliquer lifestyle (multiplicateur sur fatigue) + check-in (additif modéré)
     const lsMult    = lifestyleBoost.fatigueMult || 1.0;
-    const fatWithLS = fatigue * lsMult;  // lifestyle = multiplicateur (jamais à 0)
+    const fatWithLS = fatigue * lsMult;
     const fatFinal  = Math.max(0, Math.min(1, fatWithLS + checkinBoost.fatigue));
-    const strFinal  = Math.max(0, Math.min(1, stress   + checkinBoost.stress   + (lifestyleBoost.stress||0)));
+    const strFinal  = Math.max(0, Math.min(1, stress + (lifestyleBoost.stress||0)));
     const perfFinal = Math.max(0.05, Math.min(1, perf  + checkinBoost.performance + (lifestyleBoost.performance||0)));
-    const recFinal  = Math.max(0.02, Math.min(1, recovery + checkinBoost.recovery  + (lifestyleBoost.recovery||0)));
+    // Récupération : check-in subjectif a plus de poids en repos actif (Sonnentag 2003)
+    const recBoostFactor = (consecRest >= 2) ? 1.8 : 1.0;
+    const recFinal  = Math.max(0.04, Math.min(1, recovery + (checkinBoost.recovery * recBoostFactor) + (lifestyleBoost.recovery||0)));
+
+    // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
+    // Si stress chronique élevé → cvRisk et cogRisk doivent augmenter (OMS/OIT 2021)
+    // Kivimäki 2015 : chaque +10 pts stress → +4% cvRisk
+    // OEM 2025 (Jang) : stress chronique amplifie le risque cérébral si exposé >52h
+    const stressBoostCV  = strFinal * 0.15;   // stress 100% → +15 pts cvRisk
+    const stressBoostCog = (strFinal > 0.6 && cumW > 4) ? (strFinal - 0.6) * 0.10 : 0;
 
     return {
       fatigue:      Math.round(fatFinal * 100),
@@ -1007,8 +1095,8 @@ class DTEEngine {
       recovery:     Math.round(recFinal * 100),
       errorRisk:    Math.round(errRisk * 100),
       overloadRisk: Math.round(overRisk * 100),
-      cvRisk:       Math.round(Math.min(Math.max(0, cvR + fatigue * 0.10 + stress * 0.08 + (lifestyleBoost.cvRisk||0)), 1) * 100),
-      cogRisk:      Math.round(Math.min(cogR + fatigue * 0.15, 1) * 100),
+      cvRisk:       Math.round(Math.min(Math.max(0, cvR + fatFinal * 0.10 + strFinal * 0.12 + stressBoostCV + (lifestyleBoost.cvRisk||0)), 1) * 100),
+      cogRisk:      Math.round(Math.min(cogR + fatFinal * 0.15 + stressBoostCog, 1) * 100),
       diabetesRisk: Math.round(diabR * 100),
       musculoRisk:  Math.round(muscR * 100),
       _f: fatFinal, _s: strFinal, _p: perfFinal, _r: recFinal,
