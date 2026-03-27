@@ -96,7 +96,8 @@ document.addEventListener('DOMContentLoaded', function () {
         const ccnRules = (typeof CCN_API !== 'undefined') 
           ? CCN_API.getGroupeForCCN(parseInt(localStorage.getItem('CCN_IDCC')||'0'))
           : {contingent: 220};
-        el('footer-contingent').textContent = 'CONTINGENT : ' + Math.round(state.norm._contingentPct || 0) + '/' + ccnRules.contingent + 'H';
+        const _limit = (ccnRules && ccnRules.contingent) ? ccnRules.contingent : 220;
+        el('footer-contingent').textContent = 'CONTINGENT : ' + Math.round(state.norm._contingentPct || 0) + '/' + _limit + 'H';
       }
       const statusEl = el('footer-status');
       if (statusEl) {
