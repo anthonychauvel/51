@@ -4547,27 +4547,27 @@ function syncModulesAndAwardXP(source) {
     console.log('🔍 Analyse situation légale:', situation);
     let xpPenalty = 0;
     let burnoutIncrease = 0;
-    
-    // Détecter violations
-    if (situation.daily?.hasDailyCrit) {
-      xpPenalty += 500;
-      burnoutIncrease += 15;
-      console.log('⚠️ VIOLATION CRITIQUE : Journée > 12h → -500 XP, +15 burn-out');
-    }
-    if (situation.weekly?.hasWeekViol) {
-      xpPenalty += 300;
-      burnoutIncrease += 10;
-      console.log('⚠️ VIOLATION : Semaine > 48h → -300 XP, +10 burn-out');
-    }
-    if (situation.weekly?.hasAvgViol && situation.weekly?.weeksCount >= 12) {
-      xpPenalty += 200;
-      burnoutIncrease += 8;
-      console.log('⚠️ VIOLATION : Moyenne 12 sem > 44h → -200 XP, +8 burn-out');
-    }
-    if (situation.annual?.hasContingentDanger) {
-      xpPenalty += 400;
-      burnoutIncrease += 12;
-      console.log('⚠️ VIOLATION : Contingent annuel dépassé → -400 XP, +12 burn-out');
+
+    // Pénalités XP : uniquement si des heures ont été saisies AUJOURD'HUI (source='data-change')
+    // Évite de pénaliser la saisie d'historique ou le chargement initial
+    const _isPenaltyEligible = (source === 'data-change' || source === 'popup');
+    if (_isPenaltyEligible) {
+      if (situation.daily?.hasDailyCrit) {
+        xpPenalty += 500;
+        burnoutIncrease += 15;
+      }
+      if (situation.weekly?.hasWeekViol) {
+        xpPenalty += 300;
+        burnoutIncrease += 10;
+      }
+      if (situation.weekly?.hasAvgViol && situation.weekly?.weeksCount >= 12) {
+        xpPenalty += 200;
+        burnoutIncrease += 8;
+      }
+      if (situation.annual?.hasContingentDanger) {
+        xpPenalty += 400;
+        burnoutIncrease += 12;
+      }
     }
     
     // Appliquer pénalités XP avec cooldown
