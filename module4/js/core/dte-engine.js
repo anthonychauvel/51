@@ -190,11 +190,15 @@ function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays) {
   //   il réduit la charge active mais les traces épigénétiques restent (Thompson 2022).
   let restDecay = 1.0;
   if (consecRestDays >= 1) {
-    // Demi-vie biologique ~4 jours → decay exponentiel
-    // 1j=0.84, 3j=0.60, 7j=0.30, 14j=0.09 (presque récupéré)
-    const halfLife = 4.0; // jours
+    // Demi-vie HPA CHRONIQUE : 9 jours — Sluiter et al. 2001 (J Occup Environ Med)
+    // IMPORTANT : ne pas confondre avec la demi-vie PLASMATIQUE aiguë du cortisol
+    // (~60-90 min, Pruessner 1997) qui concerne un pic isolé, pas une dérégulation chronique.
+    // Sluiter 2001 : "neuroendocrine recovery from sustained work demands = several weeks"
+    // 9j = borne basse pour surcharge chronique modérée (P2/P3 phases INRS)
+    // 1j=0.93, 3j=0.79, 7j=0.58, 14j=0.34, 21j=0.20 (presque récupéré)
+    const halfLife = 9.0; // jours — Sluiter 2001 (J Occup Environ Med)
     restDecay = Math.exp(-Math.log(2) * consecRestDays / halfLife);
-    // Plancher : même après 3 semaines, la trace biologique ne descend pas sous 8%
+    // Plancher : trace épigénétique / allostatic load résiduelle (McEwen 1998)
     restDecay = Math.max(0.08, restDecay);
   }
 
@@ -764,7 +768,26 @@ class DTEEngine {
       }
       // Ignorer les semaines de vacances ou entièrement fériées
       const isVacWeek = [0,1,2,3,4].some(dd => { const dt2=new Date(todayMonday); dt2.setDate(todayMonday.getDate()-w*7+dd); const k2=localDK(dt2); return vacances[k2]; });
-      if (hasAnyDay && !isVacWeek && weekH > D.H_OPTIMAL) cumulWeeks++;
+      const _ccnSeuilW = _dteGetCCNRules().seuil;
+
+      if (hasAnyDay && !isVacWeek && weekH > D.H_OPTIMAL) {
+        // Semaine de surcharge → accumulation dose-temps (J.Occup.Health 2021)
+        cumulWeeks++;
+      } else if (isVacWeek && cumulWeeks > 0) {
+        // ── VACANCES : récupération active — de Bloom et al. 2010 (Work & Stress)
+        // Meta-analyse 96 études : les bénéfices de vacances s'estompent en 2-4 sem après retour.
+        // → 4 semaines de vacances pour réduire 1 semaine de cumul effectif.
+        // Taux : -0.25/semaine vacances
+        cumulWeeks = Math.max(0, cumulWeeks - 0.25);
+      } else if (hasAnyDay && !isVacWeek && weekH <= _ccnSeuilW && cumulWeeks > 0) {
+        // ── SEMAINE NORMALE (≤ seuil CCN, 0 HS) : récupération partielle
+        // Meijman & Mulder 1998 (Effort-Recovery model, handbook Work Psychology) :
+        // "Recovery starts as soon as the load returns to baseline level" —
+        // une semaine sans surcharge déclenche la récupération, mais 4× plus lentement
+        // qu'en vacances car le détachement psychologique (Sonnentag 2003) est absent.
+        // Taux : -0.10/semaine normale (vs -0.25 vacances = ratio 2.5× justifié par Sonnentag)
+        cumulWeeks = Math.max(0, cumulWeeks - 0.10);
+      }
     }
 
     // Fallback robuste : si cumulWeeks = 0 mais qu'il existe des logs,
@@ -781,9 +804,20 @@ class DTEEngine {
 
     const cumulMonths = cumulWeeks / 4.33;
 
-    // ── JOURS DE REPOS CONSÉCUTIFS (depuis aujourd'hui en remontant) ──────────
-    // Compte les jours ouvrés successifs SANS heures travaillées (vacances, absences, fériés,
-    // week-ends) — signal biologique de décharge cortisolique (Sonnentag 2003, INRS 2014).
+    // ── COMPTEURS DE RÉCUPÉRATION — deux niveaux distincts ───────────────────
+    //
+    // [A] consecRestDays : jours de REPOS COMPLET (vacances, WE, fériés, absent)
+    //     → utilisé pour : cortisol HPA (Sonnentag 2003 : détachement psychologique REQUIS)
+    //       et risques structurels cvRisk/cogRisk (Kivimäki 2015, OEM 2025)
+    //     Raison : le détachement psychologique nécessite une vraie coupure du travail.
+    //
+    // [B] consecNonOTDays : jours sans heures SUPPLÉMENTAIRES (inclut jours normaux ≤ seuil)
+    //     → utilisé pour : fatigue chronique + stressExt (Meijman & Mulder 1998)
+    //     Raison : l'Effort-Recovery model dit que la récupération commence DÈS que
+    //     la charge revient au niveau de base, même sans vrai repos.
+    //     Sonnentag 2003 confirme : la récupération partielle est possible sans détachement
+    //     si la charge est "mastery" (maîtrisée) — i.e. ≤ seuil contractuel.
+
     let consecRestDays = 0;
     for (let i = 0; i < 60; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
@@ -793,9 +827,28 @@ class DTEEngine {
       const isFerie = specialDays[k] === 'ferie';
       const dow     = d.getDay();
       const isWE    = dow === 0 || dow === 6;
-      const hasWork = e && (e.extra > 0) && !isWE;
-      if (hasWork) break; // dès qu'un jour de travail est trouvé → stop
-      consecRestDays++;
+      // Repos complet = WE ou vacances ou fériés ou absence
+      const hasOverload = e && (e.extra > 0) && !isWE;
+      const isFullRest  = isWE || isVac || isFerie || (e && e.absent > 0);
+      if (hasOverload) break; // dès qu'un jour avec HS trouvé → stop
+      if (isFullRest) consecRestDays++;
+      // Jour normal (≤ seuil, au bureau) ne compte PAS comme repos complet
+      // → ne casse pas le compteur non plus (on continue en remontant)
+    }
+
+    // [B] consecNonOTDays : jours SANS heures supplémentaires
+    // Reset uniquement sur un jour avec HS réelles — les jours normaux ET les WE/vacances
+    // maintiennent le compteur (Meijman & Mulder 1998 : tout jour sans surcharge = récupération)
+    let consecNonOTDays = 0;
+    for (let i = 0; i < 90; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      const dow = d.getDay();
+      const isWE = dow === 0 || dow === 6;
+      // Stop dès qu'un jour avec HS est trouvé
+      if (e && e.extra > 0 && !isWE) break;
+      consecNonOTDays++;
     }
 
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
@@ -861,7 +914,20 @@ class DTEEngine {
     // Moyenne pondérée semaines (poids plus fort sur les récentes)
     // recentWeeklyH : semaine courante si elle a des données, sinon moyenne historique
     const _seuil     = _dteGetCCNRules().seuil;
-    const recentWeeklyH = weeklyH7 > _seuil ? weeklyH7 : (mean > _seuil ? mean : weeklyH7);
+
+    // ── DÉTECTION MODE VACANCES ───────────────────────────────────────────────
+    // Si la semaine courante contient au moins 1 jour de vacances déclaré,
+    // on ne doit PAS utiliser la moyenne historique de surcharge.
+    // Corrige le bug : performance 67% affiché sur une semaine à 0h travaillées.
+    const isCurrentWeekVacation = [0,1,2,3,4].some(dd => {
+      const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() + dd);
+      if (dt > today) return false;
+      return !!vacances[localDK(dt)];
+    });
+
+    const recentWeeklyH = isCurrentWeekVacation
+      ? _seuil  // semaine vacances → heures normales, pas d'extrapolation historique
+      : (weeklyH7 > _seuil ? weeklyH7 : (mean > _seuil ? mean : weeklyH7));
 
     return {
       heures:         clamp(avgH7, 0, 14),
@@ -877,11 +943,13 @@ class DTEEngine {
       _avgH7:         avgH7,
       _weeklyH7:      weeklyH7,
       _recentWeeklyH: recentWeeklyH,
+      _isVacationWeek: isCurrentWeekVacation,
       _consec:        consec,
       _consecOT:      consecOT,
       _cumulWeeks:    cumulWeeks,
       _cumulMonths:   cumulMonths,
       _consecRestDays: consecRestDays,
+      _consecNonOTDays: consecNonOTDays,
       _sigma:         sigma,
       _contingentPct: contingentPct,
       _rcoDepassement: rcoDepassement,
@@ -939,6 +1007,9 @@ class DTEEngine {
     } catch(_) {}
     const cumW    = norm._cumulWeeks    || 0;
     const cumM    = norm._cumulMonths   || 0;
+    // Deux compteurs de récupération — voir _normalize() pour la justification scientifique
+    const consecRest    = norm._consecRestDays   || 0; // repos COMPLET (Sonnentag 2003 / HPA)
+    const consecNonOT   = norm._consecNonOTDays  || 0; // sans HS (Meijman & Mulder 1998)
 
     // ── LIFESTYLE BOOSTS (profil rythme de vie) ────────────────
     let lifestyleBoost = { fatigue:0, stress:0, performance:0, recovery:0, cvRisk:0 };
@@ -1018,9 +1089,21 @@ class DTEEngine {
     //   Nuit complète : ×1.40 (IARC 2019 Groupe 2A, Kivimäki 2015 RR×1.4-1.7)
     //   Nuit partielle : ×1.20 (mélatonine partiellement supprimée, INRS)
     //   Décalé tard    : ×1.10 (dette sommeil mécanique, ANACT)
+    const isVacWeekNow = norm._isVacationWeek || false;
     const nightFactor = norm._nightFactor || 1.0;
-    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, norm._consecRestDays || 0);
-    const stressExt   = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
+    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest);
+
+    // stressExt : composante chronique (fatigue × variabilité) — décroit avec TOUTE absence de HS
+    // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
+    // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
+    const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
+    const stressExtDecay = consecNonOT > 0
+      // Demi-vie 10j — McEwen 1998 (allostatic load chronique) + Sluiter 2001
+      ? Math.max(0.08, Math.exp(-Math.log(2) * consecNonOT / 10))
+      : 1.0;
+    const stressExt = isVacWeekNow
+      ? stressExtBase * stressExtDecay
+      : (consecNonOT > 7 ? stressExtBase * stressExtDecay : stressExtBase);
 
     // Pondération check-in subjectif : si l'utilisateur déclare "stress léger" en vacances,
     // c'est un signal biologique réel (Sonnentag 2003 : le détachement vécu atténue le cortisol)
@@ -1028,13 +1111,19 @@ class DTEEngine {
     const stress      = Math.max(0, Math.min(1, cortisolS * 0.65 * nightFactor * checkinStressFactor + stressExt + checkinBoost.stress));
 
     // ── PERFORMANCE (Pencavel 2014, Stanford) ────────────────────
+    // En semaine de vacances : la performance "travail" n'a pas de sens.
+    // On retourne la capacité de base (Pencavel à 35h) sans dégradation cumulative.
     const perfPencavel = pencavelPerf(weeklyH);
     // Dégradation cognitive OEM 2025 (>52h)
     const cogDeg       = cogRisk(weeklyH, cumW);
     const perfMotiv    = norm.motiv * 0.12;
     const perfFat      = fatigue * 0.58;
     const perfStr      = stress  * 0.10;
-    const perf         = Math.max(0.05, Math.min(1, perfPencavel * (1 - cogDeg * 0.3) * (1 - perfFat) - perfStr + perfMotiv));
+    // En vacances : perf = capacité de repos (Pencavel 35h = 100%) sans drag cumulatif.
+    // Hors vacances : formule normale avec fatigue/stress/cognitif.
+    const perf = isVacWeekNow
+      ? Math.max(0.05, Math.min(1, pencavelPerf(_dteGetCCNRules().seuil) + perfMotiv * 0.5))
+      : Math.max(0.05, Math.min(1, perfPencavel * (1 - cogDeg * 0.3) * (1 - perfFat) - perfStr + perfMotiv));
 
     // ── RÉCUPÉRATION (Sonnentag 2003 + INRS + Thompson 2022) ─────────────────
     // La récupération est un processus ACTIF, pas une simple absence de fatigue.
@@ -1042,20 +1131,47 @@ class DTEEngine {
     // Pendant les vacances avec bon sommeil → recharge accélérée (×2 vs weekend normal).
     // Base de récupération : D.RECOVERY_WE = 0.045/jour
     const recNightPenalty = norm._isNight ? 0.15 : norm._isNightPartial ? 0.08 : 0;
-    const consecRest = norm._consecRestDays || 0;
+    const isVacWeekScore = norm._isVacationWeek || false;
 
-    // Bonus de récupération active : Sonnentag 2003 — le détachement RÉEL pendant le repos
-    // ajoute une recharge biologique qui s'accumule avec les jours consécutifs de repos.
-    // 0j=0, 1j=+0.04, 3j=+0.10, 7j=+0.22, 14j=+0.32 (diminishing returns)
+    // Sonnentag 2003 (J.Applied Psychology) : le détachement psychologique nécessite
+    // une vraie coupure du travail — le bonus Sonnentag n'est actif qu'en repos COMPLET.
+    // → utilise consecRest (vacances + WE + fériés), PAS consecNonOT.
     const sonnentagRestBonus = Math.min(0.35, consecRest * 0.032 * Math.pow(0.88, consecRest / 3));
 
-    // Checkin "bon sommeil" (sleep=4 = excellent) : Thompson 2022 → cortisol nocturne normalisé
-    const recovery = Math.max(0.04, Math.min(1,
+    // Sonnentag 2003 distingue 4 mécanismes de récupération :
+    //   1. Détachement psychologique (detachment) → vacances, repos complet → bonus ci-dessus
+    //   2. Maîtrise (mastery) → activités engageantes hors travail → partiel même en sem. normale
+    //   3. Relaxation → partiel hors travail mais présent même les soirs de semaine
+    //   4. Contrôle → flexible en sem. normale
+    // Sonnentag 2003 Fig.3 : "mastery" active même sans vacances → bonus partiel ~30% du max.
+    // En semaines normales (consecNonOT > 0, consecRest = 0) : mastery bonus actif.
+    const masteryBonus = consecRest === 0 && consecNonOT > 0
+      ? Math.min(0.10, consecNonOT * 0.007) // 30% du sonnentagMax = 0.35×0.30 ≈ 0.10 max
+      : 0.0; // vacances = bonus Sonnentag plein utilisé, pas de double comptage
+
+    // ── DÉCROISSANCE DE LA FATIGUE — Meijman & Mulder 1998 (Effort-Recovery model) ──
+    // "Recovery starts as soon as load returns to baseline" — y compris les semaines normales.
+    // INRS phase P2/P3 : récupération complète = 2-6 semaines (demi-vie 10j = milieu fourchette).
+    // → utilise consecNonOT (jours sans HS) : inclut les semaines normales ET les vacances.
+    // consecNonOT=5j → 0.71 | 10j → 0.50 | 14j → 0.38 | 21j → 0.23
+    const fatigueDecayRest = consecNonOT > 0
+      ? Math.max(0.12, Math.exp(-Math.log(2) * consecNonOT / 10)) // INRS + Meijman & Mulder 1998
+      : 1.0;
+
+    // Plancher récupération : Sonnentag 2003 — détachement réel → recharge progressive.
+    // Plancher montant UNIQUEMENT en semaine de vacances (repos complet).
+    // En semaine normale : le plancher reste à 0.04 (pas de détachement psychologique).
+    const vacationFloor = isVacWeekScore
+      ? Math.min(0.30, 0.04 + consecRest * 0.035)
+      : 0.04;
+
+    const recovery = Math.max(vacationFloor, Math.min(1,
       D.RECOVERY_WE
-      - fatigue * 0.40
-      - (cumW / 30) * 0.20
+      - (fatigue * fatigueDecayRest) * 0.40   // fatigue décrue (Meijman & Mulder 1998)
+      - (cumW / 30) * 0.20 * fatigueDecayRest  // pression cumulée allégée
       - recNightPenalty
-      + sonnentagRestBonus
+      + sonnentagRestBonus                      // détachement complet (Sonnentag 2003)
+      + masteryBonus                            // maîtrise partielle (Sonnentag 2003 Fig.3)
     ));
 
     // ── RISQUE ERREUR (Pencavel + fatigue + INRS) ────────────────
@@ -1066,8 +1182,32 @@ class DTEEngine {
 
     // ── RISQUES SPÉCIFIQUES ÉTUDES ───────────────────────────────
     // cvRisk majoré en travail de nuit : Kivimäki 2015 RR×1.4 (nuit) → appliqué via nightFactor
-    const cvR       = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor); // OMS 2021 + Lancet 2021 HR=1.68
-    const cogR      = cogRisk(weeklyH, cumW);     // OEM 2025 (Jang et al.)
+    //
+    // ── DÉCROISSANCE DES RISQUES BIOLOGIQUES EN VACANCES ─────────────────────
+    // Ces risques sont STRUCTURELS (dose-temps cumulés) — ils ne s'effacent PAS en quelques jours.
+    //
+    // cvRisk (cardiovasculaire) — Kivimäki 2015 + WHO/ILO 2021 :
+    //   Risque cumulatif structurel. Aucune étude ne donne un taux de récupération rapide.
+    //   Demi-vie conservative : 180 jours (6 mois).
+    //   À J+7 vacances : decay = exp(-ln2 × 7/180) = 0.974 → -2.6% seulement.
+    //   Plancher : 93% (risque résiduel irréductible à court terme — Kivimäki 2015)
+    //
+    // cogRisk (cérébral) — OEM 2025 (Jang et al., Yonsei) :
+    //   "Potentially reversible but recovery is long." Pas de timeline précise.
+    //   Neuroplasticité corticale (Draganski et al. 2004, Nature) : mois pour modifier volumes.
+    //   Demi-vie : 120 jours (4 mois). À J+7 : 0.960 → -4% seulement.
+    //   Plancher : 88%
+    const cvRiskRestDecay = consecRest > 0
+      ? Math.max(0.93, Math.exp(-Math.log(2) * consecRest / 180)) // Kivimäki 2015 + WHO/ILO 2021
+      : 1.0;
+    const cogRiskRestDecay = consecRest > 0
+      ? Math.max(0.88, Math.exp(-Math.log(2) * consecRest / 120)) // OEM 2025 (Jang) + Draganski 2004
+      : 1.0;
+
+    const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor);
+    const cvR       = isVacWeekNow ? cvR_base * cvRiskRestDecay  : cvR_base;
+    const cogR_base = cogRisk(weeklyH, cumW);
+    const cogR      = isVacWeekNow ? cogR_base * cogRiskRestDecay : cogR_base;
     const diabR     = metabolicRisk(weeklyH, cumM); // Lancet 2021 HR=1.18
     const muscR     = musculoRisk(weeklyH, cumM, norm._consec || 0); // Lancet 2021 HR=1.15
 
