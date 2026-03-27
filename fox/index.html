@@ -923,47 +923,16 @@ function _getKitsuneHistoryContext() {
 
 // ── Helper CCN pour messages dynamiques ──────────────────────
 function _kitsuneGetCCN() {
-  // Fallback par défaut
+  // Fallback par défaut (droit commun)
   const defaultCCN = { contingent: 220, seuil: 35, taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, nom: null };
-  
-  // Vérifier que CCN_API et window.CCN existent
-  if (typeof CCN_API === 'undefined') {
-    console.warn('[_kitsuneGetCCN] CCN_API non défini - retour fallback');
-    return defaultCCN;
-  }
-  if (typeof window.CCN === 'undefined') {
-    console.warn('[_kitsuneGetCCN] window.CCN non défini - retour fallback');
-    return defaultCCN;
-  }
-  
-  // Récupérer l'IDCC depuis localStorage
+
+  if (typeof CCN_API === 'undefined') return defaultCCN;
+
   const idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
-  console.log('[_kitsuneGetCCN] IDCC lu depuis localStorage:', idcc);
-  
-  // Si IDCC = 0 (pas de CCN sélectionnée), retourner droit commun
-  if (idcc === 0) {
-    console.log('[_kitsuneGetCCN] IDCC=0 - retour DROIT_COMMUN');
-    return window.CCN.DROIT_COMMUN || defaultCCN;
-  }
-  
-  // Récupérer le nom du groupe depuis l'IDCC
-  const groupeName = window.CCN_API.getGroupeForCCN(idcc);
-  console.log('[_kitsuneGetCCN] Groupe pour IDCC', idcc, ':', groupeName);
-  
-  if (!groupeName) {
-    console.warn('[_kitsuneGetCCN] Aucun groupe trouvé pour IDCC', idcc);
-    return defaultCCN;
-  }
-  
-  // Récupérer les données du groupe
-  const ccnData = window.CCN[groupeName];
-  if (!ccnData) {
-    console.warn('[_kitsuneGetCCN] Groupe', groupeName, 'non trouvé dans window.CCN');
-    return defaultCCN;
-  }
-  
-  console.log('[_kitsuneGetCCN] CCN chargée:', groupeName, ccnData);
-  return ccnData;
+
+  // getGroupeForCCN retourne directement l'objet de règles (pas un nom de groupe)
+  const ccnData = CCN_API.getGroupeForCCN(idcc);
+  return (ccnData && ccnData.contingent) ? ccnData : defaultCCN;
 }
 function _kitsuneFormatMsg(msg, h) {
   const r = _kitsuneGetCCN();
@@ -5157,21 +5126,25 @@ function refreshHUD() {
         const leagueData = leagueSystem.getCurrentLeague(_xpForLeague);
         const lgEl = document.getElementById('hud-league');
         if (lgEl && leagueData) {
-          // Mise à jour couleur dynamique selon la ligue
           const _lc = leagueData.color || '#CD7F32';
           lgEl.style.background = _lc + '33';
           lgEl.style.borderColor = _lc + '99';
           lgEl.style.color = _lc;
-          // Affichage ligue : icône emoji + nom (image si dispo)
+          // Dirty-check : ne réécrire innerHTML que si la ligue a changé
           const _lgIcon = leagueData.icon || '\uD83E\uDD49';
-          lgEl.innerHTML = _lgIcon + ' <strong>' + leagueData.name + '</strong>';
-          // Tenter chargement image en arrière-plan
-          if (leagueData.img) {
-            const _tImg = new Image();
-            _tImg.onload = function() {
-              lgEl.innerHTML = '<img src="' + leagueData.img + '" style="height:18px;vertical-align:middle;margin-right:3px;filter:drop-shadow(0 0 5px ' + _lc + ');"> <strong>' + leagueData.name + '</strong>';
-            };
-            _tImg.src = leagueData.img;
+          const _lgNewHtml = _lgIcon + ' <strong>' + leagueData.name + '</strong>';
+          if (!lgEl.dataset.leagueId || lgEl.dataset.leagueId !== String(leagueData.id)) {
+            lgEl.dataset.leagueId = String(leagueData.id);
+            lgEl.innerHTML = _lgNewHtml;
+            // Charger l'image une seule fois par ligue
+            if (leagueData.img && !lgEl.dataset.imgLoaded) {
+              const _tImg = new Image();
+              _tImg.onload = function() {
+                lgEl.innerHTML = '<img src="' + leagueData.img + '" style="height:18px;vertical-align:middle;margin-right:3px;filter:drop-shadow(0 0 5px ' + _lc + ');"> <strong>' + leagueData.name + '</strong>';
+                lgEl.dataset.imgLoaded = '1';
+              };
+              _tImg.src = leagueData.img;
+            }
           }
         }
         // Prochaine ligue
@@ -5581,10 +5554,11 @@ function refreshModulesPopup() {
             ${m2cov ? `<span style="color:#FFD700;background:rgba(255,215,0,0.1);border-radius:8px;padding:2px 7px;">M2: ${m2cov} mois</span>` : ''}
           </div>
         </div>
-        <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;font-size:0.82rem;">
+        <div style="display:grid;grid-template-columns:${(() => { const c=_kitsuneGetCCN(); return c.taux_inter!==null?'1fr 1fr 1fr 1fr':'1fr 1fr 1fr'; })()};gap:6px;font-size:0.82rem;">
           <div><div style="color:#555;font-size:0.7rem;">HS nettes</div><strong style="color:${netColor};">${_fmtH(net)}</strong></div>
-          <div><div style="color:#555;font-size:0.7rem;">HS +25%</div><strong>${_fmtH((py?.hs25||0))}</strong></div>
-          <div><div style="color:#555;font-size:0.7rem;">HS +50%</div><strong>${_fmtH((py?.hs50||0))}</strong></div>
+          <div><div style="color:#555;font-size:0.7rem;">HS +${_kitsuneGetCCN().taux1||25}%</div><strong>${_fmtH((py?.hs25||0))}</strong></div>
+          ${(() => { const c=_kitsuneGetCCN(); return c.taux_inter!==null ? `<div><div style="color:#555;font-size:0.7rem;">HS +${c.taux_inter}%</div><strong>${_fmtH((py?.hs10||0))}</strong></div>` : ''; })()}
+          <div><div style="color:#555;font-size:0.7rem;">HS +${_kitsuneGetCCN().taux2||50}%</div><strong>${_fmtH((py?.hs50||0))}</strong></div>
         </div>
       </div>`;
   });
@@ -13678,7 +13652,7 @@ const GLOSSAIRE_BASE = [
 ];
 
 // Fusion : GLOSSAIRE = articles de loi + entrées thématiques
-const GLOSSAIRE = (typeof ARTICLES_LOI !== 'undefined')
+var GLOSSAIRE = (typeof ARTICLES_LOI !== 'undefined')
   ? [...ARTICLES_LOI, ...GLOSSAIRE_BASE]
   : GLOSSAIRE_BASE;
 
