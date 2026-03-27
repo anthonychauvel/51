@@ -372,8 +372,17 @@ function renderSchedulePanel(containerId) {
         L3121-34 · Max journalier : 10h (dérogatoire 12h)<br>
         IARC 2019 · Travail nuit = cancérogène probable (Groupe 2A)
       </div>
+      <!-- ROULEMENT -->
+      <div id="rotation-panel-container"></div>
       `}
     </div>`;
+
+  // Render rotation panel after main panel
+  setTimeout(() => {
+    if (document.getElementById('rotation-panel-container') && typeof renderRotationPanel === 'function') {
+      renderRotationPanel('rotation-panel-container');
+    }
+  }, 50);
 
   // ── Handlers ──
   window._schToggleSchedule = () => {
@@ -610,3 +619,163 @@ global.DTESchedule = {
 };
 
 }(typeof window !== 'undefined' ? window : global));
+
+// ═══════════════════════════════════════════════════════
+// ROULEMENT DE SEMAINES (cycles d'horaires en boucle)
+// Permet de définir N semaines-types qui se répètent
+// Exemple 3x8 : S1=6h-13h, S2=13h-20h, S3=20h-3h → boucle
+// ═══════════════════════════════════════════════════════
+const ROTATION_KEY = 'DTE_WEEK_ROTATION';
+const ROTATION_ENABLED_KEY = 'DTE_WEEK_ROTATION_ENABLED';
+const ROTATION_ANCHOR_KEY = 'DTE_WEEK_ROTATION_ANCHOR'; // date ISO du début du cycle
+
+function loadRotation() {
+  try { return JSON.parse(localStorage.getItem(ROTATION_KEY) || '[]'); } catch(_) { return []; }
+}
+function saveRotation(r) {
+  try { localStorage.setItem(ROTATION_KEY, JSON.stringify(r)); } catch(_) {}
+}
+function isRotationEnabled() {
+  return localStorage.getItem(ROTATION_ENABLED_KEY) === 'true';
+}
+function setRotationEnabled(v) {
+  localStorage.setItem(ROTATION_ENABLED_KEY, v ? 'true' : 'false');
+}
+function getRotationAnchor() {
+  return localStorage.getItem(ROTATION_ANCHOR_KEY) || new Date().toISOString().slice(0,10);
+}
+function setRotationAnchor(dateStr) {
+  localStorage.setItem(ROTATION_ANCHOR_KEY, dateStr);
+}
+
+// Retourne les horaires à appliquer pour une date donnée selon le cycle actif
+function getRotationScheduleForDate(dateStr) {
+  if (!isRotationEnabled()) return null;
+  const rotation = loadRotation();
+  if (!rotation.length) return null;
+  const anchor = getRotationAnchor();
+  const anchorDate = new Date(anchor + 'T00:00:00');
+  const targetDate = new Date(dateStr + 'T00:00:00');
+  const diffDays = Math.round((targetDate - anchorDate) / 86400000);
+  const diffWeeks = Math.floor(diffDays / 7);
+  const weekIndex = ((diffWeeks % rotation.length) + rotation.length) % rotation.length;
+  return rotation[weekIndex] || null;
+}
+
+// Expose pour schedule panel
+window.DTERotation = {
+  load: loadRotation,
+  save: saveRotation,
+  isEnabled: isRotationEnabled,
+  setEnabled: setRotationEnabled,
+  getAnchor: getRotationAnchor,
+  setAnchor: setRotationAnchor,
+  getForDate: getRotationScheduleForDate,
+  addWeek(startH, endH, label) {
+    const r = loadRotation();
+    r.push({ startH, endH, label: label || `Semaine ${r.length+1}` });
+    saveRotation(r);
+    return r;
+  },
+  removeWeek(index) {
+    const r = loadRotation();
+    r.splice(index, 1);
+    saveRotation(r);
+    return r;
+  },
+  clear() { saveRotation([]); }
+};
+
+// Panel HTML de configuration du roulement
+function renderRotationPanel(containerId) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+  const rotation = loadRotation();
+  const enabled = isRotationEnabled();
+  const anchor = getRotationAnchor();
+
+  container.innerHTML = `
+    <div style="margin-top:16px;border-top:1px solid rgba(0,200,255,0.15);padding-top:14px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:10px;">
+        <div style="font-family:var(--font-hud);font-size:11px;color:var(--animus);letter-spacing:.1em;">
+          🔄 ROULEMENT DE SEMAINES
+        </div>
+        <button onclick="window._schToggleRotation()" style="
+          padding:5px 12px;border-radius:4px;font-size:10px;cursor:pointer;
+          background:${enabled?'rgba(0,200,255,0.15)':'rgba(255,255,255,0.05)'};
+          border:1px solid ${enabled?'rgba(0,200,255,0.5)':'rgba(255,255,255,0.1)'};
+          color:${enabled?'var(--animus)':'var(--text-muted)'};">
+          ${enabled ? '✓ ACTIVÉ' : '✕ DÉSACTIVÉ'}
+        </button>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);margin-bottom:10px;">
+        Définissez N semaines-types qui se répètent en boucle. Ex: 3×8h = S1 matin, S2 après-midi, S3 nuit → cycle de 3 semaines.
+      </div>
+      ${enabled ? `
+      <div style="margin-bottom:8px;">
+        <label style="font-family:var(--font-mono);font-size:9px;color:var(--text-muted);">Début du cycle (semaine de référence) :</label>
+        <input type="date" id="rot-anchor" value="${anchor}"
+          style="background:rgba(0,10,25,.9);border:1px solid rgba(0,200,255,0.2);color:var(--text);border-radius:4px;padding:4px 8px;font-size:11px;width:100%;margin-top:4px;"
+          onchange="DTERotation.setAnchor(this.value)">
+      </div>
+      <div id="rotation-weeks" style="display:flex;flex-direction:column;gap:6px;margin-bottom:10px;">
+        ${rotation.map((w,i) => `
+          <div style="display:flex;align-items:center;gap:6px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.12);padding:8px;border-radius:4px;">
+            <span style="font-family:var(--font-hud);font-size:10px;color:var(--animus);min-width:60px;">S${i+1}</span>
+            <input type="time" value="${String(Math.floor(w.startH)).padStart(2,'0')}:${String(Math.round((w.startH%1)*60)).padStart(2,'0')}"
+              id="rot-start-${i}" style="background:rgba(0,10,25,.9);border:1px solid rgba(0,200,255,0.2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;flex:1;">
+            <span style="color:var(--text-muted);font-size:10px;">→</span>
+            <input type="time" value="${String(Math.floor(w.endH)).padStart(2,'0')}:${String(Math.round((w.endH%1)*60)).padStart(2,'0')}"
+              id="rot-end-${i}" style="background:rgba(0,10,25,.9);border:1px solid rgba(0,200,255,0.2);color:var(--text);border-radius:4px;padding:3px 6px;font-size:11px;flex:1;">
+            <button onclick="window._schSaveRotationWeek(${i})" style="padding:3px 8px;border-radius:4px;font-size:9px;cursor:pointer;background:rgba(0,200,255,0.1);border:1px solid rgba(0,200,255,0.3);color:var(--animus);">💾</button>
+            <button onclick="window._schRemoveRotationWeek(${i})" style="padding:3px 8px;border-radius:4px;font-size:9px;cursor:pointer;background:rgba(255,50,50,0.1);border:1px solid rgba(255,50,50,0.3);color:#f55;">✕</button>
+          </div>`).join('')}
+      </div>
+      <div style="display:flex;gap:6px;">
+        <button onclick="window._schAddRotationWeek()" style="flex:1;padding:7px;border-radius:4px;font-size:10px;cursor:pointer;background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.2);color:var(--animus);">
+          ＋ Ajouter une semaine
+        </button>
+        ${rotation.length>0?`<button onclick="window._schClearRotation()" style="padding:7px 12px;border-radius:4px;font-size:10px;cursor:pointer;background:rgba(255,50,50,0.08);border:1px solid rgba(255,50,50,0.2);color:#f55;">🗑</button>`:''}
+      </div>` : ''}
+    </div>`;
+
+  // Handlers
+  window._schToggleRotation = () => {
+    setRotationEnabled(!isRotationEnabled());
+    if (typeof _triggerReanalysis === 'function') _triggerReanalysis();
+    renderRotationPanel(containerId);
+  };
+  window._schAddRotationWeek = () => {
+    const r = loadRotation();
+    const last = r[r.length-1] || { startH:9, endH:17 };
+    // Cycle automatique : décale de 7h à chaque semaine
+    const shift = 7;
+    const nStart = (last.startH + shift) % 24;
+    const nEnd = (last.endH + shift) % 24;
+    DTERotation.addWeek(nStart, nEnd, `Semaine ${r.length+1}`);
+    renderRotationPanel(containerId);
+  };
+  window._schSaveRotationWeek = (i) => {
+    const r = loadRotation();
+    const sEl = document.getElementById(`rot-start-${i}`);
+    const eEl = document.getElementById(`rot-end-${i}`);
+    if (sEl && eEl) {
+      const [sh,sm] = sEl.value.split(':').map(Number);
+      const [eh,em] = eEl.value.split(':').map(Number);
+      r[i].startH = sh + sm/60;
+      r[i].endH = eh + em/60;
+      saveRotation(r);
+      if (typeof _triggerReanalysis === 'function') _triggerReanalysis();
+    }
+  };
+  window._schRemoveRotationWeek = (i) => {
+    DTERotation.removeWeek(i);
+    renderRotationPanel(containerId);
+  };
+  window._schClearRotation = () => {
+    DTERotation.clear();
+    renderRotationPanel(containerId);
+  };
+}
+
+window.DTERotation.renderPanel = renderRotationPanel;
