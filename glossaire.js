@@ -2557,7 +2557,24 @@ function getMode() {
 function setMode(mode) {
   localStorage.setItem(MODE_STORAGE_KEY, mode);
   applyMode();
+  // Propager en temps réel à tous les onglets/modules ouverts
+  try {
+    const bc = new BroadcastChannel('glossaire_mode');
+    bc.postMessage({ type: 'MODE_CHANGE', mode });
+    bc.close();
+  } catch(_) {}
 }
+
+// Écouter les changements de mode depuis les autres modules
+try {
+  const _bcListen = new BroadcastChannel('glossaire_mode');
+  _bcListen.onmessage = (e) => {
+    if (e.data && e.data.type === 'MODE_CHANGE') {
+      localStorage.setItem(MODE_STORAGE_KEY, e.data.mode);
+      applyMode();
+    }
+  };
+} catch(_) {}
 
 function isFirstVisit() {
   return !localStorage.getItem('APP_VISITED');
@@ -2632,39 +2649,29 @@ function showDefinition(terme) {
   `;
   
   document.body.appendChild(popup);
-  
+
+  let _popupClosed = false;
+
+  // Fonction de fermeture sécurisée avec garde contre double-appel
+  const closePopup = () => {
+    if (_popupClosed) return;
+    _popupClosed = true;
+    try {
+      popup.removeEventListener('click', clickHandler);
+      document.removeEventListener('keydown', escHandler);
+      if (popup && popup.parentElement) popup.remove();
+    } catch (err) {}
+  };
+
   // Event listener pour bouton X
   const closeBtn = popup.querySelector('.glossaire-close');
   if (closeBtn) {
-    closeBtn.addEventListener('click', () => {
-      console.log('[Glossaire] Bouton X cliqué');
-      closePopup();
-    });
+    closeBtn.addEventListener('click', (e) => { e.stopPropagation(); closePopup(); });
   }
   
-  // Fonction de fermeture sécurisée
-  const closePopup = () => {
-    try {
-      console.log('[Glossaire] Fermeture popup');
-      // Supprimer les event listeners d'abord
-      popup.removeEventListener('click', clickHandler);
-      document.removeEventListener('keydown', escHandler);
-      // Puis supprimer l'élément
-      if (popup && popup.parentElement) {
-        popup.remove();
-        console.log('[Glossaire] ✅ Popup fermée');
-      }
-    } catch (err) {
-      console.error('[Glossaire] ❌ Erreur fermeture:', err);
-    }
-  };
-  
-  // Fermer en cliquant à l'extérieur
+  // Fermer en cliquant à l'extérieur (sur le fond sombre)
   const clickHandler = (e) => {
-    if (e.target === popup) {
-      console.log('[Glossaire] Clic extérieur détecté');
-      closePopup();
-    }
+    if (e.target === popup) { e.stopPropagation(); closePopup(); }
   };
   popup.addEventListener('click', clickHandler);
   
@@ -2694,25 +2701,26 @@ function showTutorial() {
       </div>
       
       <div class="tutorial-step">
-        <h3>⚖️ Ta convention collective</h3>
-        <p>Les règles sur les heures supplémentaires varient selon ton secteur d'activité. Choisis ta situation :</p>
+        <h3>⚖️ Ta convention collective (CCN)</h3>
+        <p>Les majorations et le contingent d'heures sup dépendent de ton secteur. <b>Pas sûr(e) ?</b> Regarde ton contrat ou ton bulletin de paie — la CCN y est indiquée.</p>
         <div class="ccn-choice">
           <button class="ccn-choice-btn" onclick="selectTutorialCCN('search')">
             <div class="ccn-icon">🔍</div>
-            <div class="ccn-title">Je connais ma CCN</div>
-            <div class="ccn-desc">Hôtellerie, BTP, Commerce, etc.</div>
+            <div class="ccn-title">Chercher ma CCN</div>
+            <div class="ccn-desc">Hôtellerie (HCR), BTP, Commerce, Syntec…</div>
           </button>
           <button class="ccn-choice-btn" onclick="selectTutorialCCN('default')">
             <div class="ccn-icon">📋</div>
             <div class="ccn-title">Droit commun</div>
-            <div class="ccn-desc">Règles de base (35h, 220h/an)</div>
+            <div class="ccn-desc">25%/50%, 35h/sem, contingent 220h/an</div>
           </button>
           <button class="ccn-choice-btn" onclick="selectTutorialCCN('custom')">
             <div class="ccn-icon">⚙️</div>
-            <div class="ccn-title">Accord personnalisé</div>
-            <div class="ccn-desc">Configuration sur mesure</div>
+            <div class="ccn-title">Accord d'entreprise</div>
+            <div class="ccn-desc">Taux et seuils différents de ta CCN ? Configure ici</div>
           </button>
         </div>
+        <p style="font-size:12px;color:#888;margin-top:8px;">💡 <b>Accord de branche :</b> si ton contrat précise des règles différentes (ex : semaine de 39h, seuil à 10%), choisis "Accord d'entreprise" et entre tes valeurs exactes.</p>
       </div>
       
       <div class="tutorial-step" id="mode-selection-step" style="display:none;">
@@ -2754,10 +2762,11 @@ function selectTutorialCCN(choice) {
       alert('Pour configurer votre CCN, utilisez le bouton "⚖️ Convention collective" dans le menu principal.');
     }
   } else if (choice === 'default') {
-    // Appliquer le droit commun (par défaut, rien à faire)
+    // Appliquer le droit commun
     localStorage.removeItem('CCN_IDCC');
     localStorage.removeItem('CCN_NOM');
     localStorage.removeItem('CCN_CUSTOM');
+    markVisited();
   } else if (choice === 'custom') {
     // Ouvrir le formulaire personnalisé
     if (typeof openCCNModal === 'function' && typeof toggleCustomForm === 'function') {
@@ -2822,18 +2831,35 @@ function createModeSwitch() {
     </div>
   `;
   
-  // Insérer dans le header ou menu
-  // Cherche d'abord .topbar (M2), puis .header-actions, puis nav, puis body
-  const targetContainer = document.querySelector('.topbar') || 
-                         document.querySelector('.header-actions') || 
-                         document.querySelector('nav') || 
-                         document.body;
-  
-  console.log('[Glossaire] Container trouvé:', targetContainer.className || 'body');
-  
+  // Insérer dans la topbar si présente (M2), sinon avant le h1 (M1), sinon body
+  const topbar = document.querySelector('.topbar');
+  const topNav  = document.querySelector('.top-nav-bar');
+  const footer  = document.querySelector('footer');
+
+  let targetContainer, insertBefore = null;
+
+  if (topbar) {
+    // M2 : insérer dans la topbar
+    targetContainer = topbar;
+  } else if (topNav) {
+    // M1 : insérer juste après la top-nav-bar
+    targetContainer = topNav.parentNode;
+    insertBefore = topNav.nextSibling;
+  } else if (footer) {
+    targetContainer = footer.parentNode;
+    insertBefore = footer;
+  } else {
+    targetContainer = document.body;
+  }
+
   const div = document.createElement('div');
   div.innerHTML = switchHTML;
-  targetContainer.appendChild(div.firstElementChild);
+  const node = div.firstElementChild;
+  if (insertBefore) {
+    targetContainer.insertBefore(node, insertBefore);
+  } else {
+    targetContainer.appendChild(node);
+  }
 }
 
 function toggleMode() {

@@ -603,6 +603,9 @@
       localStorage.removeItem('CCN_IDCC');
       localStorage.removeItem('CCN_NOM');
       localStorage.removeItem('CCN_CUSTOM');
+      // Confirmer visuellement et avancer
+      const badge = document.getElementById('ccn-badge');
+      if (badge) badge.textContent = '📋 Droit commun';
     } else if (choice === 'custom') {
       // Ouvrir le formulaire personnalisé
       if (typeof openCCNModal === 'function') {
@@ -617,7 +620,10 @@
   function wizChooseMode(mode) {
     selectedGlossaireMode = mode;
     // Sauvegarder dans localStorage pour le glossaire
+    localStorage.setItem('APP_MODE', mode); // clé utilisée par glossaire.js
     localStorage.setItem('GLOSSAIRE_MODE', mode);
+    // Propager en temps réel à tous les modules ouverts
+    try { const bc = new BroadcastChannel('glossaire_mode'); bc.postMessage({type:'MODE_CHANGE',mode}); bc.close(); } catch(_) {}
     
     // Mettre à jour l'UI
     const btnDebutant = document.getElementById('wizModeDebutant');
