@@ -603,9 +603,20 @@
       localStorage.removeItem('CCN_IDCC');
       localStorage.removeItem('CCN_NOM');
       localStorage.removeItem('CCN_CUSTOM');
-      // Confirmer visuellement et avancer
+      // Feedback visuel : mettre en surbrillance le bouton sélectionné
+      document.querySelectorAll('#wStep2 .wiz-btn.secondary').forEach(b => {
+        b.style.background = '';
+        b.style.border = '';
+        b.style.opacity = '1';
+      });
+      const defaultBtn = document.querySelector('#wStep2 .wiz-btn.secondary:nth-child(2)');
+      if (defaultBtn) {
+        defaultBtn.style.background = 'rgba(0,200,255,0.18)';
+        defaultBtn.style.border = '2px solid rgba(0,200,255,0.6)';
+        defaultBtn.style.color = '#00c8ff';
+      }
       const badge = document.getElementById('ccn-badge');
-      if (badge) badge.textContent = '📋 Droit commun';
+      if (badge) { badge.textContent = '📋 Droit commun'; badge.style.color = '#00c8ff'; }
     } else if (choice === 'custom') {
       // Ouvrir le formulaire personnalisé
       if (typeof openCCNModal === 'function') {

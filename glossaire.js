@@ -2831,23 +2831,26 @@ function createModeSwitch() {
     </div>
   `;
   
-  // Insérer dans la topbar si présente (M2), sinon avant le h1 (M1), sinon body
-  const topbar = document.querySelector('.topbar');
+  // Placement : toujours avant le footer (pied de page) si disponible
+  // En M1 (pas de topbar) : après .top-nav-bar
+  // En M2 (a .topbar) : avant <footer>, PAS dans la topbar
   const topNav  = document.querySelector('.top-nav-bar');
   const footer  = document.querySelector('footer');
+  const topbar  = document.querySelector('.topbar');
 
   let targetContainer, insertBefore = null;
 
-  if (topbar) {
-    // M2 : insérer dans la topbar
-    targetContainer = topbar;
-  } else if (topNav) {
-    // M1 : insérer juste après la top-nav-bar
-    targetContainer = topNav.parentNode;
-    insertBefore = topNav.nextSibling;
-  } else if (footer) {
+  if (footer) {
+    // M1 et M2 : toujours placer juste avant le footer
     targetContainer = footer.parentNode;
     insertBefore = footer;
+  } else if (topNav) {
+    // M1 sans footer : après la barre de nav
+    targetContainer = topNav.parentNode;
+    insertBefore = topNav.nextSibling;
+  } else if (topbar) {
+    // Fallback uniquement si pas de footer : dans la topbar
+    targetContainer = topbar;
   } else {
     targetContainer = document.body;
   }
@@ -2873,7 +2876,14 @@ function openGlossaireModal() {
   // Créer le modal du glossaire complet
   const modal = document.createElement('div');
   modal.className = 'glossaire-popup';
-  modal.onclick = (e) => { if (e.target === modal) modal.remove(); };
+  let _modalClosed = false;
+  modal.onclick = (e) => {
+    if (e.target === modal && !_modalClosed) {
+      _modalClosed = true;
+      e.stopPropagation();
+      modal.remove();
+    }
+  };
   
   // Organiser les termes par catégorie
   const categories = {
