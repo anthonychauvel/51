@@ -2824,7 +2824,7 @@ function createModeSwitch() {
       <button class="glossaire-btn" onclick="openGlossaireModal()" title="Ouvrir le glossaire complet">📚 GLOSSAIRE</button>
       <label class="mode-switch-label">
         <span class="mode-text">🎓 Débutant</span>
-        <input type="checkbox" id="mode-switch" onchange="toggleMode()">
+        <input type="checkbox" id="mode-switch" onchange="toggleMode()" ${getMode() === 'expert' ? 'checked' : ''}>
         <span class="mode-slider"></span>
         <span class="mode-text">⚡ Expert</span>
       </label>
@@ -2963,21 +2963,21 @@ function wrapTermesGlossaire() {
 // INITIALISATION
 // ═══════════════════════════════════════════════════════════════
 function initGlossaire() {
-  // NE PLUS afficher le tutoriel automatiquement
-  // Le wizard est maintenant dans le menu principal uniquement
-  // if (isFirstVisit()) {
-  //   setTimeout(showTutorial, 500);
-  // }
-  
-  // Appliquer le mode actuel
+  // Synchroniser la clé : le menu peut avoir écrit dans APP_MODE ou GLOSSAIRE_MODE
+  const _modeFromMenu = localStorage.getItem('APP_MODE') || localStorage.getItem('GLOSSAIRE_MODE');
+  if (_modeFromMenu && _modeFromMenu !== localStorage.getItem('APP_MODE')) {
+    localStorage.setItem('APP_MODE', _modeFromMenu);
+  }
+
+  // Appliquer le mode actuel (lu depuis APP_MODE, défaut débutant)
   applyMode();
-  
+
   // Créer le switch de mode
   createModeSwitch();
-  
+
   // Transformer les termes en éléments cliquables SANS soulignement
   wrapTermesGlossaire();
-  
+
   // Injecter les styles
   injectGlossaireStyles();
 }

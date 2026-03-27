@@ -599,24 +599,28 @@
         openCCNModal();
       }
     } else if (choice === 'default') {
-      // Droit commun (IDCC=0)
       localStorage.removeItem('CCN_IDCC');
       localStorage.removeItem('CCN_NOM');
       localStorage.removeItem('CCN_CUSTOM');
-      // Feedback visuel : mettre en surbrillance le bouton sélectionné
+      // Feedback visuel — marquer le bouton comme sélectionné
       document.querySelectorAll('#wStep2 .wiz-btn.secondary').forEach(b => {
         b.style.background = '';
         b.style.border = '';
-        b.style.opacity = '1';
+        b.style.color = '';
       });
-      const defaultBtn = document.querySelector('#wStep2 .wiz-btn.secondary:nth-child(2)');
-      if (defaultBtn) {
-        defaultBtn.style.background = 'rgba(0,200,255,0.18)';
-        defaultBtn.style.border = '2px solid rgba(0,200,255,0.6)';
-        defaultBtn.style.color = '#00c8ff';
+      const btns = document.querySelectorAll('#wStep2 .wiz-btn.secondary');
+      if (btns[1]) {
+        btns[1].style.background = 'rgba(0,200,255,0.18)';
+        btns[1].style.border = '2px solid #00c8ff';
+        btns[1].style.color = '#00c8ff';
       }
       const badge = document.getElementById('ccn-badge');
       if (badge) { badge.textContent = '📋 Droit commun'; badge.style.color = '#00c8ff'; }
+      // Scroll vers les boutons mode
+      setTimeout(() => {
+        const modeDiv = document.querySelector('#wStep2 #wizModeDebutant');
+        if (modeDiv) modeDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+      }, 100);
     } else if (choice === 'custom') {
       // Ouvrir le formulaire personnalisé
       if (typeof openCCNModal === 'function') {
