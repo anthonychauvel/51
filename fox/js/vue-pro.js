@@ -245,13 +245,13 @@
     var el = document.getElementById('vue-pro'); if (!el) return;
     var yr     = getYear();
     
-    // Récupérer le contingent selon CCN (même logique que _kitsuneGetCCN)
+    // Récupérer le contingent selon CCN — getGroupeForCCN retourne l'objet de règles directement
     var contingent = 220; // Fallback
-    if (typeof CCN_API !== 'undefined' && typeof window.CCN !== 'undefined') {
+    if (typeof CCN_API !== 'undefined') {
       var idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
-      var groupeName = CCN_API.getGroupeForCCN(idcc);
-      if (groupeName && window.CCN[groupeName]) {
-        contingent = window.CCN[groupeName].contingent || 220;
+      var ccnRules = CCN_API.getGroupeForCCN(idcc);
+      if (ccnRules && ccnRules.contingent) {
+        contingent = ccnRules.contingent;
       }
     }
     

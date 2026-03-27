@@ -602,10 +602,11 @@ class ModuleReaderPro extends ModuleReader {
     const manual = localStorage.getItem('FOX_SOURCE_OVERRIDE');
     const globalSource = manual || 'fusion';
 
-    // Récupérer la CCN pour les paliers
-    const settings = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
-    const ccn = window.CCN ? window.CCN[settings.ccn || 'DROIT_COMMUN'] : null;
-    const rules = ccn || { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, contingent: 220 };
+    // Récupérer la CCN pour les paliers — getGroupeForCCN retourne l'objet de règles directement
+    const _idccCum = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
+    const rules = (typeof CCN_API !== 'undefined')
+      ? (CCN_API.getGroupeForCCN(_idccCum) || { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, contingent: 220 })
+      : { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, contingent: 220 };
 
     let totalExtra  = 0;
     let totalPlus25 = 0;
