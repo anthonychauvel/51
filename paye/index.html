@@ -1298,8 +1298,7 @@ function generateAnnualPDF(){
   const inclDetail=document.getElementById("aOptDetail").checked;
   const yearStr=String(y);
   const pdf=pdfBuildBase();
-  
-  // Récupérer les règles CCN pour adapter les colonnes
+  if(!pdf)return;
   const globalRules = getCCNRules();
   const has3Tiers = globalRules.taux_inter !== null;
   
