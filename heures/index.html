@@ -560,6 +560,18 @@ function getCCNRules() {
   }
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
+// Retourne le lundi (ou debut CCN) de la semaine contenant 'date'
+function getWeekStart(date){
+  const rules=getCCNRules();
+  const ds=rules.debutSemaine||1; // 1=lun..7=dim
+  if(typeof window.CCN_API!=='undefined'&&window.CCN_API.getDebutSemaineHS)
+    return window.CCN_API.getDebutSemaineHS(date,ds);
+  const d=new Date(date);const dow=d.getDay()||7;
+  let offset=dow-ds;if(offset<0)offset+=7;
+  const start=new Date(d);start.setDate(d.getDate()-offset);start.setHours(0,0,0,0);
+  return start;
+}
+function getWeekKey(date){const s=getWeekStart(date);return dateKeyLocal(s);}
 /* Calcule HS par paliers CCN pour un total hebdo donné (HS nettes = total - seuil) */
 function calcHsPaliers(total, rules) {
   const seuil = rules.seuil;
@@ -736,8 +748,7 @@ function calculate(){
     const dow=dd.getDay();
     if(dd<pStart||dd>pEnd)return;
     const iso=dow===0?7:dow;
-    const monday=new Date(dd);monday.setDate(monday.getDate()-(iso-1));
-    const wk=dateKeyLocal(monday);
+    const wk=getWeekKey(dd);
     weeks[wk]=(weeks[wk]||0)+(v.extra||0);
     if(dow!==0&&dow!==6)absences[wk]=(absences[wk]||0)+(v.absent||0);
     recups[wk]=(recups[wk]||0)+(v.recup||0);
@@ -892,9 +903,7 @@ function updateContingent(){
       const d=new Date(date);const dow=d.getDay();
       if(dow===0||dow===6)return;
       if(!data[date]||!data[date].absent){
-        const iso=dow===0?7:dow;const monday=new Date(d);
-        monday.setDate(monday.getDate()-(iso-1));
-        const wk=dateKeyLocal(monday);
+        const wk=getWeekKey(d);
         absences[wk]=(absences[wk]||0)+DAILY_WORK_HOURS;
       }
     });
@@ -903,9 +912,7 @@ function updateContingent(){
     if(!v||typeof v!=="object")return;
     const[y,m,d]=date.split("-").map(Number);
     const dd=new Date(y,m-1,d);const dow=dd.getDay();
-    const iso=dow===0?7:dow;
-    const monday=new Date(dd);monday.setDate(monday.getDate()-(iso-1));
-    const wk=dateKeyLocal(monday);
+    const wk=getWeekKey(dd);
     weeks[wk]=(weeks[wk]||0)+(v.extra||0);
     if(dow!==0&&dow!==6)absences[wk]=(absences[wk]||0)+(v.absent||0);
   });
@@ -987,6 +994,23 @@ baseHebdoInput.value=BASE_HEBDO;
 annualDateInput.onchange=()=>{annualDate=forceSunday(annualDateInput.value);annualDateInput.value=annualDate;localStorage.setItem(STORAGE.annualDate,annualDate);};
 exerciseStartInput.onchange=()=>{exerciseStart=forceMonday(exerciseStartInput.value);exerciseStartInput.value=exerciseStart;localStorage.setItem(STORAGE.exerciseStart,exerciseStart);buildPeriods();};
 baseHebdoInput.oninput=()=>{BASE_HEBDO=Number(baseHebdoInput.value)||35;localStorage.setItem("BASE_HEBDO_"+currentSuffix,BASE_HEBDO);if(typeof update==="function")update();};
+
+// Sync BASE_HEBDO avec le seuil CCN quand la CCN change (depuis le menu ou un autre onglet)
+function syncBaseHebdoWithCCN(){
+  const r=getCCNRules();
+  // Ne remplacer que si l'utilisateur n'a pas saisi de valeur personnalisée différente du droit commun
+  const storedBase=Number(localStorage.getItem("BASE_HEBDO_"+currentSuffix));
+  if(!storedBase||storedBase===35){
+    BASE_HEBDO=r.seuil;
+    localStorage.setItem("BASE_HEBDO_"+currentSuffix,BASE_HEBDO);
+    if(baseHebdoInput)baseHebdoInput.value=BASE_HEBDO;
+    if(typeof update==="function")update();
+  }else{
+    // La base perso est déjà set — juste rafraîchir l'affichage
+    if(baseHebdoInput)baseHebdoInput.value=BASE_HEBDO;
+  }
+}
+window.addEventListener('storage',e=>{if(e.key==='CCN_IDCC'||e.key==='CCN_CUSTOM')syncBaseHebdoWithCCN();});
 
 /* =====================================================
    MODALE PDF UNIFIÉE – GESTION
