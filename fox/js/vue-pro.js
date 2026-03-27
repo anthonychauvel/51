@@ -29,24 +29,36 @@
 
   // ── Calculs ────────────────────────────────────────────────────
   function calcAnnual(yr) {
-    // Accumulation en minutes entières pour éviter les erreurs flottantes
-    var totalMin = 0; var src = 'aucune'; var hasM1 = false;
+    // Fusion M1 + M2 par jour (M1 prioritaire sur le même jour)
+    // même logique que module-reader.js getCumulatedHours()
+    var totalMin = 0; var src = 'aucune';
+    var seen = {}; // pour éviter double-comptage
+
+    // M1 : DATA_REPORT_YYYY → { "YYYY-MM-DD": { extra, recup, absent } }
     var m1 = readM1(yr);
     Object.keys(m1).forEach(function(k) {
       if (/^\d{4}-\d{2}-\d{2}$/.test(k) && (m1[k].extra||0) > 0) {
-        totalMin += Math.round(parseFloat(m1[k].extra) * 60);
-        hasM1 = true;
+        var ot = Math.max(0, parseFloat(m1[k].extra||0) - parseFloat(m1[k].recup||0) - parseFloat(m1[k].absent||0));
+        totalMin += Math.round(ot * 60);
+        seen[k] = true;
+        src = 'M1+M2';
       }
     });
-    if (hasM1) return { total: totalMin / 60, src: 'M1' };
+
+    // M2 : CA_HS_TRACKER_V1_DATA_YYYY → { "YYYY-MM": { days: { "15": 2.5 } } }
     var m2 = readM2(yr);
     Object.keys(m2).forEach(function(mk) {
       var mv = m2[mk];
-      if (mv && mv.days) Object.keys(mv.days).forEach(function(d) {
+      if (!mv || !mv.days) return;
+      var parts = mk.split('-');
+      Object.keys(mv.days).forEach(function(d) {
+        var dk = mk + '-' + String(d).padStart(2,'0');
+        if (seen[dk]) return; // M1 prioritaire
         var v = parseFloat(mv.days[d]) || 0;
-        if (v > 0) { totalMin += Math.round(v * 60); src = 'M2'; }
+        if (v > 0) { totalMin += Math.round(v * 60); src = src === 'aucune' ? 'M2' : 'M1+M2'; }
       });
     });
+
     return { total: totalMin / 60, src: src };
   }
 
