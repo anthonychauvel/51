@@ -602,21 +602,22 @@
       localStorage.removeItem('CCN_IDCC');
       localStorage.removeItem('CCN_NOM');
       localStorage.removeItem('CCN_CUSTOM');
-      // Feedback visuel — marquer le bouton comme sélectionné
+      // Feedback : juste une coche verte sur le bouton, rien d'autre
       document.querySelectorAll('#wStep2 .wiz-btn.secondary').forEach(b => {
         b.style.background = '';
         b.style.border = '';
         b.style.color = '';
+        const chk = b.querySelector('.wiz-ccn-check');
+        if (chk) chk.remove();
       });
       const btns = document.querySelectorAll('#wStep2 .wiz-btn.secondary');
       if (btns[1]) {
-        btns[1].style.background = 'rgba(0,200,255,0.18)';
-        btns[1].style.border = '2px solid #00c8ff';
-        btns[1].style.color = '#00c8ff';
+        const check = document.createElement('span');
+        check.className = 'wiz-ccn-check';
+        check.textContent = ' ✅';
+        btns[1].appendChild(check);
       }
-      const badge = document.getElementById('ccn-badge');
-      if (badge) { badge.textContent = '📋 Droit commun'; badge.style.color = '#00c8ff'; }
-      // Scroll vers les boutons mode
+      // Scroll vers le choix du mode
       setTimeout(() => {
         const modeDiv = document.querySelector('#wStep2 #wizModeDebutant');
         if (modeDiv) modeDiv.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
