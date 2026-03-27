@@ -1438,8 +1438,9 @@ function generateAnnualPDF(){
   pdf.setTextColor(255,255,255);pdf.setFontSize(9);pdf.setFont(undefined,"bold");
   pdf.text(pdfStr("TOTAL ANNUEL"),C.MOIS,curY+1);
   pdf.text(pdfStr(fmtH(annualTotal)),C.TOTAL,curY+1);
-  pdf.text(pdfStr(fmtH(annualH25)),C.H25,curY+1);
-  pdf.text(pdfStr(fmtH(annualH50)),C.H50,curY+1);
+  pdf.text(pdfStr(fmtH(annualH1)),C.H1,curY+1);
+  if (has3Tiers) { pdf.text(pdfStr(fmtH(annualHInter)),C.HINTER,curY+1); }
+  pdf.text(pdfStr(fmtH(annualH2)),C.H2,curY+1);
   pdf.text(pdfStr(fmtH(annualPaid)),C.PAYE,curY+1);
   pdf.text(pdfStr(fmtH(monthsData[11]?.carry||0)),C.CARRY,curY+1);
   pdf.setTextColor(0,0,0);pdf.setFont(undefined,"normal");
