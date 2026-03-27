@@ -567,6 +567,16 @@ function getCCNRules() {
   console.log('[M2] ❌ Fallback droit commun');
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
+function getWeekKeyM2(date){
+  const r=getCCNRules();const ds=r.debutSemaine||1;
+  if(typeof window.CCN_API!=='undefined'&&window.CCN_API.getDebutSemaineHS){
+    const s=window.CCN_API.getDebutSemaineHS(date,ds);
+    return s.getFullYear()+'-'+String(s.getMonth()+1).padStart(2,'0')+'-'+String(s.getDate()).padStart(2,'0');
+  }
+  const d=new Date(date);const dow=d.getDay()||7;let off=dow-ds;if(off<0)off+=7;
+  d.setDate(d.getDate()-off);
+  return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+}
 function calcHsPaliers(hs, rules) {
   if (hs <= 0) return { h1:0, hInter:0, h2:0 };
   let h1=0, hInter=0, h2=0;
@@ -806,7 +816,7 @@ function getPreviousCarry(mk){const am=[];const yd=ALL_DATA[currentYear]||{};Obj
 function recalc(){
   const{start,end}=getPeriodBounds(currentKey);const weeks={};
   const rules=getCCNRules();
-  Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const mon=new Date(date);const day=mon.getDay()||7;mon.setDate(mon.getDate()-day+1);const wk=mon.getFullYear()+"-"+String(mon.getMonth()+1).padStart(2,"0")+"-"+String(mon.getDate()).padStart(2,"0");weeks[wk]=(weeks[wk]||0)+h})});
+  Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const wk=getWeekKeyM2(date);weeks[wk]=(weeks[wk]||0)+h})});
   let t25=0,tInter=0,t50=0,ph=0;
   Object.values(weeks).forEach(wh=>{
     ph+=wh;
@@ -956,17 +966,21 @@ function loadYearData(y){return JSON.parse(localStorage.getItem(kData(y))||"{}")
 function saveYearData(y,d){localStorage.setItem(kData(y),JSON.stringify(d))}
 
 /* PARAMS € */
-// Définir les coefficients par défaut selon la CCN
-const rules = getCCNRules();
-let defaultCoefs;
-if (rules.taux_inter !== null) {
-  // HCR : 3 paliers (10%, 20%, 50%)
-  defaultCoefs = {rate:10, coef25:1.10, coefInter:1.20, coef50:1.50, coefNet:0.93};
-} else {
-  // Droit commun : 2 paliers (25%, 50%)
-  defaultCoefs = {rate:10, coef25:1.25, coefInter:1.10, coef50:1.50, coefNet:0.93};
+function getDefaultCoefs(){
+  const r=getCCNRules();
+  if(r.taux_inter!==null) return {rate:10,coef25:parseFloat((1+r.taux1/100).toFixed(4)),coefInter:parseFloat((1+r.taux_inter/100).toFixed(4)),coef50:parseFloat((1+r.taux2/100).toFixed(4)),coefNet:0.93};
+  return {rate:10,coef25:parseFloat((1+r.taux1/100).toFixed(4)),coefInter:1.10,coef50:parseFloat((1+r.taux2/100).toFixed(4)),coefNet:0.93};
 }
+function applyDefaultCoefs(){
+  const dc=getDefaultCoefs();
+  ["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const inp=document.getElementById(id);if(inp&&SETTINGS[id]==null)inp.value=dc[id];});
+  recalc();
+}
+const rules=getCCNRules();
+const defaultCoefs=getDefaultCoefs();
 ["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def=defaultCoefs[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
+// Réappliquer les coefs si la CCN change depuis un autre onglet/module
+window.addEventListener('storage',e=>{if(e.key==='CCN_IDCC'||e.key==='CCN_CUSTOM'){Object.keys(SETTINGS).forEach(k=>delete SETTINGS[k]);applyDefaultCoefs();}});
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
@@ -1064,6 +1078,7 @@ function fmtH(h){
 const PDF_MARGIN=14,PDF_W=210,PDF_H=297,PDF_LINE=7;
 
 function pdfBuildBase(){
+  if(!window.jspdf||!window.jspdf.jsPDF){toast("❌ Bibliothèque PDF non chargée. Vérifiez votre connexion internet.","error");return null;}
   const {jsPDF}=window.jspdf;
   return new jsPDF();
 }
@@ -1127,8 +1142,7 @@ function pdfDayTable(pdf, startY, allDays, inclSansHeures, inclSemaines){
 
   for(let i=0;i<allDays.length;i++){
     const {date,h}=allDays[i];
-    const mon=new Date(date);const dow=mon.getDay()||7;mon.setDate(mon.getDate()-dow+1);
-    const wk=toInputDate(mon);
+    const wk=getWeekKeyM2(date);
 
     if(inclSemaines&&weekKey&&wk!==weekKey){
       chk(PDF_LINE+2);
@@ -1220,8 +1234,7 @@ function calcWeeks(allDays){
   const rules=getCCNRules();
   const wm={};
   allDays.forEach(({date,h})=>{
-    const m=new Date(date);const dw=m.getDay()||7;m.setDate(m.getDate()-dw+1);
-    const k=toInputDate(m);wm[k]=(wm[k]||0)+h;
+    const k=getWeekKeyM2(date);wm[k]=(wm[k]||0)+h;
   });
   let h25=0,hInter=0,h50=0;
   Object.values(wm).forEach(wh=>{
@@ -1252,7 +1265,7 @@ function generateMonthlyPDF(){
   const mCoef1=1+mRules.taux1/100,mCoefI=mRules.taux_inter?(1+mRules.taux_inter/100):0,mCoef2=1+mRules.taux2/100;
   const carry=monthData.carry||0;
 
-  const pdf=pdfBuildBase();
+  const pdf=pdfBuildBase();if(!pdf)return;
   let curY=pdfHeader(pdf,
     `Relevé mensuel – ${MOIS_NOMS[m-1]} ${y}`,
     `Période de paie : ${formatDate(start)} → ${formatDate(end)}`
@@ -1478,7 +1491,7 @@ function generatePeriodPDF(){
   const daysWorked=allDays.filter(r=>r.h>0).length;
   const{h25,hInter:hInterP,h50,rules:pRules}=calcWeeks(allDays);
 
-  const pdf=pdfBuildBase();
+  const pdf=pdfBuildBase();if(!pdf)return;
   let curY=pdfHeader(pdf,
     "Relevé d'heures – Période personnalisée",
     `Du ${formatDate(start)} au ${formatDate(end)}`
