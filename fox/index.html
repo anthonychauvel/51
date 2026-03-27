@@ -4532,12 +4532,31 @@ function syncModulesAndAwardXP(source) {
     }
 
     const _retroSync = isFirstSync || _forceRetro;
-    const deltaM1 = _retroSync ? (cumM1Cap - Math.max(0, _lastM1Net)) : (cumM1Cap - Math.max(0, _lastM1Net));
-    const deltaM2 = _retroSync ? (cumM2Cap - Math.max(0, _lastM2Tot)) : (cumM2Cap - Math.max(0, _lastM2Tot));
+    const deltaM1 = cumM1Cap - Math.max(0, _lastM1Net);
+    const deltaM2 = cumM2Cap - Math.max(0, _lastM2Tot);
 
-    // Utiliser le delta le plus significatif
-    const totalDelta = deltaM1 !== 0 ? deltaM1 : deltaM2;
-    console.log('🦊 XP delta (caps 5h/j 35h/sem 450h/an) : M1='+deltaM1.toFixed(2)+'h M2='+deltaM2.toFixed(2)+'h totalDelta='+totalDelta.toFixed(2)+'h');
+    // Anti double-comptage : si M1 et M2 ont les mêmes jours, on prend le MAX
+    // pour éviter de créditer 2× les mêmes heures (même logique que module-reader fusion)
+    // On utilise la source primaire pour déterminer le delta pertinent
+    let totalDelta;
+    if (primary === 'M2') {
+      totalDelta = deltaM2;
+    } else if (deltaM1 !== 0) {
+      totalDelta = deltaM1;
+    } else {
+      totalDelta = deltaM2;
+    }
+
+    // Sécurité : le delta ne peut jamais être négatif à cause du plafonnement
+    // (les retraits volontaires d'heures sont détectés via cumM1Cap < _lastM1Net
+    //  UNIQUEMENT si la réduction est significative ET confirmée dans les deux sources)
+    const _isHoursRemoved = (cumM1Cap < (oldM1 - 0.5) && primary !== 'M2') ||
+                            (cumM2Cap < (oldM2 - 0.5) && primary === 'M2');
+    if (totalDelta < -0.09 && !_isHoursRemoved) {
+      totalDelta = 0; // faux négatif lié au plafonnement ou rechargement → ignorer
+    }
+
+    console.log('🦊 XP delta : M1='+deltaM1.toFixed(2)+'h M2='+deltaM2.toFixed(2)+'h → '+totalDelta.toFixed(2)+'h (src:'+primary+')');
 
     // Analyse Kitsune — toujours, même sans nouvelles heures
     if (!isFirstSync) { try { kitsuneNarrateOvertime(totalDelta, primary); } catch(_e) {} }
@@ -4673,7 +4692,8 @@ function syncModulesAndAwardXP(source) {
       }
       _lastM1Net = cumM1Cap !== undefined ? cumM1Cap : cumM1Net;
       _lastM2Tot = cumM2Cap !== undefined ? cumM2Cap : cumM2Tot;
-      _saveLastCumul(cumM1Net, cumM2Tot);
+      _saveLastCumul(cumM1Cap !== undefined ? cumM1Cap : cumM1Net,
+                     cumM2Cap !== undefined ? cumM2Cap : cumM2Tot);
       refreshHUD();
     }
 
@@ -4745,7 +4765,8 @@ function syncModulesAndAwardXP(source) {
 
     _lastM1Net = cumM1Cap !== undefined ? cumM1Cap : cumM1Net;
     _lastM2Tot = cumM2Cap !== undefined ? cumM2Cap : cumM2Tot;
-    _saveLastCumul(cumM1Net, cumM2Tot);
+    _saveLastCumul(cumM1Cap !== undefined ? cumM1Cap : cumM1Net,
+                   cumM2Cap !== undefined ? cumM2Cap : cumM2Tot);
 
     // ── Bonus XP nuit / week-end ──────────────────────────────────────
     if (totalDelta > 0.09 && typeof xpSystem !== 'undefined') {
