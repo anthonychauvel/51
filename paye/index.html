@@ -176,7 +176,7 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
     <p style="font-size:14px;color:var(--muted)">Cet outil te permet de suivre tes heures supplémentaires mois par mois, avec report automatique et estimation €.<br><br>La configuration prend moins d'une minute.</p>
     <ol style="font-size:14px;line-height:1.9">
       <li>Clique sur un jour pour saisir des heures</li>
-      <li>La clôture mensuelle est le dernier dimanche par défaut</li>
+      <li>La clôture mensuelle s'adapte à votre semaine de paie (CCN/accord d'entreprise)</li>
       <li>Les reliquats sont reportés automatiquement</li>
       <li>La zone € est protégée par un code</li>
     </ol>
@@ -185,11 +185,11 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
 
   <div class="wiz-step" id="wizStep2">
     <h2 style="margin-top:0">&#x1F4C6; Clôture mensuelle</h2>
-    <p style="font-size:14px;color:var(--muted)">La clôture définit la fin de ta période de paie.<br>Par défaut : <b>dernier dimanche du mois</b>.</p>
+    <p style="font-size:14px;color:var(--muted)">La clôture définit la fin de ta période de paie.<br>Par défaut : <b id="wizClosingDayDesc">dernier jour de fin de semaine</b>.</p>
     <div style="background:#262a33;border-radius:10px;padding:14px;margin-top:10px">
       <label style="font-size:13px;color:var(--muted)">Mode de clôture</label>
       <div class="wiz-choice">
-        <button id="wizClosureAuto" onclick="wizSelectClosure('auto')" style="background:#2196a6">&#x1F916; Auto<br><small style="font-weight:400;color:#cde">Dernier dimanche</small></button>
+        <button id="wizClosureAuto" onclick="wizSelectClosure('auto')" style="background:#2196a6">&#x1F916; Auto<br><small style="font-weight:400;color:#cde" id="wizClosureAutoLabel">Dernier dimanche</small></button>
         <button id="wizClosureManual" onclick="wizSelectClosure('manual')" style="background:#2a2f3a">&#x270F;&#xFE0F; Manuel<br><small style="font-weight:400;color:#999">12 dates différentes</small></button>
       </div>
     </div>
@@ -201,7 +201,7 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
 
   <div class="wiz-step" id="wizStep2b">
     <h2 style="margin-top:0">&#x1F4C5; Clôtures des 12 mois</h2>
-    <p style="font-size:13px;color:var(--muted);margin-top:0">Choisis un dimanche par mois. Laisse vide = dernier dimanche automatique.</p>
+    <p style="font-size:13px;color:var(--muted);margin-top:0">Choisis le dernier <span id="wizClosingDayName2b">jour de fin de semaine</span> par mois. Laisse vide = automatique.</p>
     <div class="closures-grid" id="wizClosuresGrid" style="margin-top:10px"></div>
     <div class="wiz-nav">
       <button class="secondary" onclick="wizPrev2b()">&#x2190; Retour</button>
@@ -289,7 +289,7 @@ input[type="number"]{text-align:center;appearance:none;-webkit-appearance:none;-
 <!-- MODALE CLÔTURES 12 MOIS -->
 <div class="modal" id="closuresModal"><div class="modal-content" style="max-height:85vh;overflow-y:auto">
   <h3 style="margin-top:0">&#x1F4C5; Clôtures des 12 mois</h3>
-  <p style="font-size:13px;color:var(--muted);margin-top:0">Chaque mois peut avoir son propre dimanche de clôture.<br>Laisse vide = dernier dimanche du mois (automatique).</p>
+  <p style="font-size:13px;color:var(--muted);margin-top:0">Chaque mois peut avoir son propre jour de clôture.<br>Laisse vide = dernier <span class="wiz-closing-day-label">jour de fin de semaine</span> du mois (automatique).</p>
   <div class="closures-grid" id="closuresGrid"></div>
   <button onclick="saveAllClosures()" style="margin-top:16px;background:linear-gradient(135deg,#4FB3C2,#2196a6)">&#x2705; Enregistrer</button>
   <button class="secondary" onclick="closeClosuresModal()" style="margin-top:6px">Annuler</button>
@@ -651,7 +651,7 @@ function wizBuildManualGrid(){
   grid.innerHTML="";
   const y=new Date().getFullYear(); // toujours Jan-Dec de l'année en cours
   for(let m=0;m<12;m++){
-    const ls=getLastSunday(y,m);
+    const ls=getLastClosingDay(y,m);
     const row=document.createElement("div"); row.className="closure-row";
     const lbl=document.createElement("label"); lbl.textContent=MOIS_NOMS[m];
     const inp=document.createElement("input"); inp.type="date"; inp.id="wizCls_"+m;
@@ -659,7 +659,7 @@ function wizBuildManualGrid(){
     inp.min=`${y}-${String(m+1).padStart(2,"0")}-01`;
     const ld=new Date(y,m+1,0).getDate();
     inp.max=`${y}-${String(m+1).padStart(2,"0")}-${ld}`;
-    inp.onchange=()=>{ if(!inp.value)return; const sel=new Date(inp.value); if(sel.getDay()!==0){toast("⛔ Doit être un dimanche","error");inp.value="";}};
+    inp.onchange=()=>{ if(!inp.value)return; const sel=new Date(inp.value); if(sel.getDay()!==getClosingDow()){toast("⛔ Doit être un "+getClosingDayLabel(),"error");inp.value="";}};
     row.appendChild(lbl); row.appendChild(inp); grid.appendChild(row);
   }
 }
@@ -675,7 +675,7 @@ async function wizFinish(){
     if(!ALL_DATA[year])ALL_DATA[year]={};
     MOIS_NOMS.forEach((_,m)=>{
       const mk=`${y}-${String(m+1).padStart(2,"0")}`;
-      if(!ALL_DATA[year][mk])ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastSunday(y,m),locked:false};
+      if(!ALL_DATA[year][mk])ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastClosingDay(y,m),locked:false};
       const inp=document.getElementById("wizCls_"+m);
       if(inp&&inp.value){const sel=new Date(inp.value);if(sel.getDay()===0)ALL_DATA[year][mk].closing=sel.getDate();}
     });
@@ -709,7 +709,7 @@ function attemptAutoRecovery(){
   let repaired=false;
   try{const idx=JSON.parse(localStorage.getItem(kIndex())||"[]");
     idx.forEach(year=>{let data;try{data=loadYearData(year)}catch(e){localStorage.removeItem(kData(year));repaired=true;return}
-      Object.entries(data).forEach(([mk,m])=>{if(!m.days)m.days={};if(typeof m.paid!=="number")m.paid=0;if(typeof m.carry!=="number")m.carry=0;const[y,mo]=mk.split("-").map(Number);const ls=getLastSunday(y,mo-1);if(!m.closing||new Date(y,mo-1,m.closing).getDay()!==0){m.closing=ls;repaired=true}});
+      Object.entries(data).forEach(([mk,m])=>{if(!m.days)m.days={};if(typeof m.paid!=="number")m.paid=0;if(typeof m.carry!=="number")m.carry=0;const[y,mo]=mk.split("-").map(Number);const ls=getLastClosingDay(y,mo-1);if(!m.closing||new Date(y,mo-1,m.closing).getDay()!==getClosingDow()){m.closing=ls;repaired=true}});
       saveYearData(year,data)});
   }catch(e){return false}return repaired;
 }
@@ -731,6 +731,32 @@ monthPicker.onchange=loadMonth;
 paidInput.oninput=()=>{if(!DATA||!DATA[currentKey])return;DATA[currentKey].paid=parseFloat(paidInput.value)||0;save();recalc()};
 
 function getLastSunday(year,monthIndex){const d=new Date(year,monthIndex+1,0);const diff=d.getDay()===0?0:d.getDay();d.setDate(d.getDate()-diff);return d.getDate()}
+
+// ── CLÔTURE DYNAMIQUE CCN ──────────────────────────────────────────────────
+// Corrige le bug : la clôture était toujours forcée au dimanche.
+// Avec un accord CCN qui débute la semaine un mercredi (ex. HCR),
+// la fin de semaine est le mardi → la clôture doit tomber un mardi.
+//
+// getClosingDow() : retourne le getDay() du jour de clôture selon CCN.
+//   Formule : closingDow = (debutSemaine % 7 - 1 + 7) % 7
+//   debutSemaine=1(lun) → 0(dim) | =3(mer) → 2(mar) | =7(dim) → 6(sam)
+function getClosingDow() {
+  const ds = (getCCNRules().debutSemaine) || 1;
+  return (ds % 7 - 1 + 7) % 7;
+}
+// Noms des jours pour le wizard (index = getDay())
+const _JOURS_SEMAINE = ['Dimanche','Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi'];
+function getClosingDayLabel() {
+  return _JOURS_SEMAINE[getClosingDow()];
+}
+// Remplace getLastSunday — retourne la date du dernier jour de clôture du mois
+function getLastClosingDay(year, monthIndex) {
+  const closingDow = getClosingDow();
+  const d = new Date(year, monthIndex + 1, 0); // dernier jour du mois
+  const diff = (d.getDay() - closingDow + 7) % 7;
+  d.setDate(d.getDate() - diff);
+  return d.getDate();
+}
 function getPeriodBounds(monthKey){
   if(!monthKey||typeof monthKey!=="string"){const now=new Date();return{start:new Date(now.getFullYear(),now.getMonth(),1),end:new Date(now.getFullYear(),now.getMonth()+1,0)}}
   const[y,m]=monthKey.split("-").map(Number);if(!y||!m)return{start:new Date(y||1970,(m||1)-1,1),end:new Date(y||1970,m||1,0)};
@@ -738,7 +764,7 @@ function getPeriodBounds(monthKey){
   const pmd=new Date(y,m-2,1),pk=pmd.getFullYear()+"-"+String(pmd.getMonth()+1).padStart(2,"0");
   const pyd=ALL_DATA[String(pmd.getFullYear())]||{},pm=pyd[pk];
   let start=pm&&typeof pm.closing==="number"?new Date(pmd.getFullYear(),pmd.getMonth(),pm.closing+1):new Date(y,m-1,1);
-  let closing=cm.closing;if(typeof closing!=="number"||new Date(y,m-1,closing).getDay()!==0)closing=getLastSunday(y,m-1);
+  let closing=cm.closing;if(typeof closing!=="number"||new Date(y,m-1,closing).getDay()!==getClosingDow())closing=getLastClosingDay(y,m-1);
   return{start,end:new Date(y,m-1,closing)};
 }
 function goMenu(){localStorage.removeItem("lastApp");window.location.href="../menu.html"}
@@ -746,13 +772,13 @@ function loadMonth(){updateYearLabel();
   currentKey=monthPicker.value;const year=getYearFromMonth(currentKey);registerYear(year);
   if(!ALL_DATA[year])ALL_DATA[year]=loadYearData(year);DATA=ALL_DATA[year];
   const[y,m]=currentKey.split("-").map(Number);let needSave=false;
-  if(!DATA[currentKey]){DATA[currentKey]={days:{},paid:0,carry:0,closing:getLastSunday(y,m-1),locked:false};needSave=true}
-  {const ld=new Date(y,m,0).getDate(),cl=DATA[currentKey].closing;if(!cl||cl>ld||new Date(y,m-1,cl).getDay()!==0){DATA[currentKey].closing=getLastSunday(y,m-1);needSave=true}}
+  if(!DATA[currentKey]){DATA[currentKey]={days:{},paid:0,carry:0,closing:getLastClosingDay(y,m-1),locked:false};needSave=true}
+  {const ld=new Date(y,m,0).getDate(),cl=DATA[currentKey].closing;if(!cl||cl>ld||new Date(y,m-1,cl).getDay()!==getClosingDow()){DATA[currentKey].closing=getLastClosingDay(y,m-1);needSave=true}}
   paidInput.value=DATA[currentKey].paid||0;setClosingLimits();syncClosingDate();renderCalendar();recalcCascade();recalc();scrollToToday();if(needSave)save();
 }
 function syncClosingDate(){if(!DATA[currentKey])return;const[y,m]=currentKey.split("-").map(Number),day=DATA[currentKey].closing||31;closingDate.value=`${y}-${String(m).padStart(2,"0")}-${String(day).padStart(2,"0")}`}
 function setClosingLimits(){const[y,m]=currentKey.split("-").map(Number),ld=new Date(y,m,0).getDate();closingDate.min=`${y}-${String(m).padStart(2,"0")}-01`;closingDate.max=`${y}-${String(m).padStart(2,"0")}-${ld}`}
-closingDate.oninput=()=>{if(!closingDate.value)return;const sel=new Date(closingDate.value),[y,m]=currentKey.split("-").map(Number);if(sel.getFullYear()!==y||sel.getMonth()+1!==m){toast("⛔ La date doit être dans le mois sélectionné","error");syncClosingDate();return}if(sel.getDay()!==0){toast("⛔ La clôture doit être un dimanche","error");syncClosingDate();return}DATA[currentKey].closing=sel.getDate();save();renderCalendar();recalc()};
+closingDate.oninput=()=>{if(!closingDate.value)return;const sel=new Date(closingDate.value),[y,m]=currentKey.split("-").map(Number);if(sel.getFullYear()!==y||sel.getMonth()+1!==m){toast("⛔ La date doit être dans le mois sélectionné","error");syncClosingDate();return}if(sel.getDay()!==getClosingDow()){toast("⛔ La clôture doit être un "+getClosingDayLabel(),"error");syncClosingDate();return}DATA[currentKey].closing=sel.getDate();save();renderCalendar();recalc()};
 closingDate.addEventListener("blur",()=>{const cal=document.getElementById("calendar");if(!cal)return;cal.style.display="none";cal.offsetHeight;cal.style.display="grid"});
 function scrollToToday(){const today=new Date().toISOString().slice(0,7);if(currentKey!==today)return;const el=document.getElementById("todayCell");if(el)el.scrollIntoView({behavior:"smooth",block:"center"})}
 function renderCalendar(){
@@ -1717,7 +1743,7 @@ function openClosuresModal(){
   for(let m=0;m<12;m++){
     const mk=`${y}-${String(m+1).padStart(2,"0")}`;
     if(!ALL_DATA[year]) ALL_DATA[year]={};
-    if(!ALL_DATA[year][mk]) ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastSunday(y,m),locked:false};
+    if(!ALL_DATA[year][mk]) ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastClosingDay(y,m),locked:false};
     const closing=ALL_DATA[year][mk].closing;
     const row=document.createElement("div"); row.className="closure-row";
     const lbl=document.createElement("label"); lbl.textContent=MOIS_NOMS[m]+" "+y;
@@ -1726,7 +1752,7 @@ function openClosuresModal(){
     inp.min=`${y}-${String(m+1).padStart(2,"0")}-01`;
     const lastDay=new Date(y,m+1,0).getDate();
     inp.max=`${y}-${String(m+1).padStart(2,"0")}-${lastDay}`;
-    inp.onchange=()=>{if(!inp.value) return;const sel=new Date(inp.value);if(sel.getDay()!==0){ toast("⛔ Doit être un dimanche","error"); inp.value=""; return; }};
+    inp.onchange=()=>{if(!inp.value) return;const sel=new Date(inp.value);if(sel.getDay()!==getClosingDow()){ toast("⛔ Doit être un "+getClosingDayLabel(),"error"); inp.value=""; return; }};
     row.appendChild(lbl); row.appendChild(inp); grid.appendChild(row);
   }
   document.getElementById("closuresModal").classList.add("open");
@@ -1742,9 +1768,9 @@ function saveAllClosures(){
     const inp=document.getElementById("cls_"+m);
     if(!inp) continue;
     if(!ALL_DATA[year]) ALL_DATA[year]={};
-    if(!ALL_DATA[year][mk]) ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastSunday(y,m),locked:false};
+    if(!ALL_DATA[year][mk]) ALL_DATA[year][mk]={days:{},paid:0,carry:0,closing:getLastClosingDay(y,m),locked:false};
     if(inp.value){const sel=new Date(inp.value);if(sel.getDay()===0){ALL_DATA[year][mk].closing=sel.getDate();changed++;}}
-    else{ALL_DATA[year][mk].closing=getLastSunday(y,m);changed++;}
+    else{ALL_DATA[year][mk].closing=getLastClosingDay(y,m);changed++;}
   }
   save();
   closeClosuresModal();
