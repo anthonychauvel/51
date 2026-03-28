@@ -1167,9 +1167,12 @@ class DTEEngine {
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
     const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
-    const stressExtDecay = consecNonOT > 0
+    // stressExtDecay : même correction que fatigueDecayRest
+    // En vacances consecNonOT=0 (pas de saisie M1) → utiliser MAX(consecNonOT, consecRest)
+    const _consecForStress = Math.max(consecNonOT, consecRest);
+    const stressExtDecay = _consecForStress > 0
       // Demi-vie 10j — McEwen 1998 (allostatic load chronique) + Sluiter 2001
-      ? Math.max(0.08, Math.exp(-Math.log(2) * consecNonOT / 10))
+      ? Math.max(0.08, Math.exp(-Math.log(2) * _consecForStress / 10))
       : 1.0;
     const stressExt = isVacWeekNow
       ? stressExtBase * stressExtDecay
@@ -1224,8 +1227,12 @@ class DTEEngine {
     // INRS phase P2/P3 : récupération complète = 2-6 semaines (demi-vie 10j = milieu fourchette).
     // → utilise consecNonOT (jours sans HS) : inclut les semaines normales ET les vacances.
     // consecNonOT=5j → 0.71 | 10j → 0.50 | 14j → 0.38 | 21j → 0.23
-    const fatigueDecayRest = consecNonOT > 0
-      ? Math.max(0.12, Math.exp(-Math.log(2) * consecNonOT / 10)) // INRS + Meijman & Mulder 1998
+    // fatigueDecayRest : décroissance de la fatigue pendant le repos
+    // En vacances déclarées M4 : consecNonOT=0 (pas de saisie M1) mais consecRest monte
+    // → utiliser MAX(consecNonOT, consecRest) pour que les vacances décroissent bien la fatigue
+    const _consecForDecay = Math.max(consecNonOT, consecRest);
+    const fatigueDecayRest = _consecForDecay > 0
+      ? Math.max(0.12, Math.exp(-Math.log(2) * _consecForDecay / 10)) // INRS + Meijman & Mulder 1998
       : 1.0;
 
     // Plancher récupération : Sonnentag 2003 — détachement réel → recharge progressive.
