@@ -60,10 +60,10 @@ class Dashboard {
             📋 Saisissez des heures dans<br><b style="color:#fff">M1 (Suivi annuel)</b><br>pour activer l'analyse complète.
           </div>` :
           [
-            ['🧠 Fatigue','fatigue','red', fatV, fatLbl],
-            ['⚡ Performance','performance','cyan', perfV, perfLbl],
-            ['💊 Stress','stress','amber', strV, strLbl],
-          ].map(([l,k,col,v,desc])=>`
+            ['🧠 Fatigue',     'fatigue',     v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', fatV,  fatLbl],
+            ['⚡ Performance', 'performance', v=>v>=80?'sync':v>=60?'sync':v>=40?'amber':'red',   perfV, perfLbl],
+            ['💊 Stress',      'stress',      v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', strV,  strLbl],
+          ].map(([l,k,colFn3,v,desc])=>{ const col=colFn3(v); return `
             <div style="margin-top:10px;">
               <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
                 <span style="font-size:11px;color:#fff;">${l}</span>
@@ -71,7 +71,7 @@ class Dashboard {
               </div>
               <div class="hero-bar"><div class="hero-bar-fill" style="width:${v}%;background:var(--${col});box-shadow:0 0 6px var(--${col})40;"></div></div>
               <div style="font-size:10px;color:rgba(255,255,255,0.55);margin-top:2px;">${desc}</div>
-            </div>`).join('')
+            </div>`; }).join('')
           }
       </div>`;
       container.insertAdjacentHTML('beforeend',barHtml);
@@ -165,10 +165,19 @@ class Dashboard {
       facteurs_heures: [
         { label:'Heures hebdo vs seuil OMS (48h)', key:'_recentWeeklyH', fmt: v => v>=55?'≥55h : RR=1.35 AVC, RR=1.17 cardio':v>=48?v.toFixed(0)+'h : au-delà du légal (48h)':'Dans les normes (<48h)' },
         { label:'Durée d\'exposition (dose-temps)', key:'_cumulMonths', fmt: v => {
-            // Source unique : norm._cumulMonths calculé par dte-engine (arrondi 1 déc.)
-            // PAS de recalcul local (évite divergence avec _cumulWeeks / 4.33)
-            const vR = Math.round(v * 10) / 10;
-            return vR > 0 ? vR.toFixed(1)+' mois cumulés (risque ×'+Math.round(Math.min(1.8,(1+vR*0.08))*100)/100+')' : 'Court terme (<1 mois)';
+            const vR = Math.round(v * 100) / 100; // 2 décimales pour voir le decay
+            const norm3 = window.DTE&&window.DTE._state&&window.DTE._state.norm;
+            const isRest = norm3&&norm3._isVacationWeek;
+            const consecRest = (norm3&&norm3._consecRestDays)||0;
+            // Décroissance lente (demi-vie 180j — Kivimäki 2015 : risque structurel)
+            // 2 décimales permettent de voir le mouvement même à court terme
+            const vDisplay = isRest && consecRest > 0
+              ? Math.round(Math.max(0, vR * Math.exp(-Math.LN2 * consecRest / 180)) * 100) / 100
+              : vR;
+            const suffix = isRest ? ' ↓ (récup. lente — risque structurel)' : '';
+            return vDisplay > 0
+              ? vDisplay.toFixed(2)+' mois cumulés (risque ×'+Math.round(Math.min(1.8,(1+vDisplay*0.08))*100)/100+')'+suffix
+              : 'Court terme (<1 mois)';
         }},
       ],
       facteurs_vie: [
@@ -210,8 +219,22 @@ class Dashboard {
       facteurs_heures: [
         { label:'Fatigue accumulée', key:'_cumulWeeks', fmt: v => {
             const isRest = (window.DTE&&window.DTE._state&&window.DTE._state.norm&&window.DTE._state.norm._isVacationWeek);
-            if (isRest && v > 0) return '↓ En cours de restauration — ' + Math.round(v*10)/10 + ' sem. restantes';
-            return v>0 ? 'Réduite : '+Math.round(v*10)/10+' sem. de surcharge' : 'Normale : pas de surcharge';
+            const vR = Math.round(v * 10) / 10;
+            if (isRest && vR > 0) {
+              // Seuil P2 (phase vigilance) = 4 semaines cumulées — INRS phases RPS
+              // Objectif : sortir de la zone surcharge (vR → <4 sem), pas atteindre 0
+              // Vacances : -0.25/sem = -0.25/7j. Semaines normales : -0.10/sem.
+              const surplusVersP2 = Math.max(0, vR - 4);
+              const joursVac   = Math.round(surplusVersP2 * 7 / 0.25);  // jours de vacances
+              const semNorm    = Math.round(surplusVersP2 / 0.10);       // semaines normales
+              if (surplusVersP2 <= 0) {
+                return '✓ Sous le seuil P2 — restauration en bonne voie (' + vR + ' sem.)';
+              }
+              return '↓ Restauration active — ~' + joursVac + 'j de repos' +
+                     (semNorm > 0 ? ' ou ' + semNorm + ' sem. normales' : '') +
+                     ' pour sortir de surcharge (' + vR + ' sem. cumulées)';
+            }
+            return vR > 0 ? 'Réduite : '+vR+' sem. de surcharge' : 'Normale : pas de surcharge';
         }},
         { label:'Base de récupération', key:'_recentWeeklyH', fmt: v => v>48?'Faible (>48h/sem)':v>40?'Moyenne (40-48h)':'Bonne (≤40h)' },
       ],
