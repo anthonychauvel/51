@@ -85,6 +85,14 @@ body {
 
 #animus-boot.hide {
   animation: boot-hide 0.8s ease forwards;
+  /* iOS Safari fix: forcer la disparition même si l'animation ne se déclenche pas */
+  pointer-events: none;
+}
+/* Fallback: si l'animation CSS ne se complète pas (iOS throttling), on masque quand même */
+#animus-boot[style*="display: none"],
+#animus-boot[style*="display:none"] {
+  animation: none !important;
+  opacity: 0 !important;
 }
 @keyframes boot-hide {
   to { opacity: 0; pointer-events: none; transform: scale(1.04); }
