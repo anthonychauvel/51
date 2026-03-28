@@ -161,7 +161,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <p>D&eacute;clench&eacute;es &agrave; partir de la 36&sup1; heure r&eacute;ellement travaill&eacute;e dans la semaine (base 35h, ajust&eacute;e des absences uniquement)&nbsp;:</p>
     <ul><li>36&sup1; &agrave; 43&sup1; heure&nbsp;: majoration de <b>25&nbsp;%</b></li><li>Au-del&agrave; de la 43&sup1; heure&nbsp;: majoration de <b>50&nbsp;%</b></li></ul>
     <hr><h4>&#x1F4C6; P&eacute;riodes et cl&ocirc;tures</h4>
-    <p>Les p&eacute;riodes se terminent le dimanche. La p&eacute;riode suivante d&eacute;bute automatiquement le lundi. Le solde d&apos;une p&eacute;riode est automatiquement report&eacute; sur la p&eacute;riode suivante.</p>
+    <p>Les p&eacute;riodes se terminent en fin de semaine selon l&apos;accord applicable. La p&eacute;riode suivante d&eacute;bute automatiquement le jour suivant. Le solde d&apos;une p&eacute;riode est automatiquement report&eacute; sur la p&eacute;riode suivante.</p>
     <hr><h4>&#x1F512; Verrouillage de la configuration</h4>
     <p>Il est possible de verrouiller les param&egrave;tres g&eacute;n&eacute;raux (date de d&eacute;but, base hebdomadaire, cl&ocirc;ture annuelle) afin d&apos;&eacute;viter toute modification involontaire.</p>
     <hr><h4>&#x1F4BE; Sauvegarde</h4>
@@ -184,12 +184,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <label style="font-size:13px;margin-top:8px;margin-bottom:4px;display:block;">Date de cl&ocirc;ture annuelle</label>
       <input type="date" id="annualDateInput">
     </div>
-    <hr class="settings-divider">
-    <div class="settings-group">
-      <span class="settings-group-label">&#x23F1;&#65039; Temps de travail</span>
-      <label style="font-size:13px;margin-bottom:4px;display:block;">Base hebdomadaire (heures)</label>
-      <input type="number" step="0.5" id="baseHebdoInput">
-    </div>
+    <input type="number" step="0.5" id="baseHebdoInput" style="display:none;">
     <hr class="settings-divider">
     <div class="settings-group">
       <span class="settings-group-label">&#128198; Cl&ocirc;tures comptables</span>
@@ -566,7 +561,7 @@ function getCCNRules() {
   }
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
-// Retourne le lundi (ou debut CCN) de la semaine contenant 'date'
+// Retourne le premier jour (ou debut CCN) de la semaine contenant 'date'
 function getWeekStart(date){
   const rules=getCCNRules();
   const ds=rules.debutSemaine||1; // 1=lun..7=dim
@@ -648,7 +643,7 @@ function saveClosures(){
   let adj=false;
   closures=[...document.querySelectorAll("#closuresInputs input")].map(i=>{const f=forceSunday(i.value);if(i.value&&i.value!==f)adj=true;return f;}).filter(v=>v).sort();
   localStorage.setItem(STORAGE.closures,JSON.stringify(closures));
-  if(adj)toast("ℹ️ Dates ajustées au dimanche","info");
+  if(adj)toast("ℹ️ Dates ajustées au dernier jour de la semaine","info");
   buildPeriods();closeClosures();
 }
 
@@ -746,7 +741,7 @@ function calculate(){
     });
   }
 
-  // Accumuler par semaine civile — tout jour dans [pStart,pEnd], lundi de la semaine sans filtre
+  // Accumuler par semaine civile — tout jour dans [pStart,pEnd], premier jour de la semaine sans filtre
   // Les semaines à cheval (début/fin de période) sont calculées sur 35h plein (semaine civile indivisible)
   Object.entries(data).forEach(([date,v])=>{
     const[y,m,d]=date.split("-").map(Number);
@@ -1617,7 +1612,7 @@ localStorage.removeItem("APP_CRASH_STATE");
 let _scrollY=0;
 function lockBodyScroll(){_scrollY=window.scrollY;document.body.style.overflow="hidden";document.body.style.position="fixed";document.body.style.top="-"+_scrollY+"px";document.body.style.width="100%";}
 function unlockBodyScroll(){document.body.style.overflow="";document.body.style.position="";document.body.style.top="";document.body.style.width="";window.scrollTo(0,_scrollY);}
-document.addEventListener("DOMContentLoaded",()=>{protectFunctions();initSelectors();applyConfigLock();buildPeriods();autoSwitchPeriodAtMidnight();if(!exerciseStart)setTimeout(openWizardModal,300);});
+document.addEventListener("DOMContentLoaded",()=>{protectFunctions();syncBaseHebdoWithCCN();initSelectors();applyConfigLock();buildPeriods();autoSwitchPeriodAtMidnight();if(!exerciseStart)setTimeout(openWizardModal,300);});
 function openLegalPopup(){document.getElementById("popupLegal").style.display="flex";}
 function closeLegalPopup(){document.getElementById("popupLegal").style.display="none";}
 function protectFunctions(){
@@ -1646,7 +1641,7 @@ function protectFunctions(){
   <a href="#" onclick="event.preventDefault();openNotice();">&#x1F4D8; Notice utilisateur</a>
   <button type="button" onclick="protectedCrash()" style="margin-left:10px;background:none;border:none;padding:0;color:#777;font-size:12px;cursor:pointer;user-select:none;">&copy; C.Anthony</button>
 </div>
-<p style="max-width:900px;margin:20px auto;font-size:12px;color:#555;background:#fffde7;border:1px solid #ffe082;padding:12px;border-radius:8px;text-align:center;">
+<p style="max-width:900px;margin:20px auto;font-size:12px;color:#777;text-align:center;">
   &#9888;&#65039; <b>Sauvegarde des données</b><br><br>
   Les données saisies dans cette application sont enregistrées <b>localement sur cet appareil</b>.<br><br>
   <b>Il est fortement recommandé d'effectuer des exports réguliers</b> (mensuels ou après chaque clôture).
@@ -1694,18 +1689,18 @@ function protectFunctions(){
     <span class="wiz-step-label" id="wizStepLabel">Étape 1 / 5</span>
     <div class="wiz-step wiz-active" id="wizStep1">
       <div class="wiz-question">📅 Quelle est la date de début de ton exercice ?</div>
-      <p class="wiz-hint">Ce doit être un <b>lundi</b>. La date sera automatiquement avancée au lundi suivant si nécessaire.</p>
+      <p class="wiz-hint">Ce doit être le <b>premier jour de ta semaine de travail</b>. La date sera ajustée automatiquement si nécessaire.</p>
       <input type="date" id="wizStartDate">
       <div class="wiz-nav"><button class="kitsune-btn" onclick="wizGoTo(2)">Suivant →</button></div>
     </div>
     <div class="wiz-step" id="wizStep2">
       <div class="wiz-question">📆 Comment veux-tu définir tes clôtures mensuelles ?</div>
       <div class="wiz-choice-row">
-        <div class="wiz-choice-btn" id="wizChoiceAuto" onclick="wizSelectClosureMode('auto')">🤖 Automatique<br><small style="font-weight:400;color:#999;">Dernier dimanche de chaque mois</small></div>
+        <div class="wiz-choice-btn" id="wizChoiceAuto" onclick="wizSelectClosureMode('auto')">🤖 Automatique<br><small style="font-weight:400;color:#999;">Dernier jour de fermeture de chaque mois</small></div>
         <div class="wiz-choice-btn" id="wizChoiceManual" onclick="wizSelectClosureMode('manual')">✏️ Manuel<br><small style="font-weight:400;color:#999;">Je saisis les 12 dates moi-même</small></div>
       </div>
       <div id="wizManualDates" style="display:none;"><div class="wiz-closures-grid" id="wizClosuresGrid"></div></div>
-      <div id="wizAutoInfo" style="display:none;font-size:13px;color:#2196a6;background:#e0f4f7;border-radius:8px;padding:10px;margin-bottom:10px;">✅ Les 12 clotures seront les derniers dimanches de chaque mois, a partir du premier mois complet apres la date de debut d'exercice.</div>
+      <div id="wizAutoInfo" style="display:none;font-size:13px;color:#2196a6;background:#e0f4f7;border-radius:8px;padding:10px;margin-bottom:10px;">✅ Les 12 clôtures seront les derniers jours de fermeture de chaque mois, à partir du premier mois complet après la date de début d'exercice.</div>
       <div class="wiz-nav">
         <button onclick="wizGoTo(1)" style="flex:0 0 auto;width:auto;padding:8px 16px;">← Retour</button>
         <button class="kitsune-btn" onclick="wizGoTo(3)">Suivant →</button>
@@ -1713,7 +1708,7 @@ function protectFunctions(){
     </div>
     <div class="wiz-step" id="wizStep3">
       <div class="wiz-question">🏁 Date de clôture annuelle finale ?</div>
-      <p class="wiz-hint">Cette date marque la fin de l'exercice. Elle sera automatiquement ramenée au dimanche le plus proche.</p>
+      <p class="wiz-hint">Cette date marque la fin de l'exercice. Elle sera automatiquement ajustée au dernier jour de ta semaine de travail.</p>
       <input type="date" id="wizAnnualDate">
       <p id="wizAnnualDateInfo" style="font-size:12px;color:#888;margin-top:4px;"></p>
       <div class="wiz-nav">
@@ -1748,7 +1743,7 @@ function protectFunctions(){
 function openSettingsModal(){document.getElementById("exerciseStartInput").value=exerciseStart||"";document.getElementById("annualDateInput").value=annualDate||"";document.getElementById("baseHebdoInput").value=BASE_HEBDO;const aft=document.getElementById("autoFerieToggle");if(aft)aft.checked=AUTO_FERIE;document.getElementById("settingsModal").style.display="flex";lockBodyScroll();}
 function closeSettingsModal(){document.getElementById("settingsModal").style.display="none";unlockBodyScroll();if(typeof update==="function")update();}
 document.getElementById("settingsModal").addEventListener("click",function(e){if(e.target===this)closeSettingsModal();});
-document.getElementById("wizardModal").addEventListener("click",function(e){if(e.target===this)closeWizardModal();});
+// Wizard obligatoire — pas de fermeture par click extérieur
 document.getElementById("pdfModal").addEventListener("click",function(e){if(e.target===this)closePdfModal();});
 let wizClosureMode=null,wizCurrentStep=1;
 const WIZ_TOTAL=5;
@@ -1762,7 +1757,7 @@ function wizGoTo(step){
   wizCurrentStep=step;
   if(step===1){const inpS=document.getElementById("wizStartDate");if(inpS&&!inpS._mondayBound){inpS._mondayBound=true;inpS.onchange=()=>{inpS.value=forceMonday(inpS.value);};}}
   if(step===2)wizBuildManualGrid();
-  if(step===3){const inp=document.getElementById("wizAnnualDate");inp.onchange=()=>{const f=forceSunday(inp.value);document.getElementById("wizAnnualDateInfo").textContent=f&&f!==inp.value?"📅 Date ajustée au dimanche : "+new Date(f).toLocaleDateString():"";inp.value=f;};}
+  if(step===3){const inp=document.getElementById("wizAnnualDate");inp.onchange=()=>{const f=forceSunday(inp.value);document.getElementById("wizAnnualDateInfo").textContent=f&&f!==inp.value?"📅 Date ajustée : "+new Date(f).toLocaleDateString():"";inp.value=f;};}
 }
 function wizValidate(step){if(step===1&&!document.getElementById("wizStartDate").value){toast("⚠️ Date de début requise","warn");return false;}if(step===2&&!wizClosureMode){toast("⚠️ Mode de clôture requis","warn");return false;}return true;}
 function wizSelectClosureMode(mode){wizClosureMode=mode;document.getElementById("wizChoiceAuto").classList.toggle("wiz-selected",mode==="auto");document.getElementById("wizChoiceManual").classList.toggle("wiz-selected",mode==="manual");document.getElementById("wizManualDates").style.display=mode==="manual"?"block":"none";document.getElementById("wizAutoInfo").style.display=mode==="auto"?"block":"none";}
@@ -1792,7 +1787,7 @@ function wizBuildManualGrid(){
   }
 }
 function wizLastSunday(year,month){const last=new Date(year,month+1,0,12,0,0);const dow=last.getDay();if(dow!==0)last.setDate(last.getDate()-dow);return dateKeyLocal(last);}
-function wizShowSummary(){const sd=document.getElementById("wizStartDate").value;const ad=document.getElementById("wizAnnualDate").value;const rate=document.getElementById("wizHourlyRate").value||"—";const feries=document.getElementById("wizImportFeries").checked?"Oui":"Non";const autoF=document.getElementById("wizAutoFerie").checked?"Oui":"Non";const cm=wizClosureMode==="auto"?"Automatique (derniers dimanches)":"Manuel (12 dates saisies)";document.getElementById("wizSummaryContent").innerHTML=`📅 Début d'exercice : <b>${sd?new Date(sd).toLocaleDateString():"Non définie"}</b><br>🏁 Clôture annuelle : <b>${ad?new Date(ad).toLocaleDateString():"Non définie"}</b><br>📆 Clôtures : <b>${cm}</b><br>⏱️ Base hebdomadaire : <b>35 h</b><br>🎌 Jours fériés importés : <b>${feries}</b><br>⚙️ Mode auto-férié : <b>${autoF}</b><br>💶 Taux horaire : <b>${rate} €/h</b>`;document.getElementById("wizSummary").style.display="block";document.getElementById("wizSummaryBtn").style.display="none";document.getElementById("wizFinishBtn").style.display="inline-block";}
+function wizShowSummary(){const sd=document.getElementById("wizStartDate").value;const ad=document.getElementById("wizAnnualDate").value;const rate=document.getElementById("wizHourlyRate").value||"—";const feries=document.getElementById("wizImportFeries").checked?"Oui":"Non";const autoF=document.getElementById("wizAutoFerie").checked?"Oui":"Non";const cm=wizClosureMode==="auto"?"Automatique (derniers jours de mois)":"Manuel (12 dates saisies)";document.getElementById("wizSummaryContent").innerHTML=`📅 Début d'exercice : <b>${sd?new Date(sd).toLocaleDateString():"Non définie"}</b><br>🏁 Clôture annuelle : <b>${ad?new Date(ad).toLocaleDateString():"Non définie"}</b><br>📆 Clôtures : <b>${cm}</b><br>⏱️ Base hebdomadaire : <b>35 h</b><br>🎌 Jours fériés importés : <b>${feries}</b><br>⚙️ Mode auto-férié : <b>${autoF}</b><br>💶 Taux horaire : <b>${rate} €/h</b>`;document.getElementById("wizSummary").style.display="block";document.getElementById("wizSummaryBtn").style.display="none";document.getElementById("wizFinishBtn").style.display="inline-block";}
 async function finishWiz(){
   let sd=document.getElementById("wizStartDate").value;if(!sd){toast("❌ Date de début manquante","error");return;}
   sd=forceMonday(sd);
@@ -1855,7 +1850,7 @@ const TIPS={
   },
   seuil:{
     title:'⏱️ Seuil de déclenchement des HS',
-    body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence le lundi à 0h00, sauf si un accord d\'entreprise ou votre CCN fixe un autre jour de début.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
+    body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence selon le jour fixé par votre accord d\'entreprise ou votre CCN.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
     ref:'Art. L3121-27 · Art. L3121-32 Code du travail'
   }
 };
