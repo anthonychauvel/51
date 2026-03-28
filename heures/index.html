@@ -126,6 +126,12 @@ button,input,textarea{width:100%;padding:8px;margin:5px 0}
 .tip-panel p{margin:0 0 10px;font-size:13px;color:#bcc0c8;line-height:1.5}
 .tip-panel .tip-ref{font-size:11px;color:#6b7280;margin-top:6px;border-top:1px solid #2a2f3a;padding-top:8px}
 .tip-close{position:absolute;top:12px;right:14px;background:none;border:none;color:#9aa0a6;font-size:20px;cursor:pointer;padding:4px 8px}
+/* ── COMPATIBILITY FIXES ─────────────────────────────────── */
+* { -webkit-tap-highlight-color: transparent; }
+button, [onclick] { -webkit-user-select: none; user-select: none; }
+body { overscroll-behavior-y: none; touch-action: pan-y; }
+.popup, .modal, [class*="overlay"] { overscroll-behavior: contain; }
+input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; }
 </style>
 </head>
 <body>
@@ -1823,6 +1829,14 @@ function wizReset(){wizClosureMode=null;wizCurrentStep=1;document.querySelectorA
   </div>
 </div>
 <script>
+  /* ── SAFE localStorage (iOS Navigation Privée) ── */
+  const _safeLS = {
+    get:  (k, d='')  => { try { return localStorage.getItem(k) ?? d; }    catch(_) { return d; } },
+    set:  (k, v)     => { try { localStorage.setItem(k, v); }              catch(_) {} },
+    del:  (k)        => { try { localStorage.removeItem(k); }              catch(_) {} },
+    json: (k, d={})  => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(_) { return d; } },
+  };
+
 const TIPS={
   contingent:{
     title:'📊 Contingent annuel d\'heures supplémentaires',
