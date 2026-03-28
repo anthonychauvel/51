@@ -414,3 +414,8 @@
   }
   .action-block-btn { width: auto; flex: 1; min-width: 80px; }
 }
+
+/* ── COMPATIBILITY FIXES ─────────────────────────────────── */
+.score-detail-modal, .modal-overlay {
+  overscroll-behavior: contain;
+}

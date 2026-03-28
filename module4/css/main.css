@@ -249,7 +249,7 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh;
+  height: 100vh; height: 100dvh;
   height: 100dvh;
   overflow: hidden;
   position: relative;
@@ -544,7 +544,7 @@ body {
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .modal.hidden { display: none; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
 .modal-box {
   position: relative;
   background: linear-gradient(135deg, #001428 0%, #000d1a 100%);
@@ -635,7 +635,7 @@ body {
 /* ── MOBILE SCROLL FIX ──────────────────────────────────────────── */
 @media (max-width: 900px) {
   html, body { overflow: auto; height: auto; }
-  #app { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
+  #app { height: auto; min-height: 100vh; min-height: 100dvh; height: 100dvh; overflow: visible; flex-direction: column; }
   .app-main { overflow: visible; height: auto; flex: none; }
   .view { position: relative !important; opacity: 1 !important; pointer-events: auto !important; display: none; }
   .view.active { display: block; }
@@ -956,3 +956,22 @@ body {
 .gloss-cat-neuro     { color: #c86830; }
 .gloss-cat-burnout   { color: #c88020; }
 .gloss-cat-prod      { color: #2090b8; }
+
+/* ── COMPATIBILITY FIXES ─────────────────────────────────── */
+/* Prevent pull-to-refresh on Android in modals */
+.modal, .modal-content, [class*="overlay"], [class*="popup"] {
+  overscroll-behavior: contain;
+}
+/* Prevent scroll bounce on iOS in fixed panels */
+body {
+  overscroll-behavior-y: none;
+}
+/* iOS: remove blue flash on tap */
+* { -webkit-tap-highlight-color: transparent; }
+/* iOS: prevent text selection on buttons */
+button, [onclick] { -webkit-user-select: none; user-select: none; }
+/* iOS/Android: consistent date input rendering */
+input[type="date"], input[type="time"] {
+  -webkit-appearance: none;
+  appearance: none;
+}
