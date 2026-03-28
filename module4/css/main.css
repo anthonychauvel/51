@@ -544,7 +544,7 @@ body {
   padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left));
 }
 .modal.hidden { display: none; }
-.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); -webkit-backdrop-filter: blur(4px); backdrop-filter: blur(4px); }
+.modal-overlay { position: absolute; inset: 0; background: rgba(0,6,15,0.92); backdrop-filter: blur(4px); }
 .modal-box {
   position: relative;
   background: linear-gradient(135deg, #001428 0%, #000d1a 100%);
@@ -957,5 +957,9 @@ body {
 .gloss-cat-burnout   { color: #c88020; }
 .gloss-cat-prod      { color: #2090b8; }
 
-/* iOS: remove tap flash */
-* { -webkit-tap-highlight-color: transparent; }
+/* ── ANTI-ZOOM iOS ─────────────────────────────────────────────────
+   Sur iOS Safari, tout input/select avec font-size < 16px déclenche
+   un zoom automatique au focus. On force 16px pour tous les champs.   */
+input, select, textarea {
+  font-size: 16px !important;
+}
