@@ -694,6 +694,10 @@ class DTEEngine {
     const _ccnR      = _dteGetCCNRules();
     const weeklyH7   = _ccnR.seuil + weeklyExtra; // seuil CCN + HS réelles
 
+    // Signal "semaine sans travail" — déclaré ici car utilisé dans consecRestDays ET isCurrentWeekVacation
+    // count7=0 ET sumExtra7=0 → aucune heure saisie cette semaine dans M1/M2
+    const noWorkThisWeek = count7 === 0 && sumExtra7 === 0;
+
     // ── JOURS CONSÉCUTIFS — deux compteurs distincts ─────────────────────────
     // [1] consec (légal) : jours ouverts SANS weekend (L3132-1)
     //     → le weekend casse le compteur = repos hebdomadaire légal
@@ -969,7 +973,7 @@ class DTEEngine {
     });
 
     // Signal calendrier : aucune heure saisie cette semaine dans M1/M2
-    const noWorkThisWeek = count7 === 0 && sumExtra7 === 0;
+    // (noWorkThisWeek déclaré plus haut, avant les boucles de compteurs)
 
     // Signal combiné : moins d'heures que le seuil contractuel ET fenêtre 28j nulle
     const belowBaseThisWeek = weeklyH7 <= _seuil && countWorkDays28 < 3;
