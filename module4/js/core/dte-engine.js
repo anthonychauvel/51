@@ -1242,13 +1242,17 @@ class DTEEngine {
       ? Math.min(0.30, 0.04 + consecRest * 0.035)
       : 0.04;
 
+    // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
+    // Ancienne formule : partait de 0.045 → plafond ~10% même sans surcharge (faux)
+    // Sans surcharge fat=1% → ~98% | 10 sem fat=36% → ~36% | surmenage fat=80% → ~4%
+    const recBase = 1.0
+      - (fatigue * fatigueDecayRest) * 1.40    // fatigue (Meijman & Mulder 1998)
+      - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
+      - recNightPenalty;
     const recovery = Math.max(vacationFloor, Math.min(1,
-      D.RECOVERY_WE
-      - (fatigue * fatigueDecayRest) * 0.40   // fatigue décrue (Meijman & Mulder 1998)
-      - (cumW / 30) * 0.20 * fatigueDecayRest  // pression cumulée allégée
-      - recNightPenalty
-      + sonnentagRestBonus                      // détachement complet (Sonnentag 2003)
-      + masteryBonus                            // maîtrise partielle (Sonnentag 2003 Fig.3)
+      recBase
+      + sonnentagRestBonus * 0.20   // détachement psychologique (Sonnentag 2003)
+      + masteryBonus * 0.20         // maîtrise partielle (Sonnentag 2003 Fig.3)
     ));
 
     // ── RISQUE ERREUR (Pencavel + fatigue + INRS) ────────────────
