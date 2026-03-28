@@ -79,7 +79,9 @@ class Dashboard {
   }
 
   _calcGlobal(scores){
-    return Math.max(0,Math.min(100,scores.performance-Math.floor(scores.fatigue*.3)));
+    // Cohérence avec app.js : 100 - MAX(fatigue, stress, cogRisk)
+    const worst = Math.max(scores.fatigue||0, scores.stress||0, scores.cogRisk||0);
+    return Math.max(0, Math.min(100, Math.round(100 - worst)));
   }
 
   _renderScores(scores){
@@ -95,7 +97,10 @@ class Dashboard {
       facteurs_heures: [
         { label:'Heures supplémentaires/sem', key:'_avgExtra7', fmt: v => v>0 ? '+'+v.toFixed(1)+'h/j × 0.09' : '0h supp.' },
         { label:'Jours consécutifs',          key:'_consecOT',  fmt: v => v > 10 ? v+'j ouvrés de surcharge ⚠️' : v > 5 ? v+'j ouvrés de surcharge' : v+'j consécutifs cette semaine' },
-        { label:'Semaines de surcharge',       key:'_cumulWeeks',fmt: v => v>0 ? v+' sem. cumulées (×'+( v>=24?'1.55':v>=16?'1.40':v>=8?'1.25':v>=4?'1.12':'1.00')+')' : 'Pas de cumul' },
+        { label:'Semaines de surcharge', key:'_cumulWeeks', fmt: v => {
+            const vR = Math.round(v * 10) / 10;
+            return vR > 0 ? vR+' sem. cumulées (×'+(vR>=24?'1.55':vR>=16?'1.40':vR>=8?'1.25':vR>=4?'1.12':'1.00')+')' : 'Pas de cumul';
+        }},
       ],
       facteurs_vie: [
         { label:'Sommeil (check-in)',   key:'ci_sleep',  fmt: v => v!==undefined ? ['< 4h','4-5h','6h','7h','8h+'][v]||'—' : 'Non renseigné' },
@@ -134,7 +139,11 @@ class Dashboard {
       desc: 'Votre efficacité estimée. Pencavel/Stanford 2014 : chute après 50h/sem, falaise à 55h.',
       source: 'Pencavel 2014 (Stanford) · OEM 2025 (Jang) · Nature 2025 (Fan)',
       facteurs_heures: [
-        { label:'Heures hebdo (courbe Pencavel)', key:'_recentWeeklyH', fmt: v => v.toFixed(0)+'h/sem — perf. Pencavel '+( v<=35?'100%':v<=40?'~99%':v<=48?'~82%':v<=50?'~80%':v<=55?'~60%':'~52%' ) },
+        { label:'Heures hebdo (courbe Pencavel)', key:'_recentWeeklyH', fmt: v => {
+            const isRest = (window.DTE&&window.DTE._state&&window.DTE._state.norm&&window.DTE._state.norm._isVacationWeek);
+            if (isRest) return '0h travaillées — potentiel de récupération actif';
+            return v.toFixed(0)+'h/sem — perf. Pencavel '+(v<=35?'100%':v<=40?'~99%':v<=48?'~82%':v<=50?'~80%':v<=55?'~60%':'~52%');
+        }},
         { label:'Risque cognitif (≥52h)', key:'_recentWeeklyH', fmt: v => v>=52?'Actif : +19% gyrus frontal (OEM 2025)':'Non actif (<52h)' },
       ],
       facteurs_vie: [
@@ -155,7 +164,12 @@ class Dashboard {
       source: 'OMS/OIT 2021 (Pega et al.) · Lancet 2021 (Ervasti) · Kivimäki 2015',
       facteurs_heures: [
         { label:'Heures hebdo vs seuil OMS (48h)', key:'_recentWeeklyH', fmt: v => v>=55?'≥55h : RR=1.35 AVC, RR=1.17 cardio':v>=48?v.toFixed(0)+'h : au-delà du légal (48h)':'Dans les normes (<48h)' },
-        { label:'Durée d\'exposition (dose-temps)', key:'_cumulMonths', fmt: v => v>0 ? v.toFixed(1)+' mois cumulés (risque ×'+Math.min(1.8,(1+v*0.08)).toFixed(2)+')' : 'Court terme (<1 mois)' },
+        { label:'Durée d\'exposition (dose-temps)', key:'_cumulMonths', fmt: v => {
+            // Source unique : norm._cumulMonths calculé par dte-engine (arrondi 1 déc.)
+            // PAS de recalcul local (évite divergence avec _cumulWeeks / 4.33)
+            const vR = Math.round(v * 10) / 10;
+            return vR > 0 ? vR.toFixed(1)+' mois cumulés (risque ×'+Math.round(Math.min(1.8,(1+vR*0.08))*100)/100+')' : 'Court terme (<1 mois)';
+        }},
       ],
       facteurs_vie: [
         { label:'Sport régulier',    key:'ci_motiv', fmt: v => 'Non mesuré dans le check-in' },
@@ -174,7 +188,10 @@ class Dashboard {
       source: 'OEM 2025 — Jang W. et al., Yonsei University',
       facteurs_heures: [
         { label:'Seuil ≥52h/sem', key:'_recentWeeklyH', fmt: v => v>=52?'Actif : '+v.toFixed(0)+'h/sem':'Sous le seuil ('+v.toFixed(0)+'h < 52h)' },
-        { label:'Durée exposition', key:'_cumulWeeks',   fmt: v => v>0 ? v+' sem. → risque ×'+Math.min(2.0,(1+v*0.05)).toFixed(2) : 'Sous le seuil' },
+        { label:'Durée exposition', key:'_cumulWeeks', fmt: v => {
+            const vR = Math.round(v * 10) / 10;
+            return vR > 0 ? vR+' sem. → risque ×'+Math.round(Math.min(2.0,(1+vR*0.05))*100)/100 : 'Sous le seuil';
+        }},
       ],
       facteurs_vie: [
         { label:'Sommeil (protecteur)', key:'ci_sleep', fmt: v => v!==undefined && v>=3 ? 'Bon sommeil — facteur protecteur' : v!==undefined ? 'Sommeil insuffisant — facteur aggravant' : 'Non mesuré' },
@@ -191,7 +208,11 @@ class Dashboard {
       desc: 'Capacité à récupérer. Diminue avec l\'accumulation. Sonnentag 2003 : le détachement psychologique est clé.',
       source: 'INRS · Sonnentag 2003 (J.Applied Psychology) · Nature 2025 (Fan)',
       facteurs_heures: [
-        { label:'Fatigue accumulée',    key:'_cumulWeeks', fmt: v => v>0 ? 'Réduite : '+v+' sem. de surcharge' : 'Normale : pas de surcharge' },
+        { label:'Fatigue accumulée', key:'_cumulWeeks', fmt: v => {
+            const isRest = (window.DTE&&window.DTE._state&&window.DTE._state.norm&&window.DTE._state.norm._isVacationWeek);
+            if (isRest && v > 0) return '↓ En cours de restauration — ' + Math.round(v*10)/10 + ' sem. restantes';
+            return v>0 ? 'Réduite : '+Math.round(v*10)/10+' sem. de surcharge' : 'Normale : pas de surcharge';
+        }},
         { label:'Base de récupération', key:'_recentWeeklyH', fmt: v => v>48?'Faible (>48h/sem)':v>40?'Moyenne (40-48h)':'Bonne (≤40h)' },
       ],
       facteurs_vie: [
@@ -213,14 +234,16 @@ class Dashboard {
     const defs=[
       {key:'fatigue',    label:'FATIGUE',       sub:'Niveau d\'épuisement', inv:false},
       {key:'stress',     label:'STRESS',        sub:'Cortisol & tension',   inv:false},
-      {key:'performance',label:'PERFORMANCE',   sub:'Efficacité au travail', inv:true},
+      {key:'performance',label:'PERFORMANCE',   sub:'Efficacité au travail', inv:true, subFn: (s,n) => (n&&n._isVacationWeek) ? 'Potentiel de récupération' : 'Efficacité au travail'},
       {key:'cvRisk',     label:'CŒUR',          sub:'Risque cardio OMS',    inv:false},
       {key:'cogRisk',    label:'CERVEAU',        sub:'Risque cérébral OEM',  inv:false},
-      {key:'recovery',   label:'RÉCUPÉRATION',  sub:'Capacité de récup.',   inv:true},
+      {key:'recovery',   label:'RÉCUPÉRATION',  sub:'Capacité de récup.',   inv:true, subFn: (s,n) => (n&&n._isVacationWeek) ? 'Phase de restauration active' : 'Capacité de récup.'},
     ];
     el.innerHTML=defs.map(d=>{
       const v=Math.round(scores[d.key])||0;
       const c=colFn(d.inv)(v);
+      const norm2 = window.DTE && window.DTE._state && window.DTE._state.norm;
+      const subLabel = d.subFn ? d.subFn(scores, norm2) : d.sub;
       return `<div class="score-card" style="cursor:pointer;transition:border-color .15s;"
         onclick="window._showScoreDetail('${d.key}')"
         onmouseover="this.style.borderColor='rgba(0,200,255,0.4)'"
@@ -228,7 +251,7 @@ class Dashboard {
         <div class="score-card-label">${d.label}</div>
         <div class="score-card-val" style="color:${c};">${v}</div>
         <div class="score-card-bar"><div class="score-card-bar-fill" style="width:${v}%;background:${c};"></div></div>
-        <div class="score-card-sub">${d.sub}</div>
+        <div class="score-card-sub">${subLabel}</div>
         <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:2px;">Toucher pour détails ›</div>
       </div>`;
     }).join('');
