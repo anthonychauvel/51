@@ -700,7 +700,7 @@ class DTEEngine {
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
     const avgExtra7 = weeklyExtra / 5;
-    const avgH7Raw  = D.BASE_JOUR + avgExtra7;
+    const avgH7     = D.BASE_JOUR + avgExtra7;
     const _ccnR        = _dteGetCCNRules();
     const weeklyH7     = _ccnR.seuil + weeklyExtra;
 
@@ -994,9 +994,7 @@ class DTEEngine {
 
     const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
 
-    // En vacances déclarées M4 : avgExtra7 déjà déclaré, on force fatHS à 0 via norm
-    // avgH7 recalculé selon vacances
-    const avgH7     = isCurrentWeekVacation ? D.BASE_JOUR : (D.BASE_JOUR + avgExtra7);
+    // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
     // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
     const recentWeeklyH = isCurrentWeekVacation
