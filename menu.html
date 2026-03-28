@@ -390,7 +390,21 @@
         </div>
       </div>
       
-      <button class="wiz-btn primary" onclick="goStep(3)" style="margin-top:20px">Continuer →</button>
+      <div style="margin-top:16px;background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.12);border-radius:10px;padding:12px;">
+        <h3 style="font-size:13px;margin-bottom:10px;color:#2196a6;">🎁 Les deux autres modules disponibles</h3>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:rgba(255,179,0,0.06);border:1px solid rgba(255,179,0,0.2);border-radius:8px;padding:10px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px;">🦊 Mon compagnon d'analyse</div>
+            <div style="font-size:11px;color:#666;line-height:1.5;">Un renard-compagnon RPG qui suit tes heures, te donne des récompenses et t'aide à visualiser ta progression de façon ludique.</div>
+          </div>
+          <div style="background:rgba(0,200,100,0.06);border:1px solid rgba(0,200,100,0.2);border-radius:8px;padding:10px;">
+            <div style="font-size:13px;font-weight:600;margin-bottom:3px;">🩺 Ma prédiction santé</div>
+            <div style="font-size:11px;color:#666;line-height:1.5;">Un jumeau numérique qui analyse l'impact de tes heures sur ta fatigue, ton stress et ta santé à long terme, avec des prédictions basées sur des études scientifiques.</div>
+          </div>
+        </div>
+      </div>
+
+      <button class="wiz-btn primary" onclick="goStep(3)" style="margin-top:16px">Continuer →</button>
     </div>
 
     <!-- Étape 3 : Quelle situation ? -->
@@ -494,6 +508,15 @@
 <!-- =====================
      MENU PRINCIPAL
 ===================== -->
+<button class="info-btn" onclick="reopenWizard()" style="background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
+
+<!-- CCN BADGE en haut -->
+<div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
+  <span>⚖️</span>
+  <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
+  <span class="ccn-edit">✎ modifier</span>
+</div>
+
 <div class="btn" onclick="go('heures')">
   <img src="images/renard-annuel.png.jpg" loading="lazy" alt="Compteur annuel">
   <div class="title">Simulateur de compteur annuel</div>
@@ -510,20 +533,12 @@
 </div>
 
 <div class="btn" onclick="go('module4')">
-  <div class="btn-no-img">
-    <div class="title" style="margin:0;">🩺 Ma prédiction santé</div>
-  </div>
+  <img src="foxpredit.jpg" loading="eager" alt="Ma prédiction santé" onerror="this.style.display='none'">
+  <div class="title">🩺 Ma prédiction santé</div>
 </div>
 
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
-<button class="info-btn" onclick="reopenWizard()">🔁 Revoir l'aide au choix</button>
 
-<!-- CCN BADGE -->
-<div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
-  <span>⚖️</span>
-  <span class="ccn-name" id="ccn-badge-name">Convention collective</span>
-  <span class="ccn-edit">✎ modifier</span>
-</div>
 
 <!-- MODAL CCN -->
 <div id="ccnModal">
@@ -574,10 +589,6 @@
   </div>
 </div>
 
-<div class="backup-advice">
-  💾 <strong>Conseil sauvegarde</strong><br>
-  Effectuez des <strong>exports réguliers</strong> (JSON/PDF) pour éviter toute perte de données.
-</div>
 
 <div style="display:flex;gap:12px;justify-content:center;padding:8px 0;font-size:11px;opacity:0.7;">
   <button onclick="window.openLicensePopup()" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:0;margin:0;text-decoration:underline;">📄 Licence</button>
