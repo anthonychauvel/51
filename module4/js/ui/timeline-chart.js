@@ -8,7 +8,7 @@ class TimelineChart {
   constructor(canvas){
     // canvas peut être null ou un <div> (affichage narratif désormais)
     this._canvas = (canvas && canvas.tagName === 'CANVAS') ? canvas : null;
-    this._ctx    = this._canvas ? this._canvas.getContext('2d'); if (!ctx) return; : null;
+    this._ctx    = this._canvas ? this._canvas.getContext('2d') : null;
     this._tooltip= null;
     this._data   = null;
     if(this._canvas) { this._resize(); window.addEventListener('resize',()=>this._resize()); }

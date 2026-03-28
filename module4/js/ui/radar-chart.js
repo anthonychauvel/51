@@ -5,7 +5,7 @@
 'use strict';
 
 class RadarChart {
-  constructor(canvas){ this._canvas=canvas; this._ctx=canvas?canvas.getContext('2d'); if (!ctx) return;:null; }
+  constructor(canvas){ this._canvas=canvas; this._ctx=canvas?canvas.getContext('2d'):null; }
 
   render(axes){
     const cv=this._canvas, ctx=this._ctx;
