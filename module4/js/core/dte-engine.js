@@ -699,10 +699,10 @@ class DTEEngine {
       }
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
-    const avgExtra7  = weeklyExtra / 5;
-    const avgH7      = D.BASE_JOUR + avgExtra7;
-    const _ccnR      = _dteGetCCNRules();
-    const weeklyH7   = _ccnR.seuil + weeklyExtra;
+    const avgExtra7Raw = weeklyExtra / 5;
+    const avgH7Raw     = D.BASE_JOUR + avgExtra7Raw;
+    const _ccnR        = _dteGetCCNRules();
+    const weeklyH7     = _ccnR.seuil + weeklyExtra;
 
     // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
     // (jours vides = pas de saisie = vacances non déclarées ou repos de fait)
@@ -994,6 +994,11 @@ class DTEEngine {
 
     const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
 
+    // En vacances déclarées M4 : avgExtra7 forcé à 0 — la moyenne historique des HS
+    // ne doit PAS être injectée comme si on travaillait (bug : fatigue artificielle)
+    const avgExtra7 = isCurrentWeekVacation ? 0 : avgExtra7Raw;
+    const avgH7     = D.BASE_JOUR + avgExtra7;
+
     // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
     const recentWeeklyH = isCurrentWeekVacation
       ? _seuil
@@ -1167,9 +1172,8 @@ class DTEEngine {
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
     const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
-    // stressExtDecay : même correction que fatigueDecayRest
-    // En vacances consecNonOT=0 (pas de saisie M1) → utiliser MAX(consecNonOT, consecRest)
-    const _consecForStress = Math.max(consecNonOT, consecRest);
+    // stressExtDecay : même logique que fatigueDecayRest — vacances = 2× plus efficace
+    const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? consecRest * 2 : consecRest);
     const stressExtDecay = _consecForStress > 0
       // Demi-vie 10j — McEwen 1998 (allostatic load chronique) + Sluiter 2001
       ? Math.max(0.08, Math.exp(-Math.log(2) * _consecForStress / 10))
@@ -1228,9 +1232,10 @@ class DTEEngine {
     // → utilise consecNonOT (jours sans HS) : inclut les semaines normales ET les vacances.
     // consecNonOT=5j → 0.71 | 10j → 0.50 | 14j → 0.38 | 21j → 0.23
     // fatigueDecayRest : décroissance de la fatigue pendant le repos
-    // En vacances déclarées M4 : consecNonOT=0 (pas de saisie M1) mais consecRest monte
-    // → utiliser MAX(consecNonOT, consecRest) pour que les vacances décroissent bien la fatigue
-    const _consecForDecay = Math.max(consecNonOT, consecRest);
+    // En vacances : consecRest compte double (de Bloom 2010 : détachement actif = récupération 2× plus rapide)
+    // En repos normal : consecNonOT (jours sans HS) donne la décroissance standard (demi-vie 10j)
+    const consecRestEff  = isVacWeekScore ? consecRest * 2 : consecRest;
+    const _consecForDecay = Math.max(consecNonOT, consecRestEff);
     const fatigueDecayRest = _consecForDecay > 0
       ? Math.max(0.12, Math.exp(-Math.log(2) * _consecForDecay / 10)) // INRS + Meijman & Mulder 1998
       : 1.0;
