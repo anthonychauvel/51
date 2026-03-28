@@ -1,8 +1,8 @@
 /**
- * Animus Boot Sequence — Séquence d'initialisation style AC Animus
+ * Animus Boot Sequence
+ * FIX : délais réduits sur mobile + détection connexion lente
  */
-(function(global){
-'use strict';
+(function(global){'use strict';
 
 const BOOT_MESSAGES = [
   'INITIALISATION DU JUMEAU NUMERIQUE...',
@@ -17,6 +17,14 @@ const BOOT_MESSAGES = [
   'DIGITAL TWIN PRET — SYNCHRONISATION COMPLETE.',
 ];
 
+// Détection mobile/connexion lente
+// Sur iPhone, Safari throttle les timers → on réduit drastiquement les délais
+const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+const _slowConnection = (navigator.connection && 
+  (navigator.connection.saveData || 
+   ['slow-2g','2g'].includes(navigator.connection.effectiveType)));
+const _fastMode = _isMobile || _slowConnection;
+
 class AnimusBoot {
   constructor(){
     this._screen = document.getElementById('animus-boot');
@@ -27,8 +35,37 @@ class AnimusBoot {
   }
 
   start(onComplete){
+    // Sur mobile : animation ultra-rapide (< 2s total)
+    if (_fastMode) {
+      this._runFast(onComplete);
+      return;
+    }
     this._spawnParticles();
     this._runSequence(onComplete);
+  }
+
+  // Mode rapide pour mobile : pas de typage, juste la barre de progression
+  _runFast(onComplete){
+    const total = BOOT_MESSAGES.length;
+    let step = 0;
+    if(this._status) this._status.textContent = 'DIGITAL TWIN — CHARGEMENT...';
+    const tick = () => {
+      step++;
+      const pct = Math.round((step / total) * 100);
+      if(this._bar) this._bar.style.width = pct + '%';
+      if(step >= total){
+        setTimeout(()=>{
+          if(this._screen) this._screen.classList.add('hide');
+          setTimeout(()=>{
+            if(this._screen) this._screen.style.display='none';
+            if(onComplete) onComplete();
+          }, 200); // réduit de 800ms → 200ms
+        }, 100); // réduit de 400ms → 100ms
+        return;
+      }
+      setTimeout(tick, 80); // 80ms par step = ~800ms total
+    };
+    tick();
   }
 
   _runSequence(onComplete){
