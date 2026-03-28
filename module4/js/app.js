@@ -233,13 +233,16 @@ document.addEventListener('DOMContentLoaded', function () {
       const r2 = DTE.risks.detect(s.scores, s.norm);
       const a2 = buildAdvice(s.scores, r2, s.norm);
       DTE.lastRisks = r2; DTE.lastAdvice = a2;
-      // Recalculer le scoreGlobal
+      // Recalculer le scoreGlobal — formule unifiée avec runAnalysis
       if (!s.scores._hasData) {
         DTE.app = { scoreGlobal: null };
       } else {
+        const sc = s.scores;
+        const worstResidue = Math.max(sc.fatigue||0, sc.stress||0, sc.cogRisk||0);
         const d2 = r2.filter(r => r.level === 'CRITIQUE').length;
         const al = r2.filter(r => r.level !== 'CRITIQUE').length;
-        DTE.app = { scoreGlobal: Math.max(0, Math.min(100, (s.scores.performance||50) - d2*15 - al*5)) };
+        const base = Math.max(0, 100 - worstResidue);
+        DTE.app = { scoreGlobal: Math.max(0, Math.min(100, Math.round(base - d2*5 - al*2))) };
       }
       DTE.dashboard.render(s, r2, a2);
       if (DTE.twin) DTE.twin.update(s.scores);
@@ -248,6 +251,8 @@ document.addEventListener('DOMContentLoaded', function () {
         if (av.id === 'view-predictions') renderPredictions(s);
         if (av.id === 'view-whatif' && DTE.whatif) DTE.whatif.render();
       }
+      // Notifier les autres composants qu'une analyse vient d'être faite
+      document.dispatchEvent(new CustomEvent('dte:analyzed', { detail: s }));
     } catch(e) { console.warn('[DTE] fullSync:', e); }
   };
 
