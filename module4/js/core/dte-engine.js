@@ -662,24 +662,38 @@ class DTEEngine {
     const avgExtraPerDay28 = countWorkDays28 > 0 ? sumExtra / countWorkDays28 : 0;
     const weeklyExtra28 = avgExtraPerDay28 * 5;  // projeté sur 5j ouvrés/sem
 
-    // Semaine civile courante (lun → aujourd'hui) — pour affichage et fallback
+    // Semaine civile courante (lun → aujourd'hui)
+    // CORRECTION : on ne compte un jour que s'il a une ENTRÉE RÉELLE dans M1/M2
+    // (e !== undefined ET e.extra >= 0). Un jour sans entrée = pas de donnée = pas comptabilisé.
+    // Avant : !e → count7++ (jour vide compté comme jour travaillé → faux pour les vacances)
     let sumExtra7 = 0, count7 = 0;
+    let hasAnyEntryThisWeek = false; // au moins 1 entrée M1/M2 cette semaine
     for (let dd = 0; dd < todayDowA && dd < 5; dd++) {
       const d = new Date(weekMondayA); d.setDate(weekMondayA.getDate() + dd);
       if (d > today) break;
       const k = localDK(d);
       const e = days[k];
-      if (!e || !e.absent) { sumExtra7 += (e ? (e.extra || 0) : 0); count7++; }
+      // Ignorer jours fériés et vacances déclarées dans le compteur
+      if (specialDays[k] === 'ferie' || vacances[k]) continue;
+      // Ignorer jours absents
+      if (e && e.absent > 0) continue;
+      // Ne compter QUE les jours avec une entrée réelle (e existe)
+      if (e) {
+        sumExtra7 += (e.extra || 0);
+        count7++;
+        hasAnyEntryThisWeek = true;
+      }
+      // Un jour sans entrée (e=undefined) = vacances non déclarées ou repos → PAS compté
     }
-    // weeklyExtra : on utilise la fenêtre 28j si suffisamment de données (≥5 jours ouvrés)
-    // Sinon extrapolation de la semaine civile courante si elle a ≥2 jours
+
+    // weeklyExtra : fenêtre 28j si données suffisantes, sinon semaine courante
     let weeklyExtra;
     if (countWorkDays28 >= 5) {
-      weeklyExtra = weeklyExtra28; // fenêtre 28j = référence principale
+      weeklyExtra = weeklyExtra28;
     } else if (count7 >= 2) {
-      weeklyExtra = (sumExtra7 / count7) * 5; // extrapolation semaine courante
+      weeklyExtra = (sumExtra7 / count7) * 5;
     } else {
-      // Fallback : semaine précédente
+      const prevExtra2 = [], prevCount2 = [];
       let prevExtra = 0, prevCount = 0;
       for (let dd = 0; dd < 5; dd++) {
         const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() - 7 + dd);
@@ -689,14 +703,19 @@ class DTEEngine {
       }
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
-    const avgExtra7  = weeklyExtra / 5;         // HS/j = total semaine ÷ 5 jours ouvrés
-    const avgH7      = D.BASE_JOUR + avgExtra7; // h/j moyenne
+    const avgExtra7  = weeklyExtra / 5;
+    const avgH7      = D.BASE_JOUR + avgExtra7;
     const _ccnR      = _dteGetCCNRules();
-    const weeklyH7   = _ccnR.seuil + weeklyExtra; // seuil CCN + HS réelles
+    const weeklyH7   = _ccnR.seuil + weeklyExtra;
 
-    // Signal "semaine sans travail" — déclaré ici car utilisé dans consecRestDays ET isCurrentWeekVacation
-    // count7=0 ET sumExtra7=0 → aucune heure saisie cette semaine dans M1/M2
-    const noWorkThisWeek = count7 === 0 && sumExtra7 === 0;
+    // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
+    // (jours vides = pas de saisie = vacances non déclarées ou repos de fait)
+    const noWorkThisWeek = !hasAnyEntryThisWeek;
+
+    // Si semaine de repos détectée : forcer weeklyExtra à 0 immédiatement
+    // pour que les calculs aval (variabilité, sigma) reflètent la réalité
+    const weeklyExtraEffective = noWorkThisWeek ? 0 : weeklyExtra;
+    const weeklyH7Effective    = noWorkThisWeek ? _ccnR.seuil : weeklyH7;
 
     // ── JOURS CONSÉCUTIFS — deux compteurs distincts ─────────────────────────
     // [1] consec (légal) : jours ouverts SANS weekend (L3132-1)
@@ -778,7 +797,7 @@ class DTEEngine {
       }
       // Extrapolation semaine courante
       if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
-        weekH = _ccnSeuilW + weeklyExtra;
+        weekH = _ccnSeuilW + weeklyExtraEffective;
       }
       const isVacWeekP1 = [0,1,2,3,4].some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
@@ -828,7 +847,9 @@ class DTEEngine {
       }
     }
 
-    const cumulMonths = cumulWeeks / 4.33;
+    // Arrondi final pour éviter 6.0000000000000014 dans l'affichage
+    const cumulWeeksR  = Math.round(cumulWeeks * 10) / 10;  // 1 décimale
+    const cumulMonths  = Math.round((cumulWeeksR / 4.33) * 10) / 10; // même précision
 
     // ── COMPTEURS DE RÉCUPÉRATION — deux niveaux distincts ───────────────────
     //
@@ -975,14 +996,15 @@ class DTEEngine {
     // Signal calendrier : aucune heure saisie cette semaine dans M1/M2
     // (noWorkThisWeek déclaré plus haut, avant les boucles de compteurs)
 
-    // Signal combiné : moins d'heures que le seuil contractuel ET fenêtre 28j nulle
-    const belowBaseThisWeek = weeklyH7 <= _seuil && countWorkDays28 < 3;
+    // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
+    const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
     const isCurrentWeekVacation = isVacFromDTE || noWorkThisWeek || belowBaseThisWeek;
 
+    // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
     const recentWeeklyH = isCurrentWeekVacation
-      ? _seuil  // repos → seuil contractuel, PAS la moyenne historique de surcharge
-      : (weeklyH7 > _seuil ? weeklyH7 : (mean > _seuil ? mean : weeklyH7));
+      ? _seuil
+      : (weeklyH7Effective > _seuil ? weeklyH7Effective : (mean > _seuil ? mean : weeklyH7Effective));
 
     return {
       heures:         clamp(avgH7, 0, 14),
@@ -996,12 +1018,12 @@ class DTEEngine {
       // Valeurs brutes pour les calculs
       _avgExtra7:     avgExtra7,
       _avgH7:         avgH7,
-      _weeklyH7:      weeklyH7,
+      _weeklyH7:      weeklyH7Effective,
       _recentWeeklyH: recentWeeklyH,
       _isVacationWeek: isCurrentWeekVacation,
       _consec:        consec,
       _consecOT:      consecOT,
-      _cumulWeeks:    cumulWeeks,
+      _cumulWeeks:    cumulWeeksR,
       _cumulMonths:   cumulMonths,
       _consecRestDays: consecRestDays,
       _consecNonOTDays: consecNonOTDays,
