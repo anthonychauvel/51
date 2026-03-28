@@ -876,20 +876,17 @@ class DTEEngine {
       const isWE    = dow === 0 || dow === 6;
 
       // Sonnentag 2003 : détachement psychologique = vraie coupure.
-      // Un jour ouvré est considéré "repos" si :
-      //   - c'est un WE, férié, vacances déclaré, ou absence
-      //   - OU si aucune heure n'est saisie (0h dans calendrier = pas au travail)
-      // Un jour avec HS → STOP immédiat (charge active).
+      // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, ou absence
+      // noWorkThisWeek ne s'applique QU'à la semaine courante (i=0..6)
+      const isCurrentWeek  = i < 7;
       const hasOverload    = e && (e.extra > 0) && !isWE;
-      const hasAnyWork     = !isWE && !isVac && !isFerie && !(e && e.absent > 0) && (e && e.extra === 0 && !noWorkThisWeek);
-      // Signal : si aucun travail déclaré cette semaine (noWorkThisWeek),
-      // les jours ouvrés de cette semaine comptent comme repos (cohérence multi-signal)
       const isRestDay = isWE || isVac || isFerie || (e && e.absent > 0)
-                     || (!isWE && !hasOverload && noWorkThisWeek);
+                     || (isCurrentWeek && !isWE && !hasOverload && noWorkThisWeek);
 
       if (hasOverload) break; // HS → stop définitif
-      // Jour ouvré normal (au bureau, 0 HS) SANS signal de repos → stop
-      if (!isWE && !isVac && !isFerie && !(e && e.absent > 0) && !noWorkThisWeek) break;
+      // Jour ouvré sans aucun signal de repos → stop
+      if (!isWE && !isVac && !isFerie && !(e && e.absent > 0)
+          && !(isCurrentWeek && noWorkThisWeek)) break;
 
       if (isRestDay) consecRestDays++;
     }
