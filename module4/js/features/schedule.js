@@ -27,6 +27,18 @@ const DEFAULTS = {
   endH:       17,
   commuteH:   0,
   regimeType: 'standard',
+  posteType:  'standard',
+};
+
+// Types de poste et leurs multiplicateurs scientifiques
+// Sources : INRS 2022 (risques professionnels), Kivimäki 2015 (cardio), ANACT (charge psychique)
+const POSTE_TYPES = {
+  standard:        { label: 'Bureau / Standard',      icon: '💼', fatF:1.00, strF:1.00, cvF:1.00, cogF:1.00, desc:'Référence OMS' },
+  poste_3x8:       { label: 'Posté 3×8',              icon: '🔄', fatF:1.30, strF:1.20, cvF:1.35, cogF:1.15, desc:'INRS 2022 : +30% fatigue, RR cardio ×1.35' },
+  poste_2x8:       { label: 'Posté 2×8 / 2×12',      icon: '↔️', fatF:1.15, strF:1.10, cvF:1.15, cogF:1.10, desc:'INRS 2022 : perturbation circadienne modérée' },
+  travail_physique: { label: 'Travail physique',       icon: '🏗️', fatF:1.25, strF:1.05, cvF:1.10, cogF:1.00, desc:'INRS : charge physique élevée → fatigue accrue' },
+  astreinte:       { label: 'Astreinte / On-call',    icon: '📟', fatF:1.10, strF:1.30, cvF:1.10, cogF:1.20, desc:'ANACT : charge psychique + fragmentation du sommeil' },
+  cadre_dirigeant: { label: 'Cadre dirigeant',        icon: '👔', fatF:1.05, strF:1.20, cvF:1.10, cogF:1.30, desc:'ANACT : charge décisionnelle + responsabilité' },
 };
 
 const REGIME_LABELS = {
@@ -251,6 +263,30 @@ function renderSchedulePanel(containerId) {
           font-family:var(--font-mono);">minutes · aller uniquement (×2 = total)</div>
       </div>
 
+      <!-- TYPE DE POSTE -->
+      <div style="margin-bottom:12px;">
+        <div style="font-size:9px;color:var(--text-dim);font-family:var(--font-mono);
+          margin-bottom:6px;letter-spacing:.08em;">TYPE DE POSTE</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:6px;">
+          ${Object.entries(POSTE_TYPES).map(([key, pt]) => `
+            <button onclick="window._schSetPoste('${key}')"
+              style="padding:7px 6px;text-align:left;border-radius:5px;cursor:pointer;
+              background:${settings.posteType===key?'rgba(0,200,255,0.15)':'rgba(255,255,255,0.03)'};
+              border:1px solid ${settings.posteType===key?'rgba(0,200,255,0.5)':'rgba(255,255,255,0.08)'};
+              color:${settings.posteType===key?'var(--animus)':'var(--text-dim)'};
+              font-family:var(--font-mono);font-size:9px;line-height:1.4;width:auto;margin:0;">
+              <div>${pt.icon} ${pt.label}</div>
+              ${pt.fatF > 1 ? `<div style="font-size:8px;color:#ffb300;margin-top:2px;">fat ×${pt.fatF} str ×${pt.strF}</div>` : ''}
+            </button>`).join('')}
+        </div>
+        ${settings.posteType !== 'standard' ? `
+          <div style="margin-top:6px;font-size:9px;color:rgba(255,179,0,0.8);
+            font-family:var(--font-mono);padding:5px 8px;
+            background:rgba(255,179,0,0.06);border-radius:4px;">
+            ⚠ ${POSTE_TYPES[settings.posteType]?.desc || ''}
+          </div>` : ''}
+      </div>
+
       <!-- CLASSIFICATION AUTO -->
       <div style="padding:8px 10px;background:rgba(0,10,25,.7);
         border-left:3px solid var(--animus);margin-bottom:12px;" id="sch-regime-info">
@@ -385,6 +421,14 @@ function renderSchedulePanel(containerId) {
   }, 50);
 
   // ── Handlers ──
+  window._schSetPoste = (posteType) => {
+    const s = loadSettings();
+    s.posteType = posteType;
+    saveSettings(s);
+    renderSchedulePanel(containerId);
+    if (typeof window._fullSync === 'function') window._fullSync();
+  };
+
   window._schToggleSchedule = () => {
     const currentState = localStorage.getItem('M4_SCHEDULE_ENABLED') !== 'false';
     const newState = !currentState;
