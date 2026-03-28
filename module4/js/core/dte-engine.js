@@ -699,8 +699,8 @@ class DTEEngine {
       }
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
-    const avgExtra7Raw = weeklyExtra / 5;
-    const avgH7Raw     = D.BASE_JOUR + avgExtra7Raw;
+    const avgExtra7 = weeklyExtra / 5;
+    const avgH7Raw  = D.BASE_JOUR + avgExtra7;
     const _ccnR        = _dteGetCCNRules();
     const weeklyH7     = _ccnR.seuil + weeklyExtra;
 
@@ -994,10 +994,9 @@ class DTEEngine {
 
     const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
 
-    // En vacances déclarées M4 : avgExtra7 forcé à 0 — la moyenne historique des HS
-    // ne doit PAS être injectée comme si on travaillait (bug : fatigue artificielle)
-    const avgExtra7 = isCurrentWeekVacation ? 0 : avgExtra7Raw;
-    const avgH7     = D.BASE_JOUR + avgExtra7;
+    // En vacances déclarées M4 : avgExtra7 déjà déclaré, on force fatHS à 0 via norm
+    // avgH7 recalculé selon vacances
+    const avgH7     = isCurrentWeekVacation ? D.BASE_JOUR : (D.BASE_JOUR + avgExtra7);
 
     // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
     const recentWeeklyH = isCurrentWeekVacation
@@ -1135,7 +1134,8 @@ class DTEEngine {
     //     → multiplicateur 1.10 et 1.15 sur cumulAmp
     //
     const consecOT      = norm._consecOT || 0;
-    const fatHS         = norm._avgExtra7 * 0.130 * c.fh; // INRS phases — voir dérivation ci-dessus
+    // En vacances M4 : pas de HS actives → fatHS = 0 (la moyenne historique ne compte pas)
+    const fatHS         = isVacWeekNow ? 0 : norm._avgExtra7 * 0.130 * c.fh;
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
     const fatSurchar    = norm.surcharge * 0.12;
     const fatBurnout    = norm.burnout * 0.22;
