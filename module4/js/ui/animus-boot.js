@@ -1,8 +1,8 @@
 /**
- * Animus Boot Sequence
- * FIX : délais réduits sur mobile + détection connexion lente
+ * Animus Boot Sequence — Séquence d'initialisation style AC Animus
  */
-(function(global){'use strict';
+(function(global){
+'use strict';
 
 const BOOT_MESSAGES = [
   'INITIALISATION DU JUMEAU NUMERIQUE...',
@@ -17,14 +17,6 @@ const BOOT_MESSAGES = [
   'DIGITAL TWIN PRET — SYNCHRONISATION COMPLETE.',
 ];
 
-// Détection mobile/connexion lente
-// Sur iPhone, Safari throttle les timers → on réduit drastiquement les délais
-const _isMobile = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-const _slowConnection = (navigator.connection && 
-  (navigator.connection.saveData || 
-   ['slow-2g','2g'].includes(navigator.connection.effectiveType)));
-const _fastMode = _isMobile || _slowConnection;
-
 class AnimusBoot {
   constructor(){
     this._screen = document.getElementById('animus-boot');
@@ -35,42 +27,8 @@ class AnimusBoot {
   }
 
   start(onComplete){
-    // Sur mobile : animation ultra-rapide (< 2s total)
-    if (_fastMode) {
-      this._runFast(onComplete);
-      return;
-    }
     this._spawnParticles();
     this._runSequence(onComplete);
-  }
-
-  // Mode rapide pour mobile : pas de typage, juste la barre de progression
-  _runFast(onComplete){
-    const total = BOOT_MESSAGES.length;
-    let step = 0;
-    if(this._status) this._status.textContent = 'DIGITAL TWIN — CHARGEMENT...';
-    const tick = () => {
-      step++;
-      const pct = Math.round((step / total) * 100);
-      if(this._bar) this._bar.style.width = pct + '%';
-      if(step >= total){
-        // Sur mobile : pas d'animation CSS (peut bloquer sur iOS Safari)
-        // → masquage direct sans délai
-        if(this._screen){
-          this._screen.style.opacity = '0';
-          this._screen.style.transition = 'opacity 0.2s';
-          setTimeout(()=>{
-            if(this._screen) this._screen.style.display = 'none';
-            if(onComplete) onComplete();
-          }, 250);
-        } else {
-          if(onComplete) onComplete();
-        }
-        return;
-      }
-      setTimeout(tick, 80);
-    };
-    tick();
   }
 
   _runSequence(onComplete){
