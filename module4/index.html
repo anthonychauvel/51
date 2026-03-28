@@ -388,11 +388,17 @@ function showApp() {
   var boot = document.getElementById('animus-boot');
   if (app) app.style.display = 'flex';
   if (boot) boot.style.display = 'none';
+  // S'assurer que l'analyse est lancée après l'affichage
+  // (cas fallback mobile où le boot n'a pas eu le temps d'appeler onComplete)
+  setTimeout(function() {
+    if (window._fullSync) window._fullSync();
+  }, 100);
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  // Fallback: affiche l'app après 5s max si le boot plante
-  var fallback = setTimeout(showApp, 5000);
+  // Fallback: affiche l'app après 2.5s max sur mobile, 6s sur desktop
+  const _isMobileFallback = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
+  var fallback = setTimeout(showApp, _isMobileFallback ? 2500 : 6000);
 
   try {
     var boot = new AnimusBoot();
