@@ -472,7 +472,7 @@ class Dashboard {
     const cont=document.getElementById('footer-contingent'); 
     if(cont) {
       const ccnRules = (typeof CCN_API !== 'undefined') 
-        ? CCN_API.getGroupeForCCN(parseInt(localStorage.getItem('CCN_IDCC')||'0'))
+        ? CCN_API.getGroupeForCCN(parseInt((()=>{try{return localStorage.getItem('CCN_IDCC')}catch(_){return '0'}})() || '0'))
         : {contingent: 220};
       const _limit = (ccnRules && ccnRules.contingent) ? ccnRules.contingent : 220;
       cont.textContent=`Contingent : ${raw&&raw.m1?Math.round(raw.m1.netOvertime||raw.m1.totalExtra||0):0}/${_limit}h`;
