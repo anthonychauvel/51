@@ -245,16 +245,17 @@
 
     /* === CCN BADGE === */
     #ccn-badge {
-      display:flex; align-items:center; gap:8px;
+      display:flex; align-items:center; gap:8px; flex-wrap:wrap;
       background:rgba(255,255,255,0.12);
       border:1px solid rgba(255,255,255,0.3);
       border-radius:22px; padding:8px 16px;
       cursor:pointer; transition:background .15s;
       font-size:13px; color:#fff; margin-bottom:6px;
+      width:90%; max-width:420px; box-sizing:border-box;
     }
     #ccn-badge:hover { background:rgba(255,255,255,0.2); }
-    #ccn-badge .ccn-name { font-weight:600; max-width:200px; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    #ccn-badge .ccn-edit { font-size:11px; color:rgba(255,255,255,0.6); }
+    #ccn-badge .ccn-name { font-weight:600; white-space:normal; word-break:break-word; flex:1; min-width:0; }
+    #ccn-badge .ccn-edit { font-size:11px; color:rgba(255,255,255,0.6); white-space:nowrap; }
 
     /* === CCN MODAL === */
     #ccnModal {
@@ -505,12 +506,12 @@
 
 <div class="btn" onclick="go('fox')">
   <img src="images/renard-central.png.jpg" loading="lazy" alt="Module central">
-  <div class="title">Fox player</div>
+  <div class="title">Mon compagnon d'analyse</div>
 </div>
 
 <div class="btn" onclick="go('module4')">
   <div class="btn-no-img">
-    <div class="title" style="margin:0;">🤖 Digital Twin — Prédictions intelligentes</div>
+    <div class="title" style="margin:0;">🩺 Ma prédiction santé</div>
   </div>
 </div>
 
