@@ -6,9 +6,9 @@
 'use strict';
 
 const BOOT_MESSAGES = [
-  'SYNCHRONISATION DES DONNEES...',
-  'CALIBRATION DES CAPTEURS BIOMETRIQUES...',
-  'DIGITAL TWIN PRET — SYNCHRONISATION COMPLETE.',
+  'Chargement de tes données...',
+  'Analyse de ta santé en cours...',
+  'Prédiction prête.',
 ];
 
 class AnimusBoot {

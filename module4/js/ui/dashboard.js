@@ -8,10 +8,18 @@ class Dashboard {
   constructor(){}
 
   render(state, risks, advice){
-    // Pas de données M1 → bandeau info
+    // Pas de données M1/M2 → bandeau info
     const noData = state && state.scores && !state.scores._hasData;
     const noDataBanner = document.getElementById('no-data-banner');
     if(noDataBanner) noDataBanner.remove();
+    if(noData) {
+      const banner = document.createElement('div');
+      banner.id = 'no-data-banner';
+      banner.style.cssText = 'margin:16px;padding:14px 16px;background:rgba(0,200,255,0.07);border:1px solid rgba(0,200,255,0.2);border-left:3px solid rgba(0,200,255,0.6);border-radius:10px;font-size:13px;color:rgba(255,255,255,0.75);line-height:1.6;';
+      banner.innerHTML = '<b style="color:#00c8ff;">👆 Pour voir ton analyse</b><br>Commence par saisir des heures dans le <b>Compteur annuel (M1)</b> ou le <b>Simulateur mensuel (M2)</b>. Ce module lit automatiquement tes données.';
+      const main = document.querySelector('.dashboard-main') || document.querySelector('.view.active') || document.body;
+      main.prepend(banner);
+    }
         if(!state||!state.scores) return;
     const {scores, norm, raw}=state;
     this._renderHero(scores, norm, raw);
@@ -31,7 +39,7 @@ class Dashboard {
     const sg = hasData ? (window.DTE&&window.DTE.app ? window.DTE.app.scoreGlobal : this._calcGlobal(scores)) : null;
     el.textContent = sg !== null ? sg : '--';
     const levelMap={EXCELLENT:'excellent',BON:'bon',MOYEN:'moyen',FAIBLE:'faible',CRITIQUE:'critique'};
-    const level = sg === null ? 'EN ATTENTE' : sg>=80?'EXCELLENT':sg>=60?'BON':sg>=40?'MOYEN':sg>=20?'FAIBLE':'CRITIQUE';
+    const level = sg === null ? 'En attente de données' : sg>=80?'EXCELLENT':sg>=60?'BON':sg>=40?'MOYEN':sg>=20?'FAIBLE':'CRITIQUE';
     const lel=document.getElementById('hero-level');
     if(lel){
       lel.textContent=level;
@@ -60,9 +68,9 @@ class Dashboard {
             📋 Saisissez des heures dans<br><b style="color:#fff">M1 (Suivi annuel)</b><br>pour activer l'analyse complète.
           </div>` :
           [
-            ['🧠 Fatigue',     'fatigue',     v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', fatV,  fatLbl],
-            ['⚡ Performance', 'performance', v=>v>=80?'sync':v>=60?'sync':v>=40?'amber':'red',   perfV, perfLbl],
-            ['💊 Stress',      'stress',      v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', strV,  strLbl],
+            ['🧠 Fatigue accumulée',     'fatigue',     v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', fatV,  fatLbl],
+            ['⚡ Forme & énergie', 'performance', v=>v>=80?'sync':v>=60?'sync':v>=40?'amber':'red',   perfV, perfLbl],
+            ['💊 Niveau de stress',      'stress',      v=>v>=80?'red':v>=60?'orange':v>=35?'amber':'sync', strV,  strLbl],
           ].map(([l,k,colFn3,v,desc])=>{ const col=colFn3(v); return `
             <div style="margin-top:10px;">
               <div style="display:flex;justify-content:space-between;margin-bottom:3px;">
@@ -258,8 +266,8 @@ class Dashboard {
       {key:'fatigue',    label:'FATIGUE',       sub:'Niveau d\'épuisement', inv:false},
       {key:'stress',     label:'STRESS',        sub:'Cortisol & tension',   inv:false},
       {key:'performance',label:'PERFORMANCE',   sub:'Efficacité au travail', inv:true, subFn: (s,n) => (n&&n._isVacationWeek) ? 'Potentiel de récupération' : 'Efficacité au travail'},
-      {key:'cvRisk',     label:'CŒUR',          sub:'Risque cardio OMS',    inv:false},
-      {key:'cogRisk',    label:'CERVEAU',        sub:'Risque cérébral OEM',  inv:false},
+      {key:'cvRisk',     label:'CŒUR',          sub:'Risque cœur (OMS)',    inv:false},
+      {key:'cogRisk',    label:'CERVEAU',        sub:'Risque cerveau (études)',  inv:false},
       {key:'recovery',   label:'RÉCUPÉRATION',  sub:'Capacité de récup.',   inv:true, subFn: (s,n) => (n&&n._isVacationWeek) ? 'Phase de restauration active' : 'Capacité de récup.'},
     ];
     el.innerHTML=defs.map(d=>{
