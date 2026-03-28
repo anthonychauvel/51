@@ -319,12 +319,12 @@
 
     <!-- WHAT IF -->
     <section id="view-whatif" class="view hidden">
-      <div id="whatif-container" style="display:grid;grid-template-columns:300px 1fr;gap:6px;min-height:calc(100dvh - 70px);"></div>
+      <div id="whatif-container" style="display:grid;grid-template-columns:300px 1fr;gap:6px;min-height:calc(100vh - 70px);"></div>
     </section>
 
     <!-- HEATMAP -->
     <section id="view-heatmap" class="view hidden">
-      <div class="panel" style="min-height:calc(100dvh - 70px);">
+      <div class="panel" style="min-height:calc(100vh - 70px);">
         <div class="panel-label">HEATMAP ANNUELLE &mdash; RISQUES PAR JOUR</div>
         <div class="panel-corner-br"></div>
         <div id="heatmap-container" style="overflow-x:auto;margin-top:4px;"></div>
@@ -388,17 +388,11 @@ function showApp() {
   var boot = document.getElementById('animus-boot');
   if (app) app.style.display = 'flex';
   if (boot) boot.style.display = 'none';
-  // S'assurer que l'analyse est lancée après l'affichage
-  // (cas fallback mobile où le boot n'a pas eu le temps d'appeler onComplete)
-  setTimeout(function() {
-    if (window._fullSync) window._fullSync();
-  }, 100);
 }
 
 document.addEventListener('DOMContentLoaded', function(){
-  // Fallback: affiche l'app après 2.5s max sur mobile, 6s sur desktop
-  const _isMobileFallback = /iPhone|iPad|iPod|Android/i.test(navigator.userAgent);
-  var fallback = setTimeout(showApp, _isMobileFallback ? 2500 : 6000);
+  // Fallback: affiche l'app après 5s max si le boot plante
+  var fallback = setTimeout(showApp, 5000);
 
   try {
     var boot = new AnimusBoot();
