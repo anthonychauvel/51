@@ -2078,3 +2078,6 @@ button, [onclick] { -webkit-user-select: none; user-select: none; }
 .modal, .overlay, [class*="popup"], [class*="panel"] { overscroll-behavior: contain; }
 body { overscroll-behavior-y: none; }
 input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; }
+
+/* Anti-zoom iOS */
+input, select, textarea { font-size: 16px !important; }
