@@ -737,56 +737,78 @@ class DTEEngine {
       if (e && e.extra > 0) consecOT++; // jour ouvré avec HS → compte
     }
 
-    // Semaines cumulées de surcharge sur 1 an (J.Occup.Health 2021)
-    // Parcours lun-ven de chaque semaine civile en remontant
-    // BUG FIX :
-    //   1. La semaine courante incomplète (ex: mer) est extrapolée → comptée si proj > H_OPTIMAL
-    //   2. Fallback : si count logique = 0, recalcul via la plage de dates du log
+    // ── CUMUL SEMAINES DE SURCHARGE — 2 passes pour éviter le bug d'ordre ────
+    //
+    // BUG CORRIGÉ : l'ancienne boucle unique allait de w=0 (aujourd'hui) → w=51 (il y a 1 an).
+    // Les réductions (vacances, sem normales) s'appliquaient sur cumulWeeks=0 AVANT
+    // d'avoir accumulé les semaines de surcharge passées → résultat faussé.
+    //
+    // NOUVELLE APPROCHE : 2 passes chronologiques séparées.
+    // Passe 1 (chronologique, du passé vers aujourd'hui) : accumuler les semaines de surcharge.
+    // Passe 2 (même ordre) : soustraire les semaines de récupération.
+    // Séparation garantit que les +1 sont TOUJOURS calculés avant les −0.10/−0.25.
+    //
+    // BUG FLOAT CORRIGÉ : 10 − 0.10 × 40 = 6.0000000000000014 en JS (IEEE 754)
+    // Fix : arrondi à 9 décimales après chaque opération (préserve la précision utile).
+
+    const _ccnSeuilW = _dteGetCCNRules().seuil;
+
+    // Passe 1 : accumulation des semaines de surcharge (plus ancienne → plus récente)
     let cumulWeeks = 0;
-    const todayDow = today.getDay() || 7; // 1=lun ... 7=dim
+    const todayDow = today.getDay() || 7;
     const todayMonday = new Date(today);
     todayMonday.setDate(today.getDate() - (todayDow - 1));
-    for (let w = 0; w < 52; w++) {
+
+    for (let w = 51; w >= 0; w--) { // chronologique : w=51 (passé) → w=0 (maintenant)
       let weekH = 0, hasAnyDay = false, daysLogged = 0;
-      for (let dd = 0; dd < 5; dd++) { // lun=0 à ven=4
+      for (let dd = 0; dd < 5; dd++) {
         const dt = new Date(todayMonday);
         dt.setDate(todayMonday.getDate() - w * 7 + dd);
-        if (dt > today) continue; // pas dans le futur
+        if (dt > today) continue;
         const k = localDK(dt);
         const e = days[k];
-        if (e && e.absent) continue; // jour absent ignoré
-        // Jour ouvré : BASE_JOUR + HS (0 si pas d'entrée = jour normal)
+        if (e && e.absent) continue;
         weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
         hasAnyDay = true;
         if (e && e.extra > 0) daysLogged++;
       }
-      // Extrapoler la semaine courante (w=0) si incomplète
-      // Ex: mer avec 3×2h HS = 27h → projeté 5j = 45h > 40h → compter
+      // Extrapolation semaine courante
       if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
-        // On a déjà calculé weeklyExtra (extrapolé) — l'utiliser directement
-        weekH = _dteGetCCNRules().seuil + weeklyExtra;
+        weekH = _ccnSeuilW + weeklyExtra;
       }
-      // Ignorer les semaines de vacances ou entièrement fériées
-      const isVacWeek = [0,1,2,3,4].some(dd => { const dt2=new Date(todayMonday); dt2.setDate(todayMonday.getDate()-w*7+dd); const k2=localDK(dt2); return vacances[k2]; });
-      const _ccnSeuilW = _dteGetCCNRules().seuil;
+      const isVacWeekP1 = [0,1,2,3,4].some(dd => {
+        const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
+        return vacances[localDK(dt2)];
+      });
+      if (hasAnyDay && !isVacWeekP1 && weekH > D.H_OPTIMAL) {
+        cumulWeeks = Math.round((cumulWeeks + 1) * 1e9) / 1e9;
+      }
+    }
 
-      if (hasAnyDay && !isVacWeek && weekH > D.H_OPTIMAL) {
-        // Semaine de surcharge → accumulation dose-temps (J.Occup.Health 2021)
-        cumulWeeks++;
-      } else if (isVacWeek && cumulWeeks > 0) {
-        // ── VACANCES : récupération active — de Bloom et al. 2010 (Work & Stress)
-        // Meta-analyse 96 études : les bénéfices de vacances s'estompent en 2-4 sem après retour.
-        // → 4 semaines de vacances pour réduire 1 semaine de cumul effectif.
-        // Taux : -0.25/semaine vacances
-        cumulWeeks = Math.max(0, cumulWeeks - 0.25);
-      } else if (hasAnyDay && !isVacWeek && weekH <= _ccnSeuilW && cumulWeeks > 0) {
-        // ── SEMAINE NORMALE (≤ seuil CCN, 0 HS) : récupération partielle
-        // Meijman & Mulder 1998 (Effort-Recovery model, handbook Work Psychology) :
-        // "Recovery starts as soon as the load returns to baseline level" —
-        // une semaine sans surcharge déclenche la récupération, mais 4× plus lentement
-        // qu'en vacances car le détachement psychologique (Sonnentag 2003) est absent.
-        // Taux : -0.10/semaine normale (vs -0.25 vacances = ratio 2.5× justifié par Sonnentag)
-        cumulWeeks = Math.max(0, cumulWeeks - 0.10);
+    // Passe 2 : réductions de récupération (même ordre chronologique)
+    for (let w = 51; w >= 0; w--) {
+      let weekH = 0, hasAnyDay = false;
+      for (let dd = 0; dd < 5; dd++) {
+        const dt = new Date(todayMonday);
+        dt.setDate(todayMonday.getDate() - w * 7 + dd);
+        if (dt > today) continue;
+        const k = localDK(dt);
+        const e = days[k];
+        if (e && e.absent) continue;
+        weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
+        hasAnyDay = true;
+      }
+      const isVacWeekP2 = [0,1,2,3,4].some(dd => {
+        const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
+        return vacances[localDK(dt2)];
+      });
+      if (!hasAnyDay) continue;
+      if (isVacWeekP2 && cumulWeeks > 0) {
+        // Vacances déclarées — de Bloom 2010 : -0.25/semaine
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.25) * 1e9) / 1e9;
+      } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
+        // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
       }
     }
 
@@ -827,13 +849,24 @@ class DTEEngine {
       const isFerie = specialDays[k] === 'ferie';
       const dow     = d.getDay();
       const isWE    = dow === 0 || dow === 6;
-      // Repos complet = WE ou vacances ou fériés ou absence
-      const hasOverload = e && (e.extra > 0) && !isWE;
-      const isFullRest  = isWE || isVac || isFerie || (e && e.absent > 0);
-      if (hasOverload) break; // dès qu'un jour avec HS trouvé → stop
-      if (isFullRest) consecRestDays++;
-      // Jour normal (≤ seuil, au bureau) ne compte PAS comme repos complet
-      // → ne casse pas le compteur non plus (on continue en remontant)
+
+      // Sonnentag 2003 : détachement psychologique = vraie coupure.
+      // Un jour ouvré est considéré "repos" si :
+      //   - c'est un WE, férié, vacances déclaré, ou absence
+      //   - OU si aucune heure n'est saisie (0h dans calendrier = pas au travail)
+      // Un jour avec HS → STOP immédiat (charge active).
+      const hasOverload    = e && (e.extra > 0) && !isWE;
+      const hasAnyWork     = !isWE && !isVac && !isFerie && !(e && e.absent > 0) && (e && e.extra === 0 && !noWorkThisWeek);
+      // Signal : si aucun travail déclaré cette semaine (noWorkThisWeek),
+      // les jours ouvrés de cette semaine comptent comme repos (cohérence multi-signal)
+      const isRestDay = isWE || isVac || isFerie || (e && e.absent > 0)
+                     || (!isWE && !hasOverload && noWorkThisWeek);
+
+      if (hasOverload) break; // HS → stop définitif
+      // Jour ouvré normal (au bureau, 0 HS) SANS signal de repos → stop
+      if (!isWE && !isVac && !isFerie && !(e && e.absent > 0) && !noWorkThisWeek) break;
+
+      if (isRestDay) consecRestDays++;
     }
 
     // [B] consecNonOTDays : jours SANS heures supplémentaires
@@ -915,18 +948,36 @@ class DTEEngine {
     // recentWeeklyH : semaine courante si elle a des données, sinon moyenne historique
     const _seuil     = _dteGetCCNRules().seuil;
 
-    // ── DÉTECTION MODE VACANCES ───────────────────────────────────────────────
-    // Si la semaine courante contient au moins 1 jour de vacances déclaré,
-    // on ne doit PAS utiliser la moyenne historique de surcharge.
-    // Corrige le bug : performance 67% affiché sur une semaine à 0h travaillées.
-    const isCurrentWeekVacation = [0,1,2,3,4].some(dd => {
+    // ── DÉTECTION MODE VACANCES — multi-signal ────────────────────────────────
+    // BUG CORRIGÉ : la détection précédente reposait UNIQUEMENT sur DTE_VACANCES.
+    // Si l'utilisateur n'a pas déclaré ses vacances dans M4 (case fréquente : il utilise
+    // seulement M1/M2), vacances[] est vide → isCurrentWeekVacation = false
+    // → performance calculée sur moyenne historique 47h → bug "Performance 75% / 43h".
+    //
+    // NOUVEAU : 3 signaux complémentaires pour détecter une semaine sans travail :
+    // [A] DTE_VACANCES déclaré (M4) — signal explicite
+    // [B] 0 HS saisies cette semaine ET count7=0 (aucun jour logué) — signal calendrier
+    // [C] weeklyH7 ≤ seuil ET aucune entrée M1/M2 dans la fenêtre 7j — signal combiné
+    //
+    // Meijman & Mulder 1998 : l'absence de surcharge = début de récupération,
+    // qu'elle soit déclarée "vacances" ou non.
+
+    const isVacFromDTE = [0,1,2,3,4].some(dd => {
       const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() + dd);
       if (dt > today) return false;
       return !!vacances[localDK(dt)];
     });
 
+    // Signal calendrier : aucune heure saisie cette semaine dans M1/M2
+    const noWorkThisWeek = count7 === 0 && sumExtra7 === 0;
+
+    // Signal combiné : moins d'heures que le seuil contractuel ET fenêtre 28j nulle
+    const belowBaseThisWeek = weeklyH7 <= _seuil && countWorkDays28 < 3;
+
+    const isCurrentWeekVacation = isVacFromDTE || noWorkThisWeek || belowBaseThisWeek;
+
     const recentWeeklyH = isCurrentWeekVacation
-      ? _seuil  // semaine vacances → heures normales, pas d'extrapolation historique
+      ? _seuil  // repos → seuil contractuel, PAS la moyenne historique de surcharge
       : (weeklyH7 > _seuil ? weeklyH7 : (mean > _seuil ? mean : weeklyH7));
 
     return {
