@@ -85,14 +85,6 @@ body {
 
 #animus-boot.hide {
   animation: boot-hide 0.8s ease forwards;
-  /* iOS Safari fix: forcer la disparition même si l'animation ne se déclenche pas */
-  pointer-events: none;
-}
-/* Fallback: si l'animation CSS ne se complète pas (iOS throttling), on masque quand même */
-#animus-boot[style*="display: none"],
-#animus-boot[style*="display:none"] {
-  animation: none !important;
-  opacity: 0 !important;
 }
 @keyframes boot-hide {
   to { opacity: 0; pointer-events: none; transform: scale(1.04); }
@@ -257,7 +249,7 @@ body {
 #app {
   display: flex;
   flex-direction: column;
-  height: 100vh; height: 100dvh;
+  height: 100vh;
   height: 100dvh;
   overflow: hidden;
   position: relative;
@@ -643,7 +635,7 @@ body {
 /* ── MOBILE SCROLL FIX ──────────────────────────────────────────── */
 @media (max-width: 900px) {
   html, body { overflow: auto; height: auto; }
-  #app { height: auto; min-height: 100vh; min-height: 100dvh; height: 100dvh; overflow: visible; flex-direction: column; }
+  #app { height: auto; min-height: 100vh; overflow: visible; flex-direction: column; }
   .app-main { overflow: visible; height: auto; flex: none; }
   .view { position: relative !important; opacity: 1 !important; pointer-events: auto !important; display: none; }
   .view.active { display: block; }
@@ -965,21 +957,5 @@ body {
 .gloss-cat-burnout   { color: #c88020; }
 .gloss-cat-prod      { color: #2090b8; }
 
-/* ── COMPATIBILITY FIXES ─────────────────────────────────── */
-/* Prevent pull-to-refresh on Android in modals */
-.modal, .modal-content, [class*="overlay"], [class*="popup"] {
-  overscroll-behavior: contain;
-}
-/* Prevent scroll bounce on iOS in fixed panels */
-body {
-  overscroll-behavior-y: none;
-}
-/* iOS: remove blue flash on tap */
+/* iOS: remove tap flash */
 * { -webkit-tap-highlight-color: transparent; }
-/* iOS: prevent text selection on buttons */
-button, [onclick] { -webkit-user-select: none; user-select: none; }
-/* iOS/Android: consistent date input rendering */
-input[type="date"], input[type="time"] {
-  -webkit-appearance: none;
-  appearance: none;
-}
