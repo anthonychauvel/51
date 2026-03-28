@@ -107,13 +107,22 @@ document.addEventListener('DOMContentLoaded', function () {
       }
 
       // Score global dans DTE.app
+      // CORRECTION : GlobalScore = état de récupération réel, pas performance
+      // Formule : 100 - MAX(fatigue, stress, risqueCérébral)
+      // Justification : pendant le repos, performance=100% (Pencavel 35h) mais
+      // fatigue/stress résiduels empêchent un état global parfait.
+      // Le 100 doit être une CIBLE à atteindre, pas une valeur forcée. (Sonnentag 2003)
       if(!state.scores._hasData) {
         DTE.app = { scoreGlobal: null };
       } else {
+        const s = state.scores;
+        // Résidus biologiques actifs — le max domine (maillon le plus faible)
+        const worstResidue = Math.max(s.fatigue || 0, s.stress || 0, s.cogRisk || 0);
+        // Pénalité risques détectés
         const dangers = risks.filter(r => r.level === 'CRITIQUE').length;
         const alertes = risks.filter(r => r.level !== 'CRITIQUE').length;
-        const base = state.scores.performance || 50;
-        DTE.app = { scoreGlobal: Math.max(0, Math.min(100, base - dangers * 15 - alertes * 5)) };
+        const base = Math.max(0, 100 - worstResidue);
+        DTE.app = { scoreGlobal: Math.max(0, Math.min(100, Math.round(base - dangers * 5 - alertes * 2))) };
       }
 
       DTE.notifs.checkAndNotify(state, risks);
