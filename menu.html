@@ -33,14 +33,30 @@
       width: 90%;
       max-width: 250px;
       border-radius: 28px;
-      overflow: hidden;
+      overflow: visible;          /* ← était hidden : coupait les titres */
       box-shadow: 0 10px 25px rgba(0,0,0,.25);
       cursor: pointer;
       transition: transform .15s ease;
       background: rgba(255,255,255,0.1);
     }
     .btn:active { transform: scale(0.96); }
-    .btn img { width: 100%; height: auto; display: block; }
+    /* Image : coins arrondis en haut, titre en dessous */
+    .btn img {
+      width: 100%;
+      height: auto;
+      display: block;
+      border-radius: 28px 28px 0 0;  /* arrondi en haut seulement */
+    }
+    /* Bouton sans image (ex: module4) */
+    .btn-no-img {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      min-height: 90px;
+      border-radius: 28px;
+      background: linear-gradient(135deg, rgba(0,0,0,0.6), rgba(20,20,50,0.8));
+      border: 1px solid rgba(255,255,255,0.15);
+    }
 
     .title {
       text-align: center;
@@ -487,7 +503,9 @@
 </div>
 
 <div class="btn" onclick="go('module4')">
-  <div class="title">Digital Twin — Prédictions intelligentes</div>
+  <div class="btn-no-img">
+    <div class="title" style="margin:0;">🤖 Digital Twin — Prédictions intelligentes</div>
+  </div>
 </div>
 
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
