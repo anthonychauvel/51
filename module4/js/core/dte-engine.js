@@ -827,7 +827,7 @@ class DTEEngine {
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées — de Bloom 2010 : -0.25/semaine
+        // Vacances déclarées M4 — de Bloom 2010 : -0.25/semaine
         cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.25) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
         // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
@@ -999,7 +999,7 @@ class DTEEngine {
     // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
     const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
-    const isCurrentWeekVacation = isVacFromDTE || noWorkThisWeek || belowBaseThisWeek;
+    const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
 
     // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
     const recentWeeklyH = isCurrentWeekVacation
