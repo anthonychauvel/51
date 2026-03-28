@@ -940,6 +940,24 @@ class DTEEngine {
     const todayDK   = localDK(today);
     const schedule  = readSchedule(todayDK);
     const nightInfo = classifySchedule(schedule.startH, schedule.endH);
+
+    // ── TYPE DE POSTE — multiplicateurs biométriques (INRS 2022, ANACT) ──────
+    // Lire le type de poste depuis DTE_SETTINGS
+    const _posteFactors = (() => {
+      try {
+        const s = JSON.parse(localStorage.getItem('DTE_SETTINGS') || '{}');
+        const t = s.posteType || 'standard';
+        const MAP = {
+          standard:        { fatF:1.00, strF:1.00, cvF:1.00, cogF:1.00 },
+          poste_3x8:       { fatF:1.30, strF:1.20, cvF:1.35, cogF:1.15 },
+          poste_2x8:       { fatF:1.15, strF:1.10, cvF:1.15, cogF:1.10 },
+          travail_physique:{ fatF:1.25, strF:1.05, cvF:1.10, cogF:1.00 },
+          astreinte:       { fatF:1.10, strF:1.30, cvF:1.10, cogF:1.20 },
+          cadre_dirigeant: { fatF:1.05, strF:1.20, cvF:1.10, cogF:1.30 },
+        };
+        return MAP[t] || MAP.standard;
+      } catch(_) { return { fatF:1.00, strF:1.00, cvF:1.00, cogF:1.00 }; }
+    })();
     // sleepDebt : calcul depuis horaires réels si profil configuré,
     // sinon fallback sur l'estimation par heures travaillées
     const hasSchedule = schedule.startH !== 9 || schedule.endH !== 17
@@ -1030,6 +1048,7 @@ class DTEEngine {
       _contract:      m2.contract || D.BASE_HEBDO,
       // Horaires
       _nightFactor:   nightInfo.factor,
+      _posteFactors:  _posteFactors,
       _isNight:       nightInfo.isNightComplete,
       _isNightPartial:nightInfo.isNightPartial,
       _isDecale:      nightInfo.isDecale,
@@ -1155,7 +1174,8 @@ class DTEEngine {
                         : consecOT >= 5  ? 1.05   // >1 sem HS : premier signal Sonnentag
                         : 1.0;                    // <5j : récupération weekend normale (baseline)
 
-    const fat_raw = (fatHS + fatSommeil + fatSurchar + fatBurnout) * cumulAmp * sonnentagMult;
+    const _pf      = norm._posteFactors || { fatF:1, strF:1, cvF:1, cogF:1 };
+    const fat_raw = (fatHS + fatSommeil + fatSurchar + fatBurnout) * cumulAmp * sonnentagMult * _pf.fatF;
     const fatigue = Math.max(0, Math.min(1, fat_raw));
 
     // ── STRESS/CORTISOL (Thompson 2022 + ANACT/INRS + IARC 2019) ─────────────
@@ -1183,7 +1203,7 @@ class DTEEngine {
     // Pondération check-in subjectif : si l'utilisateur déclare "stress léger" en vacances,
     // c'est un signal biologique réel (Sonnentag 2003 : le détachement vécu atténue le cortisol)
     const checkinStressFactor = checkinBoost.stress < 0 ? 0.75 : 1.0;
-    const stress      = Math.max(0, Math.min(1, cortisolS * 0.65 * nightFactor * checkinStressFactor + stressExt + checkinBoost.stress));
+    const stress      = Math.max(0, Math.min(1, (cortisolS * 0.65 * nightFactor + stressExt) * _pf.strF * checkinStressFactor + checkinBoost.stress));
 
     // ── PERFORMANCE (Pencavel 2014, Stanford) ────────────────────
     // En semaine de vacances : la performance "travail" n'a pas de sens.
@@ -1288,9 +1308,9 @@ class DTEEngine {
       ? Math.max(0.88, Math.exp(-Math.log(2) * consecRest / 120)) // OEM 2025 (Jang) + Draganski 2004
       : 1.0;
 
-    const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor);
+    const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor * _pf.cvF);
     const cvR       = isVacWeekNow ? cvR_base * cvRiskRestDecay  : cvR_base;
-    const cogR_base = cogRisk(weeklyH, cumW);
+    const cogR_base = Math.min(0.5, cogRisk(weeklyH, cumW) * _pf.cogF);
     const cogR      = isVacWeekNow ? cogR_base * cogRiskRestDecay : cogR_base;
     const diabR     = metabolicRisk(weeklyH, cumM); // Lancet 2021 HR=1.18
     const muscR     = musculoRisk(weeklyH, cumM, norm._consec || 0); // Lancet 2021 HR=1.15
