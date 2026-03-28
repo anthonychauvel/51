@@ -54,16 +54,21 @@ class AnimusBoot {
       const pct = Math.round((step / total) * 100);
       if(this._bar) this._bar.style.width = pct + '%';
       if(step >= total){
-        setTimeout(()=>{
-          if(this._screen) this._screen.classList.add('hide');
+        // Sur mobile : pas d'animation CSS (peut bloquer sur iOS Safari)
+        // → masquage direct sans délai
+        if(this._screen){
+          this._screen.style.opacity = '0';
+          this._screen.style.transition = 'opacity 0.2s';
           setTimeout(()=>{
-            if(this._screen) this._screen.style.display='none';
+            if(this._screen) this._screen.style.display = 'none';
             if(onComplete) onComplete();
-          }, 200); // réduit de 800ms → 200ms
-        }, 100); // réduit de 400ms → 100ms
+          }, 250);
+        } else {
+          if(onComplete) onComplete();
+        }
         return;
       }
-      setTimeout(tick, 80); // 80ms par step = ~800ms total
+      setTimeout(tick, 80);
     };
     tick();
   }
