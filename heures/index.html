@@ -132,6 +132,8 @@ button, [onclick] { -webkit-user-select: none; user-select: none; }
 body { overscroll-behavior-y: none; touch-action: pan-y; }
 .popup, .modal, [class*="overlay"] { overscroll-behavior: contain; }
 input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; }
+  /* Anti-zoom iOS — font-size < 16px déclenche zoom au focus */
+  input, select, textarea { font-size: 16px !important; }
 </style>
 </head>
 <body>
@@ -345,7 +347,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <div id="saisieWorked" style="display:none">
       <div class="saisie-worked">
         <label>&#x1F551; Total heures travaill&eacute;es ce jour</label>
-        <input id="workedHours" type="number" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()">
+        <input id="workedHours" type="number" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()" style="font-size:16px;">
         <div class="calc-result" id="workedResult"></div>
       </div>
     </div>
@@ -1752,6 +1754,8 @@ function closeSettingsModal(){document.getElementById("settingsModal").style.dis
 document.getElementById("settingsModal").addEventListener("click",function(e){if(e.target===this)closeSettingsModal();});
 // Wizard obligatoire — pas de fermeture par click extérieur
 document.getElementById("pdfModal").addEventListener("click",function(e){if(e.target===this)closePdfModal();});
+document.getElementById("popupNotice").addEventListener("click",function(e){if(e.target===this)closeNotice();});
+document.getElementById("popupLegal").addEventListener("click",function(e){if(e.target===this)closeLegalPopup();});
 let wizClosureMode=null,wizCurrentStep=1;
 const WIZ_TOTAL=5;
 function wizGoTo(step){
