@@ -5,6 +5,10 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Digital Twin Engine — Module 4</title>
   <meta name="theme-color" content="#00060f">
+  <link rel="apple-touch-icon" href="/hs/apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Digital Twin">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
   <link rel="stylesheet" href="css/main.css">
@@ -315,12 +319,12 @@
 
     <!-- WHAT IF -->
     <section id="view-whatif" class="view hidden">
-      <div id="whatif-container" style="display:grid;grid-template-columns:300px 1fr;gap:6px;min-height:calc(100vh - 70px);"></div>
+      <div id="whatif-container" style="display:grid;grid-template-columns:300px 1fr;gap:6px;min-height:calc(100dvh - 70px);"></div>
     </section>
 
     <!-- HEATMAP -->
     <section id="view-heatmap" class="view hidden">
-      <div class="panel" style="min-height:calc(100vh - 70px);">
+      <div class="panel" style="min-height:calc(100dvh - 70px);">
         <div class="panel-label">HEATMAP ANNUELLE &mdash; RISQUES PAR JOUR</div>
         <div class="panel-corner-br"></div>
         <div id="heatmap-container" style="overflow-x:auto;margin-top:4px;"></div>
