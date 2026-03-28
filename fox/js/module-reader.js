@@ -367,16 +367,13 @@ class ModuleReaderPro extends ModuleReader {
     const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
     console.log('[FOX module-reader] IDCC lu:', idcc);
     
-    let groupeName = 'DC'; // Par défaut droit commun
-    if (typeof window.CCN_API !== 'undefined' && idcc !== 0) {
-      groupeName = window.CCN_API.getGroupeForCCN(idcc) || 'DC';
-      console.log('[FOX module-reader] Groupe pour IDCC', idcc, ':', groupeName);
+    // getGroupeForCCN() retourne l'objet de règles directement — pas un nom de groupe
+    const _defaultRules = { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, contingent: 220 };
+    let rules = _defaultRules;
+    if (typeof window.CCN_API !== 'undefined') {
+      rules = window.CCN_API.getGroupeForCCN(idcc) || _defaultRules;
+      console.log('[FOX module-reader] CCN rules pour IDCC', idcc, ':', rules);
     }
-    
-    const ccn = window.CCN ? window.CCN[groupeName] : null;
-    console.log('[FOX module-reader] CCN chargée:', ccn);
-    
-    const rules = ccn || { taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50 };
 
     // Calcul hs25/hsInter/hs50 par semaine, ventilation par mois proportionnelle
     let totalHs25 = 0, totalHsInter = 0, totalHs50 = 0, totalAnnual = 0;
