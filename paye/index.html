@@ -118,6 +118,8 @@ button, [onclick] { -webkit-user-select: none; user-select: none; }
 body { overscroll-behavior-y: none; touch-action: pan-y; }
 .modal, [class*="overlay"], [class*="popup"] { overscroll-behavior: contain; }
 input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: none; }
+  /* Anti-zoom iOS */
+  input, select, textarea { font-size: 16px !important; }
 </style>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="../ccn/conventions-collectives.js"></script>
@@ -126,7 +128,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
 
 <div class="topbar">
   <button class="menu-btn" onclick="goMenu()">&#x2B05; Menu</button>
-  <button class="kitsune-btn" onclick="window.location.href='../fox/index.html'" title="Ouvrir FOX Engine">&#x1F98A; Kitsune</button>
+  <button class="kitsune-btn" onclick="window.location.href='../fox/index.html'" title="Mon compagnon d'analyse — suit tes heures et te récompense">&#x1F98A; Mon compagnon</button>
   <button onclick="openTutorial()" style="margin:0;width:auto;padding:9px 14px;background:#2a2f3a;border-radius:20px;font-size:13px;line-height:1;">&#x2753; Tutoriel</button>
 </div>
 
@@ -190,12 +192,12 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   </div>
 
   <div class="wiz-step" id="wizStep2">
-    <h2 style="margin-top:0">&#x1F4C6; Clôture mensuelle</h2>
-    <p style="font-size:14px;color:var(--muted)">La clôture définit la fin de ta période de paie.<br>Par défaut : <b id="wizClosingDayDesc">dernier jour de fin de semaine</b>.</p>
+    <h2 style="margin-top:0">&#x1F4C6; Quand ton employeur fait-il le point ?</h2>
+    <p style="font-size:14px;color:var(--muted)">C'est la date de fin de ta période de paie mensuelle — le jour où tes heures sont comptabilisées. Si tu ne la connais pas, choisis <b>Auto</b> (fin de chaque mois).</p>
     <div style="background:#262a33;border-radius:10px;padding:14px;margin-top:10px">
       <label style="font-size:13px;color:var(--muted)">Mode de clôture</label>
       <div class="wiz-choice">
-        <button id="wizClosureAuto" onclick="wizSelectClosure('auto')" style="background:#2196a6">&#x1F916; Auto<br><small style="font-weight:400;color:#cde" id="wizClosureAutoLabel">Dernier dimanche</small></button>
+        <button id="wizClosureAuto" onclick="wizSelectClosure('auto')" style="background:#2196a6">&#x1F916; Auto<br><small style="font-weight:400;color:#cde" id="wizClosureAutoLabel">Dernier jour du mois</small></button>
         <button id="wizClosureManual" onclick="wizSelectClosure('manual')" style="background:#2a2f3a">&#x270F;&#xFE0F; Manuel<br><small style="font-weight:400;color:#999">12 dates différentes</small></button>
       </div>
     </div>
@@ -221,9 +223,9 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <div style="background:#262a33;border-radius:10px;padding:14px;margin-top:10px">
       <label style="font-size:13px;color:var(--muted)">Taux horaire de base (€/h)</label>
       <input type="number" id="wizRate" step="0.5" placeholder="Ex: 12.50">
-      <label style="font-size:13px;color:var(--muted);margin-top:10px;display:block">Coefficient brut &#x2192; net</label>
+      <label style="font-size:13px;color:var(--muted);margin-top:10px;display:block">Coefficient brut → net <span style="font-size:11px;opacity:0.6;">(facultatif)</span></label>
       <input type="number" id="wizCoefNet" step="0.01" placeholder="Ex: 0.93">
-      <p style="font-size:11px;color:#9aa0a6;margin-top:6px">Laisser vide = valeurs par défaut.</p>
+      <p style="font-size:11px;color:#9aa0a6;margin-top:6px">Les heures supplémentaires sont défiscalisées (exonération impôt + cotisations salariales depuis 2019). Le coefficient est en général autour de <b style="color:#4FB3C2">0.93</b>. Laisse vide si tu n'es pas sûr.</p>
     </div>
     <div class="wiz-nav">
       <button class="secondary" onclick="wizPrev()">&#x2190; Retour</button>
@@ -233,7 +235,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
 
   <div class="wiz-step" id="wizStep4_code">
     <h2 style="margin-top:0">&#x1F510; Code de sécurité</h2>
-    <p style="font-size:14px;color:var(--muted)">La zone € est protégée par un code. Le code par défaut est <b>1234</b> — change-le pour sécuriser tes données.</p>
+    <p style="font-size:14px;color:var(--muted)">La zone € affiche le montant de tes heures sup en argent. Elle est protégée par un code pour éviter que quelqu'un voie tes données salariales. Le code par défaut est <b>1234</b> — change-le pour sécuriser tes données.</p>
     <div style="background:#262a33;border-radius:10px;padding:14px;margin-top:10px">
       <label style="font-size:13px;color:var(--muted)">Nouveau code (laisser vide = garder 1234)</label>
       <input type="password" id="wizNewCode" placeholder="Minimum 4 caractères">
@@ -701,6 +703,7 @@ window.addEventListener("load",()=>{
   if(RECOVERY_ACTIVE){openRecovery();return}
   if(!localStorage.getItem("LEGAL_OK")){document.getElementById("legalModal").classList.add("open");return}
   if(!localStorage.getItem("CA_HS_TRACKER_V1_ONBOARDING")){openWizard();return}
+  if(typeof syncCCNSettings==="function")syncCCNSettings();
   loadMonth();
 });
 
@@ -1835,7 +1838,7 @@ const TIPS={
   },
   seuil:{
     title:'⏱️ Seuil de déclenchement des HS',
-    body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence le lundi à 0h00, sauf si un accord d\'entreprise ou votre CCN fixe un autre jour de début.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
+    body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence selon le jour fixé par votre accord d\'entreprise ou votre CCN.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
     ref:'Art. L3121-27 · Art. L3121-32 Code du travail'
   }
 };
