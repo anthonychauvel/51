@@ -581,9 +581,9 @@
 <footer>
   <div style="margin-bottom: 8px;">Développé par C. Anthony v3.0.0</div>
   <div style="font-size: 11px; opacity: 0.7; display: flex; gap: 12px; justify-content: center; flex-wrap: wrap;">
-    <a href="LICENSE" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">📄 Licence</a>
+    <button onclick="window.openLicensePopup()" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:0;margin:0;text-decoration:underline;">📄 Licence</button>
     <span style="opacity: 0.5;">•</span>
-    <a href="privacy.html" target="_blank" style="color: rgba(255,255,255,0.8); text-decoration: none; cursor: pointer;">🔒 Confidentialité</a>
+    <button onclick="window.openPrivacyPopup()" style="background:none;border:none;color:rgba(255,255,255,0.8);cursor:pointer;font-size:11px;padding:0;margin:0;text-decoration:underline;">🔒 Confidentialité</button>
   </div>
 </footer>
 
@@ -744,39 +744,56 @@
     unlockScroll();
   }
 
-  function openLicensePopup() {
+  window.openLicensePopup = function openLicensePopup() {
     const popup = document.createElement('div');
     popup.id = 'license-popup';
-    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:env(safe-area-inset-top,20px) 16px 20px;';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:env(safe-area-inset-top,20px) 16px 20px;';
     popup.addEventListener('click', e => { if(e.target===popup) window.closeLicensePopup(); });
     popup.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;width:100%;max-width:600px;padding:20px;margin:auto;" onclick="event.stopPropagation()">
+      <div style="background:#0d1117;border:1px solid rgba(0,200,255,0.25);border-radius:12px;width:100%;max-width:600px;padding:20px;margin:auto;" onclick="event.stopPropagation()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="color:#00c8ff;margin:0;font-size:18px;">📄 Licence MIT</h2>
-          <button onclick="window.closeLicensePopup()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:20px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;margin:0;flex-shrink:0;">✕</button>
+          <h2 style="color:#00c8ff;margin:0;font-size:17px;">📄 Licence</h2>
+          <button onclick="window.closeLicensePopup()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;margin:0;flex-shrink:0;">✕</button>
         </div>
-        <div style="color:#fff;line-height:1.8;white-space:pre-wrap;font-family:monospace;font-size:13px;">
-MIT License
+        <div style="color:#ccc;line-height:1.7;font-size:13px;">
+          <p style="color:#fff;font-weight:700;margin-bottom:4px;">LICENCE PROPRIÉTAIRE — SIMULHEURES</p>
+          <p style="color:rgba(255,255,255,0.5);font-size:11px;margin-bottom:16px;">Copyright (c) 2024-2026 Anthony Chauvel. Tous droits réservés.</p>
 
-Copyright (c) 2024 Anthony Chauvel
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">1. Droits accordés</p>
+          <p>L'auteur accorde à tout utilisateur le droit :</p>
+          <ul style="margin:6px 0 12px 16px;padding:0;">
+            <li>D'utiliser l'application à titre <strong>personnel et non commercial</strong></li>
+            <li>De consulter le code source à des fins d'information et de vérification</li>
+            <li>De signaler des bugs et proposer des améliorations via GitHub</li>
+          </ul>
 
-Permission is hereby granted, free of charge, to any person obtaining a copy
-of this software and associated documentation files (the "Software"), to deal
-in the Software without restriction, including without limitation the rights
-to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-copies of the Software, and to permit persons to whom the Software is
-furnished to do so, subject to the following conditions:
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">2. Droits réservés — Interdictions explicites</p>
+          <p>Sont <strong>strictement interdits</strong> sans autorisation écrite préalable :</p>
+          <ul style="margin:6px 0 12px 16px;padding:0;">
+            <li>Toute utilisation commerciale, directe ou indirecte</li>
+            <li>Toute vente, revente, location ou monétisation</li>
+            <li>Toute intégration dans un produit ou service commercial</li>
+            <li>Toute modification et redistribution sous un autre nom</li>
+            <li>Toute suppression des mentions de copyright</li>
+            <li>Tout déploiement sur des infrastructures d'entreprise sans accord écrit</li>
+            <li>Toute création d'œuvre dérivée à des fins commerciales</li>
+          </ul>
 
-The above copyright notice and this permission notice shall be included in all
-copies or substantial portions of the Software.
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">3. Données utilisateur</p>
+          <p>Cette application traite les données localement. Aucune donnée personnelle n'est collectée ni transmise par l'auteur.</p>
 
-THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-SOFTWARE.
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">4. Sources scientifiques</p>
+          <p>Les références scientifiques (OMS, INRS, HAS, Lancet, etc.) sont citées à titre informatif. L'application ne constitue pas un avis médical.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">5. Limitation de responsabilité</p>
+          <p>L'application est fournie "telle quelle". L'auteur ne pourra être tenu responsable de décisions prises sur la base des résultats affichés. Seuls les documents officiels de l'employeur et le droit applicable font foi.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">6. Cession commerciale</p>
+          <p>Toute cession commerciale fait l'objet d'un contrat distinct négocié avec l'auteur.</p>
+
+          <div style="margin-top:16px;padding:12px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.15);border-radius:8px;font-size:11px;color:rgba(255,255,255,0.5);">
+            Contact : appareils.treves6g@icloud.com
+          </div>
         </div>
       </div>
     `;
@@ -784,44 +801,45 @@ SOFTWARE.
     lockScroll();
   }
 
-  window.closeLicensePopup = function closeLicensePopup() {
+    window.closeLicensePopup = function closeLicensePopup() {
     const popup = document.getElementById('license-popup');
     if (popup) popup.remove();
     unlockScroll();
   }
 
-  function openPrivacyPopup() {
+  window.openPrivacyPopup = function openPrivacyPopup() {
     const popup = document.createElement('div');
     popup.id = 'privacy-popup';
-    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:env(safe-area-inset-top,20px) 16px 20px;';
+    popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.92);z-index:10000;display:flex;align-items:flex-start;justify-content:center;overflow-y:auto;padding:env(safe-area-inset-top,20px) 16px 20px;';
     popup.addEventListener('click', e => { if(e.target===popup) window.closePrivacyPopup(); });
     popup.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;width:100%;max-width:600px;padding:20px;margin:auto;" onclick="event.stopPropagation()">
+      <div style="background:#0d1117;border:1px solid rgba(0,200,255,0.25);border-radius:12px;width:100%;max-width:600px;padding:20px;margin:auto;" onclick="event.stopPropagation()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:16px;">
-          <h2 style="color:#00c8ff;margin:0;font-size:18px;">🔒 Confidentialité</h2>
-          <button onclick="window.closePrivacyPopup()" style="background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:#fff;font-size:20px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;margin:0;flex-shrink:0;">✕</button>
+          <h2 style="color:#00c8ff;margin:0;font-size:17px;">🔒 Confidentialité</h2>
+          <button onclick="window.closePrivacyPopup()" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:#fff;font-size:18px;cursor:pointer;width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;padding:0;margin:0;flex-shrink:0;">✕</button>
         </div>
-        <div style="color:#fff;line-height:1.8;">
-          <h3 style="color:#00c8ff;">1. Collecte de données</h3>
-          <p>Simulheures est une application 100% locale. Aucune donnée n'est collectée, transmise ou stockée sur des serveurs externes.</p>
-          
-          <h3 style="color:#00c8ff;">2. Stockage local</h3>
-          <p>Toutes vos données (heures supplémentaires, CCN, horaires) sont stockées uniquement sur votre appareil via localStorage. Aucun cloud, aucun serveur.</p>
-          
-          <h3 style="color:#00c8ff;">3. Sécurité</h3>
-          <p>Vos données restent privées et sous votre contrôle. Elles ne quittent jamais votre appareil.</p>
-          
-          <h3 style="color:#00c8ff;">4. Cookies</h3>
-          <p>Aucun cookie de tracking. L'application utilise uniquement localStorage pour sauvegarder vos préférences localement.</p>
-          
-          <h3 style="color:#00c8ff;">5. Partage de données</h3>
-          <p>Aucune donnée n'est partagée avec des tiers. L'application fonctionne 100% offline.</p>
-          
-          <h3 style="color:#00c8ff;">6. Vos droits</h3>
-          <p>Vous pouvez supprimer toutes vos données à tout moment en effaçant les données de l'application dans les paramètres de votre navigateur.</p>
-          
-          <h3 style="color:#00c8ff;">7. Contact</h3>
-          <p>Pour toute question : anthony.chauvel@example.com</p>
+        <div style="color:#ccc;line-height:1.7;font-size:13px;">
+          <p style="color:rgba(255,255,255,0.5);font-size:11px;margin-bottom:16px;">Dernière mise à jour : 28 février 2026</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">1. Absence de collecte de données</p>
+          <p>L'Application est conçue pour fonctionner de manière totalement autonome. Nous ne collectons, ne stockons, ni ne transmettons aucune donnée personnelle vers des serveurs externes ou vers des tiers.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">2. Stockage local (LocalStorage)</p>
+          <p>Toutes les données saisies sont conservées <strong>exclusivement sur votre appareil</strong>. Ces données ne nous sont jamais envoyées et restent sous votre contrôle exclusif. Vous pouvez les effacer à tout moment en vidant le cache de votre navigateur.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">3. Pas de services de suivi</p>
+          <p>Nous n'utilisons aucun outil de suivi, de cookies publicitaires ou de services d'analyse tiers. Votre utilisation reste totalement anonyme.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">4. Sécurité</p>
+          <p>Puisque aucune donnée n'est transmise sur Internet, les risques liés à la sécurité des serveurs tiers sont inexistants. La sécurité de vos données dépend de la sécurité de votre propre appareil.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">5. Modifications</p>
+          <p>Nous pouvons mettre à jour cette politique de temps à autre. Toute modification sera publiée sur cette page.</p>
+
+          <p style="color:#00c8ff;font-weight:600;margin-bottom:6px;">6. Contact</p>
+          <div style="margin-top:8px;padding:12px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.15);border-radius:8px;font-size:11px;color:rgba(255,255,255,0.5);">
+            Email : appareils.treves6g@icloud.com
+          </div>
         </div>
       </div>
     `;
@@ -829,7 +847,7 @@ SOFTWARE.
     lockScroll();
   }
 
-  window.closePrivacyPopup = function closePrivacyPopup() {
+    window.closePrivacyPopup = function closePrivacyPopup() {
     const popup = document.getElementById('privacy-popup');
     if (popup) popup.remove();
     unlockScroll();
