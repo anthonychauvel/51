@@ -163,14 +163,14 @@ function open() {
         <span style="font-family:var(--font-mono);font-size:13px;color:#ffb300;letter-spacing:.1em;">
           🏖 VACANCES &amp; FÉRIÉS
         </span>
-        <button onclick="document.getElementById('vacances-modal').remove()"
+        <button onclick="window._closeVacancesModal()"
           style="background:none;border:none;color:rgba(255,255,255,0.5);font-size:20px;
           cursor:pointer;padding:0;width:auto;margin:0;line-height:1;">✕</button>
       </div>
       <div id="vacances-content">${render()}</div>
     </div>`;
   document.body.appendChild(modal);
-  modal.addEventListener('click', e => { if(e.target===modal) modal.remove(); });
+  modal.addEventListener('click', e => { if(e.target===modal) window._closeVacancesModal(); });
 }
 
 function refresh() {
@@ -191,12 +191,22 @@ global._vacancesAddWeek = () => {
   monday.setDate(jan4.getDate() - (jan4.getDay()||7) + 1 + (w-1)*7);
   addWeek(localDK(monday));
   refresh();
+  // Mettre à jour les scores EN DIRECT — le modal reste ouvert
   if (typeof window._fullSync === 'function') window._fullSync();
 };
 
 global._vacancesRemoveWeek = (monday) => {
   removeWeek(monday);
   refresh();
+  // Mettre à jour les scores EN DIRECT
+  if (typeof window._fullSync === 'function') window._fullSync();
+};
+
+// Fermeture du modal vacances → re-analyse pour s'assurer que les scores sont à jour
+global._closeVacancesModal = () => {
+  const modal = document.getElementById('vacances-modal');
+  if (modal) modal.remove();
+  // Re-analyse au moment où l'utilisateur ferme → scores visibles immédiatement
   if (typeof window._fullSync === 'function') window._fullSync();
 };
 
