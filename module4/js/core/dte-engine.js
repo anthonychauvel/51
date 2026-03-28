@@ -1133,7 +1133,8 @@ class DTEEngine {
     //
     const consecOT      = norm._consecOT || 0;
     // En vacances M4 : pas de HS actives → fatHS = 0 (la moyenne historique ne compte pas)
-    const fatHS         = isVacWeekNow ? 0 : norm._avgExtra7 * 0.130 * c.fh;
+    const isVacWeekNow = norm._isVacationWeek || false;
+    const fatHS         = isVacWeekNow ? 0 : norm._avgExtra7 * 0.130 * c.fh; // INRS phases
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
     const fatSurchar    = norm.surcharge * 0.12;
     const fatBurnout    = norm.burnout * 0.22;
@@ -1162,7 +1163,6 @@ class DTEEngine {
     //   Nuit complète : ×1.40 (IARC 2019 Groupe 2A, Kivimäki 2015 RR×1.4-1.7)
     //   Nuit partielle : ×1.20 (mélatonine partiellement supprimée, INRS)
     //   Décalé tard    : ×1.10 (dette sommeil mécanique, ANACT)
-    const isVacWeekNow = norm._isVacationWeek || false;
     const nightFactor = norm._nightFactor || 1.0;
     const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest);
 
