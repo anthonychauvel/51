@@ -293,6 +293,11 @@
       background:transparent; border:1px solid #ddd; border-radius:10px;
       padding:10px; font-size:13px; cursor:pointer; color:#555;
     }
+  /* ── COMPATIBILITY FIXES ─────────────────────────────── */
+  * { -webkit-tap-highlight-color: transparent; }
+  button, [onclick] { -webkit-user-select: none; user-select: none; }
+  .overlay { overscroll-behavior: contain; }
+  body { overscroll-behavior-y: none; }
   </style>
 </head>
 
@@ -559,6 +564,15 @@
 </footer>
 
 <script>
+  /* ── SAFE localStorage (iOS Navigation Privée) ───────────────
+   * Sur iPhone en navigation privée, localStorage lance une
+   * SecurityError. Ce wrapper absorbe l'erreur silencieusement.  */
+  const _safeLS = {
+    get:  (k, d='')  => { try { return localStorage.getItem(k) ?? d; }    catch(_) { return d; } },
+    set:  (k, v)     => { try { localStorage.setItem(k, v); }              catch(_) {} },
+    del:  (k)        => { try { localStorage.removeItem(k); }              catch(_) {} },
+    json: (k, d={})  => { try { return JSON.parse(localStorage.getItem(k)) ?? d; } catch(_) { return d; } },
+  };
   if ("serviceWorker" in navigator) {
     window.addEventListener("load", () => {
       navigator.serviceWorker.register("./sw.js").catch(err => console.log("SW erreur", err));
@@ -583,7 +597,7 @@
   }
 
   // Afficher le wizard seulement à la première ouverture
-  if (localStorage.getItem("menuWizardDone") === "1") {
+  if (_safeLS.get("menuWizardDone") === "1") {
     document.getElementById("welcomeWizard").style.display = "none";
   } else {
     lockScroll();
@@ -599,9 +613,9 @@
         openCCNModal();
       }
     } else if (choice === 'default') {
-      localStorage.removeItem('CCN_IDCC');
-      localStorage.removeItem('CCN_NOM');
-      localStorage.removeItem('CCN_CUSTOM');
+      _safeLS.del('CCN_IDCC');
+      _safeLS.del('CCN_NOM');
+      _safeLS.del('CCN_CUSTOM');
       // Feedback : juste une coche verte sur le bouton, rien d'autre
       document.querySelectorAll('#wStep2 .wiz-btn.secondary').forEach(b => {
         b.style.background = '';
@@ -636,8 +650,8 @@
   function wizChooseMode(mode) {
     selectedGlossaireMode = mode;
     // Sauvegarder dans localStorage pour le glossaire
-    localStorage.setItem('APP_MODE', mode); // clé utilisée par glossaire.js
-    localStorage.setItem('GLOSSAIRE_MODE', mode);
+    _safeLS.set('APP_MODE', mode); // clé utilisée par glossaire.js
+    _safeLS.set('GLOSSAIRE_MODE', mode);
     // Propager en temps réel à tous les modules ouverts
     try { const bc = new BroadcastChannel('glossaire_mode'); bc.postMessage({type:'MODE_CHANGE',mode}); bc.close(); } catch(_) {}
     
@@ -675,7 +689,7 @@
   }
 
   function closeWizard() {
-    localStorage.setItem("menuWizardDone", "1");
+    _safeLS.set("menuWizardDone", "1");
     document.getElementById("welcomeWizard").style.display = "none";
     unlockScroll();
   }
@@ -796,7 +810,7 @@ SOFTWARE.
   }
 
   function go(app) {
-    localStorage.setItem("lastApp", app);
+    _safeLS.set("lastApp", app);
     window.location.href = app + "/index.html";
   }
 
@@ -805,9 +819,9 @@ SOFTWARE.
   let _ccnCustom = false;
 
   function initCCNBadge() {
-    const idcc   = localStorage.getItem('CCN_IDCC');
-    const nom    = localStorage.getItem('CCN_NOM');
-    const custom = localStorage.getItem('CCN_CUSTOM');
+    const idcc   = _safeLS.get('CCN_IDCC');
+    const nom    = _safeLS.get('CCN_NOM');
+    const custom = _safeLS.get('CCN_CUSTOM');
     let label = 'Convention collective — cliquer pour choisir';
     if (custom) {
       try { const c = JSON.parse(custom); label = '⚙️ ' + (c.nom || 'Accord personnalisé'); } catch(e){}
@@ -823,8 +837,8 @@ SOFTWARE.
     document.getElementById('ccnCustomForm').classList.remove('open');
     document.getElementById('ccn-search').value = '';
     ccnSearch('');
-    const idcc = localStorage.getItem('CCN_IDCC');
-    if (idcc) _ccnSelected = { idcc: parseInt(idcc), nom: localStorage.getItem('CCN_NOM') || '' };
+    const idcc = _safeLS.get('CCN_IDCC');
+    if (idcc) _ccnSelected = { idcc: parseInt(idcc), nom: _safeLS.get('CCN_NOM') || '' };
     document.getElementById('ccnModal').classList.add('open');
   }
 
@@ -839,7 +853,7 @@ SOFTWARE.
       return;
     }
     const items = CCN_API.search(q, 60);
-    const activeIdcc = _ccnSelected ? _ccnSelected.idcc : parseInt(localStorage.getItem('CCN_IDCC') || '0');
+    const activeIdcc = _ccnSelected ? _ccnSelected.idcc : parseInt(_safeLS.get('CCN_IDCC') || '0');
     let html = items.map(it => {
       const isActive = it.i === activeIdcc;
       return `<div class="ccn-item${isActive?' active':''}" onclick="selectCCN(${it.i},this)">
@@ -869,7 +883,7 @@ SOFTWARE.
     _ccnCustom = true;
     _ccnSelected = null;
     document.getElementById('ccnCustomForm').classList.toggle('open');
-    const saved = localStorage.getItem('CCN_CUSTOM');
+    const saved = _safeLS.get('CCN_CUSTOM');
     if (saved) {
       try {
         const c = JSON.parse(saved);
@@ -902,12 +916,12 @@ SOFTWARE.
       if (seuil < 35)  { alert('⚠️ Le seuil ne peut pas être inférieur à 35h'); return; }
       if (taux1 < 10)  { alert('⚠️ Taux minimum légal : 10% (Art. L3121-33)'); return; }
       CCN_API.setCustom({ nom, seuil, taux1, palier1, taux_inter, palier_inter, taux2, contingent, debutSemaine });
-      localStorage.removeItem('CCN_IDCC');
-      localStorage.setItem('CCN_NOM', nom);
+      _safeLS.del('CCN_IDCC');
+      _safeLS.set('CCN_NOM', nom);
     } else if (_ccnSelected) {
       CCN_API.resetCustom();
-      localStorage.setItem('CCN_IDCC', _ccnSelected.idcc);
-      localStorage.setItem('CCN_NOM', _ccnSelected.nom);
+      _safeLS.set('CCN_IDCC', _ccnSelected.idcc);
+      _safeLS.set('CCN_NOM', _ccnSelected.nom);
     } else {
       closeCCNModal();
       return;
