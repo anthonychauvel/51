@@ -71,8 +71,8 @@
     }
 
     footer {
-      margin-top: auto;
-      padding-top: 20px;
+      margin-top: 20px;
+      padding-top: 0;
       width: 100%;
       text-align: center;
       font-size: 12px;
@@ -314,6 +314,9 @@
   button, [onclick] { -webkit-user-select: none; user-select: none; }
   .overlay { overscroll-behavior: contain; }
   body { overscroll-behavior-y: none; }
+  /* ── ANTI-ZOOM iOS ───────────────────────────────────────────────
+     Safari zoome si font-size < 16px sur un input au focus         */
+  input, select, textarea { font-size: 16px !important; }
   </style>
 </head>
 
@@ -463,9 +466,12 @@
 <!-- =====================
      POPUP PRÉSENTATION
 ===================== -->
-<div class="overlay" id="presentationPopup" style="display:none;">
+<div class="overlay" id="presentationPopup" style="display:none;" onclick="closePresentation()">
   <div class="presentation-box" onclick="event.stopPropagation()">
-    <h2>📦 Présentation du projet</h2>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
+      <h2 style="margin:0;">📦 Présentation du projet</h2>
+      <button onclick="closePresentation()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#333;padding:0;width:auto;margin:0;line-height:1;">✕</button>
+    </div>
     <p><b>Simulateur d'heures supplémentaires</b><br>Écosystème PWA – Développé par <b>C. Anthony</b></p>
     <hr>
     <h3>🎯 Objectif général</h3>
@@ -742,11 +748,12 @@
     const popup = document.createElement('div');
     popup.id = 'license-popup';
     popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    popup.addEventListener('click', e => { if(e.target===popup) closeLicensePopup(); });
     popup.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;">
+      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;" onclick="event.stopPropagation()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
           <h2 style="color:#00c8ff;margin:0;">📄 Licence MIT</h2>
-          <button onclick="closeLicensePopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+          <button onclick="closeLicensePopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;width:auto;margin:0;">✕</button>
         </div>
         <div style="color:#fff;line-height:1.8;white-space:pre-wrap;font-family:monospace;font-size:13px;">
 MIT License
@@ -787,11 +794,12 @@ SOFTWARE.
     const popup = document.createElement('div');
     popup.id = 'privacy-popup';
     popup.style.cssText = 'position:fixed;inset:0;background:rgba(0,0,0,0.9);z-index:10000;display:flex;align-items:center;justify-content:center;padding:20px;';
+    popup.addEventListener('click', e => { if(e.target===popup) closePrivacyPopup(); });
     popup.innerHTML = `
-      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;">
+      <div style="background:#1a1a2e;border:2px solid rgba(0,200,255,0.3);border-radius:12px;max-width:800px;max-height:90vh;overflow-y:auto;padding:30px;" onclick="event.stopPropagation()">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
           <h2 style="color:#00c8ff;margin:0;">🔒 Politique de confidentialité</h2>
-          <button onclick="closePrivacyPopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;">✕</button>
+          <button onclick="closePrivacyPopup()" style="background:none;border:none;color:#fff;font-size:24px;cursor:pointer;width:auto;margin:0;">✕</button>
         </div>
         <div style="color:#fff;line-height:1.8;">
           <h3 style="color:#00c8ff;">1. Collecte de données</h3>
