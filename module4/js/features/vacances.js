@@ -200,7 +200,7 @@ function renderSemaine(year, vacData, weeks, JOURS, MOIS) {
   <div style="display:flex;gap:8px;align-items:center;margin-top:8px;">
     <input type="week" id="vacances-week-picker"
       style="flex:1;background:#1a1f2b;color:#fff;border:1px solid rgba(255,179,0,0.3);
-      border-radius:6px;padding:7px;font-size:12px;min-width:0;">
+      border-radius:6px;padding:7px;font-size:16px;min-width:0;">
     <button onclick="window._vacancesAddWeek()"
       style="background:rgba(255,179,0,0.15);border:1px solid rgba(255,179,0,0.4);
       border-radius:6px;padding:8px 12px;color:#ffb300;font-size:12px;
@@ -215,7 +215,7 @@ function renderJour(year, vacData, feries, JOURS, MOIS) {
   <div style="display:flex;gap:8px;align-items:center;margin-bottom:12px;">
     <input type="date" id="vacances-day-picker"
       style="flex:1;background:#1a1f2b;color:#fff;border:1px solid rgba(255,179,0,0.3);
-      border-radius:6px;padding:7px;font-size:12px;min-width:0;">
+      border-radius:6px;padding:7px;font-size:16px;min-width:0;">
     <button onclick="window._vacancesAddDay()"
       style="background:rgba(255,179,0,0.15);border:1px solid rgba(255,179,0,0.4);
       border-radius:6px;padding:8px 12px;color:#ffb300;font-size:12px;
