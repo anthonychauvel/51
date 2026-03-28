@@ -459,9 +459,23 @@ class DTEEngine {
           if(k && k.startsWith('DATA_REPORT_') && !keys.includes(k)) keys.push(k);
         }
       } catch(_) {}
+      // Lire les fériés et vacances M4 EN PREMIER — indépendants des données M1
+      // (BUG : si M1 vide → return prématuré → vacances jamais lues)
+      try {
+        const yr = new Date().getFullYear();
+        for (const y of [yr-1, yr, yr+1]) {
+          const sd = JSON.parse(localStorage.getItem('SPECIAL_DAYS_'+y) || '{}');
+          Object.entries(sd).forEach(([date, type]) => { if(type==='ferie') r.specialDays[date] = 'ferie'; });
+          const fd = JSON.parse(localStorage.getItem('DTE_FERIES_'+y) || '{}');
+          Object.keys(fd).forEach(date => { r.specialDays[date] = 'ferie'; });
+          const vac = JSON.parse(localStorage.getItem('DTE_VACANCES_'+y) || '{}');
+          Object.keys(vac).forEach(date => { r.vacances[date] = true; });
+        }
+      } catch(_) {}
+
       let raw = null;
       for(const k of keys){ raw = localStorage.getItem(k); if(raw && raw !== '{}' && raw !== 'null') break; }
-      if (!raw || raw === '{}') return r;
+      if (!raw || raw === '{}') return r; // pas de données M1 → on retourne avec vacances/fériés déjà chargés
       const d = JSON.parse(raw);
       // M1 stocke data['2026-03-14']={extra,recup,absent} à la racine
       let days = d.days || d.jours || {};
@@ -480,24 +494,6 @@ class DTEEngine {
         if (!absent) r.totalWorkedDays++;
       }
       r.violations = d.violations || [];
-      // Lire les jours fériés : M1 (SPECIAL_DAYS) + M4 propre (DTE_FERIES)
-      try {
-        const year = new Date().getFullYear();
-        for (const y of [year-1, year, year+1]) {
-          const sd = JSON.parse(localStorage.getItem('SPECIAL_DAYS_'+y) || '{}');
-          Object.entries(sd).forEach(([date, type]) => { if(type==='ferie') r.specialDays[date] = 'ferie'; });
-          const fd = JSON.parse(localStorage.getItem('DTE_FERIES_'+y) || '{}');
-          Object.keys(fd).forEach(date => { r.specialDays[date] = 'ferie'; });
-        }
-      } catch(_) {}
-      // Lire les vacances module4 (DTE_VACANCES_{year})
-      try {
-        const year = new Date().getFullYear();
-        for (const y of [year-1, year, year+1]) {
-          const vac = JSON.parse(localStorage.getItem('DTE_VACANCES_'+y) || '{}');
-          Object.keys(vac).forEach(date => { r.vacances[date] = true; });
-        }
-      } catch(_) {}
     } catch(e) { console.warn('[DTE-E] m1:', e); }
     return r;
   }
