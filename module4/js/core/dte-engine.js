@@ -1028,7 +1028,11 @@ class DTEEngine {
     // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
     const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
-    const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
+    // Vacances = UNIQUEMENT déclarées dans M4 (DTE_VACANCES)
+    // Une semaine sans saisie M1/M2 = semaine normale à seuil CCN (35h ou 39h)
+    // → fatHS = 0 naturellement (avgExtra7 = 0), mais PAS de bonus vacances
+    // → distinction claire entre "pas de HS" et "vacances déclarées"
+    const isCurrentWeekVacation = isVacFromDTE;
 
     // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
@@ -1179,17 +1183,20 @@ class DTEEngine {
     const fatBurnout    = norm.burnout * 0.22 * _vacCoef;
 
     // J.Occup.Health 2021 — amplification dose-temps non-linéaire
-    const cumulAmp = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
-                   : cumW >= 16 ? 1.95   // 4 mois
-                   : cumW >= 12 ? 1.75   // 3 mois — risque OMS biologique établi
-                   : cumW >= 10 ? 1.65   // 2.5 mois
-                   : cumW >= 8  ? 1.55   // 2 mois
-                   : cumW >= 4  ? 1.25   // 1 mois
-                   : 1.0;
+    // En vacances : cumulAmp atténué à 60% (de Bloom 2010 : vacances réduisent l'allostatic load)
+    const _cumulAmpBase = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
+                        : cumW >= 16 ? 1.95   // 4 mois
+                        : cumW >= 12 ? 1.75   // 3 mois — risque OMS biologique établi
+                        : cumW >= 10 ? 1.65   // 2.5 mois
+                        : cumW >= 8  ? 1.55   // 2 mois
+                        : cumW >= 4  ? 1.25   // 1 mois
+                        : 1.0;
+    const cumulAmp = isVacWeekNow ? Math.max(1.0, _cumulAmpBase * 0.60) : _cumulAmpBase;
 
     // Sonnentag 2003 — dégradation du détachement psychologique
-    // Effets mesurés sur : relaxation, maîtrise, contrôle pendant les hors-travail
-    const sonnentagMult = consecOT >= 20 ? 1.15   // >4 sem HS : détachement sévèrement compromis
+    // En vacances : sonnentagMult = 1.0 (les vacances permettent la récupération du détachement)
+    const sonnentagMult = isVacWeekNow ? 1.0
+                        : consecOT >= 20 ? 1.15   // >4 sem HS : détachement sévèrement compromis
                         : consecOT >= 12 ? 1.10   // >2.4 sem HS : détachement partiellement compromis
                         : consecOT >= 5  ? 1.05   // >1 sem HS : premier signal Sonnentag
                         : 1.0;                    // <5j : récupération weekend normale (baseline)
