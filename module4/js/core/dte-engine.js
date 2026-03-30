@@ -1016,28 +1016,43 @@ class DTEEngine {
     // Meijman & Mulder 1998 : l'absence de surcharge = début de récupération,
     // qu'elle soit déclarée "vacances" ou non.
 
-    const isVacFromDTE = [0,1,2,3,4].some(dd => {
-      const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() + dd);
-      if (dt > today) return false;
-      return !!vacances[localDK(dt)];
-    });
+    // ── DÉTECTION VACANCES DYNAMIQUE — de Bloom 2010 ──────────────────────────
+    // Compte toutes les semaines de vacances consécutives déclarées dans M4,
+    // en remontant depuis la semaine en cours vers le passé.
+    // Si on est lundi, on inclut aussi la semaine précédente (cas lundi matin).
+    // Résultat : consVacWeeks = nombre de semaines de vacances contiguës actives.
 
-    // Signal calendrier : aucune heure saisie cette semaine dans M1/M2
-    // (noWorkThisWeek déclaré plus haut, avant les boucles de compteurs)
+    function _isVacWeek(mondayOffset) {
+      return [0,1,2,3,4].some(dd => {
+        const dt = new Date(weekMondayA);
+        dt.setDate(weekMondayA.getDate() + mondayOffset * 7 + dd);
+        if (dt > today && mondayOffset === 0) return false;
+        return !!vacances[localDK(dt)];
+      });
+    }
 
-    // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
-    const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
-
-    // Vacances = déclarées dans M4 (DTE_VACANCES)
-    // Vérification sur la semaine courante ET la semaine précédente
-    // (cas lundi matin : les vacances de la sem passée doivent encore être prises en compte)
-    const isVacFromDTEprev = [0,1,2,3,4].some(dd => {
-      const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() - 7 + dd);
-      return !!vacances[localDK(dt)];
-    });
-    // Si on est lundi (todayDowA===1) et que la sem passée était vacances → actif
+    // Compter les semaines de vacances consécutives en remontant (max 12 semaines)
+    let consVacWeeks = 0;
     const isMonday = (today.getDay() || 7) === 1;
-    const isCurrentWeekVacation = isVacFromDTE || (isMonday && isVacFromDTEprev);
+    // Semaine en cours
+    if (_isVacWeek(0)) {
+      consVacWeeks = 1;
+      // Remonter dans le passé
+      for (let w = 1; w <= 12; w++) {
+        if (_isVacWeek(-w)) consVacWeeks++;
+        else break;
+      }
+    } else if (isMonday && _isVacWeek(-1)) {
+      // Lundi matin : la sem passée était vacances → on part de la semaine précédente
+      consVacWeeks = 1;
+      for (let w = 2; w <= 12; w++) {
+        if (_isVacWeek(-w)) consVacWeeks++;
+        else break;
+      }
+    }
+
+    const isCurrentWeekVacation = consVacWeeks > 0;
+    const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
     // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
@@ -1061,6 +1076,7 @@ class DTEEngine {
       _weeklyH7:      weeklyH7Effective,
       _recentWeeklyH: recentWeeklyH,
       _isVacationWeek: isCurrentWeekVacation,
+      _consVacWeeks:  consVacWeeks,
       _consec:        consec,
       _consecOT:      consecOT,
       _cumulWeeks:    cumulWeeksR,
@@ -1182,13 +1198,27 @@ class DTEEngine {
     const isVacWeekNow = norm._isVacationWeek || false;
     const fatHS         = isVacWeekNow ? 0 : norm._avgExtra7 * 0.130 * c.fh; // INRS phases
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
-    // En vacances : surcharge et burnout atténués (de Bloom 2010 : détachement actif réduit le load)
-    const _vacCoef      = isVacWeekNow ? 0.40 : 1.0;
-    const fatSurchar    = norm.surcharge * 0.12 * _vacCoef;
-    const fatBurnout    = norm.burnout * 0.22 * _vacCoef;
+    // ── COEFFICIENTS VACANCES DYNAMIQUES — de Bloom 2010 ──────────────────────
+    // Plus les vacances consécutives sont longues, plus la récupération est profonde.
+    // Calibration : de Bloom 2010 J.Occup.Health — fade-in effect sur 1-3 semaines.
+    //   1 sem  : récupération partielle (~30-40% load réduit)
+    //   2 sem  : récupération significative (~50-65% load réduit)
+    //   3 sem+ : récupération quasi-complète (~70-80% load réduit)
+    const _nVac = isVacWeekNow ? (norm._consVacWeeks || 1) : 0;
+    // _vacCumulF : réduction de cumulAmp selon semaines de vacances consécutives
+    const _vacCumulF = _nVac >= 3 ? 0.40   // 3 sem+ : récupération quasi-complète
+                     : _nVac === 2 ? 0.55   // 2 sem  : récupération significative
+                     : _nVac === 1 ? 0.70   // 1 sem  : récupération partielle
+                     : 1.0;                 // pas de vacances
+    // _vacFatF : réduction fatSurchar/fatBurnout selon semaines de vacances
+    const _vacFatF   = _nVac >= 3 ? 0.20   // 3 sem+ : traces résiduelles minimales
+                     : _nVac === 2 ? 0.35   // 2 sem
+                     : _nVac === 1 ? 0.50   // 1 sem
+                     : 1.0;
+    const fatSurchar = norm.surcharge * 0.12 * _vacFatF;
+    const fatBurnout = norm.burnout * 0.22 * _vacFatF;
 
     // J.Occup.Health 2021 — amplification dose-temps non-linéaire
-    // En vacances : cumulAmp atténué à 60% (de Bloom 2010 : vacances réduisent l'allostatic load)
     const _cumulAmpBase = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
                         : cumW >= 16 ? 1.95   // 4 mois
                         : cumW >= 12 ? 1.75   // 3 mois — risque OMS biologique établi
@@ -1196,7 +1226,7 @@ class DTEEngine {
                         : cumW >= 8  ? 1.55   // 2 mois
                         : cumW >= 4  ? 1.25   // 1 mois
                         : 1.0;
-    const cumulAmp = isVacWeekNow ? Math.max(1.0, _cumulAmpBase * 0.60) : _cumulAmpBase;
+    const cumulAmp = isVacWeekNow ? Math.max(1.0, _cumulAmpBase * _vacCumulF) : _cumulAmpBase;
 
     // Sonnentag 2003 — dégradation du détachement psychologique
     // En vacances : sonnentagMult = 1.0 (les vacances permettent la récupération du détachement)
@@ -1364,35 +1394,7 @@ class DTEEngine {
     const stressBoostCV  = strFinal * 0.15;   // stress 100% → +15 pts cvRisk
     const stressBoostCog = (strFinal > 0.6 && cumW > 4) ? (strFinal - 0.6) * 0.10 : 0;
 
-    // ── DEBUG TEMPORAIRE ─────────────────────────────────────────
-    if (typeof window !== 'undefined') {
-      window._DTE_DEBUG = {
-        isVacWeekNow,
-        fatHS:        +(fatHS*100).toFixed(1),
-        fatSurchar:   +(fatSurchar*100).toFixed(1),
-        fatBurnout:   +(fatBurnout*100).toFixed(1),
-        fatSommeil:   +(fatSommeil*100).toFixed(1),
-        cumulAmp:     +cumulAmp.toFixed(2),
-        sonnentagMult:+sonnentagMult.toFixed(2),
-        fat_raw:      +(fat_raw*100).toFixed(1),
-        fatFinal:     +(fatFinal*100).toFixed(1),
-        strFinal:     +(strFinal*100).toFixed(1),
-        cumW:         +cumW.toFixed(1),
-        avgExtra7:    +((norm._avgExtra7||0)).toFixed(2),
-        weeklyH:      +weeklyH.toFixed(1),
-        consecRest:   norm._consecRestDays||0,
-        consecNonOT:  norm._consecNonOTDays||0,
-      };
-      console.log('[DTE DEBUG]', window._DTE_DEBUG);
-      // Debug vacances spécifique
-      try {
-        const _yr = new Date().getFullYear();
-        const _vac2 = JSON.parse(localStorage.getItem('DTE_VACANCES_'+_yr) || '{}');
-        console.log('[DTE VAC] DTE_VACANCES_'+_yr+':', Object.keys(_vac2).slice(0,10));
-        console.log('[DTE VAC] norm._isVacationWeek:', norm._isVacationWeek);
-        console.log('[DTE VAC] vacances keys (raw):', Object.keys(raw && raw.m1 && raw.m1.vacances || {}).slice(0,10));
-      } catch(_e) { console.log('[DTE VAC] erreur:', _e); }
-    }
+
 
     return {
       fatigue:      Math.round(fatFinal * 100),
