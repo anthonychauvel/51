@@ -54,10 +54,16 @@ class Dashboard {
     if (hasData && _isBeforeCutoff) {
       const _hint = document.createElement('div');
       _hint.id = 'dte-today-hint';
-      _hint.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-top:6px;';
+      _hint.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-top:8px;display:block;width:100%;';
       _hint.textContent = '⏱ Mise à jour des scores ce soir à 22h30';
-      const _heroPanel = document.querySelector('.panel--hero');
-      if (_heroPanel) _heroPanel.appendChild(_hint);
+      // Insérer après la div marge-securite, pas dans le panel entier
+      const _margeEl = document.getElementById('marge-securite');
+      if (_margeEl && _margeEl.parentNode) {
+        _margeEl.parentNode.insertBefore(_hint, _margeEl.nextSibling);
+      } else {
+        const _heroPanel = document.querySelector('.panel--hero');
+        if (_heroPanel) _heroPanel.appendChild(_hint);
+      }
     }
 
     const mel=document.getElementById('marge-securite');
