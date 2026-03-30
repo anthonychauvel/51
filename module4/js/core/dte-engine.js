@@ -780,16 +780,23 @@ class DTEEngine {
 
     for (let w = 51; w >= 0; w--) { // chronologique : w=51 (passé) → w=0 (maintenant)
       let weekH = 0, hasAnyDay = false, daysLogged = 0;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < 7; dd++) { // 7 jours : lun→dim (HCR, BTP travaillent le week-end)
         const dt = new Date(todayMonday);
         dt.setDate(todayMonday.getDate() - w * 7 + dd);
         if (dt > today) continue;
+        const dowDt = dt.getDay();
+        const isWEdt = dowDt === 0 || dowDt === 6;
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
-        hasAnyDay = true;
-        if (e && e.extra > 0) daysLogged++;
+        if (isWEdt) {
+          // Week-end : ajouter uniquement les HS saisies (pas BASE_JOUR)
+          if (e && e.extra > 0) { weekH += e.extra; hasAnyDay = true; daysLogged++; }
+        } else {
+          weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
+          hasAnyDay = true;
+          if (e && e.extra > 0) daysLogged++;
+        }
       }
       // Extrapolation semaine courante
       if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
@@ -807,15 +814,21 @@ class DTEEngine {
     // Passe 2 : réductions de récupération (même ordre chronologique)
     for (let w = 51; w >= 0; w--) {
       let weekH = 0, hasAnyDay = false;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < 7; dd++) { // 7 jours : lun→dim
         const dt = new Date(todayMonday);
         dt.setDate(todayMonday.getDate() - w * 7 + dd);
         if (dt > today) continue;
+        const dowDt2 = dt.getDay();
+        const isWEdt2 = dowDt2 === 0 || dowDt2 === 6;
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
-        hasAnyDay = true;
+        if (isWEdt2) {
+          if (e && e.extra > 0) { weekH += e.extra; hasAnyDay = true; }
+        } else {
+          weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
+          hasAnyDay = true;
+        }
       }
       const isVacWeekP2 = [0,1,2,3,4].some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
