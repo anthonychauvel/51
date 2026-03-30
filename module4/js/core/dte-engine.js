@@ -1359,6 +1359,28 @@ class DTEEngine {
     const stressBoostCV  = strFinal * 0.15;   // stress 100% → +15 pts cvRisk
     const stressBoostCog = (strFinal > 0.6 && cumW > 4) ? (strFinal - 0.6) * 0.10 : 0;
 
+    // ── DEBUG TEMPORAIRE ─────────────────────────────────────────
+    if (typeof window !== 'undefined') {
+      window._DTE_DEBUG = {
+        isVacWeekNow,
+        fatHS:        +(fatHS*100).toFixed(1),
+        fatSurchar:   +(fatSurchar*100).toFixed(1),
+        fatBurnout:   +(fatBurnout*100).toFixed(1),
+        fatSommeil:   +(fatSommeil*100).toFixed(1),
+        cumulAmp:     +cumulAmp.toFixed(2),
+        sonnentagMult:+sonnentagMult.toFixed(2),
+        fat_raw:      +(fat_raw*100).toFixed(1),
+        fatFinal:     +(fatFinal*100).toFixed(1),
+        strFinal:     +(strFinal*100).toFixed(1),
+        cumW:         +cumW.toFixed(1),
+        avgExtra7:    +((norm._avgExtra7||0)).toFixed(2),
+        weeklyH:      +weeklyH.toFixed(1),
+        consecRest:   norm._consecRestDays||0,
+        consecNonOT:  norm._consecNonOTDays||0,
+      };
+      console.log('[DTE DEBUG]', window._DTE_DEBUG);
+    }
+
     return {
       fatigue:      Math.round(fatFinal * 100),
       stress:       Math.round(strFinal * 100),
