@@ -641,18 +641,23 @@ class DTEEngine {
       : (() => { const d=new Date(today); d.setDate(today.getDate()-((today.getDay()||7)-1)); return d; })();
     const todayDowA = today.getDay() || 7; // 1=lun..7=dim (gardé pour comptage jours)
     let sumExtra = 0, countWorkDays28 = 0;
-    // Fenêtre 28j glissante — ne compte que les jours ouvrés (lun-ven) non absents
+    // Fenêtre 28j glissante — jours ouvrés (lun-ven) + week-ends si HS saisies (HCR, BTP)
     for (let i = 0; i < 28; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (dow === 0 || dow === 6) continue; // ignorer week-ends
+      const isWE28 = dow === 0 || dow === 6;
       const k = localDK(d);
       if (specialDays[k] === 'ferie' || vacances[k]) continue;
       const e = days[k];
       if (e && e.absent > 0) continue;
-      // Jour ouvré : on compte les HS (0 si pas d'entrée = journée normale, sans HS)
-      sumExtra += (e ? (e.extra || 0) : 0);
-      countWorkDays28++;
+      if (isWE28) {
+        // Week-end : compter uniquement les HS réellement saisies (HCR, BTP...)
+        if (e && e.extra > 0) sumExtra += e.extra;
+        // Ne pas incrémenter countWorkDays28 (base = jours ouvrés)
+      } else {
+        sumExtra += (e ? (e.extra || 0) : 0);
+        countWorkDays28++;
+      }
     }
     // avgExtraPerDay28 = HS/jour moyen sur 4 semaines → weeklyExtra = HS/sem = avg × 5
     const avgExtraPerDay28 = countWorkDays28 > 0 ? sumExtra / countWorkDays28 : 0;
@@ -1168,8 +1173,10 @@ class DTEEngine {
     const isVacWeekNow = norm._isVacationWeek || false;
     const fatHS         = isVacWeekNow ? 0 : norm._avgExtra7 * 0.130 * c.fh; // INRS phases
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
-    const fatSurchar    = norm.surcharge * 0.12;
-    const fatBurnout    = norm.burnout * 0.22;
+    // En vacances : surcharge et burnout atténués (de Bloom 2010 : détachement actif réduit le load)
+    const _vacCoef      = isVacWeekNow ? 0.40 : 1.0;
+    const fatSurchar    = norm.surcharge * 0.12 * _vacCoef;
+    const fatBurnout    = norm.burnout * 0.22 * _vacCoef;
 
     // J.Occup.Health 2021 — amplification dose-temps non-linéaire
     const cumulAmp = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
