@@ -1379,6 +1379,14 @@ class DTEEngine {
         consecNonOT:  norm._consecNonOTDays||0,
       };
       console.log('[DTE DEBUG]', window._DTE_DEBUG);
+      // Debug vacances spécifique
+      try {
+        const _yr = new Date().getFullYear();
+        const _vac2 = JSON.parse(localStorage.getItem('DTE_VACANCES_'+_yr) || '{}');
+        console.log('[DTE VAC] DTE_VACANCES_'+_yr+':', Object.keys(_vac2).slice(0,10));
+        console.log('[DTE VAC] norm._isVacationWeek:', norm._isVacationWeek);
+        console.log('[DTE VAC] vacances keys (raw):', Object.keys(raw && raw.m1 && raw.m1.vacances || {}).slice(0,10));
+      } catch(_e) { console.log('[DTE VAC] erreur:', _e); }
     }
 
     return {
