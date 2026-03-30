@@ -46,6 +46,20 @@ class Dashboard {
       lel.className='hero-level '+(levelMap[level]||'bon');
       if(sg===null){ lel.style.color='var(--text-muted)'; lel.style.borderColor='var(--text-muted)'; lel.style.background='transparent'; }
     }
+    // Indicateur "mise à jour ce soir" si avant 22h30
+    const _now = new Date();
+    const _isBeforeCutoff = _now.getHours() < 22 || (_now.getHours() === 22 && _now.getMinutes() < 30);
+    const _todayEl = document.getElementById('dte-today-hint');
+    if (_todayEl) _todayEl.remove();
+    if (hasData && _isBeforeCutoff) {
+      const _hint = document.createElement('div');
+      _hint.id = 'dte-today-hint';
+      _hint.style.cssText = 'font-size:11px;color:rgba(255,255,255,0.35);text-align:center;margin-top:6px;';
+      _hint.textContent = '⏱ Mise à jour des scores ce soir à 22h30';
+      const _heroPanel = document.querySelector('.panel--hero');
+      if (_heroPanel) _heroPanel.appendChild(_hint);
+    }
+
     const mel=document.getElementById('marge-securite');
     if(mel){
       if(!hasData){ mel.textContent='—'; mel.style.color='var(--text-muted)'; }
