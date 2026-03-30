@@ -1028,11 +1028,16 @@ class DTEEngine {
     // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
     const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
-    // Vacances = UNIQUEMENT déclarées dans M4 (DTE_VACANCES)
-    // Une semaine sans saisie M1/M2 = semaine normale à seuil CCN (35h ou 39h)
-    // → fatHS = 0 naturellement (avgExtra7 = 0), mais PAS de bonus vacances
-    // → distinction claire entre "pas de HS" et "vacances déclarées"
-    const isCurrentWeekVacation = isVacFromDTE;
+    // Vacances = déclarées dans M4 (DTE_VACANCES)
+    // Vérification sur la semaine courante ET la semaine précédente
+    // (cas lundi matin : les vacances de la sem passée doivent encore être prises en compte)
+    const isVacFromDTEprev = [0,1,2,3,4].some(dd => {
+      const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() - 7 + dd);
+      return !!vacances[localDK(dt)];
+    });
+    // Si on est lundi (todayDowA===1) et que la sem passée était vacances → actif
+    const isMonday = (today.getDay() || 7) === 1;
+    const isCurrentWeekVacation = isVacFromDTE || (isMonday && isVacFromDTEprev);
 
     // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
