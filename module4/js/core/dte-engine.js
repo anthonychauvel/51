@@ -1075,28 +1075,28 @@ class DTEEngine {
     try {
       const today    = (() => { const d=new Date(); return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); })();
       const history  = JSON.parse(localStorage.getItem('DTE_CHECKIN_HISTORY')||'[]');
-      const ci       = history.find(h=>h.date===today) || history[history.length-1];
+      const ci       = history.find(h=>h.date===today); // check-in du jour uniquement — pas de fallback (hier≠aujourd'hui)
       if (ci) {
         // Sommeil court → fatigue +, performance −
         if (ci.sleep !== undefined) {
           const sleepDef = (4 - ci.sleep) / 4;  // 0=bien, 1=très mal
-          checkinBoost.fatigue    += sleepDef * 0.14;  // Thompson 2022: +14% cortisol après privation
-          checkinBoost.performance -= sleepDef * 0.15;  // Thomson 2022 + OMS: perf −15% nuit courte
-          checkinBoost.recovery   -= sleepDef * 0.15;
+          checkinBoost.fatigue    += sleepDef * 0.09;  // Thompson 2022 — atténué : signal parmi d'autres
+          checkinBoost.performance -= sleepDef * 0.10;  // Thomson 2022 + OMS — atténué
+          checkinBoost.recovery   -= sleepDef * 0.10;
         }
         // Énergie basse → fatigue +
         if (ci.energy !== undefined) {
           const energyDef = (4 - ci.energy) / 4;
-          checkinBoost.fatigue    += energyDef * 0.15;
-          checkinBoost.performance -= energyDef * 0.12;
+          checkinBoost.fatigue    += energyDef * 0.10;
+          checkinBoost.performance -= energyDef * 0.08;
         }
         // Stress ressenti → stress +
         if (ci.stress !== undefined) {
-          checkinBoost.stress += (ci.stress / 4) * 0.30;  // ANACT: stress ressenti corrèle 0.65 avec cortisol
+          checkinBoost.stress += (ci.stress / 4) * 0.15;  // ANACT — atténué : subjectif, ne remplace pas le modèle biologique
         }
         // Douleurs → fatigue musculo +
         if (ci.pain !== undefined && ci.pain > 0) {
-          checkinBoost.fatigue += (ci.pain / 4) * 0.10;
+          checkinBoost.fatigue += (ci.pain / 4) * 0.07;
         }
         // Motivation → performance +
         if (ci.motiv !== undefined) {
