@@ -271,7 +271,7 @@ class LifestylePanel {
 
     // ── SPORT ────────────────────────────────────────────────────
     if (d.sport !== undefined) {
-      fatigueMult *= [1.10, 1.03, 0.87, 0.80][d.sport] || 1.0;
+      fatigueMult *= [1.08, 1.02, 0.90, 0.85][d.sport] || 1.0; // atténué
     }
 
     // ── NUTRITION ────────────────────────────────────────────────
@@ -281,12 +281,12 @@ class LifestylePanel {
 
     // ── SOMMEIL HABITUEL ─────────────────────────────────────────
     if (d.sleep_quality !== undefined) {
-      fatigueMult *= [1.20, 1.10, 1.00, 0.90][d.sleep_quality] || 1.0;
+      fatigueMult *= [1.12, 1.06, 1.00, 0.92][d.sleep_quality] || 1.0; // atténué
     }
 
     // ── SENS AU TRAVAIL ──────────────────────────────────────────
     if (d.sens !== undefined) {
-      fatigueMult *= [1.15, 1.05, 1.00, 0.72][d.sens] || 1.0;
+      fatigueMult *= [1.12, 1.04, 1.00, 0.80][d.sens] || 1.0; // atténué : sens fort → ×0.80 (vs ×0.72)
     }
 
     // ── PAUSES ───────────────────────────────────────────────────
@@ -301,7 +301,7 @@ class LifestylePanel {
 
     // ── ALCOOL (INSERM 2021 · OMS) ───────────────────────────────
     if (d.alcool !== undefined) {
-      fatigueMult *= [1.00, 1.06, 1.15, 1.30][d.alcool] || 1.0;
+      fatigueMult *= [1.00, 1.04, 1.10, 1.20][d.alcool] || 1.0; // atténué
       if (d.alcool >= 2) cvRiskAdd += (d.alcool - 1) * 0.03; // risque cardio
     }
 
@@ -310,7 +310,7 @@ class LifestylePanel {
       fatigueMult *= [1.00, 1.10, 1.12, 1.25][d.drogues] || 1.0;
     }
 
-    fatigueMult = Math.max(0.50, Math.min(1.80, fatigueMult));
+    fatigueMult = Math.max(0.60, Math.min(1.50, fatigueMult)); // cap réduit : 1.50 max (vs 1.80), plancher 0.60
 
     // ── ADDITIFS (stress, perf, récup, cvRisk) ───────────────────
     let stress = 0, perf = 0, rec = 0;
