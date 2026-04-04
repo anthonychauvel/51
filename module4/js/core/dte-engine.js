@@ -1613,8 +1613,54 @@ class DTEEngine {
     // En vacances : pas d'usure supplémentaire (le repos prolongé brise le cycle).
     if (cumW > 6 && !isVacWeekNow) {
       const usure = Math.min(0.45, (cumW - 6) * 0.06); // 6%/sem au-delà du seuil
-      recFinal = Math.max(0.50, recFinal - usure);
+      recFinal = Math.max(0.30, recFinal - usure); // plancher 30 (cohérent avec recovery dynamique)
     }
+
+    // ════════════════════════════════════════════════════════════════
+    // PATCH CALIBRATION SCIENTIFIQUE — 3 blocs finaux
+    // S'appliquent après tous les calculs du moteur comme gates finaux
+    // Sources : McEwen 1998 (allostatic load), INRS phases, Meijman & Mulder 1998
+    // ════════════════════════════════════════════════════════════════
+
+    // ── 1. VACANCES — anti reset magique ─────────────────────────────
+    // Réduction partielle (pas reset complet). Mémoire biologique maintenue.
+    if (isVacWeekNow) {
+      fatFinal = fatFinal * 0.70;                   // réduction 30%, progressive
+      fatFinal = Math.max(fatFinal, 0.40);          // plancher physiologique réaliste
+
+      if (cumW >= 6) {
+        // Historique lourd : récupération plafonnée
+        recFinal = Math.min(recFinal + 0.10, 0.65);
+      } else {
+        // Historique léger : bonne récupération possible
+        recFinal = Math.min(recFinal + 0.15, 1.0);
+      }
+    }
+
+    // ── 2. RECOVERY DYNAMIQUE — éviter le blocage à 50 ──────────────
+    // Recovery bouge en fonction de la charge courante, chaque semaine
+    const _ccnSeuilCur = norm._weeklyH7 ? (norm._weeklyH7 - (norm._avgExtra7 || 0) * 5) : D.BASE_HEBDO;
+    if (weeklyH <= D.BASE_HEBDO) {
+      recFinal += 0.02;   // semaine normale 35h → légère amélioration
+    } else if (weeklyH > D.H_OPTIMAL) {
+      recFinal -= 0.02;   // surcharge > 40h → dégradation
+    }
+    // Bornes dynamiques : recovery peut descendre à 30 sous forte surcharge longue
+    recFinal = Math.max(0.30, Math.min(recFinal, 1.0));
+
+    // ── 3. FATIGUE CHRONIQUE — effet cumulatif exponentiel ───────────
+    // Après 6 semaines de surcharge : accélération de la fatigue résiduelle
+    // Correspond à la saturation HPA (Thompson 2022) et aux phases INRS P2→P3
+    if (cumW >= 6) {
+      fatFinal += fatFinal * 0.05;   // +5% exponentiel : plus on est fatigué, plus ça empire
+    }
+    if (fatFinal > 0.65) {
+      fatFinal += 0.02;              // effet aggravant si fatigue déjà élevée
+    }
+
+    // Bornes finales absolues
+    fatFinal = Math.max(0, Math.min(fatFinal, 1.0));
+    recFinal = Math.max(0.30, Math.min(recFinal, 1.0));
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
     // Si stress chronique élevé → cvRisk et cogRisk doivent augmenter (OMS/OIT 2021)
