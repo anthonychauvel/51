@@ -152,10 +152,18 @@ document.addEventListener('DOMContentLoaded', function () {
           ' Le sens que vous donnez à votre travail peut atténuer la perception, mais pas les risques biologiques réels.',
         source:'OMS/OIT 2021 · INRS · HAS 2017 · Art. L4121-1 Code du travail' });
     } else if (scores.fatigue >= 60) {
+      advice.push({ type:'danger', emoji:'🔴',
+        titre:'Fatigue élevée — Phase 4',
+        message:'À ' + weekH.toFixed(0) + 'h/sem sur ' + (cumW||1) + ' semaine(s), la fatigue dépasse le seuil critique. ' +
+          'Récupération difficile sans réduction des heures. ' +
+          'Votre hygiène de vie peut réduire l\'impact de 20-30% (INRS) mais ne compense pas ce niveau.',
+        source:'J.Occup.Health 2021 · INRS · Thompson 2022' });
+    } else if (scores.fatigue >= 50) {
       advice.push({ type:'warning', emoji:'🟠',
-        titre:'Fatigue chronique — Phase 3',
+        titre:'Surcharge — Phase 3',
         message:'À ' + weekH.toFixed(0) + 'h/sem sur ' + (cumW||1) + ' semaine(s), la fatigue s\'accumule. ' +
-          'Votre hygiène de vie (sport, alimentation, sommeil) peut réduire l\'impact de 20 à 30% selon les études INRS.',
+          'Votre hygiène de vie (sport, alimentation, sommeil) peut réduire l\'impact de 20 à 30% selon les études INRS. ' +
+          'Surveillez la durée : au-delà de 6 semaines, la récupération devient plus difficile.',
         source:'J.Occup.Health 2021 · INRS · Sonnentag 2003' });
     } else if (scores.fatigue >= 35) {
       advice.push({ type:'warning', emoji:'🟡',
