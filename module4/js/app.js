@@ -746,8 +746,9 @@ document.addEventListener('DOMContentLoaded', function () {
   window._updateRestDays = () => {
     const days = window._getRestDays();
     localStorage.setItem('DTE_REST_DAYS', JSON.stringify(days));
-    // Re-lancer les prédictions avec les nouveaux jours de repos
-    if (DTE._state) renderPredictions(DTE._state);
+    // Re-analyser tout (pas juste re-render les prédictions avec l'ancien state)
+    if (typeof window._fullSync === 'function') window._fullSync();
+    else if (DTE._state) renderPredictions(DTE._state);
     DTE.notifs.show('Jours de repos mis à jour', 'info', '📅');
   };
 
