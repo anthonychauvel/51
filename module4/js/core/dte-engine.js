@@ -935,13 +935,15 @@ class DTEEngine {
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — augmenté : de Bloom 2010 + INRS phases récupération
-        // Avant : -0.50/sem (trop faible → plafond visible sur 2+ sem vacances)
-        // Après : -0.75/sem → 2 semaines OFF = -1.5 sem de cumul (réaliste P2→P1)
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.75) * 1e9) / 1e9;
+        // Vacances déclarées M4 — PATCH calibration anti-reset (de Bloom 2010 + INRS)
+        // Avant : -0.75/sem (trop fort → quasi reset après 1-2 sem, irréaliste)
+        // Après : -0.45/sem → récupération forte mais PARTIELLE, dette résiduelle conservée
+        // 1 sem OFF = -0.45 | 2 sem = -0.90 | 3 sem = -1.35 (mémoire physiologique réaliste)
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.45) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
-        // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
+        // Semaine normale (0 HS) — PATCH : -0.12/sem (vs -0.10) — différenciation vacances/repos claire
+        // Meijman & Mulder 1998 : récupération partielle active dès retour à charge normale
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.12) * 1e9) / 1e9;
       }
     }
 
@@ -958,8 +960,9 @@ class DTEEngine {
     }
 
     // Arrondi final pour éviter 6.0000000000000014 dans l'affichage
-    const cumulWeeksR  = Math.round(cumulWeeks * 10) / 10;  // 1 décimale
-    const cumulMonths  = Math.round((cumulWeeksR / 4.33) * 10) / 10; // même précision
+    // PATCH : let (vs const) — cumulWeeksR sera réajusté après calcul recentVacDays28
+    let cumulWeeksR  = Math.round(cumulWeeks * 10) / 10;  // 1 décimale
+    let cumulMonths  = Math.round((cumulWeeksR / 4.33) * 10) / 10; // même précision
 
     // ── COMPTEURS DE RÉCUPÉRATION — deux niveaux distincts ───────────────────
     //
@@ -1036,6 +1039,17 @@ class DTEEngine {
       const e = days[k];
       // M1→M4 : absent ≥ 7h ou recup ≥ 7h = jour de repos → compte dans le buffer vacances récentes
       if (vacances[k] || (e && ((e.absent >= 7) || (e.recup >= 7)))) recentVacDays28++;
+    }
+
+    // ── MÉMOIRE BIOLOGIQUE POST-VACANCES (Sonnentag 2003 + de Bloom 2010) ───
+    // Sonnentag 2003 : les effets du repos persistent 2-4 semaines après la reprise.
+    // de Bloom 2010 : "vacation effects are short-lived but remain measurable" (2 semaines).
+    // 5+ jours de vacances dans les 28j → réduction supplémentaire du cumul (-0.20)
+    // → différencie clairement "a travaillé 28j sans pause" vs "a eu une semaine OFF récente"
+    if (recentVacDays28 >= 5) {
+      cumulWeeks  = Math.max(0, cumulWeeks - 0.20);
+      cumulWeeksR = Math.round(cumulWeeks * 10) / 10;
+      cumulMonths = Math.round((cumulWeeksR / 4.33) * 10) / 10;
     }
 
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
@@ -1597,6 +1611,35 @@ class DTEEngine {
     if (cumW > 6 && !isVacWeekNow) {
       const usure = Math.min(0.45, (cumW - 6) * 0.06); // 6%/sem au-delà du seuil
       recFinal = Math.max(0.50, recFinal - usure);
+    }
+
+    // ── PLAFOND LONG TERME — dette physiologique irréductible (OMS/INRS/McEwen) ──
+    // Après 6+ sem. de surcharge, la récupération parfaite est biologiquement impossible.
+    // INRS phase P2/P3 : retour à P1 = 2-6 semaines minimum (pas 1 weekend).
+    // McEwen 1998 (allostatic load) : charge chronique → seuil de stress basal élevé.
+    // Guard !isVacWeekNow : évite conflit avec vacationFloor (0.80-0.92 en vacances).
+    if (cumW >= 6 && !isVacWeekNow) {
+      recFinal  = Math.min(recFinal,  0.70); // rec  ≤ 70% — INRS P2/P3
+      perfFinal = Math.min(perfFinal, 0.85); // perf ≤ 85% — Pencavel 2014
+      strFinal  = Math.max(strFinal,  0.20); // stress ≥ 20% — McEwen 1998 allostatic load
+    }
+
+    // ── FATIGUE CHRONIQUE — accélération non-linéaire (J.Occup.Health 2021) ──
+    // Mécanismes adaptatifs épuisés après 6+ sem → courbe superlinéaire validée.
+    if (cumW >= 6) {
+      fatFinal = Math.min(1, fatFinal + fatFinal * 0.05); // +5% relatif au seuil critique
+    }
+    if (fatFinal > 0.65) {
+      fatFinal = Math.min(1, fatFinal + 0.02); // accélération supplémentaire > 65%
+    }
+
+    // ── COUPLAGE RÉCUPÉRATION ↔ FATIGUE (Meijman & Mulder 1998) ─────────────
+    // Récupération insuffisante → fatigue s'aggrave ; récupération forte → atténue.
+    if (recFinal < 0.50) {
+      fatFinal = Math.min(1, fatFinal + 0.01);
+    }
+    if (recFinal > 0.70) {
+      fatFinal = Math.max(0, fatFinal - 0.01);
     }
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
