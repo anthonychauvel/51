@@ -848,9 +848,11 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
+        // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
+        const isVacDay = !!vacances[k];
+        weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
         hasAnyDay = true;
-        if (e && e.extra > 0) daysLogged++;
+        if (e && e.extra > 0 && !isVacDay) daysLogged++;
       }
       // Extrapolation semaine courante
       if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
@@ -875,7 +877,9 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        weekH += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
+        // FIX VACANCES : jour vacances = 0h HS
+        const isVacDay = !!vacances[k];
+        weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
         hasAnyDay = true;
       }
       const isVacWeekP2 = [0,1,2,3,4].some(dd => {
@@ -884,8 +888,8 @@ class DTEEngine {
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — de Bloom 2010 : -0.25/semaine
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.25) * 1e9) / 1e9;
+        // Vacances déclarées M4 — de Bloom 2010 : -0.50/semaine (impact significatif)
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.50) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
         // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
         cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
@@ -936,11 +940,13 @@ class DTEEngine {
       // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, ou absence
       // noWorkThisWeek ne s'applique QU'à la semaine courante (i=0..6)
       const isCurrentWeek  = i < 7;
-      const hasOverload    = e && (e.extra > 0) && !isWE;
+      // FIX BUG VACANCES : un jour marqué vacances dans M4 EST un jour de repos,
+      // même si M1/M2 a des entrées pour ce jour (déclaration vacances = prioritaire)
+      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac;
       const isRestDay = isWE || isVac || isFerie || (e && e.absent > 0)
                      || (isCurrentWeek && !isWE && !hasOverload && noWorkThisWeek);
 
-      if (hasOverload) break; // HS → stop définitif
+      if (hasOverload) break; // HS réelles (hors vacances) → stop définitif
       // Jour ouvré sans aucun signal de repos → stop
       if (!isWE && !isVac && !isFerie && !(e && e.absent > 0)
           && !(isCurrentWeek && noWorkThisWeek)) break;
@@ -958,9 +964,21 @@ class DTEEngine {
       const e = days[k];
       const dow = d.getDay();
       const isWE = _isRestDow(dow);
-      // Stop dès qu'un jour avec HS est trouvé
-      if (e && e.extra > 0 && !isWE) break;
+      const isVac = !!vacances[k];
+      // FIX BUG VACANCES : un jour vacances ne casse pas le compteur même avec entrées M1/M2
+      if (e && e.extra > 0 && !isWE && !isVac) break;
       consecNonOTDays++;
+    }
+
+    // [C] recentVacDays28 : total de jours de VACANCES dans les 28 derniers jours
+    // PAS consécutif — capte l'effet d'une semaine OFF même si l'utilisateur a retravaillé après.
+    // Sonnentag 2003 : les effets du repos persistent ~2-4 semaines après la reprise.
+    // Bug corrigé : consecRestDays=0 dès le 1er jour travaillé → vacances passées invisibles.
+    let recentVacDays28 = 0;
+    for (let i = 0; i < 28; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      if (vacances[k]) recentVacDays28++;
     }
 
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
@@ -1119,6 +1137,7 @@ class DTEEngine {
       _cumulMonths:   cumulMonths,
       _consecRestDays: consecRestDays,
       _consecNonOTDays: consecNonOTDays,
+      _recentVacDays28: recentVacDays28,
       _sigma:         sigma,
       _contingentPct: contingentPct,
       _rcoDepassement: rcoDepassement,
@@ -1180,6 +1199,7 @@ class DTEEngine {
     // Deux compteurs de récupération — voir _normalize() pour la justification scientifique
     const consecRest    = norm._consecRestDays   || 0; // repos COMPLET (Sonnentag 2003 / HPA)
     const consecNonOT   = norm._consecNonOTDays  || 0; // sans HS (Meijman & Mulder 1998)
+    const recentVac28   = norm._recentVacDays28  || 0; // vacances récentes (28j) — effet persistant
 
     // ── LIFESTYLE BOOSTS (profil rythme de vie) ────────────────
     let lifestyleBoost = { fatigue:0, stress:0, performance:0, recovery:0, cvRisk:0 };
@@ -1441,25 +1461,44 @@ class DTEEngine {
     // ── FINE-TUNING — calibrage charge modérée continue (38-45h, ≥5 sem) ─────
     // Sans vacances, le système doit être stable, progressif, cohérent.
     //
-    // Ajust. 1 — Performance : boost contextuel si stress + fatigue bas
+    // Ajust. 1 — Performance : boost si stress + fatigue bas, plafond si fatigue > 20%
     //   Pencavel 2014 + Nature 2025 (Fan) : motivation + faible stress = meilleure perf réelle
     if (strFinal < 0.20 && fatFinal < 0.30 && !isVacWeekNow) {
       perfFinal = Math.min(1, perfFinal * 1.05);
     }
-    // Ajust. 2 — Récupération : moins punitive si fatigue modérée
-    //   INRS : récupération corrèle inversement avec fatigue résiduelle
+    // Plafond doux : perf ne dépasse pas 90 si fatigue résiduelle > 20%
+    if (perfFinal > 0.90 && fatFinal > 0.20 && !isVacWeekNow) {
+      perfFinal = 0.90;
+    }
+    // Ajust. 2 — Récupération : moins punitive si fatigue modérée, pénalité si stress > 20%
+    //   INRS : récupération corrèle inversement avec fatigue ET stress résiduel
     if (fatFinal < 0.40 && !isVacWeekNow) {
       recFinal = Math.min(1, recFinal + 0.08);
     }
-    // Ajust. 3 — Fatigue : accumulation prolongée doit se voir (seulement si fatigue actuellement basse)
-    //   J.Occup.Health 2021 : surcharge ≥5 sem → fatigue résiduelle mesurable
-    if (cumW >= 5 && !isVacWeekNow && fatFinal < 0.25) {
-      fatFinal = Math.min(1, fatFinal + 0.05);
+    if (strFinal > 0.20 && !isVacWeekNow) {
+      recFinal = Math.max(0.04, recFinal - 0.05);
+    }
+    // Ajust. 3 — Fatigue : accumulation prolongée doit se voir
+    //   J.Occup.Health 2021 : surcharge ≥6 sem → fatigue résiduelle renforcée
+    if (cumW >= 6 && !isVacWeekNow && fatFinal < 0.30) {
+      fatFinal = Math.min(1, fatFinal + 0.02);
     }
     // Ajust. 4 — Stabilité sous charge modérée (38-45h) : inertie réaliste
     //   ANACT : charge modérée stable ≠ surcharge aiguë, pas de reset fort
     //   L'accumulation ralentit naturellement (corps s'adapte partiellement)
     // (déjà intégré via cumulAmp progressif — pas d'action supplémentaire nécessaire)
+
+    // ── BÉNÉFICE VACANCES RÉCENTES (persistant après reprise) ─────────────────
+    // Sonnentag 2003 : les effets du repos persistent 2-4 semaines après la reprise.
+    // de Bloom 2010 : "vacation effects fade within 2 weeks but remain measurable".
+    // Bug corrigé : consecRestDays=0 dès le 1er jour travaillé → vacances invisibles.
+    // recentVacDays28 capte le bénéfice même si l'utilisateur a repris le travail.
+    if (recentVac28 >= 5 && !isVacWeekNow) {
+      // 5j de vacances dans les 28 derniers jours = bénéfice mesurable
+      const vacBenefit = Math.min(0.15, recentVac28 * 0.02); // 5j→0.10, 7j→0.14, 10j→0.15 max
+      fatFinal = Math.max(0, fatFinal - vacBenefit);           // fatigue réduite
+      recFinal = Math.min(1, recFinal + vacBenefit * 1.5);     // récupération boostée
+    }
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
     // Si stress chronique élevé → cvRisk et cogRisk doivent augmenter (OMS/OIT 2021)
