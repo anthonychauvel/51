@@ -1394,9 +1394,11 @@ class DTEEngine {
     // stressExt : composante chronique (fatigue × variabilité) — décroit avec TOUTE absence de HS
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
-    const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
-    // stressExtDecay : même logique que fatigueDecayRest — vacances = 2× plus efficace
-    const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? Math.round(consecRest * 1.5) : consecRest);
+    // PATCH : couplage fatigue→stress renforcé (0.40 vs 0.30) — cohérence physiologique
+    const stressExtBase = fatigue * 0.40 + norm.extStress * 0.20 + norm.variab * 0.12;
+    // stressExtDecay : demi-vie 10j (McEwen 1998) — PATCH : vacances ×1.1 (vs ×1.5 trop rapide)
+    // Cortisol basal reste élevé plusieurs semaines après surcharge (Sluiter 2001)
+    const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? Math.round(consecRest * 1.1) : consecRest);
     const stressExtDecay = _consecForStress > 0
       // Demi-vie 10j — McEwen 1998 (allostatic load chronique) + Sluiter 2001
       ? Math.max(0.08, Math.exp(-Math.log(2) * _consecForStress / 10))
@@ -1417,7 +1419,7 @@ class DTEEngine {
     // Dégradation cognitive OEM 2025 (>52h)
     const cogDeg       = cogRisk(weeklyH, cumW);
     const perfMotiv    = norm.motiv * 0.12;
-    const perfFat      = fatigue * 0.58;
+    const perfFat      = fatigue * 0.65; // PATCH ×0.65 (vs 0.58) — lien fatigue→perf renforcé
     const perfStr      = stress  * 0.10;
     // En vacances : perf = capacité de repos (Pencavel 35h = 100%) sans drag cumulatif.
     // Hors vacances : formule normale avec fatigue/stress/cognitif.
@@ -1606,6 +1608,19 @@ class DTEEngine {
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
+    // ── PLANCHER STRESS — allostatic load résiduel (McEwen 1998 + Sluiter 2001) ──────
+    // Le cortisol basal reste chroniquement élevé après surcharge prolongée.
+    // McEwen 1998 : allostatic load → seuil de stress physiologique durablement rehaussé.
+    // Sluiter 2001 : "neuroendocrine recovery from sustained work demands = several weeks"
+    // → stress ne peut pas tomber à 0 dès la 1ère semaine de repos après P2/P3.
+    // Plancher : 28% à 8 sem (cible post-surcharge : 25–40%).
+    // Même logique que fatFloor dans l'inertia block — appliquer même pendant vacances.
+    if (cumW >= 3) {
+      const stressInertia = Math.min(1, cumW / 8);
+      const stressFloor = stressInertia * 0.28; // 8 sem → 28%, 4 sem → 14%, 3 sem → 10%
+      strFinal = Math.max(strFinal, stressFloor);
+    }
+
     // ── USURE LONG TERME — weekend insuffisant à recharger après surcharge chronique ──
     // de Bloom 2010 : après 6+ semaines de surcharge, 2j de repos ne suffisent plus.
     // Sans ce correctif : recovery = 96 le lundi matin après 8 semaines à 45h (irréaliste).
@@ -1627,6 +1642,17 @@ class DTEEngine {
       recFinal  = Math.min(recFinal,  0.70); // rec  ≤ 70% — INRS P2/P3
       perfFinal = Math.min(perfFinal, 0.85); // perf ≤ 85% — Pencavel 2014
       strFinal  = Math.max(strFinal,  0.20); // stress ≥ 20% — McEwen 1998 allostatic load
+    }
+
+    // ── PLAFOND DYNAMIQUE PERFORMANCE — inertie post-surcharge (Pencavel 2014) ───
+    // La performance ne peut pas excéder une valeur liée à la fatigue résiduelle.
+    // Pencavel 2014 : "output quality degrades before quantity — restoration is non-linear"
+    // OEM 2025 (Jang) : "cognitive performance recovery takes weeks after chronic overload"
+    // Formule : perf ≤ 1 − fatFinal × 0.50
+    // fat=40% → perf ≤ 80% | fat=60% → perf ≤ 70% | fat=20% → perf ≤ 90%
+    if (fatFinal > 0.20) {
+      const perfCap = Math.max(0.05, 1 - fatFinal * 0.50);
+      if (perfFinal > perfCap) perfFinal = perfCap;
     }
 
     // ── FATIGUE CHRONIQUE — accélération non-linéaire (J.Occup.Health 2021) ──
