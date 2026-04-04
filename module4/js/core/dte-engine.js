@@ -227,7 +227,11 @@ function musculoRisk(weeklyH, cumulMonths, consec) {
  */
 function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays, consecNonOTDays) {
   const loadF    = Math.max(0, (weeklyH - D.H_OPTIMAL) / (D.H_CV - D.H_OPTIMAL));
-  const variabF  = Math.min(1, variabSigma / 8);
+  // FIX SIGMA BUG : variabF réduit pour éviter explosion stress à mi-semaine
+  // Avant : sigma/8 × 0.45 → sigma=7.8h → variabF=0.97 → stress=80 (irréaliste pour 42h/sem)
+  // Après : sigma/12 × 0.25 → sigma=7.8h → variabF=0.65 → contribution 0.16 max
+  // La variabilité reste un signal mais ne domine plus loadF (heures réelles)
+  const variabF  = Math.min(1, variabSigma / 12);
   // Saturation HPA à ~10 semaines — Thompson 2022 + ANACT
   const chronicF = Math.min(2.5, 1 + cumulWeeks * 0.15);
 
@@ -260,7 +264,7 @@ function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays, consecN
     restDecay = Math.max(0.30, restDecay); // plancher : sans détachement, récupération incomplète
   }
 
-  return Math.min(1, (loadF * 0.55 + variabF * 0.45) * chronicF * restDecay);
+  return Math.min(1, (loadF * 0.75 + variabF * 0.25) * chronicF * restDecay);
 }
 
 /**
@@ -698,7 +702,11 @@ class DTEEngine {
     const weekMondayA = (typeof CCN_API !== 'undefined')
       ? CCN_API.getDebutSemaineHS(today, _ccnWeek.debutSemaine)
       : (() => { const d=new Date(today); d.setDate(today.getDate()-((today.getDay()||7)-1)); return d; })();
-    const todayDowA = today.getDay() || 7; // 1=lun..7=dim (gardé pour comptage jours)
+    // FIX CCN : todayDowA = jours écoulés depuis le début de semaine CCN (pas le lundi civil)
+    // Supporte semaine débutant lundi, mercredi, samedi, dimanche, etc.
+    // Ex: semaine CCN débutant mercredi, aujourd'hui vendredi → todayDowA = 3 (mer, jeu, ven)
+    const _msDiffA   = today.getTime() - weekMondayA.getTime();
+    const todayDowA  = Math.min(workDaysPerWeek, Math.max(1, Math.floor(_msDiffA / 86400000) + 1));
     let sumExtra = 0, countWorkDays28 = 0;
     // Fenêtre 28j glissante — ne compte que les jours ouvrés (lun-ven) non absents
     for (let i = 0; i < 28; i++) {
@@ -728,7 +736,7 @@ class DTEEngine {
     // Avant : !e → count7++ (jour vide compté comme jour travaillé → faux pour les vacances)
     let sumExtra7 = 0, count7 = 0;
     let hasAnyEntryThisWeek = false; // au moins 1 entrée M1/M2 cette semaine
-    for (let dd = 0; dd < todayDowA && dd < 5; dd++) {
+    for (let dd = 0; dd < todayDowA && dd < workDaysPerWeek; dd++) {
       const d = new Date(weekMondayA); d.setDate(weekMondayA.getDate() + dd);
       if (d > today) break;
       const k = localDK(d);
@@ -748,16 +756,29 @@ class DTEEngine {
       // Un jour sans entrée (e=undefined) = vacances non déclarées ou repos → PAS compté
     }
 
-    // weeklyExtra : fenêtre 28j si données suffisantes, sinon semaine courante
+    // weeklyExtra : priorité à la semaine courante pour la progression jour par jour
+    //
+    // ARCHITECTURE : deux usages distincts
+    //   weeklyExtra  → charge COURANTE (fatigue/stress du jour, affichage "Xh/sem")
+    //   weeklyExtra28 → contexte HISTORIQUE (cumulWeeks, tendance longue)
+    //
+    // RÈGLE : si la semaine courante a des données (count7 >= 1), on utilise les HS réelles.
+    //   La fenêtre 28j ne prend le relais QUE si aucune donnée cette semaine.
+    //   Avant : countWorkDays28 >= 5 → 28j écrasait la semaine courante →
+    //   progression lun→ven invisible (weeklyExtra constant = moyenne historique).
     let weeklyExtra;
-    if (countWorkDays28 >= 5) {
+    if (count7 >= 1) {
+      // Semaine en cours avec données → HS réelles faites (progression jour par jour visible)
+      // Lun +2h → 37h | Mar +4h → 39h | Mer +6h → 41h | Jeu +8h → 43h | Ven +10h → 45h
+      // En repos/vacances en cours de semaine → weeklyExtra descend progressivement
+      weeklyExtra = sumExtra7;
+    } else if (countWorkDays28 >= 5) {
+      // Aucune saisie cette semaine → fallback sur historique 28j (début de semaine ou vacances)
       weeklyExtra = weeklyExtra28;
-    } else if (count7 >= 2) {
-      weeklyExtra = (sumExtra7 / count7) * workDaysPerWeek;
     } else {
-      const prevExtra2 = [], prevCount2 = [];
+      // Fallback : semaine précédente (démarrage, peu de données)
       let prevExtra = 0, prevCount = 0;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < workDaysPerWeek; dd++) {
         const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() - 7 + dd);
         const k = localDK(dt);
         const e = days[k];
@@ -765,9 +786,10 @@ class DTEEngine {
       }
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
-    const avgExtra7 = weeklyExtra / 5; // toujours /5 : fatigue par jour = charge hebdo ÷ 5j standard
-    const avgH7     = D.BASE_JOUR + avgExtra7;
+    const avgExtra7    = weeklyExtra / workDaysPerWeek; // FIX CCN : workDaysPerWeek au lieu de 5 fixe
     const _ccnR        = _dteGetCCNRules();
+    const _baseJourCCN = _ccnR.seuil / workDaysPerWeek; // 35/5=7h ou 39/5=7.8h selon accord
+    const avgH7        = _baseJourCCN + avgExtra7;
     const weeklyH7     = _ccnR.seuil + weeklyExtra;
 
     // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
@@ -840,13 +862,12 @@ class DTEEngine {
 
     // Passe 1 : accumulation des semaines de surcharge (plus ancienne → plus récente)
     let cumulWeeks = 0;
-    const todayDow = today.getDay() || 7;
-    const todayMonday = new Date(today);
-    todayMonday.setDate(today.getDate() - (todayDow - 1));
+    const todayMonday = weekMondayA; // FIX CCN : début de semaine CCN (pas forcément lundi civil)
+    const baseJourCCN = _baseJourCCN; // réutilise le calcul déjà fait plus haut
 
     for (let w = 51; w >= 0; w--) { // chronologique : w=51 (passé) → w=0 (maintenant)
       let weekH = 0, hasAnyDay = false, daysLogged = 0;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < workDaysPerWeek; dd++) { // FIX CCN : workDaysPerWeek au lieu de 5
         const dt = new Date(todayMonday);
         dt.setDate(todayMonday.getDate() - w * 7 + dd);
         if (dt > today) continue;
@@ -857,22 +878,23 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
         const isVacDay = !!vacances[k];
-        weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
         hasAnyDay = true;
         if (e && e.extra > 0 && !isVacDay) daysLogged++;
       }
-      // Extrapolation semaine courante
-      if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
-        weekH = _ccnSeuilW + weeklyExtraEffective;
+      // FIX EXTRAPOLATION : semaine courante → weekH réel (HS faites + base jours restants)
+      // Cohérent avec weeklyExtra conservative → weekH = seuil + HS réelles
+      if (w === 0 && count7 >= 1 && count7 < workDaysPerWeek) {
+        weekH = _ccnSeuilW + weeklyExtraEffective; // weeklyExtraEffective = sumExtra7 (HS réelles)
       }
       // Détecter si la semaine est une semaine de repos M1 (recup/absent ≥ 7h sur tous jours)
       // → traiter comme semaine vacances pour la réduction de cumulWeeks
-      const isM1RestWeekP1 = [0,1,2,3,4].some(dd => {
+      const isM1RestWeekP1 = Array.from({length: workDaysPerWeek}, (_,dd) => dd).some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         const ek = localDK(dt2); const ev = days[ek];
         return ev && ((ev.absent >= 7) || (ev.recup >= 7));
       });
-      const isVacWeekP1 = isM1RestWeekP1 || [0,1,2,3,4].some(dd => {
+      const isVacWeekP1 = isM1RestWeekP1 || Array.from({length: workDaysPerWeek}, (_,dd) => dd).some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
@@ -884,7 +906,7 @@ class DTEEngine {
     // Passe 2 : réductions de récupération (même ordre chronologique)
     for (let w = 51; w >= 0; w--) {
       let weekH = 0, hasAnyDay = false;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < workDaysPerWeek; dd++) { // FIX CCN
         const dt = new Date(todayMonday);
         dt.setDate(todayMonday.getDate() - w * 7 + dd);
         if (dt > today) continue;
@@ -895,16 +917,16 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS
         const isVacDay = !!vacances[k];
-        weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
         hasAnyDay = true;
       }
       // Détecter repos M1 (recup/absent ≥ 7h) comme vacances pour la réduction cumulWeeks
-      const isM1RestWeekP2 = [0,1,2,3,4].some(dd => {
+      const isM1RestWeekP2 = Array.from({length: workDaysPerWeek}, (_,dd) => dd).some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         const ek = localDK(dt2); const ev = days[ek];
         return ev && ((ev.absent >= 7) || (ev.recup >= 7));
       });
-      const isVacWeekP2 = isM1RestWeekP2 || [0,1,2,3,4].some(dd => {
+      const isVacWeekP2 = isM1RestWeekP2 || Array.from({length: workDaysPerWeek}, (_,dd) => dd).some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
@@ -1018,12 +1040,10 @@ class DTEEngine {
     // Sinon semaine 0h vs 45h → sigma artificiellement gonflé (12.5h au lieu de 3h)
     // On exclut les semaines sans AUCUNE entrée réelle M1/M2 (= vacances non déclarées)
     const weekTotals = [];
-    const todayDowV = today.getDay() || 7;
-    const todayMondayV = new Date(today);
-    todayMondayV.setDate(today.getDate() - (todayDowV - 1));
+    const todayMondayV = weekMondayA; // FIX CCN : début de semaine CCN (pas lundi civil)
     for (let w = 0; w < D.VARIAB_WINDOW + 3; w++) { // +3 pour compenser les semaines exclues
       let wt = 0, daysInWeek = 0, hasRealEntry = false;
-      for (let dd = 0; dd < 5; dd++) {
+      for (let dd = 0; dd < workDaysPerWeek; dd++) { // FIX CCN : workDaysPerWeek au lieu de 5
         const dt = new Date(todayMondayV);
         dt.setDate(todayMondayV.getDate() - w * 7 + dd);
         if (dt > today) continue;
@@ -1034,14 +1054,24 @@ class DTEEngine {
         // FIX BUG 7 : ne compter que les jours avec une vraie entrée M1/M2
         // Un jour sans entrée (e=undefined) = pas de donnée = possible vacances non déclarées
         if (e) {
-          wt += D.BASE_JOUR + (e.extra || 0);
+          wt += baseJourCCN + (e.extra || 0); // FIX CCN : baseJourCCN (7h ou 7.8h selon accord)
           daysInWeek++;
           hasRealEntry = true;
         }
       }
+      // FIX SIGMA : semaine courante (w=0) incomplète → seuil + HS réelles faites
+      // Cohérent avec weeklyExtra conservative : pas d'extrapolation agressive
+      // Lundi +2h → 37h (pas 45h), mercredi +6h → 41h — sigma réaliste
+      let wtFinal = wt;
+      if (w === 0 && daysInWeek > 0 && daysInWeek < workDaysPerWeek && hasRealEntry) {
+        // wt contient baseJourCCN × daysInWeek + HS réelles
+        // On recalcule : seuil CCN + HS réelles uniquement (jours restants à 0 HS)
+        const hsReelles = wt - (baseJourCCN * daysInWeek);
+        wtFinal = _ccnSeuilW + hsReelles;
+      }
       // Inclure uniquement les semaines avec ≥ 3 jours ouvrés ET au moins 1 entrée réelle
       // ANACT : exclure(absences_longues) — une semaine sans données n'est pas représentative
-      if (daysInWeek >= 3 && hasRealEntry) weekTotals.push(wt);
+      if (daysInWeek >= 3 && hasRealEntry) weekTotals.push(wtFinal);
       if (weekTotals.length >= D.VARIAB_WINDOW) break;
     }
     // mean : calculé seulement sur les semaines avec des données (évite dilution)
