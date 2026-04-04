@@ -1301,7 +1301,7 @@ class DTEEngine {
     // Référence architecture : facteur_stress = 1 + stress * 0.5
     // On utilise cortisolModel (indépendant de fatigue, pas de dépendance circulaire)
     const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
-    const stressFatigueMult = 1 + prelimStress * 0.3; // INRS: stress chronique amplifie fatigue (0.3 = cohérent ref. architecture)
+    const stressFatigueMult = 1 + prelimStress * 0.15; // INRS: stress amplifie fatigue (modéré — 0.15 évite surréaction)
     const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
     const fatigue = Math.max(0, Math.min(1, fat_raw));
 
@@ -1395,7 +1395,7 @@ class DTEEngine {
 
     // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
     const recBase = 1.0
-      - (fatigue * fatigueDecayRest) * 1.20    // fatigue (Meijman & Mulder 1998) — réduit de 1.40
+      - (fatigue * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998) — calibré pour rec 70-80 à fat 30%
       - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
       - recNightPenalty;
     // FIX BUG 6 : bonus vacances direct (+5 à +10 pts) comme recommandé
@@ -1479,26 +1479,42 @@ class DTEEngine {
     if (strFinal > 0.20 && !isVacWeekNow) {
       recFinal = Math.max(0.04, recFinal - 0.05);
     }
-    // Ajust. 3 — Fatigue : accumulation prolongée doit se voir
-    //   J.Occup.Health 2021 : surcharge ≥6 sem → fatigue résiduelle renforcée
-    if (cumW >= 6 && !isVacWeekNow && fatFinal < 0.30) {
-      fatFinal = Math.min(1, fatFinal + 0.02);
+    // Ajust. 3 — Fatigue : accumulation longue progressive
+    //   J.Occup.Health 2021 : surcharge prolongée → fatigue résiduelle croissante
+    //   cumW * 0.003 : léger renfort linéaire (6 sem → +1.8%, 10 sem → +3%)
+    if (cumW >= 4 && !isVacWeekNow) {
+      fatFinal = Math.min(1, fatFinal + cumW * 0.003);
+    }
+    // Sécurité : si fatigue > 60% mais heures < 45h → amortir (pas de surréaction)
+    if (fatFinal > 0.60 && weeklyH < 45 && !isVacWeekNow) {
+      fatFinal *= 0.95;
     }
     // Ajust. 4 — Stabilité sous charge modérée (38-45h) : inertie réaliste
     //   ANACT : charge modérée stable ≠ surcharge aiguë, pas de reset fort
-    //   L'accumulation ralentit naturellement (corps s'adapte partiellement)
-    // (déjà intégré via cumulAmp progressif — pas d'action supplémentaire nécessaire)
+    // (déjà intégré via cumulAmp progressif)
 
     // ── BÉNÉFICE VACANCES RÉCENTES (persistant après reprise) ─────────────────
     // Sonnentag 2003 : les effets du repos persistent 2-4 semaines après la reprise.
     // de Bloom 2010 : "vacation effects fade within 2 weeks but remain measurable".
-    // Bug corrigé : consecRestDays=0 dès le 1er jour travaillé → vacances invisibles.
-    // recentVacDays28 capte le bénéfice même si l'utilisateur a repris le travail.
     if (recentVac28 >= 5 && !isVacWeekNow) {
-      // 5j de vacances dans les 28 derniers jours = bénéfice mesurable
-      const vacBenefit = Math.min(0.15, recentVac28 * 0.02); // 5j→0.10, 7j→0.14, 10j→0.15 max
-      fatFinal = Math.max(0, fatFinal - vacBenefit);           // fatigue réduite
-      recFinal = Math.min(1, recFinal + vacBenefit * 1.5);     // récupération boostée
+      const vacBenefit = Math.min(0.15, recentVac28 * 0.02);
+      fatFinal = Math.max(0, fatFinal - vacBenefit);
+      recFinal = Math.min(1, recFinal + vacBenefit * 1.5);
+    }
+
+    // ── INERTIE POST-REPOS — mémoire biologique (CRITIQUE) ──────────────────
+    // Plus la surcharge passée est longue, moins 1 semaine de repos efface.
+    // de Bloom 2010 : "vacation effects are short-lived, fading within 2 weeks"
+    // INRS phases : P2→P1 recovery = 2-6 semaines, pas 1.
+    // Sans inertie → Fat 6% et Rec 100% après 1 sem vacances sur 6 sem surcharge = irréaliste.
+    if (cumW >= 3) {
+      const inertia = Math.min(1, cumW / 8); // 3 sem→0.375, 6 sem→0.75, 8 sem→1.0
+      // Fatigue plancher : ne peut pas descendre sous ce seuil avec cette accumulation
+      const fatFloor = inertia * 0.22; // 6 sem → plancher 16.5%, 8 sem → plancher 22%
+      if (fatFinal < fatFloor) fatFinal = fatFloor;
+      // Récupération plafond : ne peut pas dépasser ce seuil avec cette accumulation
+      const recCeiling = 1.0 - inertia * 0.15; // 6 sem → max 89%, 8 sem → max 85%
+      if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
