@@ -935,9 +935,10 @@ class DTEEngine {
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — réduit à -0.45/sem (vs -0.75 trop agressif)
-        // 2 sem OFF = -0.90 sem de cumul au lieu de -1.50 → le passé reste présent
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.45) * 1e9) / 1e9;
+        // Vacances déclarées M4 — augmenté : de Bloom 2010 + INRS phases récupération
+        // Avant : -0.50/sem (trop faible → plafond visible sur 2+ sem vacances)
+        // Après : -0.75/sem → 2 semaines OFF = -1.5 sem de cumul (réaliste P2→P1)
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.75) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
         // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
         cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
@@ -1320,24 +1321,15 @@ class DTEEngine {
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
     const fatSurchar    = norm.surcharge * 0.12;
     const fatBurnout    = norm.burnout * 0.22;
-    // ── FATIGUE RÉSIDUELLE CHRONIQUE — persiste même sans HS courante ───────────
+    // FIX BUG 6 : composante cumulative — la fatigue accumulée persiste même sans HS cette semaine
     // J.Occup.Health 2021 : "les 6 derniers mois comptent autant que la semaine courante"
-    // INRS phases P2→P1 : récupération complète = 2-6 semaines, pas 2 jours.
-    //
-    // FIX COHÉRENCE : deux corrections vs version précédente
-    //   1. fatCumulBase renforcé : min(0.40, cumW×0.025) — pour cumW=8 → 0.20 (vs 0.146 avant)
-    //   2. Demi-vie allongée à 28j (vs 14j) — decay plus réaliste : 1 sem repos ≠ guérison
-    //   3. fatCumulative sorti de cumulAmp — c'est un RÉSIDU, pas de la surcharge active
-    //      → en vacances, il ne doit pas être réduit par les mêmes facteurs que fatHS
-    //
-    // Résultat : 8 sem surcharge + 1 sem vac → fatigue ~17-18% (vs 10% avant)
-    //            8 sem surcharge + 2 sem vac → fatigue ~14-15% (vs 9% avant)
-    const fatCumulBase = Math.min(0.40, cumW * 0.025); // cumW=8 → 0.20, cumW=12 → 0.30
-    // Décroissance lente : demi-vie 28j (repos complet) / 40j (semaines normales)
-    // Plancher plus haut (0.30) : la fatigue chronique ne s'efface pas si vite
+    // Sans cette composante, fatigue tombe à ~15% dès la 1ère semaine sans HS (irréaliste)
+    // Calibration : 10 sem surcharge → fatCumul ≈ 0.15, décroît avec consecNonOT (Meijman 1998)
+    const fatCumulBase = Math.min(0.25, cumW * 0.018);
+    // Décroissance : demi-vie 14j (repos complet) / 25j (semaines normales)
     const _consecForCumulDecay = Math.max(consecNonOT, consecRest);
     const fatCumulDecay = _consecForCumulDecay > 0
-      ? Math.max(0.30, Math.exp(-Math.log(2) * _consecForCumulDecay / 28))
+      ? Math.max(0.15, Math.exp(-Math.log(2) * _consecForCumulDecay / 14))
       : 1.0;
     const fatCumulative = fatCumulBase * fatCumulDecay;
 
@@ -1350,12 +1342,11 @@ class DTEEngine {
                    : cumW >= 4  ? 1.25   // 1 mois
                    : 1.0;
 
-    // En vacances : réduire cumulAmp modérément — le passé reste présent
-    // Réduit vs avant (0.70/0.55/0.40 trop agressif → le cumul s'effaçait trop vite)
-    // 1 sem vac : ×0.85 | 2 sem : ×0.75 | 3+ : ×0.65
+    // FIX BUG 4 : en vacances, réduire cumulAmp (de Bloom 2010 : détachement actif)
+    // 1 semaine vacances : cumulAmp × 0.70 | 2 semaines : × 0.55 | 3+ : × 0.40
     if (isVacWeekNow && consecRest >= 1) {
       const vacWeeks = Math.min(3, Math.floor(consecRest / 5));
-      const vacReduction = vacWeeks >= 3 ? 0.65 : vacWeeks >= 2 ? 0.75 : 0.85;
+      const vacReduction = vacWeeks >= 3 ? 0.40 : vacWeeks >= 2 ? 0.55 : 0.70;
       cumulAmp *= vacReduction;
     }
 
@@ -1371,19 +1362,11 @@ class DTEEngine {
     // FIX BUG 4 : en vacances, atténuer fatSurchar et fatBurnout (repos actif)
     const vacFatReduction = isVacWeekNow ? 0.40 : 1.0;
     // FIX BUG 8 : le stress amplifie la fatigue (INRS + OMS + Sonnentag)
+    // Référence architecture : facteur_stress = 1 + stress * 0.5
+    // On utilise cortisolModel (indépendant de fatigue, pas de dépendance circulaire)
     const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
-    const stressFatigueMult = 1 + prelimStress * 0.15;
-
-    // Composante AIGUË : charge courante (HS, sommeil, surcharge) × amplificateurs
-    const fatAcute = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction))
-      * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
-
-    // Composante RÉSIDUELLE : fatigue chronique accumulée — indépendante de cumulAmp
-    // Ne doit PAS être réduite par les facteurs de repos (vacances, 35h) : c'est un héritage biologique
-    // Appliquée uniquement quand pas de HS actives (fatHS > 0 → surcharge prime)
-    const fatResiduelle = fatHS > 0 ? 0 : fatCumulative * _pf.fatF;
-
-    const fat_raw = fatAcute + fatResiduelle;
+    const stressFatigueMult = 1 + prelimStress * 0.15; // INRS: stress amplifie fatigue (modéré — 0.15 évite surréaction)
+    const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
     const fatigue = Math.max(0, Math.min(1, fat_raw));
 
     // ── STRESS/CORTISOL (Thompson 2022 + ANACT/INRS + IARC 2019) ─────────────
@@ -1467,11 +1450,11 @@ class DTEEngine {
       : 1.0;
 
     // Plancher récupération : Sonnentag 2003 — détachement réel → recharge progressive.
-    // vacationFloor : plancher recovery en vacances — réduit pour ne pas effacer le cumul
-    // Avant : min(0.92, 0.50 + consecRest*0.06) → 7j = 0.92 trop élevé
-    // Après : min(0.75, 0.38 + consecRest*0.04) → 5j→0.58, 7j→0.66, 10j→0.78→cap 0.75
+    // FIX BUG 6 : le plancher vacation était trop bas (max 0.30 → jamais >30% en vacances).
+    // Sonnentag 2003 : après 5j+ de repos complet, récupération physique très forte,
+    // récupération mentale quasi complète. Cible : 85-90 après 1 semaine OFF.
     const vacationFloor = isVacWeekScore
-      ? Math.min(0.75, 0.38 + consecRest * 0.04)
+      ? Math.min(0.92, 0.50 + consecRest * 0.06) // 5j→0.80, 7j→0.92
       : 0.04;
 
     // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
@@ -1479,11 +1462,11 @@ class DTEEngine {
       - (fatigue * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998) — calibré pour rec 70-80 à fat 30%
       - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
       - recNightPenalty;
-    // vacationDirectBonus : réduit — les vacances récupèrent mais pas complètement
-    // Avant : min(0.18, (consecRest-4)*0.030) → trop généreux
-    // Après : min(0.09, (consecRest-4)*0.015) → 5j→+1.5%, 7j→+4.5%, 10j→+9%
+    // FIX BUG 6 + BUG 3 : bonus vacances direct — différencié semaine 1 vs 2+
+    // Avant : max 0.10 quelle que soit la durée → plafond perçu dès la 2e semaine
+    // Après : cap relevé à 0.18 → 2 sem = +0.09, 3 sem = +0.15 (de Bloom 2010)
     const vacationDirectBonus = isVacWeekScore && consecRest >= 5
-      ? Math.min(0.09, (consecRest - 4) * 0.015)
+      ? Math.min(0.18, (consecRest - 4) * 0.030) // 5j→+0.03, 7j→+0.09, 10j→+0.18
       : 0;
     const recovery = Math.max(vacationFloor, Math.min(1,
       recBase
@@ -1594,12 +1577,12 @@ class DTEEngine {
     // Avant : recCeiling max 85% après 8 sem cumul → perçu comme "plafond"
     // Après : recCeiling max 88% après 8 sem cumul, 91% après 12 sem
     if (cumW >= 3) {
-      const inertia = Math.min(1, cumW / 12);
-      // FIX COHÉRENCE : fatFloor 0.20→0.25 — avec 8 sem surcharge, minimum 17% même en vacances
-      // INRS P2 : récupération incomplète avant 4-6 sem de décharge
-      // cumW=8 → fatFloor=17% | cumW=12 → 25% | 2 sem récup → cumW=6.6 → 14%
-      const fatFloor = inertia * 0.25;
+      const inertia = Math.min(1, cumW / 12); // BUG 3 FIX : ÷12 au lieu de ÷8
+      // Fatigue plancher : ne peut pas descendre sous ce seuil avec cette accumulation
+      const fatFloor = inertia * 0.20; // légèrement réduit aussi (0.22→0.20)
       if (fatFinal < fatFloor) fatFinal = fatFloor;
+      // Récupération plafond : BUG 3 FIX : inertia × 0.10 au lieu de × 0.15
+      // 8 sem → max 93% (au lieu de 85%) — cohérent avec de Bloom 2010
       const recCeiling = 1.0 - inertia * 0.10;
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
@@ -1613,54 +1596,8 @@ class DTEEngine {
     // En vacances : pas d'usure supplémentaire (le repos prolongé brise le cycle).
     if (cumW > 6 && !isVacWeekNow) {
       const usure = Math.min(0.45, (cumW - 6) * 0.06); // 6%/sem au-delà du seuil
-      recFinal = Math.max(0.30, recFinal - usure); // plancher 30 (cohérent avec recovery dynamique)
+      recFinal = Math.max(0.50, recFinal - usure);
     }
-
-    // ════════════════════════════════════════════════════════════════
-    // PATCH CALIBRATION SCIENTIFIQUE — 3 blocs finaux
-    // S'appliquent après tous les calculs du moteur comme gates finaux
-    // Sources : McEwen 1998 (allostatic load), INRS phases, Meijman & Mulder 1998
-    // ════════════════════════════════════════════════════════════════
-
-    // ── 1. VACANCES — anti reset magique ─────────────────────────────
-    // Réduction partielle (pas reset complet). Mémoire biologique maintenue.
-    if (isVacWeekNow) {
-      fatFinal = fatFinal * 0.70;                   // réduction 30%, progressive
-      fatFinal = Math.max(fatFinal, 0.40);          // plancher physiologique réaliste
-
-      if (cumW >= 6) {
-        // Historique lourd : récupération partielle — le passé continue de peser
-        recFinal = Math.min(recFinal + 0.07, 0.62);
-      } else {
-        // Historique léger : bonne récupération possible
-        recFinal = Math.min(recFinal + 0.12, 0.88);
-      }
-    }
-
-    // ── 2. RECOVERY DYNAMIQUE — éviter le blocage à 50 ──────────────
-    // Recovery bouge en fonction de la charge courante, chaque semaine
-    const _ccnSeuilCur = norm._weeklyH7 ? (norm._weeklyH7 - (norm._avgExtra7 || 0) * 5) : D.BASE_HEBDO;
-    if (weeklyH <= D.BASE_HEBDO) {
-      recFinal += 0.02;   // semaine normale 35h → légère amélioration
-    } else if (weeklyH > D.H_OPTIMAL) {
-      recFinal -= 0.02;   // surcharge > 40h → dégradation
-    }
-    // Bornes dynamiques : recovery peut descendre à 30 sous forte surcharge longue
-    recFinal = Math.max(0.30, Math.min(recFinal, 1.0));
-
-    // ── 3. FATIGUE CHRONIQUE — effet cumulatif exponentiel ───────────
-    // Après 6 semaines de surcharge : accélération de la fatigue résiduelle
-    // Correspond à la saturation HPA (Thompson 2022) et aux phases INRS P2→P3
-    if (cumW >= 6) {
-      fatFinal += fatFinal * 0.05;   // +5% exponentiel : plus on est fatigué, plus ça empire
-    }
-    if (fatFinal > 0.65) {
-      fatFinal += 0.02;              // effet aggravant si fatigue déjà élevée
-    }
-
-    // Bornes finales absolues
-    fatFinal = Math.max(0, Math.min(fatFinal, 1.0));
-    recFinal = Math.max(0.30, Math.min(recFinal, 1.0));
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
     // Si stress chronique élevé → cvRisk et cogRisk doivent augmenter (OMS/OIT 2021)
