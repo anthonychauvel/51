@@ -702,6 +702,8 @@ class DTEEngine {
     const weekMondayA = (typeof CCN_API !== 'undefined')
       ? CCN_API.getDebutSemaineHS(today, _ccnWeek.debutSemaine)
       : (() => { const d=new Date(today); d.setDate(today.getDate()-((today.getDay()||7)-1)); return d; })();
+    // FIX CCN : workDaysPerWeek déclaré ICI — utilisé par todayDowA et toutes les boucles
+    const workDaysPerWeek = 7 - _getRestDaysSet().size; // dynamique selon jours repos (ex: 5 si dim+sam)
     // FIX CCN : todayDowA = jours écoulés depuis le début de semaine CCN (pas le lundi civil)
     // Supporte semaine débutant lundi, mercredi, samedi, dimanche, etc.
     // Ex: semaine CCN débutant mercredi, aujourd'hui vendredi → todayDowA = 3 (mer, jeu, ven)
@@ -727,7 +729,6 @@ class DTEEngine {
     }
     // avgExtraPerDay28 = HS/jour moyen sur 4 semaines → weeklyExtra = HS/sem = avg × jours ouvrés/sem
     const avgExtraPerDay28 = countWorkDays28 > 0 ? sumExtra / countWorkDays28 : 0;
-    const workDaysPerWeek = 7 - _getRestDaysSet().size; // dynamique selon jours repos (ex: 5 si dim+sam)
     const weeklyExtra28 = avgExtraPerDay28 * workDaysPerWeek;
 
     // Semaine civile courante (lun → aujourd'hui)
