@@ -576,11 +576,26 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Jours de repos — charger l'état sauvegardé
-    const _savedRest = JSON.parse(localStorage.getItem('DTE_REST_DAYS') || '{"sat":true,"sun":true}');
-    const satCb = document.getElementById('dte-rest-sat');
-    const sunCb = document.getElementById('dte-rest-sun');
-    if (satCb) satCb.checked = _savedRest.sat !== false;
-    if (sunCb) sunCb.checked = _savedRest.sun !== false;
+    // Migration : ancien format {sat:true,sun:true} → nouveau format [0,6]
+    let _savedRestArr;
+    try {
+      const _raw = JSON.parse(localStorage.getItem('DTE_REST_DAYS') || 'null');
+      if (Array.isArray(_raw)) {
+        _savedRestArr = _raw;
+      } else if (_raw && typeof _raw === 'object') {
+        // Migration ancien format
+        _savedRestArr = [];
+        if (_raw.sun !== false) _savedRestArr.push(0);
+        if (_raw.sat !== false) _savedRestArr.push(6);
+        localStorage.setItem('DTE_REST_DAYS', JSON.stringify(_savedRestArr));
+      } else {
+        _savedRestArr = [0, 6]; // défaut : dim + sam
+      }
+    } catch(_) { _savedRestArr = [0, 6]; }
+    for (let d = 0; d < 7; d++) {
+      const cb = document.getElementById('dte-rest-' + d);
+      if (cb) cb.checked = _savedRestArr.includes(d);
+    }
 
     // PDF désactivé
   }
@@ -718,20 +733,19 @@ document.addEventListener('DOMContentLoaded', function () {
   }, 3000);
 
   // Exposer le forçage de sync (bouton visible)
-  // Helper : retourner les jours de repos selon les checkboxes
+  // Helper : retourner les jours de repos selon les checkboxes (0=dim..6=sam)
   window._getRestDays = () => {
-    const sat = document.getElementById('dte-rest-sat')?.checked !== false;
-    const sun = document.getElementById('dte-rest-sun')?.checked !== false;
     const days = [];
-    if (sun) days.push(0);   // 0 = dimanche en JS
-    if (sat) days.push(6);   // 6 = samedi en JS
+    for (let d = 0; d < 7; d++) {
+      const cb = document.getElementById('dte-rest-' + d);
+      if (cb && cb.checked) days.push(d);
+    }
     return days.length ? days : [0]; // au minimum dimanche
   };
 
   window._updateRestDays = () => {
-    const sat = document.getElementById('dte-rest-sat')?.checked;
-    const sun = document.getElementById('dte-rest-sun')?.checked;
-    localStorage.setItem('DTE_REST_DAYS', JSON.stringify({sat:!!sat, sun:!!sun}));
+    const days = window._getRestDays();
+    localStorage.setItem('DTE_REST_DAYS', JSON.stringify(days));
     // Re-lancer les prédictions avec les nouveaux jours de repos
     if (DTE._state) renderPredictions(DTE._state);
     DTE.notifs.show('Jours de repos mis à jour', 'info', '📅');
