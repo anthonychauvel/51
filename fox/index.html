@@ -32,7 +32,7 @@
 <div id="burnout-popup">
   <span class="burnout-icon">🔥</span>
   <div class="score-display" id="burnout-score-val">--</div>
-  <h2>Signal Burn-Out Détecté</h2>
+  <h2>Pénalité Détectée</h2>
   <p id="burnout-popup-msg">Votre situation présente des signaux de risque élevés.</p>
   <button class="btn-close-burnout" onclick="closeBurnoutPopup()">Voir mes droits →</button>
 </div>
@@ -84,8 +84,8 @@ window._fox_pre = (function() {
   </div>
   <div class="hud-stats">
     <div class="hud-stat" onclick="openPopup('popup-modules')" title="Voir les données heures sup" style="cursor:pointer;"><div class="hud-stat-icon">⏱️</div><div class="hud-stat-val" id="hud-hours"><script>document.write(window._fox_pre.hrs||0)</script></div><div class="hud-stat-lbl">H.SUP</div></div>
-    <div class="hud-stat" onclick="openPopup('popup-burnout')" title="Voir l'énergie et burn-out" style="cursor:pointer;"><div class="hud-stat-icon">❤️</div><div class="hud-stat-val" id="hud-energy">100</div><div class="hud-stat-lbl">ÉNERGIE</div></div>
-    <div class="hud-stat" onclick="openPopup('popup-burnout')" title="Voir le risque burn-out" style="cursor:pointer;"><div class="hud-stat-icon">🔥</div><div class="hud-stat-val" id="hud-burnout"><script>document.write(window._fox_pre.bo||0)</script></div><div class="hud-stat-lbl">RISQUE</div></div>
+    <div class="hud-stat" onclick="openPopup('popup-burnout')" title="Voir mon énergie" style="cursor:pointer;"><div class="hud-stat-icon">❤️</div><div class="hud-stat-val" id="hud-energy">100</div><div class="hud-stat-lbl">ÉNERGIE</div></div>
+    <div class="hud-stat" onclick="openPopup('popup-burnout')" title="Voir mes pénalités" style="cursor:pointer;"><div class="hud-stat-icon">🔥</div><div class="hud-stat-val" id="hud-burnout"><script>document.write(window._fox_pre.bo||0)</script></div><div class="hud-stat-lbl">PÉNALITÉ</div></div>
     <div class="hud-stat" onclick="openPopup('popup-badges')" title="Voir mes badges" style="cursor:pointer;"><div class="hud-stat-icon">🏅</div><div class="hud-stat-val" id="hud-badges"><script>document.write(window._fox_pre.rwds||0)</script></div><div class="hud-stat-lbl">BADGES</div></div>
   </div>
   <div id="hud-buttons">
@@ -135,7 +135,7 @@ window._fox_pre = (function() {
     <button class="dock-btn" onclick="openPopup('popup-glossaire');closeSubs()"><span class="dock-icon">📚</span><span class="dock-label">Glossaire</span></button>
   </div>
   <div id="subdock-suivi" class="subdock" style="display:none;">
-    <button class="dock-btn" onclick="openPopup('popup-burnout');closeSubs()"><span class="dock-icon">🔥</span><span class="dock-label">Burn-Out</span></button>
+    <button class="dock-btn" onclick="openPopup('popup-burnout');closeSubs()"><span class="dock-icon">🔥</span><span class="dock-label">Pénalité</span></button>
     <button class="dock-btn" onclick="openPopup('popup-violations');closeSubs()"><span class="dock-icon">⚠️</span><span class="dock-label">Violations</span></button>
     <button class="dock-btn" onclick="openPopup('popup-xp-history');closeSubs()"><span class="dock-icon">📊</span><span class="dock-label">XP</span></button>
   </div>
@@ -290,7 +290,7 @@ window._fox_pre = (function() {
 <div class="fox-popup-backdrop" id="popup-burnout">
   <div class="fox-popup">
     <div class="fox-popup-header">
-      <h2 class="fox-popup-title">🔥 Score Burn-Out</h2>
+      <h2 class="fox-popup-title">🔥 Pénalités</h2>
       <button class="fox-popup-close" onclick="closePopup('popup-burnout')">✕</button>
     </div>
     <div id="burnout-popup-content" style="color:#ccc;"></div>
@@ -2388,6 +2388,31 @@ function _analyzeLegalSituation() {
         m2Days[dk] = { extra: hrs, recup: 0, absent: 0 };
       });
     });
+    // ── M4 vacances & absences M1 — exclure de l'analyse violation ──────────
+    // DTE_VACANCES_ : jours saisis comme "vacances" dans M4 (clé = YYYY-MM-DD)
+    // absent/recup M1 : jours de repos déclarés dans M1 (recup>=7h ou absent>=7h)
+    // → ces jours ne doivent PAS générer de violation "Semaine chargée"
+    const m4Vac = {};
+    try {
+      const rawVac = JSON.parse(localStorage.getItem('DTE_VACANCES_' + year) || '{}');
+      Object.keys(rawVac).forEach(dk => { m4Vac[dk] = true; });
+    } catch(e) {}
+    // Construire le Set des semaines avec au moins 1 jour off (vacances M4 ou repos M1)
+    const weeksWithDayOff = new Set();
+    const _isoWk = dk => {
+      const d = new Date(dk), dow = (d.getDay()+6)%7;
+      const thu = new Date(d); thu.setDate(d.getDate()-dow+3);
+      const yS = new Date(thu.getFullYear(),0,4);
+      return thu.getFullYear()+'-W'+String(1+Math.round(((thu-yS)/86400000-3+((yS.getDay()+6)%7))/7)).padStart(2,'0');
+    };
+    // Vacances M4
+    Object.keys(m4Vac).forEach(dk => weeksWithDayOff.add(_isoWk(dk)));
+    // Absences/récup M1 (≥7h = jour off)
+    Object.entries(rawM1).forEach(([dk, val]) => {
+      if (typeof val !== 'object') return;
+      if ((Number(val.absent||0) >= 7) || (Number(val.recup||0) >= 7)) weeksWithDayOff.add(_isoWk(dk));
+    });
+
     // M1 prioritaire si même jour
     const allDays = Object.assign({}, m2Days, rawM1);
 
@@ -2442,9 +2467,9 @@ function _analyzeLegalSituation() {
       maxWeekTotal: Math.round(maxWeekTotal * 100) / 100,
       maxWeekMon, weeksOver48, weeksOver44,
       maxAvg12:     Math.round(maxAvg12 * 100) / 100,
-      hasWeekViol:  maxWeekTotal >= 48,
+      hasWeekViol:  maxWeekTotal >= 48 && !weeksWithDayOff.has(isoWeekKey(maxWeekMon || new Date().toISOString().slice(0,10))),
       hasAvgViol:   maxAvg12 >= 44,
-      hasWeekAlert: maxWeekTotal >= 44 && maxWeekTotal < 48,
+      hasWeekAlert: maxWeekTotal >= 44 && maxWeekTotal < 48 && !weeksWithDayOff.has(isoWeekKey(maxWeekMon || new Date().toISOString().slice(0,10))),
       totalWeeks:   weekArr.length,
     };
 
@@ -7916,7 +7941,7 @@ function showMonthlySummary(forceMonth) {
       <span class="ms-val" style="color:${violations > 0 ? '#E53935' : '#4CAF50'};">${violations}</span>
     </div>
     <div class="monthly-stat">
-      <span class="ms-label">🔥 Score burn-out</span>
+      <span class="ms-label">⚡ Pénalités accumulées</span>
       <span class="ms-val" style="color:${burnoutScore >= 60 ? '#E53935' : burnoutScore >= 40 ? '#FF8C42' : '#4CAF50'};">${burnoutScore}/100</span>
     </div>
     <div style="margin-top:14px;padding:12px;background:rgba(255,140,66,0.06);border:1px solid rgba(255,140,66,0.15);border-radius:10px;color:#aaa;font-size:0.82rem;line-height:1.6;">
@@ -14133,7 +14158,7 @@ function _recordViolation(situation) {
   try {
     const hist = JSON.parse(localStorage.getItem(_VIOLATIONS_KEY) || '[]');
     // Dédoublonner : même titre dans les 2h → skip
-    const twoHoursAgo = new Date(Date.now() - 2*3600*1000).toISOString();
+    const twoHoursAgo = new Date(Date.now() - 24*3600*1000).toISOString(); // PATCH : fenêtre 24h (vs 2h) — évite doublons inter-sessions
     let newViols = 0;
     viols.forEach(v => {
       const isDupe = hist.some(h2 => h2.titre === v.titre && h2.ts > twoHoursAgo);
