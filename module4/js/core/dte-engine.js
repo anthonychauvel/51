@@ -709,6 +709,8 @@ class DTEEngine {
       if (specialDays[k] === 'ferie') continue;
       const e = days[k];
       if (e && e.absent > 0) continue;
+      // M1→M4 : recup ≥ 7h dans M1 = jour de repos complet → exclu des heures (comme absent)
+      if (e && (e.recup >= 7)) continue;
       // FIX : les jours de vacances comptent comme jours ouvrés à 0h HS
       // (pas exclus du dénominateur — sinon la moyenne/jour gonfle artificiellement)
       const isVacDay = !!vacances[k];
@@ -735,6 +737,8 @@ class DTEEngine {
       if (specialDays[k] === 'ferie' || vacances[k]) continue;
       // Ignorer jours absents
       if (e && e.absent > 0) continue;
+      // M1→M4 : recup ≥ 7h dans M1 = jour de repos → exclu du compteur heures semaine
+      if (e && (e.recup >= 7)) continue;
       // Ne compter QUE les jours avec une entrée réelle (e existe)
       if (e) {
         sumExtra7 += (e.extra || 0);
@@ -849,6 +853,8 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
+        // M1→M4 : recup ≥ 7h = jour de repos → ne compte pas dans les heures de surcharge
+        if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
         const isVacDay = !!vacances[k];
         weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
@@ -859,7 +865,14 @@ class DTEEngine {
       if (w === 0 && count7 >= 2 && count7 < 5 && daysLogged >= 2) {
         weekH = _ccnSeuilW + weeklyExtraEffective;
       }
-      const isVacWeekP1 = [0,1,2,3,4].some(dd => {
+      // Détecter si la semaine est une semaine de repos M1 (recup/absent ≥ 7h sur tous jours)
+      // → traiter comme semaine vacances pour la réduction de cumulWeeks
+      const isM1RestWeekP1 = [0,1,2,3,4].some(dd => {
+        const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
+        const ek = localDK(dt2); const ev = days[ek];
+        return ev && ((ev.absent >= 7) || (ev.recup >= 7));
+      });
+      const isVacWeekP1 = isM1RestWeekP1 || [0,1,2,3,4].some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
@@ -878,19 +891,29 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
+        // M1→M4 : recup ≥ 7h = jour de repos → ne compte pas dans les heures de surcharge
+        if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS
         const isVacDay = !!vacances[k];
         weekH += D.BASE_JOUR + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
         hasAnyDay = true;
       }
-      const isVacWeekP2 = [0,1,2,3,4].some(dd => {
+      // Détecter repos M1 (recup/absent ≥ 7h) comme vacances pour la réduction cumulWeeks
+      const isM1RestWeekP2 = [0,1,2,3,4].some(dd => {
+        const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
+        const ek = localDK(dt2); const ev = days[ek];
+        return ev && ((ev.absent >= 7) || (ev.recup >= 7));
+      });
+      const isVacWeekP2 = isM1RestWeekP2 || [0,1,2,3,4].some(dd => {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — de Bloom 2010 : -0.50/semaine (impact significatif)
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.50) * 1e9) / 1e9;
+        // Vacances déclarées M4 — augmenté : de Bloom 2010 + INRS phases récupération
+        // Avant : -0.50/sem (trop faible → plafond visible sur 2+ sem vacances)
+        // Après : -0.75/sem → 2 semaines OFF = -1.5 sem de cumul (réaliste P2→P1)
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.75) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
         // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
         cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
@@ -937,19 +960,23 @@ class DTEEngine {
       const dow     = d.getDay();
       const isWE    = _isRestDow(dow);
 
+      // M1→M4 : absent ≥ 7h OU recup ≥ 7h dans M1 = jour de repos complet pour M4
+      // Le salarié n'a pas travaillé ce jour → traité comme vacances/WE pour la récupération
+      const isM1FullRest = !!(e && ((e.absent >= 7) || (e.recup >= 7)));
+
       // Sonnentag 2003 : détachement psychologique = vraie coupure.
-      // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, ou absence
+      // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, absence M1, ou recup M1
       // noWorkThisWeek ne s'applique QU'à la semaine courante (i=0..6)
       const isCurrentWeek  = i < 7;
       // FIX BUG VACANCES : un jour marqué vacances dans M4 EST un jour de repos,
       // même si M1/M2 a des entrées pour ce jour (déclaration vacances = prioritaire)
-      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac;
-      const isRestDay = isWE || isVac || isFerie || (e && e.absent > 0)
+      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac && !isM1FullRest;
+      const isRestDay = isWE || isVac || isFerie || isM1FullRest
                      || (isCurrentWeek && !isWE && !hasOverload && noWorkThisWeek);
 
-      if (hasOverload) break; // HS réelles (hors vacances) → stop définitif
+      if (hasOverload) break; // HS réelles (hors vacances/repos) → stop définitif
       // Jour ouvré sans aucun signal de repos → stop
-      if (!isWE && !isVac && !isFerie && !(e && e.absent > 0)
+      if (!isWE && !isVac && !isFerie && !isM1FullRest
           && !(isCurrentWeek && noWorkThisWeek)) break;
 
       if (isRestDay) consecRestDays++;
@@ -966,8 +993,10 @@ class DTEEngine {
       const dow = d.getDay();
       const isWE = _isRestDow(dow);
       const isVac = !!vacances[k];
+      // M1→M4 : recup ≥ 7h = repos → ne casse pas le compteur consecNonOT (Meijman & Mulder 1998)
+      const isM1Rest = !!(e && ((e.absent >= 7) || (e.recup >= 7)));
       // FIX BUG VACANCES : un jour vacances ne casse pas le compteur même avec entrées M1/M2
-      if (e && e.extra > 0 && !isWE && !isVac) break;
+      if (e && e.extra > 0 && !isWE && !isVac && !isM1Rest) break;
       consecNonOTDays++;
     }
 
@@ -979,7 +1008,9 @@ class DTEEngine {
     for (let i = 0; i < 28; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const k = localDK(d);
-      if (vacances[k]) recentVacDays28++;
+      const e = days[k];
+      // M1→M4 : absent ≥ 7h ou recup ≥ 7h = jour de repos → compte dans le buffer vacances récentes
+      if (vacances[k] || (e && ((e.absent >= 7) || (e.recup >= 7)))) recentVacDays28++;
     }
 
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
@@ -1398,9 +1429,11 @@ class DTEEngine {
       - (fatigue * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998) — calibré pour rec 70-80 à fat 30%
       - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
       - recNightPenalty;
-    // FIX BUG 6 : bonus vacances direct (+5 à +10 pts) comme recommandé
+    // FIX BUG 6 + BUG 3 : bonus vacances direct — différencié semaine 1 vs 2+
+    // Avant : max 0.10 quelle que soit la durée → plafond perçu dès la 2e semaine
+    // Après : cap relevé à 0.18 → 2 sem = +0.09, 3 sem = +0.15 (de Bloom 2010)
     const vacationDirectBonus = isVacWeekScore && consecRest >= 5
-      ? Math.min(0.10, (consecRest - 4) * 0.025) // 5j→+0.025, 7j→+0.075, 9j→+0.10
+      ? Math.min(0.18, (consecRest - 4) * 0.030) // 5j→+0.03, 7j→+0.09, 10j→+0.18
       : 0;
     const recovery = Math.max(vacationFloor, Math.min(1,
       recBase
@@ -1506,14 +1539,18 @@ class DTEEngine {
     // Plus la surcharge passée est longue, moins 1 semaine de repos efface.
     // de Bloom 2010 : "vacation effects are short-lived, fading within 2 weeks"
     // INRS phases : P2→P1 recovery = 2-6 semaines, pas 1.
-    // Sans inertie → Fat 6% et Rec 100% après 1 sem vacances sur 6 sem surcharge = irréaliste.
+    // BUG 3 FIX : inertia réduite (÷12 au lieu de ÷8) pour permettre à 2+ sem
+    // de vacances de produire un effet visible sur recCeiling.
+    // Avant : recCeiling max 85% après 8 sem cumul → perçu comme "plafond"
+    // Après : recCeiling max 88% après 8 sem cumul, 91% après 12 sem
     if (cumW >= 3) {
-      const inertia = Math.min(1, cumW / 8); // 3 sem→0.375, 6 sem→0.75, 8 sem→1.0
+      const inertia = Math.min(1, cumW / 12); // BUG 3 FIX : ÷12 au lieu de ÷8
       // Fatigue plancher : ne peut pas descendre sous ce seuil avec cette accumulation
-      const fatFloor = inertia * 0.22; // 6 sem → plancher 16.5%, 8 sem → plancher 22%
+      const fatFloor = inertia * 0.20; // légèrement réduit aussi (0.22→0.20)
       if (fatFinal < fatFloor) fatFinal = fatFloor;
-      // Récupération plafond : ne peut pas dépasser ce seuil avec cette accumulation
-      const recCeiling = 1.0 - inertia * 0.15; // 6 sem → max 89%, 8 sem → max 85%
+      // Récupération plafond : BUG 3 FIX : inertia × 0.10 au lieu de × 0.15
+      // 8 sem → max 93% (au lieu de 85%) — cohérent avec de Bloom 2010
+      const recCeiling = 1.0 - inertia * 0.10;
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
