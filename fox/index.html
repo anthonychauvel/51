@@ -114,7 +114,7 @@ window._fox_pre = (function() {
 
   <!-- Renard central -->
   <div id="kitsune-center" onclick="openPopup('popup-fox')">
-    <img id="kitsune-svg" src="../images/foxplayer.PNG" loading="eager" style="filter:brightness(1.2) contrast(1.1);mix-blend-mode:screen;" alt="Kitsune" onerror="this.style.display='none'">
+    <img id="kitsune-svg" src="../images/foxplayer.PNG" loading="eager" style="filter:brightness(1.2) contrast(1.1);mix-blend-mode:screen;" alt="Kitsune">
     <div id="kitsune-tap-hint">Appuie sur moi !</div>
   </div>
 
@@ -7296,13 +7296,19 @@ function updateSeasonalBg() {
   const target  = _base(bg);
   if (current === target) return; // Déjà la bonne saison
   console.log('🌿 Changement décor :', seasonNames[q], '→', bg);
-  bgEl.style.opacity = '0';
-  bgEl.style.transition = 'opacity 1.5s ease';
-  setTimeout(() => {
-    bgEl.src = bg;
-    bgEl.onload  = () => { bgEl.style.opacity = '1'; };
-    bgEl.onerror = () => { bgEl.style.opacity = '1'; bgEl.src = _bgs[0]; };
-  }, 800);
+  // FIX : précharger l'image avant de swapper → pas de fond noir visible
+  const _preload = new Image();
+  _preload.onload = () => {
+    bgEl.style.transition = 'opacity 0.5s ease';
+    bgEl.style.opacity = '0';
+    setTimeout(() => {
+      bgEl.src = bg;
+      bgEl.style.transition = 'opacity 0.8s ease';
+      bgEl.style.opacity = '1';
+    }, 250); // swap pendant le fade-out, pas après
+  };
+  _preload.onerror = () => {}; // image absente → on garde l'actuelle
+  _preload.src = bg;
 }
 
 // \u2500\u2500 PNJ \u2014 \u00E9volution tous les 5 niveaux jusqu'au niveau 50 \u2500
@@ -7320,7 +7326,15 @@ function updatePNJLevel(level) {
     foxImgPopup.style.mixBlendMode = 'screen';
     foxImgPopup.style.background = 'transparent';
   }
-  if (pnj) { pnj.setAttribute('data-tier', tier); pnj.src = img; }
+  if (pnj) {
+    pnj.setAttribute('data-tier', tier);
+    // FIX : fallback tier 1 si l'image du tier est absente (évite display:none)
+    const _fallbackImg = '../images/foxplayer.PNG';
+    const _tryLoad = new Image();
+    _tryLoad.onload  = () => { pnj.style.display = ''; pnj.src = img; };
+    _tryLoad.onerror = () => { pnj.style.display = ''; pnj.src = _fallbackImg; };
+    _tryLoad.src = img;
+  }
   if (foxImgPopup) {
     foxImgPopup.src = img;
     // Augmenter la taille selon le tier (niveaux 4+ sont trop petits)
@@ -14654,11 +14668,11 @@ function _getBadgeImagePath(badge) {
   // Badges 51+ : retirer underscores ET espaces
   if (badge.id >= 51) {
     const fileName = name.replace(/[_\s]/g, '');  // Retire underscores et espaces
-    return '../images/badges/' + fileName + '.PNG';
+    return '../images/' + fileName + '.PNG';
   }
   
   // Badges 1-50 : garder le nom tel quel
-  return '../images/badges/' + name + '.PNG';
+  return '../images/' + name + '.PNG';
 }
 
 function buildBadgeStats() {
