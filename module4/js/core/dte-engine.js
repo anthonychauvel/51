@@ -1455,9 +1455,9 @@ class DTEEngine {
     // → utilise consecNonOT (jours sans HS) : inclut les semaines normales ET les vacances.
     // consecNonOT=5j → 0.71 | 10j → 0.50 | 14j → 0.38 | 21j → 0.23
     // fatigueDecayRest : décroissance de la fatigue pendant le repos
-    // En vacances : consecRest × 1.5 (de Bloom 2010 : détachement = récup 50% plus rapide, pas 2×)
-    // Référence architecture : fatigue *= 0.6 à 0.7 après 1 sem OFF
-    const consecRestEff  = isVacWeekScore ? Math.round(consecRest * 1.5) : consecRest;
+    // En vacances : consecRest × 1.2 (vs ×1.5 avant — trop agressif : effaçait la dette en 1 sem)
+    // de Bloom 2010 : détachement = récup 20-30% plus rapide, pas 50%
+    const consecRestEff  = isVacWeekScore ? Math.round(consecRest * 1.2) : consecRest;
     const _consecForDecay = Math.max(consecNonOT, consecRestEff);
     const fatigueDecayRest = _consecForDecay > 0
       ? Math.max(0.12, Math.exp(-Math.log(2) * _consecForDecay / 10)) // INRS + Meijman & Mulder 1998
@@ -1577,9 +1577,11 @@ class DTEEngine {
     // Sonnentag 2003 : les effets du repos persistent 2-4 semaines après la reprise.
     // de Bloom 2010 : "vacation effects fade within 2 weeks but remain measurable".
     if (recentVac28 >= 5 && !isVacWeekNow) {
-      const vacBenefit = Math.min(0.15, recentVac28 * 0.02);
+      // PATCH : vacBenefit réduit (0.08 vs 0.15) — évite double réduction post-vacances
+      // Sonnentag 2003 : effet persistant réel mais modéré (inertia block gère la mémoire)
+      const vacBenefit = Math.min(0.08, recentVac28 * 0.012);
       fatFinal = Math.max(0, fatFinal - vacBenefit);
-      recFinal = Math.min(1, recFinal + vacBenefit * 1.5);
+      recFinal = Math.min(1, recFinal + vacBenefit * 1.0); // multiplier réduit aussi (1.5→1.0)
     }
 
     // ── INERTIE POST-REPOS — mémoire biologique (CRITIQUE) ──────────────────
@@ -1590,14 +1592,17 @@ class DTEEngine {
     // de vacances de produire un effet visible sur recCeiling.
     // Avant : recCeiling max 85% après 8 sem cumul → perçu comme "plafond"
     // Après : recCeiling max 88% après 8 sem cumul, 91% après 12 sem
+    // ── INERTIE POST-REPOS v2 — mémoire biologique renforcée ─────────────────
+    // PATCH calibration : diviseur ÷8 (÷12 trop permissif → récup trop rapide)
+    // fatFloor ×0.40 : à 8 sem → plancher 40% (cible vacances : 40-45%)
+    // recCeiling ×0.32 : à 8 sem → plafond 68% (cible vacances : 60-70%)
+    // Note : recCeiling s'applique APRÈS vacationFloor → l'écrase si nécessaire.
+    // Combiné avec USURE (−12% à cumW=8) → récupération hors vacances ≈ 56% ✓
     if (cumW >= 3) {
-      const inertia = Math.min(1, cumW / 12); // BUG 3 FIX : ÷12 au lieu de ÷8
-      // Fatigue plancher : ne peut pas descendre sous ce seuil avec cette accumulation
-      const fatFloor = inertia * 0.20; // légèrement réduit aussi (0.22→0.20)
+      const inertia = Math.min(1, cumW / 8); // PATCH ÷8 : INRS P2/P3 réaliste
+      const fatFloor = inertia * 0.40; // PATCH ×0.40 : plancher dette (8 sem → 40%)
       if (fatFinal < fatFloor) fatFinal = fatFloor;
-      // Récupération plafond : BUG 3 FIX : inertia × 0.10 au lieu de × 0.15
-      // 8 sem → max 93% (au lieu de 85%) — cohérent avec de Bloom 2010
-      const recCeiling = 1.0 - inertia * 0.10;
+      const recCeiling = 1.0 - inertia * 0.32; // PATCH ×0.32 : plafond récup (8 sem → 68%)
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
