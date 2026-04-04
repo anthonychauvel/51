@@ -40,7 +40,7 @@ const RISK_DEFS=[
   {
     id:'SURCHARGE_RECUP', level:'DANGER', emoji:'⚡',
     titre:'Surcharge + récupération insuffisante',
-    condition:(sc,n)=>sc.fatigue>50&&sc.recovery<50,
+    condition:(sc,n)=>sc.fatigue>=50&&sc.recovery<=50,
     message:(sc)=>`Fatigue ${sc.fatigue}/100, Récupération ${sc.recovery}/100. Combinaison critique.`,
     article:'INRS — Phases P2/P3 de fatigue chronique',
     actions:['Prendre 2 jours consécutifs de repos','Réduire les heures cette semaine','Consulter si les symptômes persistent'],
@@ -48,7 +48,7 @@ const RISK_DEFS=[
   {
     id:'FATIGUE_STRESS_COMBINEE', level:'DANGER', emoji:'🔴',
     titre:'Fatigue et/ou stress en zone rouge',
-    condition:(sc,n)=>sc.fatigue>60||sc.stress>60,
+    condition:(sc,n)=>sc.fatigue>=55||sc.stress>=55,
     message:(sc)=>`Fatigue ${sc.fatigue}/100, Stress ${sc.stress}/100. Risque de surmenage.`,
     article:'OMS/OIT 2021 — Surcharge psychosociale',
     actions:['Réduction immédiate de la charge','Entretien avec l\'employeur ou médecin du travail'],
