@@ -1664,6 +1664,21 @@ class DTEEngine {
       if (perfFinal > perfCap) perfFinal = perfCap;
     }
 
+    // ── INERTIE PERFORMANCE POST-RÉCUPÉRATION ────────────────────────────────────
+    // La récupération physique est rapide ; la performance cognitive/professionnelle non.
+    // Règle 1 — recovery < 90% → perf ≤ 95% (latence de reprise universelle)
+    //   Logique : tant que la récupération n'est pas quasi-complète, la performance
+    //   ne peut pas être optimale. S'applique même hors surcharge prolongée.
+    if (recFinal < 0.90) {
+      perfFinal = Math.min(perfFinal, 0.95);
+    }
+    // Règle 2 — vacances récentes && reprise du travail → perf ≤ 92% pendant 1 semaine
+    //   Sonnentag 2003 : "re-entry effect" — les 1ers jours de reprise sont moins efficaces.
+    //   recentVac28 >= 5j && !isVacWeekNow = semaine de reprise après au moins 1 sem OFF.
+    if (recentVac28 >= 5 && !isVacWeekNow) {
+      perfFinal = Math.min(perfFinal, 0.92);
+    }
+
     // ── FATIGUE CHRONIQUE — effet boule de neige progressif (J.Occup.Health 2021 + INRS) ──
     // 3 paliers cumulatifs : chaque étape s'additionne aux précédentes.
     // Palier 1 (≥4 sem) : début accumulation chronique → +2% fixe
