@@ -935,10 +935,9 @@ class DTEEngine {
       });
       if (!hasAnyDay) continue;
       if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — augmenté : de Bloom 2010 + INRS phases récupération
-        // Avant : -0.50/sem (trop faible → plafond visible sur 2+ sem vacances)
-        // Après : -0.75/sem → 2 semaines OFF = -1.5 sem de cumul (réaliste P2→P1)
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.75) * 1e9) / 1e9;
+        // Vacances déclarées M4 — réduit à -0.45/sem (vs -0.75 trop agressif)
+        // 2 sem OFF = -0.90 sem de cumul au lieu de -1.50 → le passé reste présent
+        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.45) * 1e9) / 1e9;
       } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
         // Semaine normale (0 HS) — Meijman & Mulder 1998 : -0.10/semaine
         cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
@@ -1351,11 +1350,12 @@ class DTEEngine {
                    : cumW >= 4  ? 1.25   // 1 mois
                    : 1.0;
 
-    // FIX BUG 4 : en vacances, réduire cumulAmp (de Bloom 2010 : détachement actif)
-    // 1 semaine vacances : cumulAmp × 0.70 | 2 semaines : × 0.55 | 3+ : × 0.40
+    // En vacances : réduire cumulAmp modérément — le passé reste présent
+    // Réduit vs avant (0.70/0.55/0.40 trop agressif → le cumul s'effaçait trop vite)
+    // 1 sem vac : ×0.85 | 2 sem : ×0.75 | 3+ : ×0.65
     if (isVacWeekNow && consecRest >= 1) {
       const vacWeeks = Math.min(3, Math.floor(consecRest / 5));
-      const vacReduction = vacWeeks >= 3 ? 0.40 : vacWeeks >= 2 ? 0.55 : 0.70;
+      const vacReduction = vacWeeks >= 3 ? 0.65 : vacWeeks >= 2 ? 0.75 : 0.85;
       cumulAmp *= vacReduction;
     }
 
@@ -1467,11 +1467,11 @@ class DTEEngine {
       : 1.0;
 
     // Plancher récupération : Sonnentag 2003 — détachement réel → recharge progressive.
-    // FIX BUG 6 : le plancher vacation était trop bas (max 0.30 → jamais >30% en vacances).
-    // Sonnentag 2003 : après 5j+ de repos complet, récupération physique très forte,
-    // récupération mentale quasi complète. Cible : 85-90 après 1 semaine OFF.
+    // vacationFloor : plancher recovery en vacances — réduit pour ne pas effacer le cumul
+    // Avant : min(0.92, 0.50 + consecRest*0.06) → 7j = 0.92 trop élevé
+    // Après : min(0.75, 0.38 + consecRest*0.04) → 5j→0.58, 7j→0.66, 10j→0.78→cap 0.75
     const vacationFloor = isVacWeekScore
-      ? Math.min(0.92, 0.50 + consecRest * 0.06) // 5j→0.80, 7j→0.92
+      ? Math.min(0.75, 0.38 + consecRest * 0.04)
       : 0.04;
 
     // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
@@ -1479,11 +1479,11 @@ class DTEEngine {
       - (fatigue * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998) — calibré pour rec 70-80 à fat 30%
       - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
       - recNightPenalty;
-    // FIX BUG 6 + BUG 3 : bonus vacances direct — différencié semaine 1 vs 2+
-    // Avant : max 0.10 quelle que soit la durée → plafond perçu dès la 2e semaine
-    // Après : cap relevé à 0.18 → 2 sem = +0.09, 3 sem = +0.15 (de Bloom 2010)
+    // vacationDirectBonus : réduit — les vacances récupèrent mais pas complètement
+    // Avant : min(0.18, (consecRest-4)*0.030) → trop généreux
+    // Après : min(0.09, (consecRest-4)*0.015) → 5j→+1.5%, 7j→+4.5%, 10j→+9%
     const vacationDirectBonus = isVacWeekScore && consecRest >= 5
-      ? Math.min(0.18, (consecRest - 4) * 0.030) // 5j→+0.03, 7j→+0.09, 10j→+0.18
+      ? Math.min(0.09, (consecRest - 4) * 0.015)
       : 0;
     const recovery = Math.max(vacationFloor, Math.min(1,
       recBase
@@ -1629,11 +1629,11 @@ class DTEEngine {
       fatFinal = Math.max(fatFinal, 0.40);          // plancher physiologique réaliste
 
       if (cumW >= 6) {
-        // Historique lourd : récupération plafonnée
-        recFinal = Math.min(recFinal + 0.10, 0.65);
+        // Historique lourd : récupération partielle — le passé continue de peser
+        recFinal = Math.min(recFinal + 0.07, 0.62);
       } else {
         // Historique léger : bonne récupération possible
-        recFinal = Math.min(recFinal + 0.15, 1.0);
+        recFinal = Math.min(recFinal + 0.12, 0.88);
       }
     }
 
