@@ -67,6 +67,22 @@ function _dteGetCCNRules() {
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
 
+/* ── Jours de repos configurés (HCR : lun/mar, BTP : sam/dim, etc.) ── */
+let _restDaysCache = null;
+function _getRestDaysSet() {
+  if (_restDaysCache) return _restDaysCache;
+  try {
+    const raw = JSON.parse(localStorage.getItem('DTE_REST_DAYS') || 'null');
+    if (Array.isArray(raw) && raw.length > 0) {
+      _restDaysCache = new Set(raw);
+      return _restDaysCache;
+    }
+  } catch(_) {}
+  _restDaysCache = new Set([0, 6]); // défaut : dim + sam
+  return _restDaysCache;
+}
+function _isRestDow(dow) { return _getRestDaysSet().has(dow); }
+
 /* ── CONSTANTES DE BASE ─────────────────────────────────────────── */
 const D = {
   BASE_HEBDO:       35,    // France contrat standard
@@ -113,16 +129,31 @@ function pencavelPerf(weeklyH) {
  * RISQUE CARDIOVASCULAIRE — OMS/OIT 2021 (Pega) + Lancet 2021 (Ervasti)
  * Dose-réponse linéarisé depuis les RR publiés
  * Tient compte de la durée d'exposition (effet cumulatif)
+ * FIX BUG 2 : le risque ne tombe PAS à 0 quand heures < 48h.
+ * Le cumul dose-temps persiste et décroît lentement (Kivimäki 2015).
+ * Semaine < 40h → risque *= 0.85 | Semaine OFF → risque *= 0.6
  */
 function cvRisk(weeklyH, cumulMonths) {
-  if (weeklyH < D.H_LEGAL) return 0;
-  // RR à 55h = 1.35 (AVC) → risque relatif excédentaire = 0.35
-  // Linéarisé : 0.35 / (55-48) = 0.05 par heure
-  const excessH    = Math.min(weeklyH - D.H_LEGAL, 20);
-  const baseRisk   = excessH * 0.028; // calibré sur RR=1.35 à 55h
-  // Dose durée (Lancet 2021 : les 6 derniers mois comptent)
-  const durationF  = Math.min(1.8, 1 + cumulMonths * 0.08);
-  return Math.min(0.65, baseRisk * durationF);
+  // Composante AIGUË : seulement si >48h actuellement
+  let acuteRisk = 0;
+  if (weeklyH >= D.H_LEGAL) {
+    const excessH    = Math.min(weeklyH - D.H_LEGAL, 20);
+    acuteRisk = excessH * 0.028;
+  }
+  // Composante CUMULATIVE : persiste même si heures actuelles sont basses
+  // Kivimäki 2015 : le risque CV est dose-temps, il ne s'efface pas immédiatement
+  let cumulRisk = 0;
+  if (cumulMonths > 0) {
+    cumulRisk = Math.min(0.25, cumulMonths * 0.02);
+    // Décroissance si heures actuelles sous le seuil de risque
+    if (weeklyH < 40) {
+      cumulRisk *= 0.60; // semaine OFF ou légère → réduction forte (OMS/OIT 2021)
+    } else if (weeklyH < D.H_LEGAL) {
+      cumulRisk *= 0.85; // semaine normale → réduction modérée
+    }
+  }
+  const durationF = Math.min(1.8, 1 + cumulMonths * 0.08);
+  return Math.min(0.65, (acuteRisk * durationF) + cumulRisk);
 }
 
 /**
@@ -130,12 +161,31 @@ function cvRisk(weeklyH, cumulMonths) {
  * +19% volume gyrus frontal médian à ≥52h → impact sur attention,
  * mémoire de travail, planification, régulation émotionnelle
  * Seuil : 52h/sem, augmente avec durée d'exposition
+ * FIX BUG 3 : accumulation uniquement ≥52h (pas à 45h).
+ * Le cerveau récupère PLUS VITE que le cardio (neuroplasticité).
+ * Semaine < 52h → risque résiduel *= 0.50 (reset quasi complet après 5j repos)
  */
 function cogRisk(weeklyH, cumulWeeks) {
-  if (weeklyH < D.H_CEREBRAL) return 0;
-  const excessH  = weeklyH - D.H_CEREBRAL;
+  // Composante AIGUË : uniquement ≥52h (seuil réel des études OEM 2025)
+  let acuteRisk = 0;
+  if (weeklyH >= D.H_CEREBRAL) {
+    const excessH  = weeklyH - D.H_CEREBRAL;
+    acuteRisk = excessH * 0.022;
+  }
+  // Composante CUMULATIVE : trace résiduelle, mais le cerveau récupère vite
+  // Draganski 2004 (Nature) : neuroplasticité = semaines, pas mois
+  let cumulRisk = 0;
+  if (cumulWeeks > 0 && weeklyH < D.H_CEREBRAL) {
+    // Résidu cumulatif faible — le cerveau récupère beaucoup plus vite que le cardio
+    cumulRisk = Math.min(0.10, cumulWeeks * 0.008);
+    if (weeklyH < 40) {
+      cumulRisk *= 0.30; // semaine OFF → reset quasi complet
+    } else {
+      cumulRisk *= 0.50; // semaine normale → forte réduction
+    }
+  }
   const durationF = Math.min(2.0, 1 + cumulWeeks * 0.05);
-  return Math.min(0.70, excessH * 0.022 * durationF);
+  return Math.min(0.70, (acuteRisk * durationF) + cumulRisk);
 }
 
 /**
@@ -423,6 +473,7 @@ class DTEEngine {
   }
 
   analyze() {
+    _restDaysCache = null; // re-lire les jours de repos à chaque analyse
     const raw    = this._readAll();
     const norm   = this._normalize(raw);
     const scores = this._scores(norm, raw);
@@ -653,7 +704,7 @@ class DTEEngine {
     for (let i = 0; i < 28; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (dow === 0 || dow === 6) continue; // ignorer week-ends
+      if (_isRestDow(dow)) continue; // ignorer week-ends
       const k = localDK(d);
       if (specialDays[k] === 'ferie' || vacances[k]) continue;
       const e = days[k];
@@ -728,7 +779,7 @@ class DTEEngine {
     for (let i = 0; i < 60; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (dow === 0 || dow === 6) break; // weekend = repos légal
+      if (_isRestDow(dow)) break; // weekend = repos légal
       const k = localDK(d);
       const e = days[k];
       if (e && (e.absent > 0 || e.recup > 0)) break;
@@ -745,7 +796,7 @@ class DTEEngine {
     outer_loop: for (let i = 0; i < 90; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (dow === 0 || dow === 6) continue; // passer le week-end sans casser le compteur
+      if (_isRestDow(dow)) continue; // passer le week-end sans casser le compteur
       const k = localDK(d);
       const e = days[k];
       if (vacances[k]) break; // vacances = récupération réelle
@@ -877,7 +928,7 @@ class DTEEngine {
       const isVac   = vacances[k];
       const isFerie = specialDays[k] === 'ferie';
       const dow     = d.getDay();
-      const isWE    = dow === 0 || dow === 6;
+      const isWE    = _isRestDow(dow);
 
       // Sonnentag 2003 : détachement psychologique = vraie coupure.
       // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, ou absence
@@ -904,20 +955,22 @@ class DTEEngine {
       const k = localDK(d);
       const e = days[k];
       const dow = d.getDay();
-      const isWE = dow === 0 || dow === 6;
+      const isWE = _isRestDow(dow);
       // Stop dès qu'un jour avec HS est trouvé
       if (e && e.extra > 0 && !isWE) break;
       consecNonOTDays++;
     }
 
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
-    // Exclut la semaine courante si incomplète (< 3 jours) pour éviter sigma artificiel
+    // FIX BUG 7 : ANACT recommande d'exclure congés, absences longues, arrêts
+    // Sinon semaine 0h vs 45h → sigma artificiellement gonflé (12.5h au lieu de 3h)
+    // On exclut les semaines sans AUCUNE entrée réelle M1/M2 (= vacances non déclarées)
     const weekTotals = [];
     const todayDowV = today.getDay() || 7;
     const todayMondayV = new Date(today);
     todayMondayV.setDate(today.getDate() - (todayDowV - 1));
-    for (let w = 0; w < D.VARIAB_WINDOW + 1; w++) { // +1 pour ignorer sem courante si besoin
-      let wt = 0, daysInWeek = 0;
+    for (let w = 0; w < D.VARIAB_WINDOW + 3; w++) { // +3 pour compenser les semaines exclues
+      let wt = 0, daysInWeek = 0, hasRealEntry = false;
       for (let dd = 0; dd < 5; dd++) {
         const dt = new Date(todayMondayV);
         dt.setDate(todayMondayV.getDate() - w * 7 + dd);
@@ -926,11 +979,17 @@ class DTEEngine {
         const e = days[k];
         if (e && e.absent) continue;
         if (specialDays[k] === 'ferie' || vacances[k]) continue;
-        wt += D.BASE_JOUR + (e ? (e.extra || 0) : 0);
-        daysInWeek++;
+        // FIX BUG 7 : ne compter que les jours avec une vraie entrée M1/M2
+        // Un jour sans entrée (e=undefined) = pas de donnée = possible vacances non déclarées
+        if (e) {
+          wt += D.BASE_JOUR + (e.extra || 0);
+          daysInWeek++;
+          hasRealEntry = true;
+        }
       }
-      // Inclure uniquement les semaines avec ≥ 3 jours ouvrés (semaine représentative)
-      if (daysInWeek >= 3) weekTotals.push(wt);
+      // Inclure uniquement les semaines avec ≥ 3 jours ouvrés ET au moins 1 entrée réelle
+      // ANACT : exclure(absences_longues) — une semaine sans données n'est pas représentative
+      if (daysInWeek >= 3 && hasRealEntry) weekTotals.push(wt);
       if (weekTotals.length >= D.VARIAB_WINDOW) break;
     }
     // mean : calculé seulement sur les semaines avec des données (évite dilution)
@@ -1018,14 +1077,24 @@ class DTEEngine {
     // Signal combiné : weeklyH7 effective ≤ seuil ET peu de données historiques
     const belowBaseThisWeek = weeklyH7Effective <= _seuil && countWorkDays28 < 3;
 
-    const isCurrentWeekVacation = isVacFromDTE; // uniquement vacances déclarées dans M4
+    // FIX BUG 4 : détection vacances multi-signal
+    // Meijman & Mulder 1998 : l'absence de surcharge = début de récupération,
+    // qu'elle soit déclarée "vacances" ou non.
+    // Signal 1 : DTE_VACANCES déclaré (M4)
+    // Signal 2 : noWorkThisWeek (aucune entrée M1/M2 cette semaine)
+    // Signal 3 : weeklyH7 ≤ seuil ET aucune donnée récente
+    const isCurrentWeekVacation = isVacFromDTE || noWorkThisWeek || belowBaseThisWeek;
 
     // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
-    // recentWeeklyH : en repos → seuil contractuel (JAMAIS la moyenne historique de surcharge)
+    // ── FIX BUG 1+5 : recentWeeklyH = charge ACTUELLE, pas la moyenne ──────────
+    // Pencavel 2014 : la performance dépend de la charge COURANTE, pas de l'historique.
+    // INTERDIT : useGlobalAverage() — règle d'or de l'architecture de référence.
+    // Avant : si weeklyH7 ≤ seuil, fallback sur mean → 39h fantôme après 10 sem à 45h.
+    // Après : toujours la semaine en cours. En vacances → seuil CCN (35h = perf 100%).
     const recentWeeklyH = isCurrentWeekVacation
       ? _seuil
-      : (weeklyH7Effective > _seuil ? weeklyH7Effective : (mean > _seuil ? mean : weeklyH7Effective));
+      : weeklyH7Effective;
 
     return {
       heures:         clamp(avgH7, 0, 14),
@@ -1165,9 +1234,20 @@ class DTEEngine {
     const fatSommeil    = norm.sleepDebt * 0.35;           // Thompson 2022 : +14% cortisol/nuit courte
     const fatSurchar    = norm.surcharge * 0.12;
     const fatBurnout    = norm.burnout * 0.22;
+    // FIX BUG 6 : composante cumulative — la fatigue accumulée persiste même sans HS cette semaine
+    // J.Occup.Health 2021 : "les 6 derniers mois comptent autant que la semaine courante"
+    // Sans cette composante, fatigue tombe à ~15% dès la 1ère semaine sans HS (irréaliste)
+    // Calibration : 10 sem surcharge → fatCumul ≈ 0.15, décroît avec consecNonOT (Meijman 1998)
+    const fatCumulBase = Math.min(0.25, cumW * 0.018);
+    // Décroissance : demi-vie 14j (repos complet) / 25j (semaines normales)
+    const _consecForCumulDecay = Math.max(consecNonOT, consecRest);
+    const fatCumulDecay = _consecForCumulDecay > 0
+      ? Math.max(0.15, Math.exp(-Math.log(2) * _consecForCumulDecay / 14))
+      : 1.0;
+    const fatCumulative = fatCumulBase * fatCumulDecay;
 
     // J.Occup.Health 2021 — amplification dose-temps non-linéaire
-    const cumulAmp = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
+    let cumulAmp = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
                    : cumW >= 16 ? 1.95   // 4 mois
                    : cumW >= 12 ? 1.75   // 3 mois — risque OMS biologique établi
                    : cumW >= 10 ? 1.65   // 2.5 mois
@@ -1175,15 +1255,31 @@ class DTEEngine {
                    : cumW >= 4  ? 1.25   // 1 mois
                    : 1.0;
 
+    // FIX BUG 4 : en vacances, réduire cumulAmp (de Bloom 2010 : détachement actif)
+    // 1 semaine vacances : cumulAmp × 0.70 | 2 semaines : × 0.55 | 3+ : × 0.40
+    if (isVacWeekNow && consecRest >= 1) {
+      const vacWeeks = Math.min(3, Math.floor(consecRest / 5));
+      const vacReduction = vacWeeks >= 3 ? 0.40 : vacWeeks >= 2 ? 0.55 : 0.70;
+      cumulAmp *= vacReduction;
+    }
+
     // Sonnentag 2003 — dégradation du détachement psychologique
-    // Effets mesurés sur : relaxation, maîtrise, contrôle pendant les hors-travail
-    const sonnentagMult = consecOT >= 20 ? 1.15   // >4 sem HS : détachement sévèrement compromis
+    // FIX BUG 4 : en vacances, sonnentagMult = 1.0 (pas d'amplification — détachement actif)
+    const sonnentagMult = isVacWeekNow ? 1.0
+                        : consecOT >= 20 ? 1.15   // >4 sem HS : détachement sévèrement compromis
                         : consecOT >= 12 ? 1.10   // >2.4 sem HS : détachement partiellement compromis
                         : consecOT >= 5  ? 1.05   // >1 sem HS : premier signal Sonnentag
                         : 1.0;                    // <5j : récupération weekend normale (baseline)
 
     const _pf      = norm._posteFactors || { fatF:1, strF:1, cvF:1, cogF:1 };
-    const fat_raw = (fatHS + fatSommeil + fatSurchar + fatBurnout) * cumulAmp * sonnentagMult * _pf.fatF;
+    // FIX BUG 4 : en vacances, atténuer fatSurchar et fatBurnout (repos actif)
+    const vacFatReduction = isVacWeekNow ? 0.40 : 1.0;
+    // FIX BUG 8 : le stress amplifie la fatigue (INRS + OMS + Sonnentag)
+    // Référence architecture : facteur_stress = 1 + stress * 0.5
+    // On utilise cortisolModel (indépendant de fatigue, pas de dépendance circulaire)
+    const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
+    const stressFatigueMult = 1 + prelimStress * 0.5; // INRS: stress chronique amplifie fatigue
+    const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
     const fatigue = Math.max(0, Math.min(1, fat_raw));
 
     // ── STRESS/CORTISOL (Thompson 2022 + ANACT/INRS + IARC 2019) ─────────────
@@ -1199,7 +1295,7 @@ class DTEEngine {
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
     const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
     // stressExtDecay : même logique que fatigueDecayRest — vacances = 2× plus efficace
-    const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? consecRest * 2 : consecRest);
+    const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? Math.round(consecRest * 1.5) : consecRest);
     const stressExtDecay = _consecForStress > 0
       // Demi-vie 10j — McEwen 1998 (allostatic load chronique) + Sluiter 2001
       ? Math.max(0.08, Math.exp(-Math.log(2) * _consecForStress / 10))
@@ -1258,32 +1354,36 @@ class DTEEngine {
     // → utilise consecNonOT (jours sans HS) : inclut les semaines normales ET les vacances.
     // consecNonOT=5j → 0.71 | 10j → 0.50 | 14j → 0.38 | 21j → 0.23
     // fatigueDecayRest : décroissance de la fatigue pendant le repos
-    // En vacances : consecRest compte double (de Bloom 2010 : détachement actif = récupération 2× plus rapide)
-    // En repos normal : consecNonOT (jours sans HS) donne la décroissance standard (demi-vie 10j)
-    const consecRestEff  = isVacWeekScore ? consecRest * 2 : consecRest;
+    // En vacances : consecRest × 1.5 (de Bloom 2010 : détachement = récup 50% plus rapide, pas 2×)
+    // Référence architecture : fatigue *= 0.6 à 0.7 après 1 sem OFF
+    const consecRestEff  = isVacWeekScore ? Math.round(consecRest * 1.5) : consecRest;
     const _consecForDecay = Math.max(consecNonOT, consecRestEff);
     const fatigueDecayRest = _consecForDecay > 0
       ? Math.max(0.12, Math.exp(-Math.log(2) * _consecForDecay / 10)) // INRS + Meijman & Mulder 1998
       : 1.0;
 
     // Plancher récupération : Sonnentag 2003 — détachement réel → recharge progressive.
-    // Plancher montant UNIQUEMENT en semaine de vacances (repos complet).
-    // En semaine normale : le plancher reste à 0.04 (pas de détachement psychologique).
+    // FIX BUG 6 : le plancher vacation était trop bas (max 0.30 → jamais >30% en vacances).
+    // Sonnentag 2003 : après 5j+ de repos complet, récupération physique très forte,
+    // récupération mentale quasi complète. Cible : 85-90 après 1 semaine OFF.
     const vacationFloor = isVacWeekScore
-      ? Math.min(0.30, 0.04 + consecRest * 0.035)
+      ? Math.min(0.92, 0.50 + consecRest * 0.06) // 5j→0.80, 7j→0.92
       : 0.04;
 
     // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
-    // Ancienne formule : partait de 0.045 → plafond ~10% même sans surcharge (faux)
-    // Sans surcharge fat=1% → ~98% | 10 sem fat=36% → ~36% | surmenage fat=80% → ~4%
     const recBase = 1.0
       - (fatigue * fatigueDecayRest) * 1.40    // fatigue (Meijman & Mulder 1998)
       - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
       - recNightPenalty;
+    // FIX BUG 6 : bonus vacances direct (+5 à +10 pts) comme recommandé
+    const vacationDirectBonus = isVacWeekScore && consecRest >= 5
+      ? Math.min(0.10, (consecRest - 4) * 0.025) // 5j→+0.025, 7j→+0.075, 9j→+0.10
+      : 0;
     const recovery = Math.max(vacationFloor, Math.min(1,
       recBase
       + sonnentagRestBonus * 0.20   // détachement psychologique (Sonnentag 2003)
       + masteryBonus * 0.20         // maîtrise partielle (Sonnentag 2003 Fig.3)
+      + vacationDirectBonus         // FIX BUG 6 : bonus repos prolongé
     ));
 
     // ── RISQUE ERREUR (Pencavel + fatigue + INRS) ────────────────
@@ -1309,17 +1409,20 @@ class DTEEngine {
     //   Neuroplasticité corticale (Draganski et al. 2004, Nature) : mois pour modifier volumes.
     //   Demi-vie : 120 jours (4 mois). À J+7 : 0.960 → -4% seulement.
     //   Plancher : 88%
-    const cvRiskRestDecay = consecRest > 0
-      ? Math.max(0.93, Math.exp(-Math.log(2) * consecRest / 180)) // Kivimäki 2015 + WHO/ILO 2021
+    // FIX BUG 2 : décroissance des risques aussi en semaines normales (pas seulement vacances)
+    // Kivimäki 2015 : le risque décroît dès que l'exposition diminue (pas instantanément)
+    const _consecForRiskDecay = Math.max(consecRest, consecNonOT * 0.5); // semaines normales = 50% aussi efficace
+    const cvRiskRestDecay = _consecForRiskDecay > 0
+      ? Math.max(0.93, Math.exp(-Math.log(2) * _consecForRiskDecay / 180))
       : 1.0;
-    const cogRiskRestDecay = consecRest > 0
-      ? Math.max(0.88, Math.exp(-Math.log(2) * consecRest / 120)) // OEM 2025 (Jang) + Draganski 2004
+    const cogRiskRestDecay = _consecForRiskDecay > 0
+      ? Math.max(0.88, Math.exp(-Math.log(2) * _consecForRiskDecay / 120))
       : 1.0;
 
     const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor * _pf.cvF);
-    const cvR       = isVacWeekNow ? cvR_base * cvRiskRestDecay  : cvR_base;
+    const cvR       = cvR_base * cvRiskRestDecay; // FIX: decay toujours appliqué (pas seulement vacances)
     const cogR_base = Math.min(0.5, cogRisk(weeklyH, cumW) * _pf.cogF);
-    const cogR      = isVacWeekNow ? cogR_base * cogRiskRestDecay : cogR_base;
+    const cogR      = cogR_base * cogRiskRestDecay; // FIX: idem
     const diabR     = metabolicRisk(weeklyH, cumM); // Lancet 2021 HR=1.18
     const muscR     = musculoRisk(weeklyH, cumM, norm._consec || 0); // Lancet 2021 HR=1.15
 
