@@ -704,13 +704,15 @@ class DTEEngine {
     for (let i = 0; i < 28; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (_isRestDow(dow)) continue; // ignorer week-ends
+      if (_isRestDow(dow)) continue; // ignorer jours de repos configurés
       const k = localDK(d);
-      if (specialDays[k] === 'ferie' || vacances[k]) continue;
+      if (specialDays[k] === 'ferie') continue;
       const e = days[k];
       if (e && e.absent > 0) continue;
-      // Jour ouvré : on compte les HS (0 si pas d'entrée = journée normale, sans HS)
-      sumExtra += (e ? (e.extra || 0) : 0);
+      // FIX : les jours de vacances comptent comme jours ouvrés à 0h HS
+      // (pas exclus du dénominateur — sinon la moyenne/jour gonfle artificiellement)
+      const isVacDay = !!vacances[k];
+      sumExtra += isVacDay ? 0 : (e ? (e.extra || 0) : 0);
       countWorkDays28++;
     }
     // avgExtraPerDay28 = HS/jour moyen sur 4 semaines → weeklyExtra = HS/sem = avg × 5
