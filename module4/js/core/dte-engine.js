@@ -1533,7 +1533,7 @@ class DTEEngine {
     const lsMult    = lifestyleBoost.fatigueMult || 1.0;
     const fatWithLS = fatigue * lsMult;
     let fatFinal  = Math.max(0, Math.min(1, fatWithLS + checkinBoost.fatigue));
-    const strFinal  = Math.max(0, Math.min(1, stress + (lifestyleBoost.stress||0)));
+    let strFinal  = Math.max(0, Math.min(1, stress + (lifestyleBoost.stress||0))); // PATCH : let (vs const) — réassignable par plafond long terme
     let perfFinal = Math.max(0.05, Math.min(1, perf  + checkinBoost.performance + (lifestyleBoost.performance||0)));
     // Récupération : check-in subjectif a plus de poids en repos actif (Sonnentag 2003)
     const recBoostFactor = (consecRest >= 2) ? 1.8 : 1.0;
