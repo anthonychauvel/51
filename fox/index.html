@@ -7326,24 +7326,27 @@ function updatePNJLevel(level) {
     foxImgPopup.style.mixBlendMode = 'screen';
     foxImgPopup.style.background = 'transparent';
   }
-  if (pnj) {
-    pnj.setAttribute('data-tier', tier);
-    // FIX : fallback tier 1 si l'image du tier est absente (évite display:none)
-    const _fallbackImg = '../images/foxplayer.PNG';
-    const _tryLoad = new Image();
-    _tryLoad.onload  = () => { pnj.style.display = ''; pnj.src = img; };
-    _tryLoad.onerror = () => { pnj.style.display = ''; pnj.src = _fallbackImg; };
-    _tryLoad.src = img;
-  }
+  const _fallbackImg = '../images/foxplayer.PNG';
+  // Précharger l'image une seule fois — puis appliquer aux deux éléments
+  const _tryLoad = new Image();
+  _tryLoad.onload = () => {
+    if (pnj)         { pnj.style.display = ''; pnj.src = img; }
+    if (foxImgPopup) { foxImgPopup.src = img; }
+  };
+  _tryLoad.onerror = () => {
+    // Image du tier absente → fallback tier 1 sur les deux éléments
+    if (pnj)         { pnj.style.display = ''; pnj.src = _fallbackImg; }
+    if (foxImgPopup) { foxImgPopup.src = _fallbackImg; }
+  };
+  if (pnj) { pnj.setAttribute('data-tier', tier); }
   if (foxImgPopup) {
-    foxImgPopup.src = img;
-    // Augmenter la taille selon le tier (niveaux 4+ sont trop petits)
-    let size = 90; // tier 1-3 : taille de base
-    if (tier >= 7) size = 130; // tier 7-10 : grande taille
-    else if (tier >= 4) size = 110; // tier 4-6 : taille moyenne
+    let size = 90;
+    if (tier >= 7) size = 130;
+    else if (tier >= 4) size = 110;
     foxImgPopup.style.width = size + 'px';
     foxImgPopup.style.height = size + 'px';
   }
+  _tryLoad.src = img; // déclenche le chargement
 }
 
 // \u2500\u2500 Animation Level-Up \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
