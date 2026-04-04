@@ -715,9 +715,10 @@ class DTEEngine {
       sumExtra += isVacDay ? 0 : (e ? (e.extra || 0) : 0);
       countWorkDays28++;
     }
-    // avgExtraPerDay28 = HS/jour moyen sur 4 semaines → weeklyExtra = HS/sem = avg × 5
+    // avgExtraPerDay28 = HS/jour moyen sur 4 semaines → weeklyExtra = HS/sem = avg × jours ouvrés/sem
     const avgExtraPerDay28 = countWorkDays28 > 0 ? sumExtra / countWorkDays28 : 0;
-    const weeklyExtra28 = avgExtraPerDay28 * 5;  // projeté sur 5j ouvrés/sem
+    const workDaysPerWeek = 7 - _getRestDaysSet().size; // dynamique selon jours repos (ex: 5 si dim+sam)
+    const weeklyExtra28 = avgExtraPerDay28 * workDaysPerWeek;
 
     // Semaine civile courante (lun → aujourd'hui)
     // CORRECTION : on ne compte un jour que s'il a une ENTRÉE RÉELLE dans M1/M2
@@ -748,7 +749,7 @@ class DTEEngine {
     if (countWorkDays28 >= 5) {
       weeklyExtra = weeklyExtra28;
     } else if (count7 >= 2) {
-      weeklyExtra = (sumExtra7 / count7) * 5;
+      weeklyExtra = (sumExtra7 / count7) * workDaysPerWeek;
     } else {
       const prevExtra2 = [], prevCount2 = [];
       let prevExtra = 0, prevCount = 0;
@@ -760,7 +761,7 @@ class DTEEngine {
       }
       weeklyExtra = prevCount >= 3 ? prevExtra : 0;
     }
-    const avgExtra7 = weeklyExtra / 5;
+    const avgExtra7 = weeklyExtra / 5; // toujours /5 : fatigue par jour = charge hebdo ÷ 5j standard
     const avgH7     = D.BASE_JOUR + avgExtra7;
     const _ccnR        = _dteGetCCNRules();
     const weeklyH7     = _ccnR.seuil + weeklyExtra;
