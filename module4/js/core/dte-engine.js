@@ -794,8 +794,10 @@ class DTEEngine {
     const weeklyH7     = _ccnR.seuil + weeklyExtra;
 
     // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
-    // (jours vides = pas de saisie = vacances non déclarées ou repos de fait)
-    const noWorkThisWeek = !hasAnyEntryThisWeek;
+    // FIX LUNDI : le 1er jour de semaine CCN sans saisie ≠ vacances (c'est juste le début de semaine)
+    // noWorkThisWeek ne se déclenche qu'à partir du 2e jour sans aucune saisie
+    // Lundi matin (todayDowA=1) → noWorkThisWeek=false → historique 28j utilisé, cumul persiste
+    const noWorkThisWeek = !hasAnyEntryThisWeek && todayDowA > 1;
 
     // Si semaine de repos détectée : forcer weeklyExtra à 0 immédiatement
     // pour que les calculs aval (variabilité, sigma) reflètent la réalité
@@ -1583,6 +1585,18 @@ class DTEEngine {
       // 8 sem → max 93% (au lieu de 85%) — cohérent avec de Bloom 2010
       const recCeiling = 1.0 - inertia * 0.10;
       if (recFinal > recCeiling) recFinal = recCeiling;
+    }
+
+    // ── USURE LONG TERME — weekend insuffisant à recharger après surcharge chronique ──
+    // de Bloom 2010 : après 6+ semaines de surcharge, 2j de repos ne suffisent plus.
+    // Sans ce correctif : recovery = 96 le lundi matin après 8 semaines à 45h (irréaliste).
+    // Avec : recovery ≈ 80-85 (cohérent avec INRS phase P2/P3).
+    // Seuil : > 6 semaines (P2 bien installée). Amplitude : 6%/sem au-delà de 6 sem.
+    // Plancher : 50 (même en surcharge chronique, il reste de la capacité de récup).
+    // En vacances : pas d'usure supplémentaire (le repos prolongé brise le cycle).
+    if (cumW > 6 && !isVacWeekNow) {
+      const usure = Math.min(0.45, (cumW - 6) * 0.06); // 6%/sem au-delà du seuil
+      recFinal = Math.max(0.50, recFinal - usure);
     }
 
     // ── CORRÉLATION INTER-SCORES (cohérence biologique) ──────────────────────
