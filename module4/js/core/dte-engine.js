@@ -1633,14 +1633,20 @@ class DTEEngine {
       recFinal = Math.max(0.50, recFinal - usure);
     }
 
+    // ── DÉGRADATION RÉCUPÉRATION — usure progressive INRS phases P2/P3 ───────────
+    // En surcharge active : recovery structurellement plafonnée par la dette accumulée.
+    // Seuil 3 sem : entrée P1→P2 (INRS). Seuil 6 sem : P2→P3 établi (dégradation amplifiée).
+    if (cumW >= 3 && !isVacWeekNow) recFinal = Math.max(0, recFinal - 0.02); // −2% dès 3 sem
+    if (cumW >= 6 && !isVacWeekNow) recFinal = Math.max(0, recFinal - 0.03); // −3% de plus ≥6 sem
+
     // ── PLAFOND LONG TERME — dette physiologique irréductible (OMS/INRS/McEwen) ──
     // Après 6+ sem. de surcharge, la récupération parfaite est biologiquement impossible.
     // INRS phase P2/P3 : retour à P1 = 2-6 semaines minimum (pas 1 weekend).
     // McEwen 1998 (allostatic load) : charge chronique → seuil de stress basal élevé.
     // Guard !isVacWeekNow : évite conflit avec vacationFloor (0.80-0.92 en vacances).
     if (cumW >= 6 && !isVacWeekNow) {
-      recFinal  = Math.min(recFinal,  0.70); // rec  ≤ 70% — INRS P2/P3
-      perfFinal = Math.min(perfFinal, 0.85); // perf ≤ 85% — Pencavel 2014
+      recFinal  = Math.min(recFinal,  0.45); // rec  ≤ 45% — cible surcharge chronique INRS P2/P3
+      perfFinal = Math.min(perfFinal, 0.75); // perf ≤ 75% — Pencavel 2014 (abaissé vs 0.85)
       strFinal  = Math.max(strFinal,  0.20); // stress ≥ 20% — McEwen 1998 allostatic load
     }
 
@@ -1651,18 +1657,21 @@ class DTEEngine {
     // Formule : perf ≤ 1 − fatFinal × 0.50
     // fat=40% → perf ≤ 80% | fat=60% → perf ≤ 70% | fat=20% → perf ≤ 90%
     if (fatFinal > 0.20) {
-      const perfCap = Math.max(0.05, 1 - fatFinal * 0.50);
+      // Pénalité cumulative : -2% par semaine au-delà de 4 sem (max -25%)
+      // → perf met plusieurs semaines à remonter après surcharge prolongée
+      const cumWPerfPenalty = cumW >= 4 ? Math.min(0.25, (cumW - 4) * 0.02) : 0;
+      const perfCap = Math.max(0.05, 1 - fatFinal * 0.50 - cumWPerfPenalty);
       if (perfFinal > perfCap) perfFinal = perfCap;
     }
 
-    // ── FATIGUE CHRONIQUE — accélération non-linéaire (J.Occup.Health 2021) ──
-    // Mécanismes adaptatifs épuisés après 6+ sem → courbe superlinéaire validée.
-    if (cumW >= 6) {
-      fatFinal = Math.min(1, fatFinal + fatFinal * 0.05); // +5% relatif au seuil critique
-    }
-    if (fatFinal > 0.65) {
-      fatFinal = Math.min(1, fatFinal + 0.02); // accélération supplémentaire > 65%
-    }
+    // ── FATIGUE CHRONIQUE — effet boule de neige progressif (J.Occup.Health 2021 + INRS) ──
+    // 3 paliers cumulatifs : chaque étape s'additionne aux précédentes.
+    // Palier 1 (≥4 sem) : début accumulation chronique → +2% fixe
+    if (cumW >= 4) fatFinal = Math.min(1, fatFinal + 0.02);
+    // Palier 2 (≥6 sem) : mécanismes adaptatifs épuisés → +5% relatif (non-linéaire)
+    if (cumW >= 6) fatFinal = Math.min(1, fatFinal + fatFinal * 0.05);
+    // Palier 3 (≥8 sem) : surmenage chronique installé → +3% supplémentaire
+    if (cumW >= 8) fatFinal = Math.min(1, fatFinal + 0.03);
 
     // ── COUPLAGE RÉCUPÉRATION ↔ FATIGUE (Meijman & Mulder 1998) ─────────────
     // Récupération insuffisante → fatigue s'aggrave ; récupération forte → atténue.
