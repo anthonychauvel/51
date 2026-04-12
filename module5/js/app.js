@@ -27,6 +27,7 @@ function showSection(id) {
   currentSection=id;
   if(id==='historique') renderHistorique();
   if(id==='stats')      renderStats();
+  if(id==='glossaire')  renderGlossaire();
 }
 
 function openModal(id)  { const m=document.getElementById(id); if(m) m.classList.add('open'); }
@@ -44,7 +45,7 @@ function runAnalysis() {
     weekResult=CalcEngine.calcWeek(contract.hoursBase,wk.total,contract,contract.hourlyRate||0);
   }
   const weeks=M5_DataStore.getLast12Weeks(year);
-  const rule12=CalcEngine.check12WeeksRule(weeks,contract.hoursBase);
+  const rule12=CalcEngine.check12WeeksRule(weeks,contract.hoursBase,year);
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
   currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,weeks,weekMode:wk.mode};
   return currentAnalysis;
@@ -62,6 +63,13 @@ function refreshUI() {
   }
   if(noContract) noContract.style.display='none';
   if(main)       main.style.display='block';
+  // Badge header
+  const badge=document.getElementById('header-contract-badge');
+  if(badge && contract.hoursBase) {
+    badge.textContent=contract.hoursBase+'h/sem';
+    badge.className='m5-contract-badge ok';
+    badge.style.display='inline-flex';
+  }
   const analysis=runAnalysis();
   if(!analysis) return;
   const bubbleText=Mizuki.getBubbleText(analysis);
@@ -90,11 +98,16 @@ function renderCalendar() {
 
   // Mode hebdo = une seule case "total semaine"
   if(days.mode==='week') {
+    const isVacH=M5_DataStore.isVacWeek(calendarMonday,year);
     el.innerHTML=`
       <div class="m5-cal-weekly-badge">Mode hebdomadaire</div>
       <div class="m5-cal-week-total-cell" onclick="openWeeklySaisie()">
         <div class="m5-cal-week-total-val">${wk.total}h</div>
         <div class="m5-cal-week-total-sub">total semaine — tap pour modifier</div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:10px;">
+        <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:1" onclick="openWeeklySaisie()">📊 Total semaine</button>
+        <button class="m5-btn m5-btn-sm ${isVacH?'m5-btn-primary':'m5-btn-outline'}" onclick="toggleVacSemaine()">🌴 ${isVacH?'Congés ✓':'Congés'}</button>
       </div>`;
     return;
   }
@@ -155,9 +168,13 @@ function renderCalendar() {
     html+=`<div class="m5-cal-total-empty">Saisir les jours pour voir le total</div>`;
   }
 
-  // Bouton saisie hebdo rapide
+  // Boutons bas calendrier
+  const isVacNow=M5_DataStore.isVacWeek(calendarMonday,year);
   html+=`<div style="display:flex;gap:8px;margin-top:10px;">
-    <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:1" onclick="openWeeklySaisie()">📊 Saisir le total semaine</button>
+    <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:1" onclick="openWeeklySaisie()">📊 Total semaine</button>
+    <button class="m5-btn m5-btn-sm ${isVacNow?'m5-btn-primary':'m5-btn-outline'}" onclick="toggleVacSemaine()" title="${isVacNow?'Retirer les congés':'Marquer en congés'}">
+      🌴 ${isVacNow?'Congés ✓':'Congés'}
+    </button>
   </div>`;
 
   el.innerHTML=html;
@@ -359,13 +376,18 @@ function renderHistorique() {
   const contract=M5_Contract.get();
   if(!el) return;
   const year=M5_DataStore.getYear();
-  const weeks=M5_DataStore.getWeeksSorted(year).slice().reverse();
+  // Fusionner semaines saisies + semaines vacances
+  const weeks=M5_DataStore.getWeeksSorted(year);
+  M5_DataStore.getVacWeeksSorted(year).forEach(mon=>{
+    if(!weeks.find(w=>w.monday===mon)) weeks.push({monday:mon,worked:null,mode:'vac'});
+  });
+  weeks.sort((a,b)=>b.monday.localeCompare(a.monday));
   if(!weeks.length) {
     el.innerHTML='<div class="m5-empty"><div class="m5-empty-icon">📋</div><div class="m5-empty-text">Aucune semaine saisie pour '+year+'.</div></div>';
     return;
   }
   el.innerHTML=weeks.map(w=>{
-    const isVac=M5_DataStore.isVacWeek(w.monday,year);
+    const isVac=w.mode==='vac'||M5_DataStore.isVacWeek(w.monday,year);
     const worked=w.worked||0;
     const diff=Math.max(0,worked-contract.hoursBase);
     const pct35=Math.round(worked/35*100);
@@ -512,6 +534,56 @@ function selectCCN(idcc, nom, secteur) {
 }
 
 // ── Exposition ────────────────────────────────────────────────────
+// ── Glossaire ─────────────────────────────────────────────────────
+function renderGlossaire(term) {
+  const el=document.getElementById('glossaire-list'); if(!el) return;
+  if(typeof GLOSSAIRE_API==='undefined') {
+    el.innerHTML='<div class="m5-empty"><div class="m5-empty-text">Glossaire non disponible.</div></div>';
+    return;
+  }
+  const items = term ? GLOSSAIRE_API.search(term) : GLOSSAIRE_API.getAll();
+  if(!items.length) {
+    el.innerHTML='<div class="m5-empty" style="padding:20px;"><div class="m5-empty-text">Aucun résultat pour "'+term+'"</div></div>';
+    return;
+  }
+  el.innerHTML = items.map((g,i) => `
+    <div class="m5-glos-item" id="glos-${i}">
+      <button class="m5-glos-header" onclick="toggleGlos(${i})">
+        <span class="m5-glos-term">${g.terme}</span>
+        <span class="m5-glos-art">${g.art}</span>
+        <span class="m5-glos-chevron">›</span>
+      </button>
+      <div class="m5-glos-body">
+        ${g.def}
+        <div class="m5-glos-example">${g.exemple}</div>
+      </div>
+    </div>`).join('');
+}
+
+function toggleGlos(i) {
+  const el=document.getElementById('glos-'+i); if(!el) return;
+  el.classList.toggle('open');
+}
+
+function filterGlossaire(term) {
+  renderGlossaire(term);
+}
+
+// ── Gestion vacances M5 ──────────────────────────────────────────────
+function toggleVacSemaine() {
+  const year=M5_DataStore.getYear();
+  const isVac=M5_DataStore.isVacWeek(calendarMonday,year);
+  if(isVac) {
+    M5_DataStore.removeVacWeek(calendarMonday,year);
+    toast('Congés supprimés pour cette semaine','info');
+  } else {
+    M5_DataStore.addVacWeek(calendarMonday,year);
+    toast('Semaine marquée en congés 🌴','success');
+  }
+  Mizuki.clearCache();
+  refreshUI();
+}
+
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
@@ -523,8 +595,11 @@ window.updateWeekPreview=updateWeekPreview; window.saveWeeklySaisie=saveWeeklySa
 window.deleteWeeklySaisie=deleteWeeklySaisie;
 window.calPrev=calPrev; window.calNext=calNext; window.calToday=calToday;
 window.goToWeek=goToWeek; window.openMizukiPopup=openMizukiPopup;
+window.toggleVacSemaine=toggleVacSemaine;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
+window.filterGlossaire=filterGlossaire;
+window.toggleGlos=toggleGlos;
 
 document.addEventListener('DOMContentLoaded',()=>{
   initCCNSelect(); showSection('accueil'); refreshUI();
