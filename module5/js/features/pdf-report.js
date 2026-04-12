@@ -128,12 +128,12 @@ const PDFReportM5 = {
     doc.setFontSize(9);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(74, 42, 138);
-    doc.text('Semaine', M + 2, y + 2);
-    doc.text('Heures travaillées', M + 60, y + 2);
-    doc.text('Heures comp.', M + 105, y + 2);
-    doc.text('Majorées +10%', M + 135, y + 2);
-    doc.text('Majorées +25%', M + 162, y + 2);
-    y += 8;
+      doc.text('Semaine', M + 2, y + 2);
+      doc.text('Travaillees', M + 52, y + 2);
+      doc.text('Comp.', M + 90, y + 2);
+      doc.text('+10%', M + 117, y + 2);
+      doc.text('+25%', M + 144, y + 2);
+      doc.text('Montant', M + 163, y + 2);
 
     doc.setFont('helvetica', 'normal');
     doc.setTextColor(0, 0, 0);
@@ -161,19 +161,25 @@ const PDFReportM5 = {
       const dateLabel = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} au ${String(fn.getDate()).padStart(2,"0")}/${String(fn.getMonth()+1).padStart(2,"0")}/${fn.getFullYear()}`;
 
       doc.text(dateLabel, M + 2, y + 1);
-      doc.text(`${wh}h`, M + 60, y + 1);
+      doc.text(`${wh}h`, M + 52, y + 1);
 
       if (diff > 0) {
+        // Calcul montant comp
+        const rate1 = contract.rate1 || 0.10;
+        const rate2 = contract.rate2 || 0.25;
+        const montant = c1 * contract.hourlyRate * (1 + rate1) + c2 * contract.hourlyRate * (1 + rate2);
         doc.setTextColor(123, 79, 212);
-        doc.text(`+${diff.toFixed(1)}h`, M + 105, y + 1);
-        doc.text(c1 > 0 ? `${c1.toFixed(1)}h` : '—', M + 135, y + 1);
-        doc.text(c2 > 0 ? `${c2.toFixed(1)}h` : '—', M + 162, y + 1);
+        doc.text(`+${diff.toFixed(1)}h`, M + 90, y + 1);
+        doc.text(c1 > 0 ? `${c1.toFixed(1)}h` : '—', M + 117, y + 1);
+        doc.text(c2 > 0 ? `${c2.toFixed(1)}h` : '—', M + 144, y + 1);
+        doc.text(contract.hourlyRate > 0 ? `${montant.toFixed(2)}eu` : '—', M + 163, y + 1);
         doc.setTextColor(0, 0, 0);
       } else {
         doc.setTextColor(150, 150, 150);
-        doc.text('—', M + 105, y + 1);
-        doc.text('—', M + 135, y + 1);
-        doc.text('—', M + 162, y + 1);
+        doc.text('—', M + 90, y + 1);
+        doc.text('—', M + 117, y + 1);
+        doc.text('—', M + 144, y + 1);
+        doc.text('—', M + 163, y + 1);
         doc.setTextColor(0, 0, 0);
       }
 

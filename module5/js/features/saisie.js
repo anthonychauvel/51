@@ -38,7 +38,7 @@ function weekStartOf(dateStr, startDow) {
 function mondayOf(dateStr) { return weekStartOf(dateStr, Contract.get().weekStartDay || 0); }
 
 const Contract = {
-  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0}); },
+  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0,exerciceStart:'01/01',clotureJour:0}); },
   save(data) { _save(K.CONTRACT,data); },
   isSet() { return this.get().hoursBase>0; }
 };
@@ -286,10 +286,15 @@ function getCurrentMonday() {
   return weekStartOf(localDK(new Date()), sd);
 }
 function formatMonday(mondayStr) {
-  const d=new Date(mondayStr+'T12:00:00'),fn=new Date(mondayStr+'T12:00:00');
-  fn.setDate(fn.getDate()+4);
+  // Début = mondayStr, Fin = début + 6 jours (semaine de 7 jours)
+  const d=new Date(mondayStr+'T12:00:00');
+  const fn=new Date(mondayStr+'T12:00:00');
+  fn.setDate(fn.getDate()+6);
   const mn=d.toLocaleDateString('fr-FR',{month:'long'});
-  return `${d.getDate()} → ${fn.getDate()} ${mn} ${d.getFullYear()}`;
+  const mnFin=fn.toLocaleDateString('fr-FR',{month:'long'});
+  // Si même mois
+  if(mn===mnFin) return `${d.getDate()} → ${fn.getDate()} ${mn} ${d.getFullYear()}`;
+  return `${d.getDate()} ${mn} → ${fn.getDate()} ${mnFin} ${fn.getFullYear()}`;
 }
 function getExistingYears() {
   const years=new Set();
