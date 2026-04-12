@@ -121,33 +121,60 @@ const CalcEngine = {
    * Si l'horaire moyen dépasse de +2h/sem pendant 12 sem consécutives
    * → contrat doit être modifié (sauf opposition salarié)
    */
-  check12WeeksRule(weeklyData, contractH) {
-    // weeklyData = tableau chronologique { worked: number }
-    if (weeklyData.length < 12) return { triggered: false, count: weeklyData.length };
+  check12WeeksRule(weeklyData, contractH, year) {
+    // weeklyData = tableau chronologique { monday, worked, mode }
+    // Les semaines de vacances M4 sont TRANSPARENTES :
+    // elles n'incrémentent pas le compteur mais ne le remettent pas à zéro non plus.
+    // (Logique identique à M3 pour les congés intercalés dans les surcharges)
+    if (!weeklyData || !weeklyData.length) return { triggered: false, maxConsec: 0 };
 
-    let consecCount = 0;
+    // Lire les vacances M4 pour l'année concernée
+    function isVacMonday(mondayStr, yr) {
+      try {
+        const vac = JSON.parse(localStorage.getItem('DTE_VACANCES_' + (yr || new Date().getFullYear())) || '{}');
+        for (let d = 0; d < 7; d++) {
+          const dt = new Date(mondayStr + 'T12:00:00');
+          dt.setDate(dt.getDate() + d);
+          const dk = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
+          if (vac[dk]) return true;
+        }
+      } catch(_) {}
+      return false;
+    }
+
+    const yr = year || new Date().getFullYear();
+    let consecCount = 0;  // semaines de surcharge consécutives (vacances transparentes)
     let maxConsec   = 0;
     let triggerStart = null;
 
     for (let i = 0; i < weeklyData.length; i++) {
       const w = weeklyData[i];
+      const isVac = w.monday ? isVacMonday(w.monday, yr) : false;
+
+      if (isVac) {
+        // Semaine de vacances : transparente — on ne remet pas le compteur à zéro
+        // mais on n'incrémente pas non plus
+        continue;
+      }
+
       if ((w.worked || 0) >= contractH + 2) {
         consecCount++;
         if (consecCount > maxConsec) maxConsec = consecCount;
         if (consecCount >= 12 && !triggerStart) triggerStart = i - 11;
       } else {
+        // Semaine travaillée sous le seuil → reset
         consecCount = 0;
       }
     }
 
     return {
-      triggered:    maxConsec >= 12,
+      triggered:   maxConsec >= 12,
       maxConsec,
       triggerStart,
       msg: maxConsec >= 12
         ? `Tu dépasses ton contrat de +2h/sem depuis ${maxConsec} semaines consécutives. Ton employeur doit proposer une augmentation de ton contrat (Art. L3123-13).`
         : maxConsec >= 8
-          ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12 - maxConsec} semaines avant que la règle des 12 semaines s'applique.`
+          ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12 - maxConsec} semaine(s) avant que la règle des 12 semaines s'applique.`
           : null
     };
   },
