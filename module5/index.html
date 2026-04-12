@@ -101,7 +101,12 @@
           <div>💰 Majoration&nbsp;: +10% jusqu'au 1/10e, +25% au-delà</div>
           <div>⚠️ Jamais 35h&nbsp;: tes heures ne peuvent atteindre le temps plein</div>
           <div>📅 Règle 12 sem.&nbsp;: +2h/sem × 12 sem = modification de contrat obligatoire</div>
-          <div>💶 Défiscalisé&nbsp;: exonéré d'impôt sur le revenu depuis 2019</div>
+          <div style="margin-top:8px;">
+            <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openModal('modal-prevenance')" style="font-size:12px;">
+              ⏰ Vérifier le délai de prévenance
+            </button>
+          </div>
+
         </div>
       </div>
     </div>
@@ -256,6 +261,34 @@
       Chaque exercice a ses propres semaines, indépendant des autres.
     </div>
     <div id="years-list" style="border:1px solid var(--miz-border);border-radius:var(--miz-radius-sm);overflow:hidden;"></div>
+  </div>
+</div>
+
+<!-- Modale délai de prévenance -->
+<div class="m5-modal-backdrop" id="modal-prevenance" onclick="if(event.target===this)closeModal('modal-prevenance')">
+  <div class="m5-modal">
+    <div class="m5-modal-header">
+      <div class="m5-modal-title">⏰ Délai de prévenance</div>
+      <button class="m5-modal-close" onclick="closeModal('modal-prevenance')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--miz-text2);margin-bottom:14px;">
+      Vérifie si ton employeur t'a prévenu à temps (Art. L3123-24 — <strong>3 jours ouvrés minimum</strong>).
+    </div>
+    <div class="m5-input-group">
+      <label class="m5-label">Date de la demande de l'employeur</label>
+      <input type="date" class="m5-input" id="prev-date-demande">
+    </div>
+    <div class="m5-input-group">
+      <label class="m5-label">Date prévue pour travailler</label>
+      <input type="date" class="m5-input" id="prev-date-travail">
+    </div>
+    <button class="m5-btn m5-btn-primary m5-btn-full" onclick="checkPrevenance()" style="margin-bottom:12px;">
+      Vérifier le délai
+    </button>
+    <div id="prevenance-result" style="min-height:40px;"></div>
+    <div style="font-size:11px;color:var(--miz-text3);margin-top:12px;line-height:1.6;">
+      ⚖️ En cas de non-respect du délai, tu peux légalement refuser d'effectuer ces heures sans que ce soit considéré comme une faute (Art. L3123-24 Code du travail).
+    </div>
   </div>
 </div>
 
