@@ -24,12 +24,12 @@ const MSGS_NORMAL = [
   n=>`🦊 ${n}Contrat respecté cette semaine. Profite de ton temps libre — il t'appartient.`,
   n=>`🦊 ${n}Zéro heure comp. cette semaine. C'est ton droit de ne travailler que ce qui est prévu au contrat.`,
   n=>`🦊 ${n}Bonne semaine ! Pas d'heure supplémentaire à signaler. Continue comme ça.`,
-  n=>`🦊 ${n}Ton employeur a respecté ton contrat cette semaine. Note-le — c'est important d'avoir un historique positif aussi.`,
+  n=>`🦊 ${n}Tout va bien cette semaine — aucun dépassement. Mizuki est là si ça change !`,
   n=>`🦊 ${n}Semaine conforme. Si tu as une semaine chargée à venir, saisis-la dès maintenant.`,
   n=>`🦊 ${n}Dans les clous ! Chaque semaine saisie renforce ton dossier si tu en as besoin un jour.`,
   n=>`🦊 ${n}Aucune anomalie détectée. Mizuki surveille pour toi en permanence.`,
-  n=>`🦊 ${n}Semaine tranquille — et c'est exactement ce à quoi tu as droit. Personne ne peut t'obliger à faire plus sans te prévenir 3 jours avant.`,
-  n=>`🦊 ${n}Tout va bien ! Rappelle-toi : si ton employeur demande des heures supplémentaires moins de 3 jours ouvrés avant, tu peux refuser sans risque.`,
+  n=>`🦊 ${n}Semaine dans les clous ! Note que si on te demande des heures complémentaires, tu dois être prévenue 3 jours ouvrés à l'avance.`,
+  n=>`🦊 ${n}Aucun dépassement cette semaine. Bon à savoir : tu peux refuser des heures complémentaires demandées moins de 3 jours ouvrés avant.`,
 ];
 
 const MSGS_COMP_LOW = [
@@ -52,20 +52,20 @@ const MSGS_COMP_HIGH = [
 
 const MSGS_PROCHE_35 = [
   (n,h)=>`🦊 ${n}Attention : tu as travaillé ${h}h cette semaine. C'est très proche des 35h légales — encore quelques heures et ton contrat pourrait être requalifié !`,
-  (n,h)=>`🦊 ${n}${h}h cette semaine — tu frôles le temps plein. Ton employeur ne peut pas te faire travailler 35h sur un contrat à temps partiel.`,
+  (n,h)=>`🦊 ${n}${h}h cette semaine — tu es proche du seuil légal de 35h. Les heures complémentaires ne peuvent jamais atteindre le temps plein.`,
   (n,h)=>`🦊 ${n}Vigilance ! À ${h}h cette semaine, il ne reste que ${(35-h).toFixed(1)}h avant le seuil du temps plein. La loi protège ton statut de temps partiel.`,
 ];
 
 const MSGS_REQUALIF = [
-  (n,h)=>`🦊 ${n}ALERTE : ${h}h cette semaine — c'est le niveau du temps plein. La loi interdit ça sur un contrat à temps partiel. Garde cette preuve.`,
-  (n,h)=>`🦊 ${n}Tu as atteint ${h}h cette semaine ! C'est le seuil de requalification automatique en temps plein. Ton employeur doit modifier ton contrat.`,
+  (n,h)=>`🦊 ${n}${h}h cette semaine — le seuil légal du temps plein est atteint. La loi prévoit des droits dans ce cas. Conserve cet historique.`,
+  (n,h)=>`🦊 ${n}${h}h cette semaine — c'est le seuil légal. Un contrat à temps partiel ne peut pas atteindre 35h. Garde une trace de cette semaine.`,
   (n,h)=>`🦊 ${n}${h}h travaillées — ton contrat devrait déjà être à temps plein selon la loi. Conserve cet historique, c'est important.`,
 ];
 
 const MSGS_12SEM = [
-  (n,c)=>`🦊 ${n}Tu dépasses ton contrat depuis ${c} semaines consécutives ! La loi oblige ton employeur à te proposer une augmentation de tes heures contractuelles.`,
-  (n,c)=>`🦊 ${n}${c} semaines de suite au-dessus du contrat. L'Art. L3123-13 est clair : ton employeur doit agir. Tu peux refuser si tu préfères garder ton horaire actuel.`,
-  (n,c)=>`🦊 ${n}Règle des 12 semaines déclenchée après ${c} semaines ! Ton employeur a 7 jours pour te proposer un avenant. Tu n'es pas obligée d'accepter.`,
+  (n,c)=>`🦊 ${n}Depuis ${c} semaines, tes heures dépassent régulièrement le contrat. L'Art. L3123-13 prévoit une révision du contrat — tu peux en faire la demande.`,
+  (n,c)=>`🦊 ${n}${c} semaines consécutives au-dessus du contrat. Si tu le souhaites, tu peux demander une révision de ta durée contractuelle (Art. L3123-13).`,
+  (n,c)=>`🦊 ${n}La règle des 12 semaines s'applique (${c} semaines). Tu peux demander une révision de ton contrat ou garder ton horaire actuel — c'est ton choix.`,
 ];
 
 const MSGS_VACANCES = [
@@ -77,7 +77,7 @@ const MSGS_VACANCES = [
 
 const MSGS_PLAFOND = [
   (n,cap)=>`🦊 ${n}Tu as dépassé le plafond autorisé par ta convention (${Math.round(cap*100)}%). Ces heures ouvrent peut-être des droits supplémentaires pour toi.`,
-  (n,cap)=>`🦊 ${n}Dépassement du plafond de ${Math.round(cap*100)}% ! Au-delà, ton employeur prend des risques juridiques. Note bien ces semaines.`,
+  (n,cap)=>`🦊 ${n}Tes heures dépassent le plafond conventionnel (${Math.round(cap*100)}%). Garde une trace de ces semaines — elles peuvent ouvrir des droits.`,
 ];
 
 // ── Rotation intelligente ─────────────────────────────────────────
@@ -153,14 +153,14 @@ const Mizuki = {
         msg = {
           titre: '🚨 Risque de requalification',
           icon: '🚨', level: 'critique',
-          message: `${weekResult.workedH}h travaillées cette semaine — c'est le niveau du temps plein légal (35h). La loi interdit à un employeur de faire travailler un salarié à temps partiel au niveau du temps plein sans modifier son contrat. Garde cet historique — c'est une preuve importante.`,
+          message: `Cette semaine tu as atteint ${weekResult.workedH}h — le seuil légal du temps plein. Un contrat à temps partiel ne peut pas atteindre 35h sans modification. Garde une trace de cette semaine, elle peut être utile.`,
           actions: ['Garder une trace écrite', 'Comparer avec la fiche de paie', 'Consulter un délégué du personnel', 'Voir l\'Art. L3123-13'],
         };
       } else if (has12sem) {
         msg = {
           titre: '⚖️ Règle des 12 semaines',
           icon: '⚖️', level: 'alerte',
-          message: `Tu dépasses ton contrat de plus de 2h/sem depuis ${rule12.maxConsec} semaines consécutives. L'Art. L3123-13 du Code du travail oblige ton employeur à te proposer une modification de contrat. Tu as le droit d'accepter ou de refuser — dans les 7 jours.`,
+          message: `Depuis ${rule12.maxConsec} semaines consécutives, tes heures dépassent le contrat de plus de 2h/sem. L'Art. L3123-13 prévoit que le contrat peut être modifié dans ce cas. Tu peux en faire la demande, ou conserver ton horaire actuel — c'est ton choix.`,
           actions: ['Demander une modification de contrat', 'Garder l\'historique', 'Voir l\'Art. L3123-13'],
         };
       } else if (hasProche) {

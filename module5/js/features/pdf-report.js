@@ -158,7 +158,7 @@ const PDFReportM5 = {
       // Date formatée
       const d  = new Date(w.monday + 'T12:00:00');
       const fn = new Date(w.monday + 'T12:00:00'); fn.setDate(fn.getDate() + 4);
-      const dateLabel = `${d.getDate()}/${d.getMonth()+1} → ${fn.getDate()}/${fn.getMonth()+1}/${fn.getFullYear()}`;
+      const dateLabel = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} au ${String(fn.getDate()).padStart(2,"0")}/${String(fn.getMonth()+1).padStart(2,"0")}/${fn.getFullYear()}`;
 
       doc.text(dateLabel, M + 2, y + 1);
       doc.text(`${wh}h`, M + 60, y + 1);
