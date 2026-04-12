@@ -97,6 +97,18 @@ function renderCalendar() {
   const el=document.getElementById('calendar-grid'); if(!el) return;
   document.getElementById('cal-week-label').textContent=label;
 
+  // Badge nombre de semaines sauvegardées
+  const totalSaved=M5_DataStore.getWeeksSorted(year).length;
+  let badge=document.getElementById('cal-saved-badge');
+  if(!badge){
+    badge=document.createElement('span');
+    badge.id='cal-saved-badge';
+    badge.style.cssText='font-size:10px;background:var(--miz-accent);color:var(--miz-primary);border-radius:20px;padding:2px 7px;font-weight:600;';
+    const hdr=document.querySelector('.m5-card-header');
+    if(hdr) hdr.appendChild(badge);
+  }
+  badge.textContent=totalSaved>0?`${totalSaved} sem. sauvegardée${totalSaved>1?'s':''}`:'';
+
   // Noms des jours dans l'ordre de la semaine configurée
   const sd=M5_Contract.get().weekStartDay||0;
   const JOURS_SEMAINE=M5_JOURS_COURTS.slice(sd).concat(M5_JOURS_COURTS.slice(0,sd));
@@ -212,6 +224,15 @@ function openDaySaisie(dateStr, jourLabel) {
   const year=M5_DataStore.getYear();
   const existing=M5_DataStore.getAll(year)[dateStr];
 
+  // Avertir si saisie hebdo existante pour cette semaine
+  if(M5_DataStore.hasWeekTotal(dateStr, year)) {
+    const monday=M5_mondayOf(dateStr);
+    const label=M5_formatMonday(monday);
+    if(!confirm(`⚠️ Une saisie hebdomadaire de ${M5_DataStore.getWeekTotal(monday,year).total}h existe pour cette semaine (${label}).
+
+Passer en mode journalier va la remplacer. Continuer ?`)) return;
+  }
+
   document.getElementById('day-saisie-title').textContent=`${jourLabel} ${dateStr.slice(8)}/${dateStr.slice(5,7)}`;
   document.getElementById('day-saisie-date').value=dateStr;
 
@@ -268,6 +289,15 @@ function saveDaySaisie() {
     toast('Saisis un nombre d\'heures valide (0-24).','error'); return;
   }
   const year=M5_DataStore.getYear();
+  // 0h = effacer ce jour uniquement, sans toucher à la semaine
+  if(worked===0) {
+    M5_DataStore.deleteDay(dateStr,year);
+    Mizuki.clearCache();
+    closeModal('modal-day-saisie');
+    toast('Journée effacée','info');
+    refreshUI();
+    return;
+  }
   M5_DataStore.saveDay(dateStr,worked,year);
   Mizuki.clearCache();
   closeModal('modal-day-saisie');
@@ -625,6 +655,25 @@ function filterGlossaire(term) {
   renderGlossaire(term);
 }
 
+// ── Auto-save sur fermeture modale ───────────────────────────────
+function saveDaySaisieOrClose() {
+  const worked=parseFloat(document.getElementById('day-saisie-hours')?.value);
+  if(!isNaN(worked)&&worked>=0&&worked<=24) {
+    saveDaySaisie();  // sauvegarde si une valeur est saisie
+  } else {
+    closeModal('modal-day-saisie');  // ferme si rien de valide
+  }
+}
+
+function saveWeeklySaisieOrClose() {
+  const worked=parseFloat(document.getElementById('week-saisie-hours')?.value);
+  if(!isNaN(worked)&&worked>=0&&worked<35) {
+    saveWeeklySaisie();  // sauvegarde si une valeur est saisie
+  } else {
+    closeModal('modal-week-saisie');  // ferme si rien de valide
+  }
+}
+
 // ── Gestion vacances M5 ──────────────────────────────────────────────
 function toggleVacSemaine() {
   const year=M5_DataStore.getYear();
@@ -652,6 +701,8 @@ window.deleteWeeklySaisie=deleteWeeklySaisie;
 window.calPrev=calPrev; window.calNext=calNext; window.calToday=calToday;
 window.goToWeek=goToWeek; window.openMizukiPopup=openMizukiPopup;
 window.toggleVacSemaine=toggleVacSemaine;
+window.saveDaySaisieOrClose=saveDaySaisieOrClose;
+window.saveWeeklySaisieOrClose=saveWeeklySaisieOrClose;
 window.toggleAvenat=toggleAvenat;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
