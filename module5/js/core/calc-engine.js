@@ -23,23 +23,39 @@ function calcPaques(year) {
 function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
 function dk(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
 
-function getFeriesYear(year) {
+function getFeriesLocal(year) {
   const p=calcPaques(year);
   const list={};
   [
-    dk(new Date(year,0,1)),   // 1er janvier
-    dk(addDays(p,1)),          // Lundi de Pâques
-    dk(new Date(year,4,1)),   // 1er mai
-    dk(new Date(year,4,8)),   // 8 mai
-    dk(addDays(p,39)),         // Ascension
-    dk(addDays(p,50)),         // Lundi de Pentecôte
-    dk(new Date(year,6,14)),  // 14 juillet
-    dk(new Date(year,7,15)),  // 15 août
-    dk(new Date(year,10,1)),  // 1er novembre
-    dk(new Date(year,10,11)), // 11 novembre
-    dk(new Date(year,11,25)), // 25 décembre
+    dk(new Date(year,0,1)),
+    dk(addDays(p,1)),
+    dk(new Date(year,4,1)),
+    dk(new Date(year,4,8)),
+    dk(addDays(p,39)),
+    dk(addDays(p,50)),
+    dk(new Date(year,6,14)),
+    dk(new Date(year,7,15)),
+    dk(new Date(year,10,1)),
+    dk(new Date(year,10,11)),
+    dk(new Date(year,11,25)),
   ].forEach(k=>{ list[k]=true; });
   return list;
+}
+
+function getFeriesYear(year) {
+  // Priorité : données API gouvernement si disponibles
+  try {
+    const stored=localStorage.getItem('M5_FERIES_API_'+year);
+    if(stored) {
+      const apiData=JSON.parse(stored);
+      // apiData = { "2026-01-01": "1er janvier", ... }
+      const list={};
+      Object.keys(apiData).forEach(d=>{ list[d]=true; });
+      return list;
+    }
+  } catch(_) {}
+  // Fallback : calcul local
+  return getFeriesLocal(year);
 }
 
 function countFeriesInWeek(mondayStr, feriesMap) {
