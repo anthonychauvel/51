@@ -18,6 +18,7 @@
   <div style="flex:1">
     <div class="m5-header-title">🦊 Mizuki — Temps partiel</div>
     <div class="m5-header-sub">Heures complémentaires &amp; droits</div>
+  <div id="header-contract-badge" class="m5-contract-badge" style="display:none;"></div>
   </div>
   <a href="../menu.html" class="m5-nav-btn">← Menu</a>
   <button class="m5-nav-btn" onclick="openContractModal()">⚙️</button>
@@ -33,13 +34,7 @@
   <span class="mizuki-bubble-chevron">›</span>
 </div>
 
-<!-- ── LIENS MODULES ────────────────────────────────────────────── -->
-<div class="m5-module-links">
-  <a href="../heures/index.html" class="m5-mod-link">📅 Annuel</a>
-  <a href="../paye/index.html"   class="m5-mod-link">💰 Mensuel</a>
-  <a href="../fox/index.html"    class="m5-mod-link">🦊 Kitsune</a>
-  <a href="../module4/index.html" class="m5-mod-link">🩺 Santé</a>
-</div>
+
 
 <!-- ══ VUE : PAS DE CONTRAT ══════════════════════════════════════ -->
 <div id="view-no-contract" style="padding:24px 16px;text-align:center;">
@@ -119,6 +114,25 @@
     <div style="padding:12px 16px;" id="stats-content"></div>
   </div>
 
+  <!-- Section GLOSSAIRE -->
+  <div id="sec-glossaire" class="m5-section">
+    <div class="m5-card" style="margin-top:12px;">
+      <div class="m5-card-header">
+        <span class="m5-card-title">⚖️ Glossaire juridique</span>
+      </div>
+      <div class="m5-card-body" style="padding:10px 12px;">
+        <input type="text" class="m5-glos-search" id="glos-search"
+          placeholder="Rechercher un terme ou un article..."
+          oninput="filterGlossaire(this.value)"
+          autocomplete="off">
+      </div>
+      <div id="glossaire-list"></div>
+    </div>
+    <div style="padding:8px 16px 4px;font-size:11px;color:var(--miz-text3);text-align:center;">
+      Source : Code du travail — Légifrance. À titre informatif uniquement.
+    </div>
+  </div>
+
 </div><!-- /view-main -->
 
 <!-- ── BOTTOM NAV ────────────────────────────────────────────── -->
@@ -131,6 +145,9 @@
   </button>
   <button class="m5-bottom-btn" id="nav-stats" onclick="showSection('stats')">
     <span class="icon">📊</span>Stats
+  </button>
+  <button class="m5-bottom-btn" id="nav-glossaire" onclick="showSection('glossaire')">
+    <span class="icon">⚖️</span>Droits
   </button>
 </nav>
 
@@ -272,6 +289,7 @@
 <script src="js/features/saisie.js"></script>
 <script src="js/features/mizuki.js"></script>
 <script src="js/features/pdf-report.js"></script>
+<script src="js/features/glossaire.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/app.js"></script>
 </body>
