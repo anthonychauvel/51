@@ -204,6 +204,27 @@
     <div class="m5-label" style="margin-bottom:8px;">Saisie rapide</div>
     <div id="week-quick-hours" class="m5-quick-grid"></div>
 
+    <!-- Complément d'heures par avenant -->
+    <div style="margin:12px 0;padding:10px 12px;background:var(--miz-bg2);border-radius:var(--miz-radius-sm);border:1px solid var(--miz-border2);">
+      <label style="display:flex;align-items:center;gap:10px;cursor:pointer;font-size:13px;font-weight:600;color:var(--miz-text);">
+        <input type="checkbox" id="week-avenant-toggle" onchange="toggleAvenat()" style="width:18px;height:18px;accent-color:var(--miz-primary);">
+        📋 Avenant complément d'heures (Art. L3123-22)
+      </label>
+      <div style="font-size:11px;color:var(--miz-text3);margin:4px 0 0 28px;">Augmentation temporaire — les heures dans l'avenant ne sont pas majorées</div>
+      <div id="week-avenant-section" style="display:none;margin-top:10px;">
+        <div class="m5-label">Heures prévues par l'avenant</div>
+        <input type="number" class="m5-input" id="week-avenant-hours"
+          min="0" max="34.5" step="0.5" placeholder="ex: 28"
+          oninput="updateWeekPreview()"
+          style="font-size:18px;font-weight:700;text-align:center;">
+        <div id="avenant-counter" style="font-size:11px;color:var(--miz-text3);margin-top:4px;text-align:right;"></div>
+        <div class="m5-alert info" style="margin-top:8px;font-size:12px;padding:6px 10px;">
+          <span>ℹ️</span>
+          <div>Les heures entre ton contrat et l'avenant → taux normal.<br>Les heures au-delà de l'avenant → +25% obligatoire.</div>
+        </div>
+      </div>
+    </div>
+
     <div id="week-saisie-preview" style="margin:10px 0;min-height:24px;"></div>
 
     <div style="display:flex;gap:8px;">
