@@ -1,0 +1,63 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 200 220" width="200" height="220">
+  <!-- Queue -->
+  <path d="M130 160 Q175 185 165 210 Q148 225 125 195" fill="#8B5CF6" opacity="0.9"/>
+  <ellipse cx="148" cy="205" rx="18" ry="14" fill="#EDE0FF" opacity="0.95"/>
+  <!-- Corps -->
+  <ellipse cx="100" cy="155" rx="48" ry="55" fill="#7B4FD4"/>
+  <!-- Ventre -->
+  <ellipse cx="100" cy="165" rx="30" ry="38" fill="#EDE0FF"/>
+  <!-- Tête -->
+  <ellipse cx="100" cy="88" rx="42" ry="40" fill="#7B4FD4"/>
+  <!-- Oreilles -->
+  <polygon points="68,60 56,22 82,52" fill="#7B4FD4"/>
+  <polygon points="132,60 144,22 118,52" fill="#7B4FD4"/>
+  <!-- Intérieur oreilles -->
+  <polygon points="68,54 60,30 78,50" fill="#C4A8FF"/>
+  <polygon points="132,54 140,30 122,50" fill="#C4A8FF"/>
+  <!-- Fleur sur l'oreille gauche -->
+  <circle cx="56" cy="26" r="5" fill="#F9A8D4"/>
+  <circle cx="56" cy="20" r="3" fill="#FDE68A"/>
+  <!-- Museau -->
+  <ellipse cx="100" cy="102" rx="18" ry="14" fill="#EDE0FF"/>
+  <!-- Nez -->
+  <ellipse cx="100" cy="96" rx="5" ry="4" fill="#4A2A8A"/>
+  <!-- Yeux - expressifs et doux -->
+  <ellipse cx="84" cy="82" rx="9" ry="10" fill="#2C1810"/>
+  <ellipse cx="116" cy="82" rx="9" ry="10" fill="#2C1810"/>
+  <!-- Iris violet -->
+  <ellipse cx="84" cy="83" rx="6" ry="7" fill="#7B4FD4"/>
+  <ellipse cx="116" cy="83" rx="6" ry="7" fill="#7B4FD4"/>
+  <!-- Pupilles -->
+  <ellipse cx="85" cy="83" rx="3.5" ry="4.5" fill="#1A0F2E"/>
+  <ellipse cx="117" cy="83" rx="3.5" ry="4.5" fill="#1A0F2E"/>
+  <!-- Reflets -->
+  <circle cx="87" cy="80" r="2.5" fill="white" opacity="0.8"/>
+  <circle cx="119" cy="80" r="2.5" fill="white" opacity="0.8"/>
+  <!-- Cils féminins gauche -->
+  <line x1="76" y1="74" x2="73" y2="70" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="79" y1="72" x2="77" y2="68" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="83" y1="72" x2="82" y2="68" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Cils féminins droit -->
+  <line x1="124" y1="74" x2="127" y2="70" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="121" y1="72" x2="123" y2="68" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <line x1="117" y1="72" x2="118" y2="68" stroke="#2C1810" stroke-width="1.5" stroke-linecap="round"/>
+  <!-- Sourire doux -->
+  <path d="M92 110 Q100 117 108 110" stroke="#4A2A8A" stroke-width="2" fill="none" stroke-linecap="round"/>
+  <!-- Joues roses -->
+  <ellipse cx="76" cy="100" rx="8" ry="5" fill="#F9A8D4" opacity="0.5"/>
+  <ellipse cx="124" cy="100" rx="8" ry="5" fill="#F9A8D4" opacity="0.5"/>
+  <!-- Bras gauche -->
+  <ellipse cx="52" cy="148" rx="14" ry="22" fill="#7B4FD4" transform="rotate(-15 52 148)"/>
+  <!-- Bras droit tenant un carnet -->
+  <ellipse cx="148" cy="145" rx="14" ry="22" fill="#7B4FD4" transform="rotate(15 148 145)"/>
+  <!-- Carnet -->
+  <rect x="148" y="120" width="30" height="38" rx="3" fill="#EDE0FF" stroke="#7B4FD4" stroke-width="1.5"/>
+  <rect x="148" y="120" width="6" height="38" rx="2" fill="#9B6FE8"/>
+  <line x1="157" y1="130" x2="175" y2="130" stroke="#C4A8FF" stroke-width="1.5"/>
+  <line x1="157" y1="136" x2="175" y2="136" stroke="#C4A8FF" stroke-width="1.5"/>
+  <line x1="157" y1="142" x2="175" y2="142" stroke="#C4A8FF" stroke-width="1.5"/>
+  <line x1="157" y1="148" x2="170" y2="148" stroke="#C4A8FF" stroke-width="1.5"/>
+  <!-- Stylo -->
+  <rect x="176" y="118" width="4" height="24" rx="2" fill="#4A2A8A" transform="rotate(15 178 130)"/>
+  <polygon points="179,140 183,140 181,145" fill="#FDE68A" transform="rotate(15 181 142)"/>
+</svg>
