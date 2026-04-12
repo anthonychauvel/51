@@ -91,8 +91,9 @@ body {
 .mizuki-bubble-wrap:hover { background: var(--miz-bg3); }
 .mizuki-avatar {
   flex-shrink: 0;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: auto;
+  object-fit: contain;
 }
 .mizuki-bubble-text {
   font-size: 13.5px;
