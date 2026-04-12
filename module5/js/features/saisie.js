@@ -38,7 +38,7 @@ function weekStartOf(dateStr, startDow) {
 function mondayOf(dateStr) { return weekStartOf(dateStr, Contract.get().weekStartDay || 0); }
 
 const Contract = {
-  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0,exerciceStart:'01/01',clotureJour:0}); },
+  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0,exerciceStart:'01/01',clotureJour:0,modeCalcul:'HEBDO',neutraliseFeries:true}); },
   save(data) { _save(K.CONTRACT,data); },
   isSet() { return this.get().hoursBase>0; }
 };

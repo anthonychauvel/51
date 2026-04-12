@@ -80,7 +80,7 @@ const GLOSSAIRE = [
     terme: 'Complément d\'heures (avenant)',
     art: 'Art. L3123-22',
     def: 'C\'est différent des heures complémentaires. Un avenant temporaire peut augmenter ta durée de travail pour une période définie. Les heures dans le cadre de l\'avenant ne sont pas majorées, mais celles qui dépassent l\'avenant le sont à +25% minimum. Maximum 8 avenants par an.',
-    exemple: 'Contrat 25h, avenant pour travailler 30h pendant 1 mois → les 5h supplémentaires ne sont pas majorées, mais si tu travailles 32h, les 2h au-delà de 30h sont à +25%.',
+    exemple: 'Contrat 25h, avenant pour travailler 30h pendant 1 mois → les 5h entre le contrat et l\'avenant ne sont pas majorées, mais si tu travailles 32h, les 2h au-delà de 30h sont à +25%.',
     tags: ['avenant','complément','temporaire']
   },
   {
