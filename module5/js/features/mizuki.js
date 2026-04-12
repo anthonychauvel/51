@@ -35,7 +35,7 @@ const MSGS_NORMAL = [
 const MSGS_COMP_LOW = [
   (n,h,r1)=>`🦊 ${n}${h}h complémentaires cette semaine, majorées à +${Math.round(r1*100)}%. Vérifie bien qu'elles apparaissent sur ta fiche de paie !`,
   (n,h,r1)=>`🦊 ${n}Tu as dépassé ton contrat de ${h}h — elles doivent être payées avec +${Math.round(r1*100)}% de majoration. Mizuki a tout noté.`,
-  (n,h)=>`🦊 ${n}${h}h en plus du contrat cette semaine. Ces heures sont défiscalisées depuis 2019 — elles ne comptent pas dans ton impôt sur le revenu !`,
+  (n,h)=>`🦊 ${n}${h}h en plus du contrat cette semaine. Mizuki a tout noté — vérifie bien ces heures sur ta prochaine fiche de paie.`,
   (n,h)=>`🦊 ${n}Quelques heures complémentaires (${h}h). Garde cet historique — si ça dure 12 semaines de suite, ton contrat devra être modifié.`,
   (n,h,r1)=>`🦊 ${n}${h}h au-delà de ton contrat, à +${Math.round(r1*100)}%. Tu as bien fait de les noter — c'est ta preuve en cas de problème.`,
   (n,h)=>`🦊 ${n}${h}h complémentaires relevées. Pense à vérifier ta prochaine fiche de paie — ces heures doivent y figurer séparément.`,
@@ -191,7 +191,7 @@ const Mizuki = {
         msg = {
           titre: `🟡 ${total}h complémentaires`,
           icon: '🟡', level: 'info',
-          message: `Tu as effectué ${total}h au-delà de ton contrat cette semaine.${weekResult.compH1>0?` ${weekResult.compH1.toFixed(1)}h à +${Math.round((weekResult.rate1||0.10)*100)}%`:''}${weekResult.compH2>0?` et ${weekResult.compH2.toFixed(1)}h à +${Math.round((weekResult.rate2||0.25)*100)}%`:''}. ${weekResult.totalAmount>0?`Estimé : ${weekResult.totalAmount.toFixed(2)} € brut.`:''} Ces heures sont exonérées d'impôt sur le revenu depuis 2019. Vérifie bien ta prochaine fiche de paie.`,
+          message: `Tu as effectué ${total}h au-delà de ton contrat cette semaine.${weekResult.compH1>0?` ${weekResult.compH1.toFixed(1)}h à +${Math.round((weekResult.rate1||0.10)*100)}%`:''}${weekResult.compH2>0?` et ${weekResult.compH2.toFixed(1)}h à +${Math.round((weekResult.rate2||0.25)*100)}%`:''}. ${weekResult.totalAmount>0?`Estimé : ${weekResult.totalAmount.toFixed(2)} € brut.`:''} Vérifie bien que ces heures apparaissent sur ta prochaine fiche de paie.`,
           actions: ['Vérifier ta fiche de paie', 'Comprendre les majorations', 'Voir le glossaire'],
         };
       }

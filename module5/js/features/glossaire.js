@@ -72,9 +72,9 @@ const GLOSSAIRE = [
   {
     terme: 'Défiscalisation des heures complémentaires',
     art: 'Loi 2019 / Art. 81 CGI',
-    def: 'Depuis août 2019, les heures complémentaires sont exonérées d\'impôt sur le revenu dans la limite légale. Elles bénéficient aussi d\'une réduction des cotisations salariales d\'environ 11,31%.',
+    def: 'Les heures complémentaires peuvent bénéficier d\'avantages fiscaux et sociaux. Les règles évoluent selon la législation en vigueur — consulte ton bulletin de paie ou les services RH pour connaître le régime applicable à ta situation.',
     exemple: 'Tu fais 3h comp. à 13€ = 39€ brut → cet argent n\'est pas imposable et bénéficie d\'une réduction de charges.',
-    tags: ['défiscalisation','impôt','cotisations','avantage fiscal']
+    tags: ['cotisations','avantage','fiche de paie']
   },
   {
     terme: 'Complément d\'heures (avenant)',

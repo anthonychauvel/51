@@ -1,209 +1,210 @@
 /**
- * PDF-REPORT M5 — Export rapport heures complémentaires
- * Utilise jsPDF (chargé depuis CDN dans index.html)
+ * PDF-REPORT — Export PDF M5 Mizuki
+ * Adaptatif : HEBDO / MENSUEL / ANNUEL
+ * Colonnes compactes A4 (210mm — marges 15mm → PW 180mm)
  */
 (function(global) {
 'use strict';
 
-const PDFReportM5 = {
+const M5_PdfReport = {
 
-  generate(year) {
-    if (!window.jspdf && !window.jsPDF) {
-      alert('jsPDF non disponible. Vérifiez votre connexion.');
-      return;
-    }
-    const { jsPDF } = window.jspdf || window;
-    const doc = new jsPDF({ unit: 'mm', format: 'a4' });
+  generate(contract, stats, weeks, analysis) {
+    if(typeof jsPDF === 'undefined') { alert('Chargement PDF en cours, réessaie.'); return; }
+    const { jsPDF: J } = window.jspdf || { jsPDF };
+    const doc = new J({ orientation:'portrait', unit:'mm', format:'a4' });
+    const M = 15, PW = 180, pageH = 297;
+    let y = 20;
+    const mode = contract.modeCalcul || 'HEBDO';
 
-    const contract = global.M5_Contract.get();
-    const weeks    = global.M5_DataStore.getWeeksSorted(year);
-    const ccnRules = contract;
-    const stats    = global.M5_DataStore.getAnnualStats(year, contract.hoursBase, ccnRules);
-    const userName = localStorage.getItem('M5_USER_NAME') || '';
+    const checkPage = (needed=10) => {
+      if(y + needed > pageH - 15) {
+        doc.addPage(); y = 20;
+      }
+    };
 
-    const M = 15; // margin
-    const PW = 210 - M * 2;
-    let y = M;
-
-    // ── En-tête ───────────────────────────────────────────────────
-    doc.setFillColor(123, 79, 212);
+    // ── En-tête ──────────────────────────────────────────────────
+    doc.setFillColor(89, 44, 165);
     doc.rect(0, 0, 210, 22, 'F');
-
     doc.setTextColor(255, 255, 255);
-    doc.setFontSize(16);
-    doc.setFont('helvetica', 'bold');
+    doc.setFontSize(14); doc.setFont('helvetica','bold');
     doc.text('Simulateur Heures Sup France — Module Temps Partiel', M, 10);
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.text('Rapport heures complémentaires — Mizuki', M, 17);
-    doc.text(`Généré le ${new Date().toLocaleDateString('fr-FR')}`, 210 - M, 17, { align: 'right' });
-
+    doc.setFontSize(9); doc.setFont('helvetica','normal');
+    doc.text('Rapport heures complementaires — Mizuki', M, 16);
+    doc.setTextColor(0, 0, 0);
     y = 30;
-    doc.setTextColor(0, 0, 0);
 
-    // ── Informations contrat ──────────────────────────────────────
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(74, 42, 138);
-    doc.text('Mon contrat', M, y);
-    y += 6;
+    // ── Contrat ──────────────────────────────────────────────────
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(89, 44, 165);
+    doc.text('Mon contrat', M, y); y += 2;
+    doc.setDrawColor(89, 44, 165); doc.setLineWidth(0.4);
+    doc.line(M, y, M + PW, y); y += 6;
+    doc.setTextColor(0, 0, 0); doc.setFontSize(10);
 
-    doc.setDrawColor(123, 79, 212);
-    doc.setLineWidth(0.5);
-    doc.line(M, y, M + PW, y);
-    y += 5;
-
-    doc.setFontSize(10);
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-
-    const infos = [
-      ['Salarié(e)', userName || '—'],
-      ['Durée contractuelle', `${contract.hoursBase}h/semaine`],
-      ['Taux horaire brut', contract.hourlyRate > 0 ? `${contract.hourlyRate.toFixed(2)} €/h` : 'Non renseigné'],
+    const modeLabel = mode==='MENSUEL'?'Mensuel':mode==='ANNUEL'?'Annuel (glissant)':'Hebdomadaire';
+    [
+      ['Salarie(e)', contract.userName || 'Non renseigne'],
+      ['Duree contractuelle', `${contract.hoursBase}h/semaine`],
+      ['Taux horaire brut', `${(contract.hourlyRate||0).toFixed(2)} eu/h`],
       ['Convention collective', contract.ccnNom || 'Droit commun'],
-      ['Plafond heures comp.', `${Math.round((contract.cap || 0.10) * 100)}% du contrat (${(contract.hoursBase * (contract.cap || 0.10)).toFixed(1)}h/sem max)`],
-      ['Exercice', year],
-    ];
-
-    infos.forEach(([label, val]) => {
-      doc.setFont('helvetica', 'bold');
-      doc.text(label + ' :', M, y);
-      doc.setFont('helvetica', 'normal');
-      doc.text(val, M + 70, y);
+      ['Plafond heures comp.', `${Math.round((contract.cap||0.10)*100)}% du contrat (${(contract.hoursBase*(contract.cap||0.10)).toFixed(1)}h/sem max)`],
+      ['Mode de calcul', modeLabel],
+      ['Exercice', contract.exerciceStart ? `${contract.exerciceStart.slice(3,5)}/${new Date().getFullYear()}` : String(new Date().getFullYear())],
+      ['Jours feries', contract.neutraliseFeries!==false ? 'Neutralises (Art. L3121-29)' : 'Inclus dans l\'assiette (Cass. Soc. 2012)'],
+    ].forEach(([label, val]) => {
+      checkPage(7);
+      doc.setFont('helvetica','bold'); doc.text(label + ' :', M, y);
+      doc.setFont('helvetica','normal'); doc.text(String(val), M + 75, y);
       y += 6;
     });
 
     y += 4;
 
-    // ── Statistiques annuelles ────────────────────────────────────
-    if (stats) {
-      doc.setFontSize(13);
-      doc.setFont('helvetica', 'bold');
-      doc.setTextColor(74, 42, 138);
-      doc.text('Bilan annuel', M, y);
-      y += 6;
-      doc.setDrawColor(123, 79, 212);
-      doc.line(M, y, M + PW, y);
-      y += 5;
+    // ── Bilan selon le mode ───────────────────────────────────────
+    doc.setFontSize(13); doc.setFont('helvetica','bold');
+    doc.setTextColor(89, 44, 165);
+    const bilanTitle = mode==='MENSUEL'?'Bilan mensuel':mode==='ANNUEL'?'Compteur annuel':'Bilan annuel';
+    doc.text(bilanTitle, M, y); y += 2;
+    doc.line(M, y, M + PW, y); y += 6;
+    doc.setTextColor(0, 0, 0); doc.setFontSize(10);
 
-      doc.setFontSize(10);
-      doc.setFont('helvetica', 'normal');
-      doc.setTextColor(0, 0, 0);
-
-      const statRows = [
-        ['Semaines saisies', `${stats.totalWeeks}`],
-        ['Semaines avec heures comp.', `${stats.weeksWithComp} (${stats.pctOverContract}%)`],
-        ['Total heures comp.', `${stats.totalComp}h`],
-        [`dont majorées à +${Math.round((contract.rate1||0.10)*100)}%`, `${stats.totalComp1}h`],
-        [`dont majorées à +${Math.round((contract.rate2||0.25)*100)}%`, `${stats.totalComp2}h`],
-        ['Moyenne hebdo travaillée', `${stats.avgWorked}h/sem`],
-        ['Semaine la plus chargée', `${stats.maxWorked}h`],
-      ];
-
-      statRows.forEach(([label, val]) => {
-        doc.setFont('helvetica', 'bold');
-        doc.text(label + ' :', M, y);
-        doc.setFont('helvetica', 'normal');
-        doc.text(val, M + 90, y);
+    if(mode==='ANNUEL' && analysis && analysis.annuelResult) {
+      const ar = analysis.annuelResult;
+      const solde = ar.solde;
+      [
+        ['Exercice', `${ar.debutEx} au ${ar.finEx}`],
+        ['Jours ecoules', `${ar.joursEcoules} / ${ar.nbJoursEx} (${ar.pctAvancement}%)`],
+        ['Objectif annuel', `${ar.objectifAnnuel}h`],
+        ['Theorique cumule', `${ar.theoriqueCumule}h`],
+        ['Heures realisees', `${ar.reelCumule}h`],
+        ['Solde Avance/Retard', `${solde>=0?'+':''}${solde}h`],
+        ['Semaines saisies', String(ar.semaines)],
+      ].forEach(([label, val]) => {
+        checkPage(7);
+        doc.setFont('helvetica','bold'); doc.text(label + ' :', M, y);
+        doc.setFont('helvetica','normal');
+        if(label.includes('Solde')) {
+          doc.setTextColor(solde>0?0:180, solde>0?120:0, 0);
+        }
+        doc.text(String(val), M + 75, y);
+        doc.setTextColor(0,0,0);
         y += 6;
       });
 
+    } else if(mode==='MENSUEL' && analysis && analysis.mensuelResult) {
+      const mr = analysis.mensuelResult;
+      [
+        ['Seuil mensuel', `${mr.seuilMensuel}h (${contract.hoursBase}h x 52/12)`],
+        ['Heures ce mois', `${mr.totalWorked}h`],
+        ['Delta vs seuil', `${mr.delta>=0?'+':''}${mr.delta.toFixed(1)}h`],
+        ['Heures comp. mois', `${mr.totalCompH}h`],
+        ['dont +' + Math.round((contract.rate1||0.10)*100) + '%', `${mr.compH1.toFixed(1)}h`],
+        ['dont +' + Math.round((contract.rate2||0.25)*100) + '%', `${mr.compH2.toFixed(1)}h`],
+        ['Plafond mensuel', `${mr.maxAllowed.toFixed(1)}h`],
+      ].forEach(([label, val]) => {
+        checkPage(7);
+        doc.setFont('helvetica','bold'); doc.text(label + ' :', M, y);
+        doc.setFont('helvetica','normal'); doc.text(String(val), M + 75, y);
+        y += 6;
+      });
+
+    } else if(stats) {
+      // Mode HEBDO — bilan annuel
+      [
+        ['Semaines saisies', `${stats.totalWeeks}`],
+        ['Semaines avec heures comp.', `${stats.weeksWithComp} (${stats.pctOverContract}%)`],
+        ['Total heures comp.', `${stats.totalComp}h`],
+        [`dont majorees a +${Math.round((contract.rate1||0.10)*100)}%`, `${stats.totalComp1}h`],
+        [`dont majorees a +${Math.round((contract.rate2||0.25)*100)}%`, `${stats.totalComp2}h`],
+        ['Moyenne hebdo travaillee', `${stats.avgWorked}h/sem`],
+        ['Semaine la plus chargee', `${stats.maxWorked}h`],
+      ].forEach(([label, val]) => {
+        checkPage(7);
+        doc.setFont('helvetica','bold'); doc.text(label + ' :', M, y);
+        doc.setFont('helvetica','normal'); doc.text(String(val), M + 95, y);
+        y += 6;
+      });
+    }
+
+    // ── Détail semaines (toujours affiché) ───────────────────────
+    if(weeks && weeks.length > 0) {
+      y += 4; checkPage(20);
+      doc.setFontSize(13); doc.setFont('helvetica','bold');
+      doc.setTextColor(89, 44, 165);
+      doc.text('Detail par semaine', M, y); y += 2;
+      doc.line(M, y, M + PW, y); y += 6;
+
+      // En-tête tableau — 6 colonnes dans 180mm
+      // Semaine(50) Trav.(32) Comp.(22) +10%(22) +25%(22) Montant(32)
+      const cols = [M+2, M+52, M+84, M+106, M+128, M+150];
+      doc.setFillColor(230, 220, 255);
+      doc.rect(M, y-4, PW, 7, 'F');
+      doc.setFontSize(8); doc.setFont('helvetica','bold');
+      doc.setTextColor(89, 44, 165);
+      ['Semaine','Travaillees','Comp.', '+10%','+25%','Montant'].forEach((h,i)=>{
+        doc.text(h, cols[i], y);
+      });
+      doc.setTextColor(0,0,0);
       y += 4;
+
+      doc.setFontSize(8); doc.setFont('helvetica','normal');
+      let alt = false;
+      weeks.forEach(w => {
+        if(!w || w.worked === null || w.worked === undefined) return;
+        checkPage(6);
+
+        const wh = w.worked || 0;
+        const diff = Math.max(0, wh - contract.hoursBase);
+        const threshold = contract.hoursBase * (contract.threshold || 0.10);
+        const c1 = Math.min(diff, threshold);
+        const c2 = Math.max(0, diff - threshold);
+
+        const d = new Date(w.monday + 'T12:00:00');
+        const fn = new Date(w.monday + 'T12:00:00'); fn.setDate(fn.getDate()+6);
+        const dateLabel = `${String(d.getDate()).padStart(2,'0')}/${String(d.getMonth()+1).padStart(2,'0')} au ${String(fn.getDate()).padStart(2,'0')}/${String(fn.getMonth()+1).padStart(2,'0')}/${fn.getFullYear()}`;
+
+        if(alt) { doc.setFillColor(248,245,255); doc.rect(M, y-3, PW, 5.5, 'F'); }
+        alt = !alt;
+
+        doc.text(dateLabel, cols[0], y);
+        doc.text(`${wh}h`, cols[1], y);
+
+        if(diff > 0) {
+          const montant = contract.hourlyRate > 0
+            ? c1 * contract.hourlyRate * (1+(contract.rate1||0.10)) + c2 * contract.hourlyRate * (1+(contract.rate2||0.25))
+            : 0;
+          doc.setTextColor(89, 44, 165);
+          doc.text(`+${diff.toFixed(1)}h`, cols[2], y);
+          doc.text(c1>0 ? `${c1.toFixed(1)}h` : '--', cols[3], y);
+          doc.text(c2>0 ? `${c2.toFixed(1)}h` : '--', cols[4], y);
+          doc.text(montant>0 ? `${montant.toFixed(2)}eu` : '--', cols[5], y);
+          doc.setTextColor(0,0,0);
+        } else {
+          doc.setTextColor(180,180,180);
+          doc.text('--', cols[2], y);
+          doc.text('--', cols[3], y);
+          doc.text('--', cols[4], y);
+          doc.text('--', cols[5], y);
+          doc.setTextColor(0,0,0);
+        }
+        y += 5.5;
+      });
     }
 
-    // ── Détail semaines ───────────────────────────────────────────
-    doc.setFontSize(13);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(74, 42, 138);
-    doc.text('Détail par semaine', M, y);
-    y += 6;
-    doc.setDrawColor(123, 79, 212);
-    doc.line(M, y, M + PW, y);
-    y += 5;
-
-    // En-tête tableau
-    doc.setFillColor(237, 224, 255);
-    doc.rect(M, y - 3, PW, 8, 'F');
-    doc.setFontSize(9);
-    doc.setFont('helvetica', 'bold');
-    doc.setTextColor(74, 42, 138);
-      doc.text('Semaine', M + 2, y + 2);
-      doc.text('Travaillees', M + 52, y + 2);
-      doc.text('Comp.', M + 90, y + 2);
-      doc.text('+10%', M + 117, y + 2);
-      doc.text('+25%', M + 144, y + 2);
-      doc.text('Montant', M + 163, y + 2);
-
-    doc.setFont('helvetica', 'normal');
-    doc.setTextColor(0, 0, 0);
-    doc.setFontSize(9);
-
-    let alternate = false;
-    weeks.forEach(w => {
-      if (y > 270) { doc.addPage(); y = M; }
-
-      if (alternate) {
-        doc.setFillColor(248, 244, 255);
-        doc.rect(M, y - 3, PW, 7, 'F');
-      }
-      alternate = !alternate;
-
-      const wh   = w.worked || 0;
-      const diff = Math.max(0, wh - contract.hoursBase);
-      const th1  = contract.hoursBase * (contract.threshold || 0.10);
-      const c1   = diff > 0 ? Math.min(diff, th1) : 0;
-      const c2   = diff > th1 ? diff - th1 : 0;
-
-      // Date formatée
-      const d  = new Date(w.monday + 'T12:00:00');
-      const fn = new Date(w.monday + 'T12:00:00'); fn.setDate(fn.getDate() + 4);
-      const dateLabel = `${String(d.getDate()).padStart(2,"0")}/${String(d.getMonth()+1).padStart(2,"0")} au ${String(fn.getDate()).padStart(2,"0")}/${String(fn.getMonth()+1).padStart(2,"0")}/${fn.getFullYear()}`;
-
-      doc.text(dateLabel, M + 2, y + 1);
-      doc.text(`${wh}h`, M + 52, y + 1);
-
-      if (diff > 0) {
-        // Calcul montant comp
-        const rate1 = contract.rate1 || 0.10;
-        const rate2 = contract.rate2 || 0.25;
-        const montant = c1 * contract.hourlyRate * (1 + rate1) + c2 * contract.hourlyRate * (1 + rate2);
-        doc.setTextColor(123, 79, 212);
-        doc.text(`+${diff.toFixed(1)}h`, M + 90, y + 1);
-        doc.text(c1 > 0 ? `${c1.toFixed(1)}h` : '—', M + 117, y + 1);
-        doc.text(c2 > 0 ? `${c2.toFixed(1)}h` : '—', M + 144, y + 1);
-        doc.text(contract.hourlyRate > 0 ? `${montant.toFixed(2)}eu` : '—', M + 163, y + 1);
-        doc.setTextColor(0, 0, 0);
-      } else {
-        doc.setTextColor(150, 150, 150);
-        doc.text('—', M + 90, y + 1);
-        doc.text('—', M + 117, y + 1);
-        doc.text('—', M + 144, y + 1);
-        doc.text('—', M + 163, y + 1);
-        doc.setTextColor(0, 0, 0);
-      }
-
-      y += 7;
-    });
-
-    // ── Pied de page ──────────────────────────────────────────────
-    const pages = doc.internal.getNumberOfPages();
-    for (let p = 1; p <= pages; p++) {
+    // ── Pied de page ─────────────────────────────────────────────
+    const totalPages = doc.getNumberOfPages();
+    for(let p=1; p<=totalPages; p++) {
       doc.setPage(p);
-      doc.setFontSize(8);
-      doc.setTextColor(150, 150, 150);
-      doc.text(
-        'Simulateur Heures Sup France — Outil d\'aide au suivi. Ne se substitue pas à un avis juridique professionnel.',
-        105, 292, { align: 'center' }
-      );
-      doc.text(`Page ${p} / ${pages}`, 210 - M, 292, { align: 'right' });
+      doc.setFontSize(8); doc.setTextColor(150,150,150);
+      doc.text(`Page ${p}/${totalPages}`, 105, 290, {align:'center'});
+      doc.text('Source : Code du travail — Legifrance. A titre informatif uniquement.', 105, 294, {align:'center'});
     }
 
-    // ── Téléchargement ────────────────────────────────────────────
-    doc.save(`heures-complementaires-${year}.pdf`);
+    // ── Sauvegarde ───────────────────────────────────────────────
+    const yr = new Date().getFullYear();
+    doc.save(`heures-complementaires-mizuki-${yr}.pdf`);
   }
 };
 
-global.PDFReportM5 = PDFReportM5;
-
+global.M5_PdfReport = M5_PdfReport;
 }(typeof window !== 'undefined' ? window : global));
