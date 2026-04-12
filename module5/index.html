@@ -331,6 +331,18 @@
       <div id="feries-alt-label" style="font-size:11px;color:var(--miz-text3);margin-top:8px;padding:6px 8px;background:var(--miz-bg);border-radius:6px;display:none;">
         ⬜ Cass. Soc. 2012 — Certains accords d'entreprise intègrent les jours fériés chômés dans l'assiette de calcul. Le seuil reste inchangé.
       </div>
+      <div style="margin-top:10px;border-top:1px solid var(--miz-border);padding-top:10px;">
+        <button id="btn-import-feries" class="m5-btn m5-btn-outline m5-btn-sm m5-btn-full"
+          onclick="importFeriesAPI()" style="margin-bottom:6px;">
+          📅 Importer les jours fériés (API gouvernement)
+        </button>
+        <div id="feries-import-status" style="font-size:11px;color:var(--miz-text3);text-align:center;min-height:16px;">
+          Données locales (calcul automatique)
+        </div>
+        <div style="font-size:10px;color:var(--miz-text3);text-align:center;margin-top:3px;">
+          Source : calendrier.api.gouv.fr — N-1, N, N+1 · Nécessite une connexion
+        </div>
+      </div>
     </div>
 
     <div class="m5-input-group">
