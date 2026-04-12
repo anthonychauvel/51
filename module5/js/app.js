@@ -40,19 +40,44 @@ function runAnalysis() {
   const monday=calendarMonday;
   const wk=M5_DataStore.getWeekTotal(monday,year);
   const isVac=M5_DataStore.isVacWeek(monday,year);
-  let weekResult=null;
   const av=M5_DataStore.getAvenant(monday,year);
+
+  // Jours fériés
+  const feriesMap=typeof M5_getFeriesYear!=='undefined'?M5_getFeriesYear(parseInt(year)):null;
+
+  let weekResult=null;
   if(wk.total!==null&&!isVac) {
     if(av && av.avenatH > contract.hoursBase) {
       weekResult=CalcEngine.calcAvenant(contract.hoursBase,av.avenatH,wk.total,contract.hourlyRate||0);
     } else {
-      weekResult=CalcEngine.calcWeek(contract.hoursBase,wk.total,contract,contract.hourlyRate||0);
+      weekResult=CalcEngine.calcWeek(
+        contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
+        { feriesMap, neutraliseFeries:contract.neutraliseFeries!==false, mondayStr:monday }
+      );
     }
   }
-  const weeks=M5_DataStore.getLast12Weeks(year);
-  const rule12=CalcEngine.check12WeeksRule(weeks,contract.hoursBase,year);
+
+  const allWeeks=M5_DataStore.getWeeksSorted(year);
+  const last12=M5_DataStore.getLast12Weeks(year);
+  const rule12=CalcEngine.check12WeeksRule(last12,contract.hoursBase);
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
-  currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,weeks,weekMode:wk.mode};
+
+  // Mode ANNUEL
+  let annuelResult=null;
+  if(contract.modeCalcul==='ANNUEL') {
+    annuelResult=CalcEngine.calcAnnuel(contract.hoursBase,contract.exerciceStart||'01/01',allWeeks);
+  }
+  // Mode MENSUEL
+  let mensuelResult=null;
+  if(contract.modeCalcul==='MENSUEL') {
+    const now=new Date();
+    const moisDebut=new Date(now.getFullYear(),now.getMonth(),1);
+    const weeksMois=allWeeks.filter(w=>new Date(w.monday+'T12:00:00')>=moisDebut);
+    mensuelResult=CalcEngine.calcMonth(contract.hoursBase,weeksMois,contract,contract.hourlyRate||0);
+  }
+
+  currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,
+    weeks:last12,weekMode:wk.mode,feriesMap,annuelResult,mensuelResult};
   return currentAnalysis;
 }
 
@@ -82,6 +107,7 @@ function refreshUI() {
   if(bubbleEl) bubbleEl.textContent=bubbleText;
   renderCalendar();
   renderWeekSummary(analysis);
+  renderQuickStats(analysis);
 }
 
 // ── CALENDRIER SEMAINE ────────────────────────────────────────────
@@ -139,11 +165,16 @@ function renderCalendar() {
     const isToday=d.dk===today;
     const isFuture=d.isFuture;
     const isWeekend=realDow>=5; // Sam=5, Dim=6 en Mon=0
+    const _feriesMap=currentAnalysis&&currentAnalysis.feriesMap;
+    const isFerie=!!(  _feriesMap&&_feriesMap[d.dk]&&!isWeekend);
     const worked=d.worked;
     const contract_daily=contract.hoursBase/5;
     let cellClass='m5-cal-day';
     let hoursHtml='<span class="m5-cal-day-empty">—</span>';
-
+    if(isFerie&&!isVac) {
+      cellClass+=' ferie';
+      hoursHtml=worked!==null?`<span class="m5-cal-day-hours">${worked}h</span><span class="m5-cal-day-ferie">🎌</span>`:'<span class="m5-cal-day-ferie">🎌</span>';
+    }
     if(isVac) {
       cellClass+=' vac';
       hoursHtml='<span class="m5-cal-day-vac">🌴</span>';
@@ -446,6 +477,10 @@ function renderWeekSummary(analysis) {
   const el=document.getElementById('week-summary'); if(!el) return;
   if(isVacWeek) { el.innerHTML=`<div class="m5-alert ok"><span>🌴</span><div>Semaine de congés — bon repos !</div></div>`; return; }
   if(!weekResult||weekResult.workedH<=0) { el.innerHTML=''; return; }
+  // Note fériés
+  if(weekResult.feriesNote) {
+    html+=`<div class="m5-alert info" style="margin-bottom:6px;"><span>📅</span><div style="font-size:12px;">${weekResult.feriesNote}</div></div>`;
+  }
   const alerts=weekResult.alerts||[];
   let html='';
   if(alerts.length) alerts.forEach(a=>{
@@ -459,6 +494,59 @@ function renderWeekSummary(analysis) {
 }
 
 // ── Historique ────────────────────────────────────────────────────
+
+// ── Stats rapides accueil ─────────────────────────────────────────
+function renderQuickStats(analysis) {
+  const el=document.getElementById('quick-stats');
+  if(!el) return;
+  const {annualStats,rule12,contract,annuelResult,mensuelResult}=analysis;
+  const mode=contract.modeCalcul||'HEBDO';
+  const r12Cls=rule12.triggered?'danger':rule12.maxConsec>=8?'warn':'ok';
+  let html='';
+
+  // Titre dynamique selon le mode
+  const titleEl=document.getElementById('quick-stats-title');
+  if(titleEl) {
+    titleEl.textContent = mode==='ANNUEL'?'📊 Compteur annuel' : mode==='MENSUEL'?'📊 Bilan mensuel' : '📊 Cette année';
+  }
+
+  if(mode==='ANNUEL'&&annuelResult) {
+    const solde=annuelResult.solde;
+    const cls=solde>1?'ok':solde<-2?'danger':'warn';
+    html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
+      <div class="m5-stat"><div class="m5-stat-val">${annuelResult.pctAvancement}%</div><div class="m5-stat-label">Exercice écoulé</div></div>
+      <div class="m5-stat"><div class="m5-stat-val">${annuelResult.reelCumule}h</div><div class="m5-stat-label">Heures réalisées</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${cls}">${solde>=0?'+':''}${solde}h</div><div class="m5-stat-label">Avance/Retard</div></div>
+    </div>
+    <div class="m5-alert ${solde>1?'ok':solde<-2?'warn':'info'}" style="margin-bottom:6px;">
+      <span>${solde>1?'🚀':solde<-2?'⏳':'➡️'}</span>
+      <div style="font-size:12px;">Objectif : <strong>${annuelResult.objectifAnnuel}h/an</strong> — Théorique cumulé : ${annuelResult.theoriqueCumule}h</div>
+    </div>`;
+  } else if(mode==='MENSUEL'&&mensuelResult) {
+    const delta=mensuelResult.delta;
+    html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
+      <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalWorked}h</div><div class="m5-stat-label">Heures ce mois</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${delta>0?'warn':'ok'}">${delta>=0?'+':''}${delta.toFixed(1)}h</div><div class="m5-stat-label">vs seuil mensuel</div></div>
+      <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
+    </div>
+    <div class="m5-alert info" style="font-size:12px;padding:6px 10px;">
+      <span>📊</span><div>Seuil mensuel : <strong>${mensuelResult.seuilMensuel}h</strong> (${contract.hoursBase}h × 52 / 12)</div>
+    </div>`;
+  } else if(annualStats) {
+    html+=`<div class="m5-stat-grid">
+      <div class="m5-stat"><div class="m5-stat-val">${annualStats.totalWeeks}</div><div class="m5-stat-label">Semaines saisies</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${annualStats.totalComp>0?'warn':'ok'}">${annualStats.totalComp.toFixed(1)}h</div><div class="m5-stat-label">Total comp. année</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${r12Cls}">${rule12.maxConsec}</div><div class="m5-stat-label">Sem. consécutives</div></div>
+    </div>`;
+  } else {
+    html='<div style="font-size:13px;color:var(--miz-text3);text-align:center;padding:8px;">Saisis des semaines pour voir les statistiques.</div>';
+  }
+
+  if(rule12.msg) html+=`<div class="m5-alert ${rule12.triggered?'critique':'warn'}" style="margin-top:8px;"><span>${rule12.triggered?'⚖️':'👀'}</span><div style="font-size:12px;">${rule12.msg}</div></div>`;
+
+  el.innerHTML=html;
+}
+
 function renderHistorique() {
   const el=document.getElementById('historique-list');
   const contract=M5_Contract.get();
@@ -505,6 +593,8 @@ function renderStats() {
   const contract=M5_Contract.get();
   if(!el||!contract.hoursBase) return;
   const year=M5_DataStore.getYear();
+  const analysis=currentAnalysis||runAnalysis();
+  if(analysis) renderQuickStats(analysis); // sync stats accueil
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
   const caps=CalcEngine.calcAnnualCap(contract.hoursBase,contract);
   if(!stats) { el.innerHTML='<div class="m5-empty"><div class="m5-empty-icon">📊</div><div class="m5-empty-text">Pas encore assez de données.</div></div>'; return; }
@@ -559,6 +649,10 @@ function openContractModal() {
   if(exEl) exEl.value=c.exerciceStart||'01/01';
   const clEl=document.getElementById('contract-cloture');
   if(clEl) clEl.value=String(c.clotureJour||0);
+  const modeEl=document.getElementById('contract-mode');
+  if(modeEl) modeEl.value=c.modeCalcul||'HEBDO';
+  const feriesEl=document.getElementById('contract-feries');
+  if(feriesEl) feriesEl.checked=(c.neutraliseFeries!==false);
   // Restaurer la recherche CCN
   const ccnSearch=document.getElementById('contract-ccn-search');
   const ccnSel=document.getElementById('contract-ccn-selected');
@@ -578,7 +672,9 @@ function saveContract() {
   const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
   const exerciceStart=document.getElementById('contract-exercice')?.value||'01/01';
   const clotureJour=parseInt(document.getElementById('contract-cloture')?.value||'0');
-  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay,exerciceStart,clotureJour});
+  const modeCalcul=document.getElementById('contract-mode')?.value||'HEBDO';
+  const neutraliseFeries=document.getElementById('contract-feries')?.checked!==false;
+  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay,exerciceStart,clotureJour,modeCalcul,neutraliseFeries});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
   // Recalibrer le calendrier avec le nouveau début de semaine
