@@ -397,7 +397,7 @@ function updateWeekPreview() {
       result.alerts.forEach(a=>{
         html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'ℹ️'}</span> ${a.msg}</div>`;
       });
-      if(result.totalAmount>0) html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimé : <strong>${result.totalAmount.toFixed(2)} €</strong> brut</div>`;
+      if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Majoration : <strong>${_c.toFixed(2)} €</strong> brut sur les heures comp.</div>`;}
     }
   } else {
     result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0);
@@ -408,7 +408,7 @@ function updateWeekPreview() {
     result.alerts.forEach(a=>{
       html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'⚠️'}</span> ${a.msg}</div>`;
     });
-    if(result.totalAmount>0) html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimé : <strong>${result.totalAmount.toFixed(2)} €</strong> brut</div>`;
+    if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Majoration : <strong>${_c.toFixed(2)} €</strong> brut sur les heures comp.</div>`;}
   }
   prev.innerHTML=html;
 }
@@ -451,8 +451,9 @@ function renderWeekSummary(analysis) {
   if(alerts.length) alerts.forEach(a=>{
     html+=`<div class="m5-alert ${a.level}"><span>${a.level==='critique'?'🚨':'⚠️'}</span><div>${a.msg}</div></div>`;
   });
-  if(weekResult.totalAmount>0&&!html) {
-    html+=`<div class="m5-alert info"><span>💰</span><div>Estimé : <strong>${weekResult.totalAmount.toFixed(2)} € brut</strong> pour ${weekResult.totalCompH}h comp.</div></div>`;
+  if(weekResult.totalCompH>0&&contract.hourlyRate>0&&!html) {
+    const _cw=(weekResult.comp1Amount||0)+(weekResult.comp2Amount||0);
+    html+=`<div class="m5-alert info"><span>💰</span><div>Majoration estimée : <strong>${_cw.toFixed(2)} € brut</strong> sur ${weekResult.totalCompH}h comp.</div></div>`;
   }
   el.innerHTML=html;
 }
@@ -508,9 +509,10 @@ function renderStats() {
   const caps=CalcEngine.calcAnnualCap(contract.hoursBase,contract);
   if(!stats) { el.innerHTML='<div class="m5-empty"><div class="m5-empty-icon">📊</div><div class="m5-empty-text">Pas encore assez de données.</div></div>'; return; }
   const netEst=contract.hourlyRate>0?CalcEngine.estimateNet(stats.totalComp*contract.hourlyRate*(1+(contract.rate1||0.10))):null;
+  const exStart=contract.exerciceStart||'01/01';
   el.innerHTML=`
     <div class="m5-card" style="margin:12px 0;">
-      <div class="m5-card-header"><span class="m5-card-title">📊 Bilan ${year}</span></div>
+      <div class="m5-card-header"><span class="m5-card-title">📊 Bilan ${exStart.slice(3,5)}/${year} → ${exStart.slice(3,5)}/${parseInt(year)+1}</span></div>
       <div class="m5-card-body">
         <div class="m5-stat-grid" style="margin-bottom:14px;">
           <div class="m5-stat"><div class="m5-stat-val">${stats.totalWeeks}</div><div class="m5-stat-label">Semaines</div></div>
@@ -553,6 +555,10 @@ function openContractModal() {
   document.getElementById('contract-name').value    =localStorage.getItem('M5_USER_NAME')||'';
   const startDayEl=document.getElementById('contract-start-day');
   if(startDayEl) startDayEl.value=String(c.weekStartDay||0);
+  const exEl=document.getElementById('contract-exercice');
+  if(exEl) exEl.value=c.exerciceStart||'01/01';
+  const clEl=document.getElementById('contract-cloture');
+  if(clEl) clEl.value=String(c.clotureJour||0);
   // Restaurer la recherche CCN
   const ccnSearch=document.getElementById('contract-ccn-search');
   const ccnSel=document.getElementById('contract-ccn-selected');
@@ -570,7 +576,9 @@ function saveContract() {
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
   const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{rate1:0.10,rate2:0.25,threshold:0.10};
   const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
-  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay});
+  const exerciceStart=document.getElementById('contract-exercice')?.value||'01/01';
+  const clotureJour=parseInt(document.getElementById('contract-cloture')?.value||'0');
+  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay,exerciceStart,clotureJour});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
   // Recalibrer le calendrier avec le nouveau début de semaine
