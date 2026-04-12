@@ -106,18 +106,20 @@ const DataStore = {
   // Total semaine (journalier ou hebdo)
   getWeekTotal(mondayStr, year) {
     const data=this.getAll(year);
+    // Mode hebdo : la clé stockée correspond directement au total
     if(data[mondayStr]&&data[mondayStr].type==='week') {
       return {total:data[mondayStr].worked,mode:'week',days:[]};
     }
+    // Mode journalier : sommer les jours de la semaine
     const days=[]; let total=0;
     for(let d=0;d<7;d++){
       const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
       const dk=localDK(dt);
       const e=data[dk];
-      days.push({dk,worked:e?e.worked:null,dow:d});
-      if(e&&e.type==='day') total+=e.worked;
+      days.push({dk,worked:e&&e.type==='day'?e.worked:null,dow:d});
+      if(e&&e.type==='day'&&e.worked>0) total+=e.worked;
     }
-    const hasAny=days.some(d=>d.worked!==null);
+    const hasAny=days.some(d=>d.worked!==null&&d.worked>0);
     return {total:hasAny?Math.round(total*100)/100:null,mode:'day',days};
   },
 
@@ -152,7 +154,15 @@ const DataStore = {
     const data=this.getAll(year);
     const mondays=new Set();
     Object.keys(data).forEach(dk=>{
-      if(/^\d{4}-\d{2}-\d{2}$/.test(dk)) mondays.add(mondayOf(dk));
+      if(!/^\d{4}-\d{2}-\d{2}$/.test(dk)) return;
+      const entry=data[dk];
+      if(entry.type==='week') {
+        // Saisie hebdo : la clé EST le début de semaine, on l'utilise directement
+        mondays.add(dk);
+      } else if(entry.type==='day') {
+        // Saisie journalière : on calcule le début de semaine selon le paramètre actuel
+        mondays.add(mondayOf(dk));
+      }
     });
     return [...mondays].sort().map(mon=>{
       const wk=this.getWeekTotal(mon,year);
