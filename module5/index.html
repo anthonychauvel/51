@@ -83,6 +83,14 @@
     <!-- Résumé / alertes semaine -->
     <div style="padding:0 16px;" id="week-summary"></div>
 
+    <!-- Stats rapides + mode -->
+    <div class="m5-card" id="card-quick-stats">
+      <div class="m5-card-header">
+        <span class="m5-card-title" id="quick-stats-title">📊 Cette année</span>
+      </div>
+      <div class="m5-card-body" id="quick-stats"></div>
+    </div>
+
     <!-- Info légale compacte -->
     <div class="m5-card" style="margin-bottom:16px;">
       <div class="m5-card-header"><span class="m5-card-title">⚖️ Tes droits en bref</span></div>
@@ -301,6 +309,31 @@
     </div>
 
     <div class="m5-input-group">
+      <label class="m5-label">Mode de calcul des heures complémentaires</label>
+      <select class="m5-select" id="contract-mode">
+        <option value="HEBDO">Hebdomadaire (par semaine)</option>
+        <option value="MENSUEL">Mensuel (par mois de paie)</option>
+        <option value="ANNUEL">Annuel (compteur glissant)</option>
+      </select>
+    </div>
+
+    <div style="margin:12px 0;padding:10px 12px;background:var(--miz-bg2);border-radius:var(--miz-radius-sm);border:1px solid var(--miz-border2);">
+      <div style="font-size:13px;font-weight:700;color:var(--miz-text);margin-bottom:8px;">📅 Jours fériés chômés</div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="contract-feries" style="width:18px;height:18px;margin-top:2px;accent-color:var(--miz-primary);" checked onchange="toggleFeriesLabel(this.checked)">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--miz-text);">Neutraliser les jours fériés chômés</div>
+          <div id="feries-mode-label" style="font-size:11px;color:var(--miz-text3);margin-top:3px;line-height:1.5;">
+            ✅ Art. L3121-29 — Le seuil de déclenchement est abaissé de la valeur du jour férié. Les heures complémentaires ne sont comptées que sur les jours réellement travaillés.
+          </div>
+        </div>
+      </label>
+      <div id="feries-alt-label" style="font-size:11px;color:var(--miz-text3);margin-top:8px;padding:6px 8px;background:var(--miz-bg);border-radius:6px;display:none;">
+        ⬜ Cass. Soc. 2012 — Certains accords d'entreprise intègrent les jours fériés chômés dans l'assiette de calcul. Le seuil reste inchangé.
+      </div>
+    </div>
+
+    <div class="m5-input-group">
       <label class="m5-label">Premier jour de ta semaine de travail</label>
       <select class="m5-select" id="contract-start-day">
         <option value="0">Lundi (défaut)</option>
@@ -330,6 +363,14 @@
 <div class="m5-toast-container" id="m5-toast-container"></div>
 
 <!-- ── SCRIPTS ────────────────────────────────────────────────── -->
+<script>
+function toggleFeriesLabel(checked) {
+  const main=document.getElementById('feries-mode-label');
+  const alt=document.getElementById('feries-alt-label');
+  if(main) main.style.display=checked?'block':'none';
+  if(alt)  alt.style.display=checked?'none':'block';
+}
+</script>
 <script src="js/data/ccn-partiel.js"></script>
 <script src="js/core/calc-engine.js"></script>
 <script src="js/features/saisie.js"></script>
