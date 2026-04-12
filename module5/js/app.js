@@ -444,6 +444,11 @@ function openContractModal() {
   document.getElementById('contract-name').value    =localStorage.getItem('M5_USER_NAME')||'';
   const startDayEl=document.getElementById('contract-start-day');
   if(startDayEl) startDayEl.value=String(c.weekStartDay||0);
+  // Restaurer la recherche CCN
+  const ccnSearch=document.getElementById('contract-ccn-search');
+  const ccnSel=document.getElementById('contract-ccn-selected');
+  if(ccnSearch) ccnSearch.value=c.ccnNom||'';
+  if(ccnSel)   ccnSel.textContent=c.idcc?'✓ IDCC '+c.idcc+' — '+c.ccnNom:'';
   openModal('modal-contract');
 }
 
@@ -470,21 +475,46 @@ function exportPDF() {
 }
 
 function initCCNSelect() {
-  const sel=document.getElementById('contract-ccn');
-  if(!sel||typeof CCN_PARTIEL_API==='undefined') return;
-  CCN_PARTIEL_API.getSecteurs().forEach(sec=>{
-    const group=document.createElement('optgroup'); group.label=sec.icon+' '+sec.label;
-    CCN_PARTIEL_API.getBySecteur(sec.id).forEach(ccn=>{
-      const opt=document.createElement('option');
-      opt.value=ccn.idcc; opt.textContent=ccn.nom+(ccn.idcc?` (IDCC ${ccn.idcc})`:'');
-      group.appendChild(opt);
-    });
-    sel.appendChild(group);
-  });
+  // Recherche dynamique — pas de select statique avec 422 entrées
+}
+
+function searchCCN(term) {
+  const res=document.getElementById('contract-ccn-results');
+  if(!res) return;
+  if(!term||term.length<2) { res.style.display='none'; return; }
+  if(typeof CCN_PARTIEL_API==='undefined') return;
+  const results=CCN_PARTIEL_API.search(term);
+  if(!results.length) { res.style.display='none'; return; }
+  res.style.display='block';
+  res.innerHTML=results.map(ccn=>`
+    <div onclick="selectCCN(${ccn.i},'${ccn.n.replace(/'/g,"\\'")}','${ccn.s}')"
+      style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--miz-border);display:flex;flex-direction:column;gap:2px;"
+      onmouseenter="this.style.background='var(--miz-accent)'"
+      onmouseleave="this.style.background=''">
+      <span style="font-weight:600;color:var(--miz-text)">${ccn.n}</span>
+      <span style="font-size:11px;color:var(--miz-text3)">${ccn.s} — IDCC ${ccn.i} — plafond ${ccn.cap===0.33?'1/3':'10%'}</span>
+    </div>`).join('');
+}
+
+function selectCCN(idcc, nom, secteur) {
+  document.getElementById('contract-ccn').value=idcc;
+  document.getElementById('contract-ccn-search').value=nom;
+  const sel=document.getElementById('contract-ccn-selected');
+  if(sel) sel.textContent='✓ IDCC '+idcc+' — '+secteur;
+  const res=document.getElementById('contract-ccn-results');
+  if(res) res.style.display='none';
+  // Auto-appliquer le plafond si CCN a un accord étendu
+  if(typeof CCN_PARTIEL_API!=='undefined') {
+    const rules=CCN_PARTIEL_API.getRules(idcc);
+    const capEl=document.getElementById('contract-cap');
+    if(capEl && rules.cap) capEl.value=String(rules.cap);
+  }
 }
 
 // ── Exposition ────────────────────────────────────────────────────
-window.showSection=showSection; window.openModal=openModal; window.closeModal=closeModal;
+window.showSection=showSection;
+window.searchCCN=searchCCN;
+window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
 window.openDaySaisie=openDaySaisie; window.selectQuickHour=selectQuickHour;
 window.updateDayPreview=updateDayPreview; window.saveDaySaisie=saveDaySaisie;
 window.deleteDaySaisie=deleteDaySaisie;
