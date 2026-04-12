@@ -221,6 +221,79 @@ const CalcEngine = {
    * Estimer le net (défiscalisation heures complémentaires depuis 2019)
    * Taux d'abattement charges salariales ~11.31% sur les heures comp.
    */
+
+  /**
+   * Calcul complément d'heures par avenant (Art. L3123-22)
+   * Règles :
+   *   - Heures entre contrat et avenant    → taux normal (0% majoration)
+   *   - Heures au-delà de l'avenant        → +25% minimum (obligatoire)
+   *   - Max 8 avenants par an par salarié
+   *   - Possible uniquement si accord de branche étendu
+   *
+   * @param {number} contractH  - heures contractuelles
+   * @param {number} avenatH    - heures prévues par l'avenant (> contractH)
+   * @param {number} workedH    - heures réellement travaillées
+   * @param {number} hourlyRate - taux horaire brut
+   */
+  calcAvenant(contractH, avenatH, workedH, hourlyRate = 0) {
+    if (avenatH <= contractH) {
+      // Pas d'avenant valide → retour calcul classique
+      return null;
+    }
+
+    const alerts = [];
+    let baseH       = Math.min(workedH, contractH);
+    let avenatPaidH = 0;  // heures entre contrat et avenant → taux normal
+    let compH25     = 0;  // heures au-delà de l'avenant → +25%
+
+    if (workedH > contractH) {
+      const diff = workedH - contractH;
+
+      if (workedH >= LEGAL_FULL_TIME) {
+        alerts.push({
+          level: 'critique',
+          code: 'REQUALIFICATION',
+          msg: `Tu as atteint ${workedH}h cette semaine — le seuil légal du temps plein. Même avec un avenant, les heures complémentaires ne peuvent pas atteindre 35h.`
+        });
+      }
+
+      if (workedH <= avenatH) {
+        // Tout est dans l'avenant → taux normal, pas de majoration
+        avenatPaidH = diff;
+      } else {
+        // Au-delà de l'avenant → +25% obligatoire
+        avenatPaidH = avenatH - contractH;
+        compH25     = workedH - avenatH;
+        alerts.push({
+          level: 'info',
+          code: 'AVENANT_DEPASSE',
+          msg: `Tu dépasses les heures prévues par l'avenant. Les ${compH25.toFixed(1)}h au-delà sont majorées à +25% obligatoirement.`
+        });
+      }
+    }
+
+    const baseAmount    = baseH        * hourlyRate;
+    const avenatAmount  = avenatPaidH  * hourlyRate;          // pas de majoration
+    const comp25Amount  = compH25      * hourlyRate * 1.25;   // +25% obligatoire
+    const totalAmount   = baseAmount + avenatAmount + comp25Amount;
+
+    return {
+      mode: 'avenant',
+      contractH,
+      avenatH,
+      workedH,
+      baseH:          Math.round(baseH        * 100) / 100,
+      avenatPaidH:    Math.round(avenatPaidH  * 100) / 100,
+      compH25:        Math.round(compH25      * 100) / 100,
+      baseAmount:     Math.round(baseAmount   * 100) / 100,
+      avenatAmount:   Math.round(avenatAmount * 100) / 100,
+      comp25Amount:   Math.round(comp25Amount * 100) / 100,
+      totalAmount:    Math.round(totalAmount  * 100) / 100,
+      alerts,
+      isLegal: !alerts.some(a => a.code === 'REQUALIFICATION'),
+    };
+  },
+
   estimateNet(grossComp) {
     const chargesReduction = 0.1131; // réduction forfaitaire charges salariales
     return Math.round(grossComp * (1 - chargesReduction) * 100) / 100;
