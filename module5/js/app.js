@@ -100,6 +100,7 @@ function refreshUI() {
     badge.className='m5-contract-badge ok';
     badge.style.display='inline-flex';
   }
+  updateYearBadge();
   const analysis=runAnalysis();
   if(!analysis) return;
   const bubbleText=Mizuki.getBubbleText(analysis);
@@ -806,6 +807,77 @@ function toggleVacSemaine() {
 
 // ── Import jours fériés API gouvernement ──────────────────────────
 // Source : https://calendrier.api.gouv.fr — Etalab (données ouvertes)
+
+// ── Gestion des années ────────────────────────────────────────────
+function openYearsPopup() {
+  const year=M5_DataStore.getYear();
+  const years=M5_getExistingYears();
+  const now=String(new Date().getFullYear());
+
+  // Ajouter l'année courante si absente
+  if(!years.includes(now)) years.push(now);
+  years.sort();
+
+  const list=document.getElementById('years-list');
+  if(!list) return;
+
+  list.innerHTML=years.map(y=>{
+    const isActive=y===year;
+    const weeks=M5_DataStore.getWeeksSorted(y).length;
+    return `<div style="display:flex;align-items:center;gap:10px;padding:12px 14px;border-bottom:1px solid var(--miz-border);cursor:pointer;background:${isActive?'var(--miz-accent)':''}" onclick="switchYear('${y}')">
+      <div style="flex:1;">
+        <div style="font-size:15px;font-weight:700;color:${isActive?'var(--miz-primary)':'var(--miz-text)'}">
+          ${y}${isActive?' ✓ (actif)':''}
+        </div>
+        <div style="font-size:12px;color:var(--miz-text3);">${weeks > 0 ? weeks+' semaine'+(weeks>1?'s':'')+' saisie'+(weeks>1?'s':'') : 'Aucune donnée'}</div>
+      </div>
+      ${isActive?'':'<span style="color:var(--miz-primary);font-size:18px;">›</span>'}
+    </div>`;
+  }).join('');
+
+  // Bouton nouvelle année
+  list.innerHTML+=`<div style="padding:12px 14px;">
+    <button class="m5-btn m5-btn-outline m5-btn-sm m5-btn-full" onclick="createNewYear()">
+      ➕ Créer un nouvel exercice
+    </button>
+  </div>`;
+
+  openModal('modal-years');
+}
+
+function switchYear(y) {
+  M5_DataStore.setYear(y);
+  // Recalibrer le calendrier sur la semaine courante de la nouvelle année
+  calendarMonday=M5_getCurrentMonday();
+  Mizuki.clearCache();
+  closeModal('modal-years');
+  toast('Exercice '+y+' activé','success');
+  refreshUI();
+  updateYearBadge();
+}
+
+function createNewYear() {
+  const y=prompt('Saisir l\'année (ex: 2027)');
+  if(!y||!/^\d{4}$/.test(y)) return;
+  const yr=parseInt(y);
+  if(yr<2020||yr>2050) { toast('Année invalide','error'); return; }
+  // Créer un jeu de données vide
+  const key='M5_DATA_'+y;
+  if(!localStorage.getItem(key)) localStorage.setItem(key,JSON.stringify({}));
+  switchYear(y);
+}
+
+function updateYearBadge() {
+  const yr=M5_DataStore.getYear();
+  const badge=document.getElementById('year-badge');
+  if(badge) badge.textContent=yr;
+  const histBtn=document.getElementById('hist-year-btn');
+  if(histBtn) histBtn.textContent=yr;
+  // Mettre à jour le titre stats
+  const statsTitle=document.getElementById('quick-stats-title');
+  // (mis à jour dans renderQuickStats)
+}
+
 async function importFeriesAPI() {
   const btn=document.getElementById('btn-import-feries');
   const status=document.getElementById('feries-import-status');
@@ -878,13 +950,16 @@ window.saveDaySaisieOrClose=saveDaySaisieOrClose;
 window.saveWeeklySaisieOrClose=saveWeeklySaisieOrClose;
 window.toggleAvenat=toggleAvenat;
 window.importFeriesAPI=importFeriesAPI;
+window.openYearsPopup=openYearsPopup;
+window.switchYear=switchYear;
+window.createNewYear=createNewYear;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
 window.filterGlossaire=filterGlossaire;
 window.toggleGlos=toggleGlos;
 
 document.addEventListener('DOMContentLoaded',()=>{
-  initCCNSelect(); showSection('accueil'); refreshUI();
+  initCCNSelect(); showSection('accueil'); updateYearBadge(); refreshUI();
   setInterval(()=>{ if(currentSection==='accueil') refreshUI(); },15000);
 });
 
