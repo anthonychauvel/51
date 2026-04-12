@@ -229,7 +229,13 @@
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Convention collective</label>
-      <select class="m5-select" id="contract-ccn"></select>
+      <input type="text" class="m5-input" id="contract-ccn-search"
+        placeholder="Rechercher par nom ou IDCC..." autocomplete="off"
+        oninput="searchCCN(this.value)"
+        style="margin-bottom:4px;">
+      <input type="hidden" id="contract-ccn" value="0">
+      <div id="contract-ccn-results" style="display:none;max-height:180px;overflow-y:auto;border:1.5px solid var(--miz-border2);border-radius:8px;background:var(--miz-bg);"></div>
+      <div id="contract-ccn-selected" style="font-size:12px;color:var(--miz-primary);margin-top:4px;"></div>
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Premier jour de ta semaine de travail</label>
