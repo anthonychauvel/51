@@ -41,8 +41,13 @@ function runAnalysis() {
   const wk=M5_DataStore.getWeekTotal(monday,year);
   const isVac=M5_DataStore.isVacWeek(monday,year);
   let weekResult=null;
+  const av=M5_DataStore.getAvenant(monday,year);
   if(wk.total!==null&&!isVac) {
-    weekResult=CalcEngine.calcWeek(contract.hoursBase,wk.total,contract,contract.hourlyRate||0);
+    if(av && av.avenatH > contract.hoursBase) {
+      weekResult=CalcEngine.calcAvenant(contract.hoursBase,av.avenatH,wk.total,contract.hourlyRate||0);
+    } else {
+      weekResult=CalcEngine.calcWeek(contract.hoursBase,wk.total,contract,contract.hourlyRate||0);
+    }
   }
   const weeks=M5_DataStore.getLast12Weeks(year);
   const rule12=CalcEngine.check12WeeksRule(weeks,contract.hoursBase,year);
@@ -285,6 +290,7 @@ function openWeeklySaisie() {
   const contract=M5_Contract.get();
   const year=M5_DataStore.getYear();
   const wk=M5_DataStore.getWeekTotal(calendarMonday,year);
+  const av=M5_DataStore.getAvenant(calendarMonday,year);
   const label=M5_formatMonday(calendarMonday);
 
   document.getElementById('week-saisie-title').textContent=label;
@@ -292,6 +298,21 @@ function openWeeklySaisie() {
 
   const inp=document.getElementById('week-saisie-hours');
   inp.value=wk.total!==null?wk.total:contract.hoursBase;
+
+  // Avenant
+  const toggleAv=document.getElementById('week-avenant-toggle');
+  const avSection=document.getElementById('week-avenant-section');
+  const avInp=document.getElementById('week-avenant-hours');
+  if(av) {
+    toggleAv.checked=true; avSection.style.display='block'; avInp.value=av.avenatH;
+  } else {
+    toggleAv.checked=false; avSection.style.display='none'; avInp.value='';
+  }
+
+  // Compteur avenants
+  const count=M5_DataStore.countAvenants(year);
+  const counterEl=document.getElementById('avenant-counter');
+  if(counterEl) counterEl.textContent=`${count}/8 avenants utilisés cette année`;
 
   // Propositions rapides semaine
   const base=contract.hoursBase;
@@ -303,6 +324,12 @@ function openWeeklySaisie() {
   document.getElementById('week-quick-hours').innerHTML=quickHtml;
   updateWeekPreview();
   openModal('modal-week-saisie');
+}
+
+function toggleAvenat() {
+  const on=document.getElementById('week-avenant-toggle').checked;
+  document.getElementById('week-avenant-section').style.display=on?'block':'none';
+  updateWeekPreview();
 }
 
 function selectWeekQuick(h) {
@@ -318,16 +345,40 @@ function updateWeekPreview() {
   const worked=parseFloat(document.getElementById('week-saisie-hours')?.value)||0;
   const prev=document.getElementById('week-saisie-preview');
   if(!prev||!contract.hoursBase) return;
-  const result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0);
+
+  const useAvenant=document.getElementById('week-avenant-toggle')?.checked;
+  const avenatH=parseFloat(document.getElementById('week-avenant-hours')?.value)||0;
   const pct35=Math.round(worked/35*100);
-  let html=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
-    <span class="m5-preview-tag ${result.totalCompH>0?'warn':'ok'}">${result.totalCompH>0?'+'+result.totalCompH.toFixed(1)+'h comp.':'✓ Dans le contrat'}</span>
-    <span class="m5-preview-tag ${pct35>=95?'danger':''}">${pct35}% du temps plein</span>
-  </div>`;
-  if(result.alerts.length) result.alerts.forEach(a=>{
-    html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'⚠️'}</span> ${a.msg}</div>`;
-  });
-  if(result.totalAmount>0) html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimé : <strong>${result.totalAmount.toFixed(2)} €</strong> brut</div>`;
+
+  let result, html='';
+
+  if(useAvenant && avenatH>contract.hoursBase) {
+    result=CalcEngine.calcAvenant(contract.hoursBase,avenatH,worked,contract.hourlyRate||0);
+    if(result) {
+      html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+        <span class="m5-preview-tag">${result.avenatPaidH>0?result.avenatPaidH.toFixed(1)+'h avenant (taux normal)':'✓ Dans le contrat'}</span>
+        ${result.compH25>0?`<span class="m5-preview-tag warn">+${result.compH25.toFixed(1)}h à +25%</span>`:''}
+        <span class="m5-preview-tag ${pct35>=95?'danger':''}">${pct35}% temps plein</span>
+      </div>`;
+      if(result.avenatPaidH>0&&!result.compH25) {
+        html+=`<div class="m5-alert ok" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>📋</span> Heures dans l'avenant — taux normal, pas de majoration.</div>`;
+      }
+      result.alerts.forEach(a=>{
+        html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'ℹ️'}</span> ${a.msg}</div>`;
+      });
+      if(result.totalAmount>0) html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimé : <strong>${result.totalAmount.toFixed(2)} €</strong> brut</div>`;
+    }
+  } else {
+    result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0);
+    html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+      <span class="m5-preview-tag ${result.totalCompH>0?'warn':'ok'}">${result.totalCompH>0?'+'+result.totalCompH.toFixed(1)+'h comp.':'✓ Dans le contrat'}</span>
+      <span class="m5-preview-tag ${pct35>=95?'danger':''}">${pct35}% du temps plein</span>
+    </div>`;
+    result.alerts.forEach(a=>{
+      html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'⚠️'}</span> ${a.msg}</div>`;
+    });
+    if(result.totalAmount>0) html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimé : <strong>${result.totalAmount.toFixed(2)} €</strong> brut</div>`;
+  }
   prev.innerHTML=html;
 }
 
@@ -337,7 +388,12 @@ function saveWeeklySaisie() {
   if(!monday||isNaN(worked)||worked<0||worked>=35) {
     toast('Saisis un total entre 0 et 34,5h.','error'); return;
   }
-  M5_DataStore.saveWeekTotal(monday,worked,M5_DataStore.getYear());
+  const year=M5_DataStore.getYear();
+  M5_DataStore.saveWeekTotal(monday,worked,year);
+  // Sauvegarder l'avenant si activé
+  const useAv=document.getElementById('week-avenant-toggle')?.checked;
+  const avH=parseFloat(document.getElementById('week-avenant-hours')?.value)||0;
+  M5_DataStore.saveAvenant(monday, useAv&&avH>0?avH:null, year);
   Mizuki.clearCache();
   closeModal('modal-week-saisie');
   toast('Semaine enregistrée ✓','success');
@@ -596,6 +652,7 @@ window.deleteWeeklySaisie=deleteWeeklySaisie;
 window.calPrev=calPrev; window.calNext=calNext; window.calToday=calToday;
 window.goToWeek=goToWeek; window.openMizukiPopup=openMizukiPopup;
 window.toggleVacSemaine=toggleVacSemaine;
+window.toggleAvenat=toggleAvenat;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
 window.filterGlossaire=filterGlossaire;
