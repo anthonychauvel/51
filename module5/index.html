@@ -20,6 +20,7 @@
     <div class="m5-header-sub">Heures complémentaires &amp; droits</div>
   <div id="header-contract-badge" class="m5-contract-badge" style="display:none;"></div>
   </div>
+  <button class="m5-nav-btn" onclick="openYearsPopup()" id="year-badge" title="Changer d'exercice" style="font-weight:700;min-width:52px;">2026</button>
   <a href="../menu.html" class="m5-nav-btn">← Menu</a>
   <button class="m5-nav-btn" onclick="openContractModal()">⚙️</button>
 </header>
@@ -112,6 +113,7 @@
     <div class="m5-card" style="margin-top:12px;">
       <div class="m5-card-header">
         <span class="m5-card-title">📋 Historique</span>
+        <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openYearsPopup()" id="hist-year-btn">2026</button>
       </div>
       <div id="historique-list"></div>
     </div>
@@ -239,6 +241,21 @@
       <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:0 0 auto" onclick="deleteWeeklySaisie()">🗑️</button>
       <button class="m5-btn m5-btn-primary" style="flex:1" onclick="saveWeeklySaisie()">✅ Enregistrer</button>
     </div>
+  </div>
+</div>
+
+<!-- Modale changement d'année -->
+<div class="m5-modal-backdrop" id="modal-years" onclick="if(event.target===this)closeModal('modal-years')">
+  <div class="m5-modal">
+    <div class="m5-modal-header">
+      <div class="m5-modal-title">📅 Mes exercices</div>
+      <button class="m5-modal-close" onclick="closeModal('modal-years')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--miz-text2);margin-bottom:12px;">
+      Sélectionne un exercice pour naviguer dans ton historique.<br>
+      Chaque exercice a ses propres semaines, indépendant des autres.
+    </div>
+    <div id="years-list" style="border:1px solid var(--miz-border);border-radius:var(--miz-radius-sm);overflow:hidden;"></div>
   </div>
 </div>
 
