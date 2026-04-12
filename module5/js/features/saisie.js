@@ -53,10 +53,21 @@ const DataStore = {
     const yr=year||this.getYear();
     const data=this.getAll(yr);
     const mon=mondayOf(dateStr);
-    if(data[mon]&&data[mon].type==='week') delete data[mon]; // retire saisie hebdo si on passe en journalier
-    if(workedH===null||workedH===undefined) { delete data[dateStr]; }
-    else { data[dateStr]={worked:Math.round(workedH*100)/100,type:'day',savedAt:new Date().toISOString()}; }
+    // Si saisie hebdo existante : la supprimer explicitement (appelé après confirmation UI)
+    if(data[mon]&&data[mon].type==='week') delete data[mon];
+    if(workedH===null||workedH===undefined||workedH===0) {
+      delete data[dateStr]; // 0h = on efface juste ce jour
+    } else {
+      data[dateStr]={worked:Math.round(workedH*100)/100,type:'day',savedAt:new Date().toISOString()};
+    }
     _save(K.DATA(yr),data);
+  },
+
+  // Vérifier si une saisie hebdo existe déjà pour la semaine d'une date
+  hasWeekTotal(dateStr, year) {
+    const data=this.getAll(year||this.getYear());
+    const mon=mondayOf(dateStr);
+    return !!(data[mon]&&data[mon].type==='week'&&data[mon].worked>0);
   },
 
   deleteDay(dateStr, year) {
