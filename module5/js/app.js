@@ -225,8 +225,9 @@ function openDaySaisie(dateStr, jourLabel) {
   const existing=M5_DataStore.getAll(year)[dateStr];
 
   // Avertir si saisie hebdo existante pour cette semaine
+  const _mon=M5_mondayOf(dateStr);
   if(M5_DataStore.hasWeekTotal(dateStr, year)) {
-    const monday=M5_mondayOf(dateStr);
+    const monday=_mon;
     const label=M5_formatMonday(monday);
     if(!confirm(`⚠️ Une saisie hebdomadaire de ${M5_DataStore.getWeekTotal(monday,year).total}h existe pour cette semaine (${label}).
 
@@ -572,6 +573,8 @@ function saveContract() {
   M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
+  // Recalibrer le calendrier avec le nouveau début de semaine
+  calendarMonday=M5_getCurrentMonday();
   closeModal('modal-contract');
   toast('Contrat enregistré ✓','success');
   refreshUI();
