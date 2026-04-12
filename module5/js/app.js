@@ -653,6 +653,13 @@ function openContractModal() {
   if(modeEl) modeEl.value=c.modeCalcul||'HEBDO';
   const feriesEl=document.getElementById('contract-feries');
   if(feriesEl) feriesEl.checked=(c.neutraliseFeries!==false);
+  // Afficher statut dernier import
+  const feriesStatus=document.getElementById('feries-import-status');
+  if(feriesStatus) {
+    const lastImport=getFeriesImportStatus();
+    feriesStatus.textContent=lastImport||'Données locales (calcul automatique)';
+    feriesStatus.style.color='var(--miz-text3)';
+  }
   // Restaurer la recherche CCN
   const ccnSearch=document.getElementById('contract-ccn-search');
   const ccnSel=document.getElementById('contract-ccn-selected');
@@ -796,6 +803,65 @@ function toggleVacSemaine() {
   refreshUI();
 }
 
+
+// ── Import jours fériés API gouvernement ──────────────────────────
+// Source : https://calendrier.api.gouv.fr — Etalab (données ouvertes)
+async function importFeriesAPI() {
+  const btn=document.getElementById('btn-import-feries');
+  const status=document.getElementById('feries-import-status');
+  if(btn) { btn.disabled=true; btn.textContent='⏳ Import...'; }
+  if(status) { status.textContent=''; status.style.color=''; }
+
+  const now=new Date();
+  const years=[now.getFullYear()-1, now.getFullYear(), now.getFullYear()+1];
+  let success=0, errors=0;
+  const results=[];
+
+  for(const year of years) {
+    try {
+      const url=`https://calendrier.api.gouv.fr/jours-feries/metropole/${year}.json`;
+      const resp=await fetch(url);
+      if(!resp.ok) throw new Error(`HTTP ${resp.status}`);
+      const data=await resp.json();
+      // Stocker en localStorage
+      localStorage.setItem('M5_FERIES_API_'+year, JSON.stringify(data));
+      const nbFeries=Object.keys(data).length;
+      results.push(`${year} : ${nbFeries} jours ✓`);
+      success++;
+    } catch(err) {
+      results.push(`${year} : erreur (${err.message})`);
+      errors++;
+    }
+  }
+
+  // Mémoriser la date d'import
+  localStorage.setItem('M5_FERIES_LAST_IMPORT', new Date().toISOString());
+
+  if(btn) { btn.disabled=false; btn.textContent='📅 Importer les jours fériés'; }
+  if(status) {
+    status.textContent = success>0
+      ? `✅ ${success} année(s) importée(s) — ${results.join(' | ')}`
+      : `❌ Echec import. Vérifiez la connexion.`;
+    status.style.color = success>0 ? 'var(--miz-success)' : 'var(--miz-danger)';
+  }
+
+  // Rafraîchir le calendrier avec les nouvelles données
+  if(success>0) {
+    Mizuki.clearCache();
+    refreshUI();
+    toast(`${success} année(s) de jours fériés importée(s) ✓`, 'success');
+  } else {
+    toast('Erreur import. Calcul local utilisé.', 'error');
+  }
+}
+
+function getFeriesImportStatus() {
+  const last=localStorage.getItem('M5_FERIES_LAST_IMPORT');
+  if(!last) return null;
+  const d=new Date(last);
+  return `Dernier import : ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
+}
+
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
@@ -811,6 +877,7 @@ window.toggleVacSemaine=toggleVacSemaine;
 window.saveDaySaisieOrClose=saveDaySaisieOrClose;
 window.saveWeeklySaisieOrClose=saveWeeklySaisieOrClose;
 window.toggleAvenat=toggleAvenat;
+window.importFeriesAPI=importFeriesAPI;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
 window.filterGlossaire=filterGlossaire;
