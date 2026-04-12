@@ -1,72 +1,125 @@
 /**
  * CALC-ENGINE — Moteur de calcul heures complémentaires (temps partiel)
- * Inspiré du travail du dev, adapté à l'architecture Simulheures
- * Base : Code du travail Art. L3123-9 à L3123-28
+ * Modes : HEBDO / MENSUEL / ANNUEL
+ * Jours fériés : neutralisation du seuil (Art. L3121-29) ou assiette normale
  */
 (function(global) {
 'use strict';
 
-const LEGAL_FULL_TIME = 35; // plafond légal absolu
+const LEGAL_FULL_TIME = 35;
 
+// ── JOURS FÉRIÉS FRANÇAIS ─────────────────────────────────────────
+function calcPaques(year) {
+  const a=year%19, b=Math.floor(year/100), cc=year%100;
+  const d=Math.floor(b/4), e=b%4, f=Math.floor((b+8)/25);
+  const g=Math.floor((b-f+1)/3), h=(19*a+b-d-g+15)%30;
+  const i=Math.floor(cc/4), k=cc%4;
+  const l=(32+2*e+2*i-h-k)%7;
+  const m=Math.floor((a+11*h+22*l)/451);
+  const month=Math.floor((h+l-7*m+114)/31);
+  const day=((h+l-7*m+114)%31)+1;
+  return new Date(year,month-1,day);
+}
+function addDays(date,n){ const d=new Date(date); d.setDate(d.getDate()+n); return d; }
+function dk(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+function getFeriesYear(year) {
+  const p=calcPaques(year);
+  const list={};
+  [
+    dk(new Date(year,0,1)),   // 1er janvier
+    dk(addDays(p,1)),          // Lundi de Pâques
+    dk(new Date(year,4,1)),   // 1er mai
+    dk(new Date(year,4,8)),   // 8 mai
+    dk(addDays(p,39)),         // Ascension
+    dk(addDays(p,50)),         // Lundi de Pentecôte
+    dk(new Date(year,6,14)),  // 14 juillet
+    dk(new Date(year,7,15)),  // 15 août
+    dk(new Date(year,10,1)),  // 1er novembre
+    dk(new Date(year,10,11)), // 11 novembre
+    dk(new Date(year,11,25)), // 25 décembre
+  ].forEach(k=>{ list[k]=true; });
+  return list;
+}
+
+function countFeriesInWeek(mondayStr, feriesMap) {
+  // Compte uniquement les fériés tombant Lun-Ven (jours normalement ouvrés)
+  let count=0;
+  for(let d=0;d<5;d++){
+    const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
+    const key=dk(dt);
+    if(feriesMap&&feriesMap[key]) count++;
+  }
+  return count;
+}
+
+// ── MOTEUR ────────────────────────────────────────────────────────
 const CalcEngine = {
 
+  getFeriesYear,
+  countFeriesInWeek,
+
   /**
-   * Calculer les heures complémentaires d'une semaine
-   * @param {number} contractH  - heures contractuelles hebdo
-   * @param {number} workedH    - heures réellement travaillées
-   * @param {object} ccnRules   - règles CCN { cap, rate1, rate2, threshold }
-   * @param {number} hourlyRate - taux horaire brut
-   * @returns {object} résultat détaillé
+   * Calcul hebdomadaire heures complémentaires
+   * @param {number} contractH        - heures contractuelles hebdo
+   * @param {number} workedH          - heures réellement travaillées
+   * @param {object} ccnRules         - { cap, rate1, rate2, threshold }
+   * @param {number} hourlyRate       - taux horaire brut
+   * @param {object} options          - { feriesMap, neutraliseFeries, joursOuvresContrat }
    */
-  calcWeek(contractH, workedH, ccnRules, hourlyRate = 0) {
+  calcWeek(contractH, workedH, ccnRules, hourlyRate=0, options={}) {
     const cap       = ccnRules.cap       || 0.10;
     const rate1     = ccnRules.rate1     || 0.10;
     const rate2     = ccnRules.rate2     || 0.25;
     const threshold = ccnRules.threshold || 0.10;
+    const joursOuvres = options.joursOuvresContrat || 5;
+    const neutralise  = options.neutraliseFeries !== false; // true par défaut
 
-    const maxAllowed    = contractH * (1 + cap);
-    const threshold1H   = contractH * threshold; // heures à rate1
-    const alerts        = [];
+    // Calculer seuil ajusté selon les fériés
+    let contractAjuste = contractH;
+    let feriesCount = 0;
+    let feriesNote = null;
+    if(options.feriesMap && neutralise) {
+      // ✅ Mode Art. L3121-29 : on abaisse le seuil
+      const mondayStr = options.mondayStr;
+      if(mondayStr) {
+        feriesCount = countFeriesInWeek(mondayStr, options.feriesMap);
+        if(feriesCount > 0) {
+          const valJour = contractH / joursOuvres;
+          contractAjuste = Math.max(0, contractH - feriesCount * valJour);
+          feriesNote = `Seuil abaissé de ${(feriesCount * valJour).toFixed(1)}h pour ${feriesCount} jour(s) férié(s) chômé(s)`;
+        }
+      }
+    }
+    // ⬜ Mode Cass. Soc. 2012 : seuil normal, fériés intégrés dans l'assiette
 
-    let baseH    = Math.min(workedH, contractH);
-    let compH1   = 0; // heures majorées rate1
-    let compH2   = 0; // heures majorées rate2
-    let isLegal  = true;
+    const maxAllowed  = contractAjuste * (1 + cap);
+    const threshold1H = contractAjuste * threshold;
+    const alerts = [];
 
-    if (workedH > contractH) {
-      let diff = workedH - contractH;
+    let baseH  = Math.min(workedH, contractAjuste);
+    let compH1 = 0;
+    let compH2 = 0;
+    let isLegal = true;
 
-      // Alerte : risque requalification temps plein
-      if (workedH >= LEGAL_FULL_TIME) {
-        alerts.push({
-          level: 'critique',
-          code: 'REQUALIFICATION',
-          msg: `Tu as atteint ${workedH}h cette semaine. Au-delà de ${LEGAL_FULL_TIME}h, ton employeur risque une requalification de ton contrat en temps plein.`
-        });
+    if(workedH > contractAjuste) {
+      let diff = workedH - contractAjuste;
+
+      if(workedH >= LEGAL_FULL_TIME) {
+        alerts.push({ level:'critique', code:'REQUALIFICATION',
+          msg:`Tu as atteint ${workedH}h cette semaine — le seuil légal du temps plein. La loi prévoit des droits dans ce cas. Conserve cet historique.` });
         isLegal = false;
       }
-
-      // Alerte : dépassement plafond CCN
-      if (workedH > maxAllowed) {
-        alerts.push({
-          level: 'alerte',
-          code: 'PLAFOND_CCN',
-          msg: `Tu dépasses le plafond autorisé par ta convention (${Math.round(cap * 100)}% du contrat = max ${maxAllowed.toFixed(1)}h).`
-        });
+      if(workedH > maxAllowed && workedH < LEGAL_FULL_TIME) {
+        alerts.push({ level:'alerte', code:'PLAFOND_CCN',
+          msg:`Tes heures dépassent le plafond conventionnel (${Math.round(cap*100)}% du contrat = max ${maxAllowed.toFixed(1)}h). Garde une trace de ces semaines.` });
         isLegal = false;
       }
-
-      // Alerte : approche du temps plein
-      if (workedH >= LEGAL_FULL_TIME - 1 && workedH < LEGAL_FULL_TIME) {
-        alerts.push({
-          level: 'vigilance',
-          code: 'PROCHE_TEMPS_PLEIN',
-          msg: `Attention : tu es à ${(LEGAL_FULL_TIME - workedH).toFixed(1)}h du temps plein. Sois vigilante.`
-        });
+      if(workedH >= LEGAL_FULL_TIME - 1 && workedH < LEGAL_FULL_TIME) {
+        alerts.push({ level:'vigilance', code:'PROCHE_TEMPS_PLEIN',
+          msg:`Tu es à ${(LEGAL_FULL_TIME - workedH).toFixed(1)}h du temps plein. Sois vigilante.` });
       }
-
-      // Répartition paliers
-      if (diff <= threshold1H) {
+      if(diff <= threshold1H) {
         compH1 = diff;
       } else {
         compH1 = threshold1H;
@@ -74,233 +127,193 @@ const CalcEngine = {
       }
     }
 
-    // Calcul montants
-    const baseAmount  = baseH    * hourlyRate;
-    const comp1Amount = compH1   * hourlyRate * (1 + rate1);
-    const comp2Amount = compH2   * hourlyRate * (1 + rate2);
+    const baseAmount  = baseH   * hourlyRate;
+    const comp1Amount = compH1  * hourlyRate * (1 + rate1);
+    const comp2Amount = compH2  * hourlyRate * (1 + rate2);
     const totalAmount = baseAmount + comp1Amount + comp2Amount;
-    const expectedAmount = baseH * hourlyRate + compH1 * hourlyRate * (1 + rate1) + compH2 * hourlyRate * (1 + rate2);
 
     return {
-      contractH,
-      workedH,
-      baseH,
-      compH1: Math.round(compH1 * 100) / 100,
-      compH2: Math.round(compH2 * 100) / 100,
-      totalCompH: Math.round((compH1 + compH2) * 100) / 100,
-      baseAmount:    Math.round(baseAmount    * 100) / 100,
-      comp1Amount:   Math.round(comp1Amount   * 100) / 100,
-      comp2Amount:   Math.round(comp2Amount   * 100) / 100,
-      totalAmount:   Math.round(totalAmount   * 100) / 100,
-      expectedAmount:Math.round(expectedAmount* 100) / 100,
-      rate1, rate2, cap,
-      maxAllowed:    Math.round(maxAllowed    * 100) / 100,
-      alerts,
-      isLegal,
+      contractH, contractAjuste, workedH, baseH,
+      compH1: Math.round(compH1*100)/100,
+      compH2: Math.round(compH2*100)/100,
+      totalCompH: Math.round((compH1+compH2)*100)/100,
+      baseAmount: Math.round(baseAmount*100)/100,
+      comp1Amount: Math.round(comp1Amount*100)/100,
+      comp2Amount: Math.round(comp2Amount*100)/100,
+      totalAmount: Math.round(totalAmount*100)/100,
+      rate1, rate2, cap, maxAllowed: Math.round(maxAllowed*100)/100,
+      feriesCount, feriesNote, alerts, isLegal,
     };
   },
 
   /**
-   * Calculer sur une période (tableau de semaines)
+   * Calcul mensuel
+   * Période : [clotureJour+1 du mois précédent] → [clotureJour du mois courant]
    */
-  calcPeriod(weeks, contractH, ccnRules, hourlyRate = 0) {
-    const results = weeks.map(w => this.calcWeek(contractH, w.worked || 0, ccnRules, hourlyRate));
-    return {
-      weeks: results,
-      totalBase:   results.reduce((s, r) => s + r.baseH,    0),
-      totalComp1:  results.reduce((s, r) => s + r.compH1,   0),
-      totalComp2:  results.reduce((s, r) => s + r.compH2,   0),
-      totalComp:   results.reduce((s, r) => s + r.totalCompH, 0),
-      totalAmount: results.reduce((s, r) => s + r.totalAmount, 0),
-      allAlerts:   results.flatMap(r => r.alerts),
-    };
-  },
+  calcMonth(contractH, weeks, ccnRules, hourlyRate=0) {
+    const seuilMensuel = Math.round(contractH * 52 / 12 * 100) / 100;
+    const totalWorked  = weeks.reduce((s,w) => s + (w.worked||0), 0);
+    const diff         = totalWorked - seuilMensuel;
+    const cap          = ccnRules.cap || 0.10;
+    const rate1        = ccnRules.rate1 || 0.10;
+    const rate2        = ccnRules.rate2 || 0.25;
+    const threshold    = ccnRules.threshold || 0.10;
+    const maxAllowed   = seuilMensuel * (1 + cap);
 
-  /**
-   * Détecter la règle des 12 semaines (Art. L3123-13)
-   * Si l'horaire moyen dépasse de +2h/sem pendant 12 sem consécutives
-   * → contrat doit être modifié (sauf opposition salarié)
-   */
-  check12WeeksRule(weeklyData, contractH, year) {
-    // weeklyData = tableau chronologique { monday, worked, mode }
-    // Les semaines de vacances M4 sont TRANSPARENTES :
-    // elles n'incrémentent pas le compteur mais ne le remettent pas à zéro non plus.
-    // (Logique identique à M3 pour les congés intercalés dans les surcharges)
-    if (!weeklyData || !weeklyData.length) return { triggered: false, maxConsec: 0 };
-
-    // Lire les vacances M4 pour l'année concernée
-    function isVacMonday(mondayStr, yr) {
-      try {
-        const vac = JSON.parse(localStorage.getItem('DTE_VACANCES_' + (yr || new Date().getFullYear())) || '{}');
-        for (let d = 0; d < 7; d++) {
-          const dt = new Date(mondayStr + 'T12:00:00');
-          dt.setDate(dt.getDate() + d);
-          const dk = dt.getFullYear() + '-' + String(dt.getMonth()+1).padStart(2,'0') + '-' + String(dt.getDate()).padStart(2,'0');
-          if (vac[dk]) return true;
-        }
-      } catch(_) {}
-      return false;
+    let compH1 = 0, compH2 = 0;
+    if(diff > 0) {
+      const th1 = seuilMensuel * threshold;
+      compH1 = Math.min(diff, th1);
+      compH2 = Math.max(0, diff - th1);
     }
 
-    const yr = year || new Date().getFullYear();
-    let consecCount = 0;  // semaines de surcharge consécutives (vacances transparentes)
-    let maxConsec   = 0;
-    let triggerStart = null;
+    const comp1Amount = compH1 * hourlyRate * (1 + rate1);
+    const comp2Amount = compH2 * hourlyRate * (1 + rate2);
 
-    for (let i = 0; i < weeklyData.length; i++) {
-      const w = weeklyData[i];
-      const isVac = w.monday ? isVacMonday(w.monday, yr) : false;
+    return {
+      mode: 'mensuel',
+      seuilMensuel: Math.round(seuilMensuel*100)/100,
+      totalWorked:  Math.round(totalWorked*100)/100,
+      delta:        Math.round(diff*100)/100,
+      compH1: Math.round(compH1*100)/100,
+      compH2: Math.round(compH2*100)/100,
+      totalCompH: Math.round((compH1+compH2)*100)/100,
+      comp1Amount: Math.round(comp1Amount*100)/100,
+      comp2Amount: Math.round(comp2Amount*100)/100,
+      totalCompAmount: Math.round((comp1Amount+comp2Amount)*100)/100,
+      maxAllowed: Math.round(maxAllowed*100)/100,
+      depassePlafond: totalWorked > maxAllowed,
+    };
+  },
 
-      if (isVac) {
-        // Semaine de vacances : transparente — on ne remet pas le compteur à zéro
-        // mais on n'incrémente pas non plus
-        continue;
+  /**
+   * Calcul annuel — compteur glissant Avance/Retard
+   * Proratisation au jour depuis le début de l'exercice
+   */
+  calcAnnuel(contractH, exerciceStart, allWeeks, today) {
+    // exerciceStart = "01/01" ou "01/06" etc.
+    const [jourEx, moisEx] = exerciceStart.split('/').map(Number);
+    const todayDate = today || new Date();
+    const year = todayDate.getFullYear();
+
+    // Début de l'exercice courant
+    let debutEx = new Date(year, moisEx-1, jourEx);
+    if(debutEx > todayDate) debutEx = new Date(year-1, moisEx-1, jourEx);
+
+    // Bissextile ?
+    const finEx = new Date(debutEx); finEx.setFullYear(finEx.getFullYear()+1);
+    const nbJoursEx = Math.round((finEx - debutEx) / 86400000);
+
+    // Jours écoulés depuis début exercice
+    const joursEcoules = Math.round((todayDate - debutEx) / 86400000);
+
+    // Objectif annuel et théorique cumulé
+    const objectifAnnuel = Math.round(contractH * 52 * 100) / 100;
+    const tauxJournalier = objectifAnnuel / nbJoursEx;
+    const theoriqueCumule = Math.round(tauxJournalier * joursEcoules * 100) / 100;
+
+    // Heures réelles dans l'exercice
+    const debutExStr = dk(debutEx);
+    const todayStr   = dk(todayDate);
+    const weeksInEx  = allWeeks.filter(w => w.monday >= debutExStr && w.monday <= todayStr);
+    const reelCumule = Math.round(weeksInEx.reduce((s,w) => s+(w.worked||0), 0) * 100) / 100;
+
+    const solde = Math.round((reelCumule - theoriqueCumule) * 100) / 100;
+    const pctAvancement = joursEcoules > 0 ? Math.round(joursEcoules / nbJoursEx * 100) : 0;
+
+    return {
+      mode: 'annuel',
+      debutEx: debutExStr,
+      finEx: dk(finEx),
+      joursEcoules,
+      nbJoursEx,
+      pctAvancement,
+      objectifAnnuel,
+      theoriqueCumule,
+      reelCumule,
+      solde,
+      enAvance: solde > 0,
+      semaines: weeksInEx.length,
+    };
+  },
+
+  /**
+   * Complément d'heures par avenant (Art. L3123-22)
+   */
+  calcAvenant(contractH, avenatH, workedH, hourlyRate=0) {
+    if(avenatH <= contractH) return null;
+    const alerts=[];
+    let baseH=Math.min(workedH,contractH), avenatPaidH=0, compH25=0;
+    if(workedH > contractH) {
+      if(workedH >= LEGAL_FULL_TIME) {
+        alerts.push({ level:'critique', code:'REQUALIFICATION',
+          msg:`Tu as atteint ${workedH}h — le seuil légal du temps plein. Les heures complémentaires ne peuvent pas atteindre 35h.` });
       }
-
-      if ((w.worked || 0) >= contractH + 2) {
-        consecCount++;
-        if (consecCount > maxConsec) maxConsec = consecCount;
-        if (consecCount >= 12 && !triggerStart) triggerStart = i - 11;
+      if(workedH <= avenatH) {
+        avenatPaidH = workedH - contractH;
       } else {
-        // Semaine travaillée sous le seuil → reset
-        consecCount = 0;
+        avenatPaidH = avenatH - contractH;
+        compH25 = workedH - avenatH;
+        alerts.push({ level:'info', code:'AVENANT_DEPASSE',
+          msg:`Tu dépasses les heures prévues par l'avenant. Les ${compH25.toFixed(1)}h au-delà sont majorées à +25%.` });
       }
     }
-
+    const baseAmount   = baseH       * hourlyRate;
+    const avenatAmount = avenatPaidH * hourlyRate;
+    const comp25Amount = compH25     * hourlyRate * 1.25;
+    const totalAmount  = baseAmount + avenatAmount + comp25Amount;
     return {
-      triggered:   maxConsec >= 12,
-      maxConsec,
-      triggerStart,
-      msg: maxConsec >= 12
-        ? `Tu dépasses ton contrat de +2h/sem depuis ${maxConsec} semaines consécutives. Ton employeur doit proposer une augmentation de ton contrat (Art. L3123-13).`
-        : maxConsec >= 8
-          ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12 - maxConsec} semaine(s) avant que la règle des 12 semaines s'applique.`
+      mode:'avenant', contractH, avenatH, workedH,
+      baseH: Math.round(baseH*100)/100,
+      avenatPaidH: Math.round(avenatPaidH*100)/100,
+      compH25: Math.round(compH25*100)/100,
+      baseAmount: Math.round(baseAmount*100)/100,
+      avenatAmount: Math.round(avenatAmount*100)/100,
+      comp25Amount: Math.round(comp25Amount*100)/100,
+      totalAmount: Math.round(totalAmount*100)/100,
+      alerts, isLegal: !alerts.some(a=>a.code==='REQUALIFICATION'),
+    };
+  },
+
+  /**
+   * Règle des 12 semaines consécutives (Art. L3123-13)
+   */
+  check12WeeksRule(weeklyData, contractH) {
+    if(!weeklyData.length) return { triggered:false, count:0 };
+    let consecCount=0, maxConsec=0, triggerStart=null;
+    for(let i=0;i<weeklyData.length;i++) {
+      if((weeklyData[i].worked||0) >= contractH+2) {
+        consecCount++;
+        if(consecCount>maxConsec) maxConsec=consecCount;
+        if(consecCount>=12&&!triggerStart) triggerStart=i-11;
+      } else { consecCount=0; }
+    }
+    return {
+      triggered: maxConsec>=12, maxConsec, triggerStart,
+      msg: maxConsec>=12
+        ? `Depuis ${maxConsec} semaines consécutives, tes heures dépassent le contrat de +2h/sem. L'Art. L3123-13 prévoit une révision du contrat — tu peux en faire la demande.`
+        : maxConsec>=8
+          ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12-maxConsec} semaines avant que la règle des 12 semaines s'applique.`
           : null
     };
   },
 
-  /**
-   * Vérifier le délai de prévenance
-   * @param {Date|string} notifDate - date de notification par l'employeur
-   * @param {Date|string} shiftDate - date de début du service demandé
-   * @param {number} requiredDays   - délai requis (défaut 3j ouvrés)
-   */
-  checkNotice(notifDate, shiftDate, requiredDays = 3) {
-    const n = new Date(notifDate);
-    const s = new Date(shiftDate);
-    // Calcul jours ouvrés (lun-ven)
-    let ouvrés = 0;
-    const cur = new Date(n);
-    while (cur < s) {
-      cur.setDate(cur.getDate() + 1);
-      const dow = cur.getDay();
-      if (dow >= 1 && dow <= 5) ouvrés++;
-    }
-    return {
-      ok: ouvrés >= requiredDays,
-      ouvrés,
-      msg: ouvrés < requiredDays
-        ? `Délai de prévenance insuffisant : ${ouvrés} jour(s) ouvré(s) au lieu de ${requiredDays}. Tu peux refuser ces heures sans sanction.`
-        : null
-    };
-  },
-
-  /**
-   * Calculer le plafond annuel d'heures complémentaires
-   */
   calcAnnualCap(contractH, ccnRules) {
-    const cap = ccnRules.cap || 0.10;
+    const cap=ccnRules.cap||0.10;
     return {
-      weekly:  Math.round(contractH * cap * 10) / 10,
-      monthly: Math.round(contractH * 52 / 12 * cap * 10) / 10,
-      annual:  Math.round(contractH * 52 * cap * 10) / 10,
-    };
-  },
-
-  /**
-   * Estimer le net (défiscalisation heures complémentaires depuis 2019)
-   * Taux d'abattement charges salariales ~11.31% sur les heures comp.
-   */
-
-  /**
-   * Calcul complément d'heures par avenant (Art. L3123-22)
-   * Règles :
-   *   - Heures entre contrat et avenant    → taux normal (0% majoration)
-   *   - Heures au-delà de l'avenant        → +25% minimum (obligatoire)
-   *   - Max 8 avenants par an par salarié
-   *   - Possible uniquement si accord de branche étendu
-   *
-   * @param {number} contractH  - heures contractuelles
-   * @param {number} avenatH    - heures prévues par l'avenant (> contractH)
-   * @param {number} workedH    - heures réellement travaillées
-   * @param {number} hourlyRate - taux horaire brut
-   */
-  calcAvenant(contractH, avenatH, workedH, hourlyRate = 0) {
-    if (avenatH <= contractH) {
-      // Pas d'avenant valide → retour calcul classique
-      return null;
-    }
-
-    const alerts = [];
-    let baseH       = Math.min(workedH, contractH);
-    let avenatPaidH = 0;  // heures entre contrat et avenant → taux normal
-    let compH25     = 0;  // heures au-delà de l'avenant → +25%
-
-    if (workedH > contractH) {
-      const diff = workedH - contractH;
-
-      if (workedH >= LEGAL_FULL_TIME) {
-        alerts.push({
-          level: 'critique',
-          code: 'REQUALIFICATION',
-          msg: `Tu as atteint ${workedH}h cette semaine — le seuil légal du temps plein. Même avec un avenant, les heures complémentaires ne peuvent pas atteindre 35h.`
-        });
-      }
-
-      if (workedH <= avenatH) {
-        // Tout est dans l'avenant → taux normal, pas de majoration
-        avenatPaidH = diff;
-      } else {
-        // Au-delà de l'avenant → +25% obligatoire
-        avenatPaidH = avenatH - contractH;
-        compH25     = workedH - avenatH;
-        alerts.push({
-          level: 'info',
-          code: 'AVENANT_DEPASSE',
-          msg: `Tu dépasses les heures prévues par l'avenant. Les ${compH25.toFixed(1)}h au-delà sont majorées à +25% obligatoirement.`
-        });
-      }
-    }
-
-    const baseAmount    = baseH        * hourlyRate;
-    const avenatAmount  = avenatPaidH  * hourlyRate;          // pas de majoration
-    const comp25Amount  = compH25      * hourlyRate * 1.25;   // +25% obligatoire
-    const totalAmount   = baseAmount + avenatAmount + comp25Amount;
-
-    return {
-      mode: 'avenant',
-      contractH,
-      avenatH,
-      workedH,
-      baseH:          Math.round(baseH        * 100) / 100,
-      avenatPaidH:    Math.round(avenatPaidH  * 100) / 100,
-      compH25:        Math.round(compH25      * 100) / 100,
-      baseAmount:     Math.round(baseAmount   * 100) / 100,
-      avenatAmount:   Math.round(avenatAmount * 100) / 100,
-      comp25Amount:   Math.round(comp25Amount * 100) / 100,
-      totalAmount:    Math.round(totalAmount  * 100) / 100,
-      alerts,
-      isLegal: !alerts.some(a => a.code === 'REQUALIFICATION'),
+      weekly:  Math.round(contractH*cap*10)/10,
+      monthly: Math.round(contractH*52/12*cap*10)/10,
+      annual:  Math.round(contractH*52*cap*10)/10,
     };
   },
 
   estimateNet(grossComp) {
-    const chargesReduction = 0.1131; // réduction forfaitaire charges salariales
-    return Math.round(grossComp * (1 - chargesReduction) * 100) / 100;
+    return Math.round(grossComp*(1-0.1131)*100)/100;
   }
 };
 
 global.CalcEngine = CalcEngine;
-if (typeof module !== 'undefined' && module.exports) module.exports = { CalcEngine };
+global.M5_getFeriesYear = getFeriesYear;
+if(typeof module!=='undefined'&&module.exports) module.exports={CalcEngine};
 
-}(typeof window !== 'undefined' ? window : global));
+}(typeof window!=='undefined'?window:global));
