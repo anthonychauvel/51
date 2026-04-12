@@ -8,6 +8,7 @@
 const K = {
   DATA:        y => 'M5_DATA_' + y,
   VACANCES:    y => 'M5_VACANCES_' + y,
+  AVENANT:     y => 'M5_AVENANT_' + y,
   CONTRACT:    'M5_CONTRACT',
   USER_NAME:   'M5_USER_NAME',
   WELCOMED:    'M5_WELCOMED',
@@ -173,6 +174,32 @@ const DataStore = {
       maxWorked:Math.round(maxWorked*100)/100,
       pctOverContract:weeks.length>0?Math.round(weeksWithComp/weeks.length*100):0,
     };
+  },
+
+  // ── Complément d'heures par avenant (Art. L3123-22) ──────────────
+  getAvenants(year) {
+    try { return JSON.parse(localStorage.getItem(K.AVENANT(year||this.getYear()))||'{}'); } catch(_){ return {}; }
+  },
+
+  saveAvenant(mondayStr, avenatH, year) {
+    const yr=year||this.getYear();
+    const data=this.getAvenants(yr);
+    if(avenatH===null||avenatH===undefined||avenatH<=0) {
+      delete data[mondayStr];
+    } else {
+      data[mondayStr]={ avenatH: Math.round(avenatH*100)/100, savedAt: new Date().toISOString() };
+    }
+    try { localStorage.setItem(K.AVENANT(yr), JSON.stringify(data)); } catch(_){}
+  },
+
+  getAvenant(mondayStr, year) {
+    const data=this.getAvenants(year||this.getYear());
+    return data[mondayStr]||null;
+  },
+
+  // Compter les avenants de l'année (max 8 légalement)
+  countAvenants(year) {
+    return Object.keys(this.getAvenants(year||this.getYear())).length;
   },
 
   // ── Congés / vacances M5 (indépendant de M4) ─────────────────────

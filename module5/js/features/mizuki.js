@@ -128,6 +128,15 @@ const Mizuki = {
 
     let msg;
 
+    // Mode avenant
+    const isAvenant = analysis && analysis.weekMode === 'avenant';
+    if (isAvenant && weekResult) {
+      if (weekResult.compH25 > 0) {
+        return `🦊 ${name ? name + ' ! ' : ''}Avenant cette semaine — ${weekResult.avenatPaidH?.toFixed(1) || 0}h au taux normal + ${weekResult.compH25.toFixed(1)}h à +25%. Vérifie ton bulletin.`;
+      }
+      return `🦊 ${name ? name + ' ! ' : ''}Semaine avec avenant — ${weekResult.avenatPaidH?.toFixed(1) || 0}h au taux normal. Tout est dans les clous.`;
+    }
+
     if (isVacWeek) {
       msg = {
         titre: '🌴 Semaine de congés',
