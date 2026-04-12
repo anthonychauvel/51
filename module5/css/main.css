@@ -708,3 +708,134 @@ body {
   font-weight: 600;
   color: var(--miz-text2);
 }
+
+/* ── SAFE AREA iOS / Android ─────────────────────────────────────── */
+body {
+  padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom)));
+}
+.m5-bottom-nav {
+  padding-bottom: env(safe-area-inset-bottom, 0px);
+  height: calc(60px + env(safe-area-inset-bottom, 0px));
+}
+.m5-fab {
+  bottom: calc(24px + env(safe-area-inset-bottom, 0px));
+}
+
+/* ── ONBOARDING GUIDÉ ────────────────────────────────────────────── */
+.m5-step-indicator {
+  display: flex;
+  gap: 6px;
+  justify-content: center;
+  margin: 16px 0 10px;
+}
+.m5-step-dot {
+  width: 8px; height: 8px;
+  border-radius: 50%;
+  background: var(--miz-border2);
+  transition: background .2s, transform .2s;
+}
+.m5-step-dot.active {
+  background: var(--miz-primary);
+  transform: scale(1.3);
+}
+.m5-step-dot.done {
+  background: var(--miz-success);
+}
+
+/* ── GLOSSAIRE ───────────────────────────────────────────────────── */
+.m5-glos-search {
+  width: 100%;
+  padding: 11px 14px 11px 38px;
+  border: 1.5px solid var(--miz-border2);
+  border-radius: var(--miz-radius-sm);
+  font-size: 14px;
+  background: var(--miz-bg) url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' viewBox='0 0 24 24' fill='none' stroke='%236B5A8A' stroke-width='2'%3E%3Ccircle cx='11' cy='11' r='8'/%3E%3Cpath d='m21 21-4.35-4.35'/%3E%3C/svg%3E") no-repeat 12px center;
+  -webkit-appearance: none;
+}
+.m5-glos-search:focus {
+  outline: none;
+  border-color: var(--miz-primary);
+  box-shadow: 0 0 0 3px rgba(123,79,212,0.10);
+}
+.m5-glos-item {
+  border-bottom: 1px solid var(--miz-border);
+  overflow: hidden;
+}
+.m5-glos-item:last-child { border-bottom: none; }
+.m5-glos-header {
+  width: 100%;
+  background: none;
+  border: none;
+  text-align: left;
+  padding: 13px 16px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.m5-glos-header:active { background: var(--miz-bg2); }
+.m5-glos-term {
+  flex: 1;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--miz-dark);
+}
+.m5-glos-art {
+  font-size: 11px;
+  color: var(--miz-primary);
+  background: var(--miz-accent);
+  padding: 2px 7px;
+  border-radius: 10px;
+  white-space: nowrap;
+}
+.m5-glos-chevron {
+  font-size: 14px;
+  color: var(--miz-text3);
+  transition: transform .2s;
+}
+.m5-glos-item.open .m5-glos-chevron { transform: rotate(90deg); }
+.m5-glos-body {
+  display: none;
+  padding: 0 16px 14px;
+  font-size: 13px;
+  line-height: 1.65;
+  color: var(--miz-text2);
+  background: var(--miz-bg2);
+}
+.m5-glos-item.open .m5-glos-body { display: block; }
+.m5-glos-example {
+  margin-top: 8px;
+  background: var(--miz-accent);
+  border-radius: 8px;
+  padding: 8px 12px;
+  font-size: 12px;
+  color: var(--miz-dark);
+}
+.m5-glos-example::before { content: '💡 Exemple : '; font-weight: 600; }
+
+/* ── AMÉLIORATION UX GÉNÉRALE ────────────────────────────────────── */
+.m5-card {
+  transition: box-shadow .15s;
+}
+.m5-card:hover { box-shadow: 0 4px 18px rgba(123,79,212,0.16); }
+
+.m5-header-title { font-size: 16px; }
+
+/* Indicateur de complétion de contrat */
+.m5-contract-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 10px;
+  background: var(--miz-bg2);
+  color: var(--miz-text3);
+  margin-top: 2px;
+}
+.m5-contract-badge.ok { background: #e8f5e9; color: #2e7d32; }
+
+/* Amélioration bottom nav */
+.m5-bottom-btn .icon { font-size: 22px; line-height: 1; }
+.m5-bottom-btn { font-size: 11px; font-weight: 600; }
