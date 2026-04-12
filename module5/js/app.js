@@ -84,7 +84,9 @@ function renderCalendar() {
   const el=document.getElementById('calendar-grid'); if(!el) return;
   document.getElementById('cal-week-label').textContent=label;
 
-  const JOURS=M5_JOURS_COURTS;
+  // Noms des jours dans l'ordre de la semaine configurée
+  const sd=M5_Contract.get().weekStartDay||0;
+  const JOURS_SEMAINE=M5_JOURS_COURTS.slice(sd).concat(M5_JOURS_COURTS.slice(0,sd));
 
   // Mode hebdo = une seule case "total semaine"
   if(days.mode==='week') {
@@ -103,9 +105,10 @@ function renderCalendar() {
     const dt=new Date(d.dk+'T12:00:00');
     const dayNum=dt.getDate();
     const dow=d.dow;
+    const realDow=d.realDow!==undefined?d.realDow:dow;
     const isToday=d.dk===today;
     const isFuture=d.isFuture;
-    const isWeekend=dow>=5;
+    const isWeekend=realDow>=5; // Sam=5, Dim=6 en Mon=0
     const worked=d.worked;
     const contract_daily=contract.hoursBase/5;
     let cellClass='m5-cal-day';
@@ -128,8 +131,8 @@ function renderCalendar() {
     if(isToday) cellClass+=' today';
 
     const clickable=!isFuture&&!isVac;
-    html+=`<div class="${cellClass}" ${clickable?`onclick="openDaySaisie('${d.dk}','${JOURS[dow]}')"`:''}>`
-      +`<div class="m5-cal-day-name">${JOURS[dow]}</div>`
+    html+=`<div class="${cellClass}" ${clickable?`onclick="openDaySaisie('${d.dk}','${JOURS_SEMAINE[dow]}')"`:''}>`
+      +`<div class="m5-cal-day-name">${JOURS_SEMAINE[dow]}</div>`
       +`<div class="m5-cal-day-num">${dayNum}</div>`
       +`${hoursHtml}`
       +`</div>`;
@@ -439,6 +442,8 @@ function openContractModal() {
   document.getElementById('contract-ccn').value     =c.idcc||'0';
   document.getElementById('contract-cap').value     =c.cap===0.33?'0.33':'0.10';
   document.getElementById('contract-name').value    =localStorage.getItem('M5_USER_NAME')||'';
+  const startDayEl=document.getElementById('contract-start-day');
+  if(startDayEl) startDayEl.value=String(c.weekStartDay||0);
   openModal('modal-contract');
 }
 
@@ -450,7 +455,8 @@ function saveContract() {
   const name      =document.getElementById('contract-name').value.trim();
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
   const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{rate1:0.10,rate2:0.25,threshold:0.10};
-  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10});
+  const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
+  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
   closeModal('modal-contract');
