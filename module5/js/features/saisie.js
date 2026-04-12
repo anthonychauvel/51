@@ -7,6 +7,7 @@
 
 const K = {
   DATA:        y => 'M5_DATA_' + y,
+  VACANCES:    y => 'M5_VACANCES_' + y,
   CONTRACT:    'M5_CONTRACT',
   USER_NAME:   'M5_USER_NAME',
   WELCOMED:    'M5_WELCOMED',
@@ -174,19 +175,61 @@ const DataStore = {
     };
   },
 
+  // ── Congés / vacances M5 (indépendant de M4) ─────────────────────
+  getVacances(year) {
+    try { return JSON.parse(localStorage.getItem(K.VACANCES(year||this.getYear()))||'{}'); } catch(_){ return {}; }
+  },
+
+  saveVacances(data, year) {
+    try { localStorage.setItem(K.VACANCES(year||this.getYear()), JSON.stringify(data)); } catch(_){}
+  },
+
   isVacWeek(mondayStr, year) {
-    try {
-      const yr=year||this.getYear();
-      const vac=JSON.parse(localStorage.getItem('DTE_VACANCES_'+yr)||'{}');
-      const today=localDK(new Date());
-      for(let d=0;d<7;d++){
-        const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
-        const dk=localDK(dt);
-        if(dk>today) continue;
-        if(vac[dk]) return true;
-      }
-    }catch(_){}
+    const yr=year||this.getYear();
+    const vac=this.getVacances(yr);
+    const today=localDK(new Date());
+    for(let d=0;d<7;d++){
+      const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
+      const dk=localDK(dt);
+      if(dk>today) continue;
+      if(vac[dk]) return true;
+    }
     return false;
+  },
+
+  addVacWeek(mondayStr, year) {
+    const yr=year||this.getYear();
+    const vac=this.getVacances(yr);
+    // Supprimer les saisies heures de la semaine si elles existent
+    const data=this.getAll(yr);
+    let changed=false;
+    for(let d=0;d<7;d++){
+      const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
+      const dk=localDK(dt);
+      vac[dk]=true;
+      if(data[dk]){delete data[dk];changed=true;}
+    }
+    if(data[mondayStr]&&data[mondayStr].type==='week'){delete data[mondayStr];changed=true;}
+    if(changed) _save(K.DATA(yr),data);
+    this.saveVacances(vac,yr);
+  },
+
+  removeVacWeek(mondayStr, year) {
+    const yr=year||this.getYear();
+    const vac=this.getVacances(yr);
+    for(let d=0;d<7;d++){
+      const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
+      delete vac[localDK(dt)];
+    }
+    this.saveVacances(vac,yr);
+  },
+
+  getVacWeeksSorted(year) {
+    const yr=year||this.getYear();
+    const vac=this.getVacances(yr);
+    const mondays=new Set();
+    Object.keys(vac).forEach(dk=>{ if(vac[dk]) mondays.add(mondayOf(dk)); });
+    return [...mondays].sort();
   },
 };
 

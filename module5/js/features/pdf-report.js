@@ -95,8 +95,8 @@ const PDFReportM5 = {
         ['Semaines saisies', `${stats.totalWeeks}`],
         ['Semaines avec heures comp.', `${stats.weeksWithComp} (${stats.pctOverContract}%)`],
         ['Total heures comp.', `${stats.totalComp}h`],
-        ['dont majorées à +${Math.round((contract.rate1||0.10)*100)}%', `${stats.totalComp1}h`],
-        ['dont majorées à +${Math.round((contract.rate2||0.25)*100)}%', `${stats.totalComp2}h`],
+        [`dont majorées à +${Math.round((contract.rate1||0.10)*100)}%`, `${stats.totalComp1}h`],
+        [`dont majorées à +${Math.round((contract.rate2||0.25)*100)}%`, `${stats.totalComp2}h`],
         ['Moyenne hebdo travaillée', `${stats.avgWorked}h/sem`],
         ['Semaine la plus chargée', `${stats.maxWorked}h`],
       ];
