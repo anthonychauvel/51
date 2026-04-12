@@ -4,7 +4,7 @@
 <link rel="manifest" href="../manifest.json">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-title" content="Heures Comp. — Mizuki">
+<meta name="apple-mobile-web-app-title" content="Mizuki — Temps partiel">
 <meta name="theme-color" content="#7B4FD4">
 <meta charset="UTF-8">
 <title>Temps Partiel — Mizuki</title>
@@ -15,9 +15,9 @@
 
 <!-- ── HEADER ──────────────────────────────────────────────────── -->
 <header class="m5-header">
-  <div>
-    <div class="m5-header-title">🦊 Mizuki — Temps Partiel</div>
-    <div class="m5-header-sub">Heures complémentaires & droits</div>
+  <div style="flex:1">
+    <div class="m5-header-title">🦊 Mizuki — Temps partiel</div>
+    <div class="m5-header-sub">Heures complémentaires &amp; droits</div>
   </div>
   <a href="../menu.html" class="m5-nav-btn">← Menu</a>
   <button class="m5-nav-btn" onclick="openContractModal()">⚙️</button>
@@ -25,47 +25,39 @@
 
 <!-- ── BULLE MIZUKI ─────────────────────────────────────────────── -->
 <div class="mizuki-bubble-wrap" onclick="openMizukiPopup()">
-  <img src="../images/Mizuki.PNG" alt="Mizuki" class="mizuki-avatar" onerror="this.src='assets/mizuki.svg'">
+  <img src="../images/Mizuki.PNG" alt="Mizuki" class="mizuki-avatar"
+    onerror="this.src='assets/mizuki.svg'">
   <div class="mizuki-bubble-text" id="mizuki-bubble-text">
-    🦊 Bonjour ! Je suis Mizuki, ta compagne pour le suivi de tes heures complémentaires. Configure ton contrat pour commencer.
+    🦊 Bonjour ! Je suis Mizuki. Configure ton contrat pour commencer.
   </div>
   <span class="mizuki-bubble-chevron">›</span>
 </div>
 
 <!-- ── LIENS MODULES ────────────────────────────────────────────── -->
-<div style="display:flex;gap:8px;padding:10px 16px;overflow-x:auto;background:var(--miz-bg);border-bottom:1px solid var(--miz-border);">
-  <a href="../heures/index.html" style="text-decoration:none;flex-shrink:0;">
-    <button class="m5-btn m5-btn-outline m5-btn-sm">📅 Annuel</button>
-  </a>
-  <a href="../paye/index.html" style="text-decoration:none;flex-shrink:0;">
-    <button class="m5-btn m5-btn-outline m5-btn-sm">💰 Mensuel</button>
-  </a>
-  <a href="../fox/index.html" style="text-decoration:none;flex-shrink:0;">
-    <button class="m5-btn m5-btn-outline m5-btn-sm">🦊 Kitsune</button>
-  </a>
-  <a href="../module4/index.html" style="text-decoration:none;flex-shrink:0;">
-    <button class="m5-btn m5-btn-outline m5-btn-sm">🩺 Santé</button>
-  </a>
+<div class="m5-module-links">
+  <a href="../heures/index.html" class="m5-mod-link">📅 Annuel</a>
+  <a href="../paye/index.html"   class="m5-mod-link">💰 Mensuel</a>
+  <a href="../fox/index.html"    class="m5-mod-link">🦊 Kitsune</a>
+  <a href="../module4/index.html" class="m5-mod-link">🩺 Santé</a>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════ -->
-<!-- VUE : PAS DE CONTRAT ────────────────────────────────────────── -->
-<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- ══ VUE : PAS DE CONTRAT ══════════════════════════════════════ -->
 <div id="view-no-contract" style="padding:24px 16px;text-align:center;">
-  <img src="../images/Mizuki.PNG" alt="Mizuki" style="width:100px;margin:0 auto 16px;display:block;border-radius:50%;object-fit:cover;" onerror="this.src='assets/mizuki.svg'">
+  <img src="../images/Mizuki.PNG" alt="Mizuki"
+    style="width:110px;margin:0 auto 16px;display:block;border-radius:50%;object-fit:cover;"
+    onerror="this.src='assets/mizuki.svg'">
   <div style="font-size:20px;font-weight:700;color:var(--miz-dark);margin-bottom:8px;">Bonjour ! Je suis Mizuki 🦊</div>
   <div style="font-size:14px;color:var(--miz-text2);line-height:1.7;margin-bottom:24px;">
     La compagne de Kitsune pour les salariées à temps partiel.<br>
-    Je vérifie tes heures complémentaires, je détecte les anomalies<br>
-    et je t'informe de tes droits — simplement, en amie.
+    Je surveille tes heures complémentaires et t'informe de tes droits.
   </div>
   <div class="m5-card" style="margin:0 0 16px;text-align:left;">
     <div class="m5-card-body">
-      <div style="font-size:13px;font-weight:700;color:var(--miz-dark);margin-bottom:10px;">Pour commencer, j'ai besoin de :</div>
+      <div style="font-size:13px;font-weight:700;color:var(--miz-dark);margin-bottom:10px;">Pour commencer :</div>
       <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--miz-text2);">
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--miz-primary)">✓</span> Ta durée contractuelle (ex: 25h/semaine)</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--miz-primary)">✓</span> Ta convention collective (facultatif)</div>
-        <div style="display:flex;align-items:center;gap:8px;"><span style="color:var(--miz-primary)">✓</span> Ton taux horaire brut (facultatif)</div>
+        <div>✓ Ta durée contractuelle (ex&nbsp;: 25h/semaine)</div>
+        <div>✓ Ta convention collective (optionnel)</div>
+        <div>✓ Ton taux horaire brut (optionnel, pour les montants)</div>
       </div>
     </div>
   </div>
@@ -74,44 +66,38 @@
   </button>
 </div>
 
-<!-- ══════════════════════════════════════════════════════════════ -->
-<!-- VUE PRINCIPALE ──────────────────────────────────────────────── -->
-<!-- ══════════════════════════════════════════════════════════════ -->
+<!-- ══ VUE PRINCIPALE ════════════════════════════════════════════ -->
 <div id="view-main" style="display:none;">
 
   <!-- Section ACCUEIL -->
   <div id="sec-accueil" class="m5-section active">
 
-    <!-- Semaine courante -->
+    <!-- Calendrier semaine -->
     <div class="m5-card">
       <div class="m5-card-header">
-        <span class="m5-card-title">📅 Semaine en cours</span>
-        <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openSaisie(M5_getCurrentMonday())">+ Saisir</button>
+        <button class="m5-cal-nav-btn" onclick="calPrev()">‹</button>
+        <span class="m5-card-title" id="cal-week-label" style="text-transform:none;font-size:12px;"></span>
+        <button class="m5-cal-nav-btn" onclick="calNext()">›</button>
+        <button class="m5-cal-today-btn" onclick="calToday()">Auj.</button>
       </div>
-      <div class="m5-card-body" id="current-week-content"></div>
+      <div class="m5-card-body" style="padding:10px 12px;">
+        <div id="calendar-grid"></div>
+      </div>
     </div>
 
-    <!-- Stats rapides -->
-    <div class="m5-card">
-      <div class="m5-card-header">
-        <span class="m5-card-title">📊 Cette année</span>
-      </div>
-      <div class="m5-card-body" id="quick-stats"></div>
-    </div>
+    <!-- Résumé / alertes semaine -->
+    <div style="padding:0 16px;" id="week-summary"></div>
 
-    <!-- Info légale -->
+    <!-- Info légale compacte -->
     <div class="m5-card" style="margin-bottom:16px;">
-      <div class="m5-card-header">
-        <span class="m5-card-title">⚖️ Tes droits en bref</span>
-      </div>
+      <div class="m5-card-header"><span class="m5-card-title">⚖️ Tes droits en bref</span></div>
       <div class="m5-card-body">
-        <div style="display:flex;flex-direction:column;gap:8px;font-size:13px;color:var(--miz-text2);line-height:1.6;">
-          <div>📌 <strong>Plafond légal</strong> : 10% de ton contrat (ou 33% avec accord de branche)</div>
-          <div>💰 <strong>Majoration</strong> : +10% jusqu'au 1/10e, +25% au-delà</div>
-          <div>⚠️ <strong>Jamais 35h</strong> : tes heures ne peuvent pas atteindre le temps plein</div>
-          <div>📅 <strong>Règle 12 semaines</strong> : +2h/sem pendant 12 sem = modification du contrat obligatoire</div>
-          <div>🚫 <strong>Délai de prévenance</strong> : 3 jours ouvrés min. pour refuser sans sanction</div>
-          <div>💶 <strong>Défiscalisation</strong> : heures comp. exonérées IR depuis 2019</div>
+        <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--miz-text2);line-height:1.5;">
+          <div>📌 Plafond&nbsp;: 10% du contrat (ou 33% avec accord de branche)</div>
+          <div>💰 Majoration&nbsp;: +10% jusqu'au 1/10e, +25% au-delà</div>
+          <div>⚠️ Jamais 35h&nbsp;: tes heures ne peuvent atteindre le temps plein</div>
+          <div>📅 Règle 12 sem.&nbsp;: +2h/sem × 12 sem = modification de contrat obligatoire</div>
+          <div>💶 Défiscalisé&nbsp;: exonéré d'impôt sur le revenu depuis 2019</div>
         </div>
       </div>
     </div>
@@ -123,7 +109,6 @@
     <div class="m5-card" style="margin-top:12px;">
       <div class="m5-card-header">
         <span class="m5-card-title">📋 Historique</span>
-        <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openSaisie(M5_getCurrentMonday())">+ Ajouter</button>
       </div>
       <div id="historique-list"></div>
     </div>
@@ -134,12 +119,7 @@
     <div style="padding:12px 16px;" id="stats-content"></div>
   </div>
 
-</div>
-
-<!-- ── FAB ────────────────────────────────────────────────────── -->
-<button class="m5-fab" onclick="openSaisie(M5_getCurrentMonday())" title="Saisir mes heures">
-  ✏️
-</button>
+</div><!-- /view-main -->
 
 <!-- ── BOTTOM NAV ────────────────────────────────────────────── -->
 <nav class="m5-bottom-nav">
@@ -156,31 +136,67 @@
 
 <!-- ══════════════════════════════════════════════════════════════ -->
 <!-- MODALES ─────────────────────────────────────────────────────── -->
-<!-- ══════════════════════════════════════════════════════════════ -->
 
-<!-- Modale saisie heures -->
-<div class="m5-modal-backdrop" id="modal-saisie" onclick="if(event.target===this)closeModal('modal-saisie')">
+<!-- Modale saisie journalière -->
+<div class="m5-modal-backdrop" id="modal-day-saisie" onclick="if(event.target===this)closeModal('modal-day-saisie')">
   <div class="m5-modal">
     <div class="m5-modal-header">
-      <div class="m5-modal-title" id="saisie-title">Saisir mes heures</div>
-      <button class="m5-modal-close" onclick="closeModal('modal-saisie')">✕</button>
+      <div class="m5-modal-title" id="day-saisie-title">Saisir mes heures</div>
+      <button class="m5-modal-close" onclick="closeModal('modal-day-saisie')">✕</button>
     </div>
-    <input type="hidden" id="saisie-monday">
+    <input type="hidden" id="day-saisie-date">
+
     <div class="m5-input-group">
-      <label class="m5-label">Heures travaillées cette semaine</label>
-      <input type="number" class="m5-input" id="saisie-hours"
-        min="0" max="35" step="0.5" placeholder="ex: 27.5"
-        oninput="updateSaisiePreview()"
-        style="font-size:22px;font-weight:700;text-align:center;">
+      <label class="m5-label">Heures travaillées ce jour</label>
+      <input type="number" class="m5-input" id="day-saisie-hours"
+        min="0" max="24" step="0.5" placeholder="ex: 5.5"
+        oninput="updateDayPreview()"
+        style="font-size:26px;font-weight:700;text-align:center;">
     </div>
-    <div id="saisie-preview" style="margin-bottom:14px;"></div>
-    <button class="m5-btn m5-btn-primary m5-btn-full" onclick="saveSaisie()">
-      ✅ Enregistrer
-    </button>
+
+    <div class="m5-label" style="margin-bottom:8px;">Saisie rapide</div>
+    <div id="day-quick-hours" class="m5-quick-grid"></div>
+
+    <div id="day-saisie-preview" style="margin:10px 0;min-height:24px;"></div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:0 0 auto" onclick="deleteDaySaisie()">🗑️</button>
+      <button class="m5-btn m5-btn-primary" style="flex:1" onclick="saveDaySaisie()">✅ Enregistrer</button>
+    </div>
   </div>
 </div>
 
-<!-- Modale Mizuki popup -->
+<!-- Modale saisie hebdomadaire -->
+<div class="m5-modal-backdrop" id="modal-week-saisie" onclick="if(event.target===this)closeModal('modal-week-saisie')">
+  <div class="m5-modal">
+    <div class="m5-modal-header">
+      <div class="m5-modal-title">📊 Total semaine</div>
+      <button class="m5-modal-close" onclick="closeModal('modal-week-saisie')">✕</button>
+    </div>
+    <div style="font-size:13px;color:var(--miz-text2);margin-bottom:14px;" id="week-saisie-title"></div>
+    <input type="hidden" id="week-saisie-monday">
+
+    <div class="m5-input-group">
+      <label class="m5-label">Total heures travaillées cette semaine</label>
+      <input type="number" class="m5-input" id="week-saisie-hours"
+        min="0" max="34.5" step="0.5" placeholder="ex: 28"
+        oninput="updateWeekPreview()"
+        style="font-size:26px;font-weight:700;text-align:center;">
+    </div>
+
+    <div class="m5-label" style="margin-bottom:8px;">Saisie rapide</div>
+    <div id="week-quick-hours" class="m5-quick-grid"></div>
+
+    <div id="week-saisie-preview" style="margin:10px 0;min-height:24px;"></div>
+
+    <div style="display:flex;gap:8px;">
+      <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:0 0 auto" onclick="deleteWeeklySaisie()">🗑️</button>
+      <button class="m5-btn m5-btn-primary" style="flex:1" onclick="saveWeeklySaisie()">✅ Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- Modale Mizuki -->
 <div class="m5-modal-backdrop" id="modal-mizuki" onclick="if(event.target===this)closeModal('modal-mizuki')">
   <div class="m5-modal">
     <div class="m5-modal-header">
@@ -188,9 +204,7 @@
       <button class="m5-modal-close" onclick="closeModal('modal-mizuki')">✕</button>
     </div>
     <div id="mizuki-popup-body"></div>
-    <div style="margin-top:16px;">
-      <button class="m5-btn m5-btn-outline m5-btn-full" onclick="closeModal('modal-mizuki')">Fermer</button>
-    </div>
+    <button class="m5-btn m5-btn-outline m5-btn-full" style="margin-top:16px" onclick="closeModal('modal-mizuki')">Fermer</button>
   </div>
 </div>
 
@@ -201,45 +215,33 @@
       <div class="m5-modal-title">⚙️ Mon contrat</div>
       <button class="m5-modal-close" onclick="closeModal('modal-contract')">✕</button>
     </div>
-
     <div class="m5-input-group">
       <label class="m5-label">Ton prénom (optionnel)</label>
       <input type="text" class="m5-input" id="contract-name" placeholder="Prénom" autocomplete="given-name">
     </div>
-
     <div class="m5-input-group">
-      <label class="m5-label">Durée contractuelle (heures/semaine) *</label>
+      <label class="m5-label">Durée contractuelle (h/semaine) *</label>
       <input type="number" class="m5-input" id="contract-hours" min="1" max="34" step="0.5" placeholder="ex: 25">
-      <div style="font-size:12px;color:var(--miz-text3);margin-top:4px;">Entre 1h et 34,5h (temps partiel uniquement)</div>
     </div>
-
     <div class="m5-input-group">
       <label class="m5-label">Taux horaire brut (€/h)</label>
       <input type="number" class="m5-input" id="contract-rate" min="0" step="0.01" placeholder="ex: 11.88">
-      <div style="font-size:12px;color:var(--miz-text3);margin-top:4px;">Facultatif — permet d'estimer les montants</div>
     </div>
-
     <div class="m5-input-group">
       <label class="m5-label">Convention collective</label>
       <select class="m5-select" id="contract-ccn"></select>
     </div>
-
     <div class="m5-input-group">
       <label class="m5-label">Plafond heures complémentaires</label>
       <select class="m5-select" id="contract-cap">
-        <option value="0.10">10% — Droit commun (sans accord de branche)</option>
-        <option value="0.33">33% — Avec accord de branche étendu</option>
+        <option value="0.10">10% — Droit commun</option>
+        <option value="0.33">33% — Avec accord de branche</option>
       </select>
     </div>
-
     <div class="m5-alert info" style="margin-bottom:14px;">
-      <span class="m5-alert-icon">ℹ️</span>
-      <div style="font-size:12px;">Toutes les données restent sur ton téléphone. Rien n'est envoyé à un serveur.</div>
+      <span>🔒</span><div style="font-size:12px;">Données 100% locales — rien n'est envoyé à un serveur.</div>
     </div>
-
-    <button class="m5-btn m5-btn-primary m5-btn-full" onclick="saveContract()">
-      💾 Enregistrer mon contrat
-    </button>
+    <button class="m5-btn m5-btn-primary m5-btn-full" onclick="saveContract()">💾 Enregistrer</button>
   </div>
 </div>
 
@@ -254,6 +256,5 @@
 <script src="js/features/pdf-report.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="js/app.js"></script>
-
 </body>
 </html>
