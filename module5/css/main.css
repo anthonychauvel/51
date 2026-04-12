@@ -840,3 +840,14 @@ body {
 /* Amélioration bottom nav */
 .m5-bottom-btn .icon { font-size: 22px; line-height: 1; }
 .m5-bottom-btn { font-size: 11px; font-weight: 600; }
+
+/* ── JOURS FÉRIÉS CALENDRIER ─────────────────────────────────────── */
+.m5-cal-day.ferie {
+  background: #fff8e1;
+  border: 1.5px solid #f9a825;
+}
+.m5-cal-day.ferie.today { border-color: var(--miz-primary); }
+.m5-cal-day-ferie {
+  font-size: 12px;
+  line-height: 1;
+}
