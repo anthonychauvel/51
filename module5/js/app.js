@@ -595,29 +595,72 @@ function renderStats() {
   if(!el||!contract.hoursBase) return;
   const year=M5_DataStore.getYear();
   const analysis=currentAnalysis||runAnalysis();
-  if(analysis) renderQuickStats(analysis); // sync stats accueil
+  if(analysis) renderQuickStats(analysis);
+  const mode=contract.modeCalcul||'HEBDO';
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
   const caps=CalcEngine.calcAnnualCap(contract.hoursBase,contract);
-  if(!stats) { el.innerHTML='<div class="m5-empty"><div class="m5-empty-icon">📊</div><div class="m5-empty-text">Pas encore assez de données.</div></div>'; return; }
-  const netEst=contract.hourlyRate>0?CalcEngine.estimateNet(stats.totalComp*contract.hourlyRate*(1+(contract.rate1||0.10))):null;
   const exStart=contract.exerciceStart||'01/01';
-  el.innerHTML=`
-    <div class="m5-card" style="margin:12px 0;">
-      <div class="m5-card-header"><span class="m5-card-title">📊 Bilan ${exStart.slice(3,5)}/${year} → ${exStart.slice(3,5)}/${parseInt(year)+1}</span></div>
+  const exLabel=`${exStart.slice(3,5)}/${year}`;
+  let html='';
+
+  if(mode==='ANNUEL'&&analysis&&analysis.annuelResult) {
+    const ar=analysis.annuelResult;
+    const solde=ar.solde;
+    const cls=solde>1?'ok':solde<-2?'danger':'warn';
+    html+=`<div class="m5-card" style="margin:12px 0;">
+      <div class="m5-card-header"><span class="m5-card-title">📊 Compteur annuel ${exLabel}</span></div>
+      <div class="m5-card-body">
+        <div class="m5-stat-grid" style="margin-bottom:12px;">
+          <div class="m5-stat"><div class="m5-stat-val">${ar.pctAvancement}%</div><div class="m5-stat-label">Exercice écoulé</div></div>
+          <div class="m5-stat"><div class="m5-stat-val">${ar.reelCumule}h</div><div class="m5-stat-label">Réalisées</div></div>
+          <div class="m5-stat"><div class="m5-stat-val ${cls}">${solde>=0?'+':''}${solde}h</div><div class="m5-stat-label">Avance/Retard</div></div>
+        </div>
+        <div class="m5-alert info" style="margin-bottom:8px;">
+          <span>🎯</span><div>Objectif : <strong>${ar.objectifAnnuel}h/an</strong><br>
+          <small>Théorique cumulé : ${ar.theoriqueCumule}h — ${ar.joursEcoules} jours écoulés</small></div>
+        </div>
+        <div class="m5-alert ${solde>1?'ok':solde<-2?'warn':'info'}">
+          <span>${solde>1?'🚀':solde<-2?'⏳':'➡️'}</span>
+          <div>${solde>1?`En avance de <strong>${solde}h</strong>.`:solde<-2?`<strong>${Math.abs(solde)}h</strong> de retard.`:"Dans les clous sur l'objectif annuel."}</div>
+        </div>
+      </div></div>`;
+  } else if(mode==='MENSUEL'&&analysis&&analysis.mensuelResult) {
+    const mr=analysis.mensuelResult;
+    const delta=mr.delta;
+    html+=`<div class="m5-card" style="margin:12px 0;">
+      <div class="m5-card-header"><span class="m5-card-title">📊 Bilan mensuel — ${new Date().toLocaleDateString('fr-FR',{month:'long',year:'numeric'})}</span></div>
+      <div class="m5-card-body">
+        <div class="m5-stat-grid" style="margin-bottom:12px;">
+          <div class="m5-stat"><div class="m5-stat-val">${mr.totalWorked}h</div><div class="m5-stat-label">Ce mois</div></div>
+          <div class="m5-stat"><div class="m5-stat-val ${delta>0?'warn':'ok'}">${delta>=0?'+':''}${delta.toFixed(1)}h</div><div class="m5-stat-label">vs seuil</div></div>
+          <div class="m5-stat"><div class="m5-stat-val">${mr.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
+        </div>
+        <div class="m5-alert info" style="margin-bottom:8px;">
+          <span>📊</span><div>Seuil mensuel : <strong>${mr.seuilMensuel}h</strong> (${contract.hoursBase}h × 52 / 12)</div>
+        </div>
+        ${mr.totalCompH>0?`<div class="m5-alert ok"><span>💰</span><div>${mr.compH1.toFixed(1)}h à +${Math.round((contract.rate1||0.10)*100)}%${mr.compH2>0?' | '+mr.compH2.toFixed(1)+'h à +'+Math.round((contract.rate2||0.25)*100)+'%':''}</div></div>`:''}
+      </div></div>`;
+  } else if(stats) {
+    html+=`<div class="m5-card" style="margin:12px 0;">
+      <div class="m5-card-header"><span class="m5-card-title">📊 Bilan ${exLabel}</span></div>
       <div class="m5-card-body">
         <div class="m5-stat-grid" style="margin-bottom:14px;">
           <div class="m5-stat"><div class="m5-stat-val">${stats.totalWeeks}</div><div class="m5-stat-label">Semaines</div></div>
           <div class="m5-stat"><div class="m5-stat-val">${stats.avgWorked}h</div><div class="m5-stat-label">Moy. hebdo</div></div>
           <div class="m5-stat"><div class="m5-stat-val">${stats.pctOverContract}%</div><div class="m5-stat-label">En dépassement</div></div>
         </div>
-        <div class="m5-alert ${stats.totalComp>caps.annual?'warn':'info'}" style="margin-bottom:10px;">
-          <span>⏱️</span><div><strong>${stats.totalComp.toFixed(1)}h</strong> complémentaires au total<br><small>Plafond annuel estimé : ${caps.annual.toFixed(1)}h</small></div>
+        <div class="m5-alert ${stats.totalComp>caps.annual?'warn':'info'}" style="margin-bottom:8px;">
+          <span>⏱️</span><div><strong>${stats.totalComp.toFixed(1)}h</strong> complémentaires<br>
+          <small>Plafond annuel estimé : ${caps.annual.toFixed(1)}h</small></div>
         </div>
-        ${stats.totalComp1>0?`<div class="m5-alert ok" style="margin-bottom:6px;"><span>💰</span><div>${stats.totalComp1.toFixed(1)}h à +${Math.round((contract.rate1||0.10)*100)}% | ${stats.totalComp2>0?stats.totalComp2.toFixed(1)+'h à +'+Math.round((contract.rate2||0.25)*100)+'%':'Aucune tranche à 25%'}</div></div>`:''}
-        ${netEst?`<div class="m5-alert info"><span>💶</span><div>Estimation net défiscalisé : <strong>${netEst.toFixed(2)} €</strong><br><small>Exonéré IR depuis 2019</small></div></div>`:''}
-      </div>
-    </div>
-    <button class="m5-btn m5-btn-primary m5-btn-full" onclick="exportPDF()">📄 Exporter en PDF</button>`;
+        ${stats.totalComp1>0?`<div class="m5-alert ok"><span>💰</span><div>${stats.totalComp1.toFixed(1)}h à +${Math.round((contract.rate1||0.10)*100)}%${stats.totalComp2>0?' | '+stats.totalComp2.toFixed(1)+'h à +'+Math.round((contract.rate2||0.25)*100)+'%':' | Aucune tranche à 25%'}</div></div>`:''}
+      </div></div>`;
+  } else {
+    html='<div class="m5-empty"><div class="m5-empty-icon">📊</div><div class="m5-empty-text">Aucune semaine saisie pour '+year+'.</div></div>';
+  }
+
+  html+=`<button class="m5-btn m5-btn-primary m5-btn-full" onclick="exportPDF()" style="margin:0 0 16px;">📄 Exporter en PDF</button>`;
+  el.innerHTML=html;
 }
 
 // ── Popup Mizuki ──────────────────────────────────────────────────
@@ -693,8 +736,16 @@ function saveContract() {
 }
 
 function exportPDF() {
-  try { PDFReportM5.generate(M5_DataStore.getYear()); }
-  catch(e) { toast('Erreur PDF.','error'); console.error(e); }
+  try {
+    const contract=M5_Contract.get();
+    const year=M5_DataStore.getYear();
+    const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
+    const weeks=M5_DataStore.getWeeksSorted(year);
+    const analysis=currentAnalysis||runAnalysis();
+    const userName=localStorage.getItem('M5_USER_NAME')||'';
+    const contractWithName={...contract, userName};
+    M5_PdfReport.generate(contractWithName, stats, weeks, analysis);
+  } catch(e) { toast('Erreur PDF.','error'); console.error(e); }
 }
 
 function initCCNSelect() {
@@ -809,6 +860,48 @@ function toggleVacSemaine() {
 // Source : https://calendrier.api.gouv.fr — Etalab (données ouvertes)
 
 // ── Gestion des années ────────────────────────────────────────────
+
+// ── Délai de prévenance (Art. L3123-24) ──────────────────────────
+function checkPrevenance() {
+  const demande=document.getElementById('prev-date-demande')?.value;
+  const travail=document.getElementById('prev-date-travail')?.value;
+  const el=document.getElementById('prevenance-result');
+  if(!el) return;
+  if(!demande||!travail) { el.innerHTML='<div class="m5-alert warn"><span>⚠️</span><div>Remplis les deux dates.</div></div>'; return; }
+
+  const d1=new Date(demande+'T12:00:00');
+  const d2=new Date(travail+'T12:00:00');
+  if(d2<=d1) { el.innerHTML='<div class="m5-alert warn"><span>⚠️</span><div>La date de travail doit être après la demande.</div></div>'; return; }
+
+  // Compter les jours ouvrés entre d1 et d2 (Lun-Ven, hors fériés)
+  const feriesMap=currentAnalysis&&currentAnalysis.feriesMap
+    ?currentAnalysis.feriesMap
+    :(typeof M5_getFeriesYear!=='undefined'?M5_getFeriesYear(d1.getFullYear()):{});
+
+  let joursOuvres=0;
+  const cur=new Date(d1); cur.setDate(cur.getDate()+1); // on commence le lendemain
+  while(cur < d2) {
+    const dow=cur.getDay(); // 0=dim, 6=sam
+    const dk=cur.getFullYear()+'-'+String(cur.getMonth()+1).padStart(2,'0')+'-'+String(cur.getDate()).padStart(2,'0');
+    if(dow>=1&&dow<=5&&!feriesMap[dk]) joursOuvres++;
+    cur.setDate(cur.getDate()+1);
+  }
+
+  const ok=joursOuvres>=3;
+  const demandeFmt=d1.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+  const travailFmt=d2.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
+
+  el.innerHTML=`<div class="m5-alert ${ok?'ok':'critique'}">
+    <span>${ok?'✅':'🚨'}</span>
+    <div>
+      <strong>${joursOuvres} jour${joursOuvres>1?'s':''} ouvré${joursOuvres>1?'s':''}</strong> entre la demande (${demandeFmt}) et le jour de travail (${travailFmt}).<br><br>
+      ${ok
+        ?'Le délai légal de 3 jours ouvrés est respecté.'
+        :`<strong>Délai insuffisant</strong> — il manque ${3-joursOuvres} jour${3-joursOuvres>1?'s':''} ouvré${3-joursOuvres>1?'s':''}. Tu peux refuser ces heures sans faute (Art. L3123-24).`}
+    </div>
+  </div>`;
+}
+
 function openYearsPopup() {
   const year=M5_DataStore.getYear();
   const years=M5_getExistingYears();
@@ -953,6 +1046,7 @@ window.importFeriesAPI=importFeriesAPI;
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
+window.checkPrevenance=checkPrevenance;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
 window.exportPDF=exportPDF; window.M5_toast=toast;
 window.filterGlossaire=filterGlossaire;
