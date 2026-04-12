@@ -22,15 +22,21 @@ function localDK(d) {
   const dt=d||new Date();
   return dt.getFullYear()+'-'+String(dt.getMonth()+1).padStart(2,'0')+'-'+String(dt.getDate()).padStart(2,'0');
 }
-function mondayOf(dateStr) {
-  const d=new Date(dateStr+'T12:00:00');
-  const dow=(d.getDay()+6)%7;
-  d.setDate(d.getDate()-dow);
+function weekStartOf(dateStr, startDow) {
+  // startDow : 0=Lun, 1=Mar, 2=Mer, 3=Jeu, 4=Ven, 5=Sam, 6=Dim
+  const d = new Date(dateStr + 'T12:00:00');
+  const dayOfWeek = (d.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const sd = (startDow !== undefined ? startDow : 0);
+  let diff = dayOfWeek - sd;
+  if (diff < 0) diff += 7;
+  d.setDate(d.getDate() - diff);
   return localDK(d);
 }
+// Alias rétrocompat
+function mondayOf(dateStr) { return weekStartOf(dateStr, Contract.get().weekStartDay || 0); }
 
 const Contract = {
-  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10}); },
+  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0}); },
   save(data) { _save(K.CONTRACT,data); },
   isSet() { return this.get().hoursBase>0; }
 };
@@ -108,12 +114,15 @@ const DataStore = {
     const today=localDK(new Date());
     const days=[];
     const hasWeekly=data[mondayStr]&&data[mondayStr].type==='week';
+    const startDow=Contract.get().weekStartDay||0; // jour de début de semaine
     for(let d=0;d<7;d++){
       const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
       const dk=localDK(dt);
       const e=data[dk];
+      // dow réel = (startDow + d) % 7 en convention Mon=0
+      const realDow = (startDow + d) % 7;
       days.push({
-        dk, dow:d,
+        dk, dow:d, realDow,
         worked: e&&e.type==='day'?e.worked:null,
         isPast: dk<=today,
         isToday: dk===today,
@@ -182,8 +191,8 @@ const DataStore = {
 };
 
 function getCurrentMonday() {
-  const d=new Date(),dow=(d.getDay()+6)%7;
-  d.setDate(d.getDate()-dow); return localDK(d);
+  const sd = Contract.get().weekStartDay || 0;
+  return weekStartOf(localDK(new Date()), sd);
 }
 function formatMonday(mondayStr) {
   const d=new Date(mondayStr+'T12:00:00'),fn=new Date(mondayStr+'T12:00:00');
@@ -208,6 +217,7 @@ global.M5_formatMonday=formatMonday;
 global.M5_getExistingYears=getExistingYears;
 global.M5_localDK=localDK;
 global.M5_mondayOf=mondayOf;
+global.M5_weekStartOf=weekStartOf;
 global.M5_JOURS_COURTS=JOURS_COURTS;
 global.M5_JOURS_LONGS=JOURS_LONGS;
 
