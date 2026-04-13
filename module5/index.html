@@ -70,11 +70,16 @@
 
     <!-- Calendrier semaine -->
     <div class="m5-card">
-      <div class="m5-card-header">
-        <button class="m5-cal-nav-btn" onclick="calPrev()">‹</button>
-        <span class="m5-card-title" id="cal-week-label" style="text-transform:none;font-size:12px;"></span>
-        <button class="m5-cal-nav-btn" onclick="calNext()">›</button>
-        <button class="m5-cal-today-btn" onclick="calToday()">Auj.</button>
+      <div class="m5-card-header" style="flex-wrap:wrap;gap:4px;">
+        <div style="display:flex;align-items:center;gap:4px;flex:1;">
+          <button class="m5-cal-nav-btn" onclick="calPrev()">‹</button>
+          <span class="m5-card-title" id="cal-week-label" style="text-transform:none;font-size:11px;flex:1;text-align:center;"></span>
+          <button class="m5-cal-nav-btn" onclick="calNext()">›</button>
+        </div>
+        <div style="display:flex;align-items:center;gap:4px;">
+          <select id="cal-year-select" class="m5-select" style="font-size:11px;padding:3px 6px;height:28px;width:76px;" onchange="calChangeYear(this.value)"></select>
+          <button class="m5-cal-today-btn" onclick="calToday()">Auj.</button>
+        </div>
       </div>
       <div class="m5-card-body" style="padding:10px 12px;">
         <div id="calendar-grid"></div>
