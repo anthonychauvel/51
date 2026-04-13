@@ -30,7 +30,7 @@ const M5_Wellbeing = {
    */
   compute(weeks, contractH, contract) {
     if (!weeks || weeks.length < 2) {
-      return { available: false, reason: 'Pas assez de données (minimum 2 semaines).' };
+      return { available: false, reason: 'Saisis au moins 2 semaines pour voir ton analyse bien-être.' };
     }
 
     const worked = weeks.map(w => w.worked || 0);
@@ -68,18 +68,20 @@ const M5_Wellbeing = {
     // Proportion de semaines réellement sous le contrat (vraies semaines légères)
     const semainesLegeres = worked.filter(h => h < contractH).length;
     const ratioRecup = semainesLegeres / n;
-    const scoreRecup = Math.min(100, Math.round(
+    // Minimum 4 semaines pour que la récupération soit mesurable
+    const scoreRecup = n < 4 ? 50 : Math.min(100, Math.round(
       (ratioRecup / SONNENTAG_RECOVERY_MIN) * 100
     ));
 
     // ── 4. SCORE CHOIX (Voydanoff 2005) ──────────────────────────
     // Temps partiel choisi si heures réelles << plafond légal
-    // Temps partiel subi si on approche systématiquement le plafond
+    // Seuil 95% du plafond = vraiment "proche" (pas juste légèrement au-dessus du contrat)
     const cap = contract.cap || 0.10;
     const plafondH = contractH * (1 + cap);
-    const semainesProchePlafond = worked.filter(h => h >= plafondH * 0.85).length;
+    const semainesProchePlafond = worked.filter(h => h >= plafondH * 0.95).length;
     const ratioSubi = semainesProchePlafond / n;
-    const scoreChoix = Math.round(100 * (1 - Math.min(ratioSubi * 2, 1)));
+    // Minimum 4 semaines pour que l'indicateur soit représentatif
+    const scoreChoix = n < 4 ? 50 : Math.round(100 * (1 - Math.min(ratioSubi * 2, 1)));
 
     // ── 5. SCORE PRÉVISIBILITÉ (Janssen & Nachreiner 2004) ───────
     // Mesure les variations soudaines semaine à semaine (delta > 4h = choc)
@@ -88,7 +90,8 @@ const M5_Wellbeing = {
       if(Math.abs(worked[i] - worked[i-1]) >= 4) nbVariationsSoudaines++;
     }
     const ratioVariations = n > 1 ? nbVariationsSoudaines / (n-1) : 0;
-    const scorePrevisibilite = Math.max(0, Math.round(
+    // Minimum 3 semaines pour Janssen (il faut au moins 2 transitions)
+    const scorePrevisibilite = n < 3 ? 50 : Math.max(0, Math.round(
       100 * (1 - Math.min(ratioVariations / JANSSEN_DELAI_SEUIL, 1))
     ));
 
@@ -96,11 +99,14 @@ const M5_Wellbeing = {
     // Gradient temps partiel choisi (protecteur) vs subi (risque dépression ×1.5)
     // Nuance par rapport à Voydanoff : on mesure l'intensité du subi, pas juste sa présence
     const ratioSubiBambra = semainesProchePlafond / n;
+    // Minimum 4 semaines pour Bambra (indicateur long terme)
     let scoreProtection;
-    if(ratioSubiBambra < 0.20) {
-      scoreProtection = 100; // temps partiel clairement choisi → protecteur
+    if(n < 4) {
+      scoreProtection = 50;
+    } else if(ratioSubiBambra < 0.20) {
+      scoreProtection = 100;
     } else if(ratioSubiBambra >= BAMBRA_SUBI_SEUIL) {
-      scoreProtection = 0;   // temps partiel subi chronique → risque ×1.5
+      scoreProtection = 0;
     } else {
       scoreProtection = Math.round(
         100 * (1 - (ratioSubiBambra - 0.20) / (BAMBRA_SUBI_SEUIL - 0.20))
@@ -152,6 +158,8 @@ const M5_Wellbeing = {
 
     return {
       available: true,
+      donneesLimitees: n < 4,
+      noteMin: n < 4 ? `Analyse basée sur ${n} semaine${n>1?'s':''} — certains indicateurs nécessitent 4+ semaines pour être fiables.` : null,
       scoreGlobal,
       niveau,
       emoji: emoji[niveau],

@@ -76,8 +76,8 @@ const MSGS_VACANCES = [
 ];
 
 const MSGS_PLAFOND = [
-  (n,cap)=>`🦊 ${n}Tu as dépassé le plafond autorisé par ta convention (${Math.round(cap*100)}%). Ces heures ouvrent peut-être des droits supplémentaires pour toi.`,
-  (n,cap)=>`🦊 ${n}Tes heures dépassent le plafond conventionnel (${Math.round(cap*100)}%). Garde une trace de ces semaines — elles peuvent ouvrir des droits.`,
+  (n,cap)=>`🦊 ${n}Tes heures dépassent le plafond maximum de ta convention (${Math.round(cap*100)}% du contrat). Ces heures peuvent ouvrir des droits supplémentaires.`,
+  (n,cap)=>`🦊 ${n}Tes heures dépassent ton contrat de travail (${Math.round(cap*100)}%). Garde une trace de ces semaines — elles peuvent ouvrir des droits.`,
 ];
 
 // ── Rotation intelligente ─────────────────────────────────────────
