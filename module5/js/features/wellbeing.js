@@ -16,6 +16,8 @@ const HIGGINS_VARIANCE_SEUIL  = 4.0;  // h — écart-type > 4h = imprévisibili
 const KARASEK_RATIO_OPTIMAL   = 0.10; // < 10% HC = zone verte
 const KARASEK_RATIO_TENSION   = 0.25; // > 25% HC = tension chronique
 const SONNENTAG_RECOVERY_MIN  = 0.30; // au moins 30% de semaines < contrat = récupération réelle
+const JANSSEN_DELAI_SEUIL     = 0.30; // > 30% semaines avec variation soudaine = risque stress aigu
+const BAMBRA_SUBI_SEUIL       = 0.60; // > 60% semaines proches plafond = temps partiel subi (risque dépression ×1.5)
 
 const M5_Wellbeing = {
 
@@ -79,17 +81,47 @@ const M5_Wellbeing = {
     const ratioSubi = semainesProchePlafond / n;
     const scoreChoix = Math.round(100 * (1 - Math.min(ratioSubi * 2, 1)));
 
-    // ── 5. SCORE GLOBAL ───────────────────────────────────────────
-    // Pondération selon les études :
-    // Stabilité 35% (impact cortisol immédiat — Higgins)
-    // Intensité 30% (tension chronique — Karasek)
-    // Récupération 20% (restauration psychologique — Sonnentag)
-    // Choix 15% (sens et autonomie — Voydanoff)
+    // ── 5. SCORE PRÉVISIBILITÉ (Janssen & Nachreiner 2004) ───────
+    // Mesure les variations soudaines semaine à semaine (delta > 4h = choc)
+    let nbVariationsSoudaines = 0;
+    for(let i=1; i<worked.length; i++) {
+      if(Math.abs(worked[i] - worked[i-1]) >= 4) nbVariationsSoudaines++;
+    }
+    const ratioVariations = n > 1 ? nbVariationsSoudaines / (n-1) : 0;
+    const scorePrevisibilite = Math.max(0, Math.round(
+      100 * (1 - Math.min(ratioVariations / JANSSEN_DELAI_SEUIL, 1))
+    ));
+
+    // ── 6. SCORE PROTECTION SANTÉ MENTALE (Bambra et al. 2008) ──
+    // Gradient temps partiel choisi (protecteur) vs subi (risque dépression ×1.5)
+    // Nuance par rapport à Voydanoff : on mesure l'intensité du subi, pas juste sa présence
+    const ratioSubiBambra = semainesProchePlafond / n;
+    let scoreProtection;
+    if(ratioSubiBambra < 0.20) {
+      scoreProtection = 100; // temps partiel clairement choisi → protecteur
+    } else if(ratioSubiBambra >= BAMBRA_SUBI_SEUIL) {
+      scoreProtection = 0;   // temps partiel subi chronique → risque ×1.5
+    } else {
+      scoreProtection = Math.round(
+        100 * (1 - (ratioSubiBambra - 0.20) / (BAMBRA_SUBI_SEUIL - 0.20))
+      );
+    }
+
+    // ── 7. SCORE GLOBAL ───────────────────────────────────────────
+    // Pondération révisée sur 6 études :
+    // Stabilité 25%      (Higgins — cortisol immédiat)
+    // Intensité 25%      (Karasek — tension chronique)
+    // Récupération 15%   (Sonnentag — restauration)
+    // Choix 10%          (Voydanoff — sens/autonomie)
+    // Prévisibilité 15%  (Janssen — stress aigu imprévisibilité)
+    // Protection 10%     (Bambra — santé mentale long terme)
     const scoreGlobal = Math.round(
-      scoreStabilite * 0.35 +
-      scoreIntensite * 0.30 +
-      scoreRecup     * 0.20 +
-      scoreChoix     * 0.15
+      scoreStabilite    * 0.25 +
+      scoreIntensite    * 0.25 +
+      scoreRecup        * 0.15 +
+      scoreChoix        * 0.10 +
+      scorePrevisibilite* 0.15 +
+      scoreProtection   * 0.10
     );
 
     // ── INTERPRÉTATIONS ──────────────────────────────────────────
@@ -102,17 +134,20 @@ const M5_Wellbeing = {
 
     // Identifier le facteur le plus dégradé
     const scores = [
-      { nom:'Stabilité', val:scoreStabilite, ref:'Higgins 2010' },
-      { nom:'Intensité', val:scoreIntensite, ref:'Karasek 1979' },
-      { nom:'Récupération', val:scoreRecup, ref:'Sonnentag 2003' },
-      { nom:'Choix', val:scoreChoix, ref:'Voydanoff 2005' },
+      { nom:'Stabilité',     val:scoreStabilite,     ref:'Higgins 2010' },
+      { nom:'Intensité',     val:scoreIntensite,     ref:'Karasek 1979' },
+      { nom:'Récupération',  val:scoreRecup,         ref:'Sonnentag 2003' },
+      { nom:'Choix',         val:scoreChoix,         ref:'Voydanoff 2005' },
+      { nom:'Prévisibilité', val:scorePrevisibilite, ref:'Janssen 2004' },
+      { nom:'Santé mentale', val:scoreProtection,    ref:'Bambra 2008' },
     ];
     const plusFaible = [...scores].sort((a,b)=>a.val-b.val)[0];
 
     // Messages contextuels
     const messages = this._buildMessages(
       scoreGlobal, niveau, ecartType, ratioMoyen,
-      ratioRecup, ratioSubi, contractH, mean
+      ratioRecup, ratioSubi, contractH, mean,
+      worked, semainesProchePlafond
     );
 
     return {
@@ -130,11 +165,14 @@ const M5_Wellbeing = {
         ratioMoyen: Math.round(ratioMoyen * 100),
         semainesLegeres,
         semainesProchePlafond,
+        nbVariationsSoudaines,
+        ratioVariations: Math.round(ratioVariations * 100),
+        ratioSubiBambra: Math.round(ratioSubiBambra * 100),
       }
     };
   },
 
-  _buildMessages(global, niveau, ecartType, ratioMoyen, ratioRecup, ratioSubi, contractH, mean) {
+  _buildMessages(global, niveau, ecartType, ratioMoyen, ratioRecup, ratioSubi, contractH, mean, worked=[], semainesProchePlafond=0) {
     const msgs = [];
 
     // Message principal
@@ -181,6 +219,34 @@ const M5_Wellbeing = {
         text:`Plus de la moitié de tes semaines approchent le plafond légal. Voydanoff montre que ce schéma caractérise un temps partiel subi, avec les mêmes effets négatifs sur la santé que le temps plein.` });
     }
 
+    // Janssen & Nachreiner 2004 — variations soudaines
+    const nbVar = worked.length > 1
+      ? worked.slice(1).filter((h,i) => Math.abs(h-worked[i]) >= 4).length : 0;
+    const ratioVar = worked.length > 1 ? nbVar/(worked.length-1) : 0;
+    if (ratioVar >= JANSSEN_DELAI_SEUIL) {
+      msgs.push({ type:'alerte', ref:'Janssen & Nachreiner 2004',
+        text:`${Math.round(ratioVar*100)}% de tes semaines présentent une variation soudaine de 4h ou plus. Janssen montre que ces chocs horaires déclenchent un stress aigu comparable à une urgence, même sur un temps partiel.` });
+    } else if (ratioVar > 0.10) {
+      msgs.push({ type:'warn', ref:'Janssen & Nachreiner 2004',
+        text:`Quelques variations horaires soudaines détectées (${nbVar} semaine${nbVar>1?'s':''}). À surveiller si ça devient régulier.` });
+    } else {
+      msgs.push({ type:'ok', ref:'Janssen & Nachreiner 2004',
+        text:`Tes heures évoluent progressivement d'une semaine à l'autre — prévisibilité protectrice selon Janssen et al.` });
+    }
+
+    // Bambra et al. 2008 — santé mentale
+    const ratioSubiB = semainesProchePlafond / Math.max(1, worked.length);
+    if (ratioSubiB >= BAMBRA_SUBI_SEUIL) {
+      msgs.push({ type:'critique', ref:'Bambra et al. 2008',
+        text:`Temps partiel subi chronique. La méta-analyse Bambra montre un risque de dépression 1,5× plus élevé dans cette situation. Ce signal mérite attention sur le long terme.` });
+    } else if (ratioSubiB >= 0.30) {
+      msgs.push({ type:'warn', ref:'Bambra et al. 2008',
+        text:`Tendance vers un temps partiel subi (${Math.round(ratioSubiB*100)}% de semaines proches du plafond). Bambra identifie cette zone comme facteur de risque pour la santé mentale.` });
+    } else {
+      msgs.push({ type:'ok', ref:'Bambra et al. 2008',
+        text:`Ton temps partiel présente les caractéristiques d'un temps partiel choisi — configuration protectrice pour la santé mentale selon Bambra et al.` });
+    }
+
     return msgs;
   },
 
@@ -191,10 +257,14 @@ const M5_Wellbeing = {
     const n = name ? name + ' ! ' : '';
     if (!result.available) return null;
     const { niveau, plusFaible, stats } = result;
-    if (niveau === 'bon') return `🦊 ${n}Ton bien-être au travail est bon cette période. Continue comme ça !`;
-    if (niveau === 'moyen') return `🦊 ${n}Bien-être moyen — le point à surveiller : ${plusFaible.nom.toLowerCase()} (${plusFaible.ref}).`;
-    if (niveau === 'tendu') return `🦊 ${n}Ton rythme est sous tension. Tes heures varient beaucoup (${stats.ecartType}h d'écart). C'est ce qui fatigue le plus selon Higgins 2010.`;
-    return `🦊 ${n}Signal d'alerte bien-être. Ton temps partiel ressemble à un temps plein non déclaré. Garde cet historique.`;
+    if (niveau === 'bon') return `🦊 ${n}Bien-être au travail : bon. Rythme stable, récupération suffisante — continue comme ça !`;
+    if (niveau === 'moyen') {
+      if(plusFaible.ref==='Janssen 2004') return `🦊 ${n}Tes horaires changent beaucoup d'une semaine à l'autre. Ces variations soudaines créent un stress aigu même à temps partiel (Janssen 2004).`;
+      if(plusFaible.ref==='Bambra 2008') return `🦊 ${n}Ton temps partiel tend vers le subi. Bambra 2008 montre que ça peut impacter ta santé mentale sur le long terme.`;
+      return `🦊 ${n}Bien-être moyen — point à surveiller : ${plusFaible.nom.toLowerCase()} (${plusFaible.ref}).`;
+    }
+    if (niveau === 'tendu') return `🦊 ${n}Rythme sous tension : ${stats.ecartType}h d'écart-type et ${stats.ratioVariations}% de semaines avec variation soudaine. Higgins 2010 et Janssen 2004 identifient ce profil comme à risque.`;
+    return `🦊 ${n}Signal critique bien-être. Ton temps partiel ressemble à un temps plein non déclaré — risque dépression ×1.5 selon Bambra 2008. Garde cet historique.`;
   }
 };
 

@@ -146,6 +146,49 @@ const GLOSSAIRE = [
     exemple: 'Ton collègue à temps plein gagne 12€/h → tu dois toi aussi gagner 12€/h (pas moins sous prétexte que tu es à temps partiel).',
     tags: ['égalité','discrimination','temps plein','droits']
   },
+  // ── ÉTUDES SCIENTIFIQUES BIEN-ÊTRE ─────────────────────────────
+  {
+    terme: 'Higgins et al. 2010 — Imprévisibilité horaire',
+    art: 'Étude scientifique',
+    def: 'Higgins et ses collègues ont mesuré le cortisol (hormone du stress) chez des salariés à temps partiel selon la variabilité de leurs horaires. Résultat : un écart-type supérieur à 4h d\'une semaine à l\'autre produit un pic de cortisol comparable à celui observé chez des salariés en surmenage à temps plein. L\'imprévisibilité horaire est donc biologiquement aussi stressante que la surcharge, même sur un temps partiel.',
+    exemple: 'Tu travailles 20h une semaine, 26h la suivante, 19h après — cette variation crée un stress aigu mesurable, indépendamment du nombre d\'heures total.',
+    tags: ['stress','cortisol','imprévisibilité','horaires','biologie']
+  },
+  {
+    terme: 'Karasek 1979 — Modèle Demande-Contrôle',
+    art: 'Étude scientifique',
+    def: 'Robert Karasek a développé le modèle "Job Demand-Control" qui prédit le niveau de tension au travail selon deux axes : la demande (charge de travail) et le contrôle (autonomie). Les salariés à temps partiel avec peu de contrôle sur leurs horaires et une demande élevée (heures complémentaires imposées) se retrouvent dans la zone de "tension chronique" — le quadrant le plus à risque pour la santé cardiovasculaire.',
+    exemple: 'Une caissière à 20h qui se voit régulièrement imposer 6h complémentaires sans préavis cumule forte demande + faible contrôle = zone rouge Karasek.',
+    tags: ['stress','tension','autonomie','contrôle','cardiovasculaire','Karasek']
+  },
+  {
+    terme: 'Sonnentag 2003 — Récupération psychologique',
+    art: 'Étude scientifique',
+    def: 'Sabine Sonnentag a montré que la récupération psychologique après le travail nécessite des périodes de "détachement" — des jours ou semaines où la charge mentale liée au travail est réellement absente. Pour un temps partiel, les semaines travaillées sous le contrat sont des périodes de récupération réelle. En dessous de 30% de telles semaines dans l\'année, la restauration psychologique est insuffisante pour maintenir le bien-être.',
+    exemple: 'Si sur 12 semaines, seulement 2 sont sous tes heures contractuelles, tu n\'as pas assez de vraies périodes légères pour récupérer.',
+    tags: ['récupération','repos','santé mentale','détachement','Sonnentag']
+  },
+  {
+    terme: 'Voydanoff 2005 — Temps partiel choisi vs subi',
+    art: 'Étude scientifique',
+    def: 'Patricia Voydanoff a étudié l\'impact du temps partiel sur l\'équilibre travail-famille. Sa conclusion principale : le temps partiel choisi (souhaité par le salarié) est protecteur pour la santé mentale et améliore la satisfaction de vie. Le temps partiel subi (imposé par l\'employeur ou par défaut d\'emploi à temps plein) produit les mêmes effets négatifs sur la santé que le temps plein chargé, sans les avantages économiques.',
+    exemple: 'Si tu approches systématiquement le plafond légal d\'heures complémentaires, ton temps partiel est de facto subi — Mizuki le détecte avec le score "Choix".',
+    tags: ['choix','subi','équilibre','famille','santé mentale','Voydanoff']
+  },
+  {
+    terme: 'Janssen & Nachreiner 2004 — Stress aigu des variations soudaines',
+    art: 'Étude scientifique',
+    def: 'Janssen et Nachreiner ont étudié l\'impact physiologique des variations horaires brutales chez les travailleurs à temps partiel. Un changement de planning de 4h ou plus entre deux semaines consécutives déclenche une réponse de stress aigu (activation du système nerveux sympathique) comparable à une situation d\'urgence professionnelle. Ce stress est indépendant du nombre total d\'heures — c\'est le choc de la variation qui est nocif.',
+    exemple: '20h cette semaine, 26h la semaine prochaine → choc de 6h → réponse stress aigu selon Janssen. C\'est pourquoi le délai de prévenance de 3 jours est une protection biologique autant que légale.',
+    tags: ['stress','variations','imprévisibilité','prévenance','aigu','Janssen']
+  },
+  {
+    terme: 'Bambra et al. 2008 — Temps partiel et santé mentale',
+    art: 'Étude scientifique',
+    def: 'Clare Bambra et ses collègues ont réalisé une méta-analyse de 23 études sur le lien entre temps partiel et santé mentale. Résultat principal : le temps partiel subi chronique (travail régulièrement proche du plafond légal sur 6 mois ou plus) est associé à un risque de dépression 1,5 fois plus élevé que le temps plein. À l\'inverse, le temps partiel clairement choisi est protecteur — il réduit l\'anxiété et améliore le bien-être général. La frontière entre les deux se situe autour de 60% de semaines proches du plafond.',
+    exemple: 'Si sur 20 semaines, 13 ou plus approchent ton plafond légal d\'heures complémentaires → zone critique Bambra. Mizuki t\'en alerte dans le score "Santé mentale".',
+    tags: ['dépression','santé mentale','subi','choisi','méta-analyse','Bambra']
+  },
 ];
 
 const GLOSSAIRE_API = {
