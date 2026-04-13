@@ -1218,6 +1218,142 @@ function autofillClotures() {
   }
 }
 
+
+// ── WIZARD BIENVENUE ─────────────────────────────────────────────
+let _wizMode='HEBDO';
+let _wizNeutraliseFeries=true;
+let _wizCCN=null; // {i, n, s, cap, ...}
+
+function wizNext(step) {
+  // Validation avant de passer
+  if(step===3) {
+    const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
+    if(!h||h<=0||h>=35) { toast('Saisis tes heures contractuelles (ex: 25)','error'); return; }
+  }
+  _wizGo(step);
+}
+function wizPrev(step) { _wizGo(step); }
+function wizSkip() { wizFinish(); }
+
+function _wizGo(step) {
+  document.querySelectorAll('.wiz-step').forEach(s=>s.classList.remove('active'));
+  const target=document.getElementById('wStep'+step);
+  if(target) target.classList.add('active');
+  const total=5;
+  const pct=Math.round((step/total)*100);
+  const bar=document.getElementById('wiz-progress-bar');
+  const lbl=document.getElementById('wiz-step-label');
+  if(bar) bar.style.width=pct+'%';
+  if(lbl) lbl.textContent=`Étape ${step} sur ${total}`;
+  if(step===5) _wizUpdateSummary();
+  // Scroll haut
+  window.scrollTo(0,0);
+}
+
+function wizUpdateHoursPreview() {
+  const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
+  const el=document.getElementById('wiz-hours-preview'); if(!el) return;
+  if(!h||h<=0) { el.textContent=''; return; }
+  const mensuel=(h*52/12).toFixed(1);
+  el.textContent=`soit environ ${mensuel}h/mois`;
+}
+
+function wizSearchCCN(term) {
+  const res=document.getElementById('wiz-ccn-results'); if(!res) return;
+  if(!term||term.length<2) { res.style.display='none'; return; }
+  if(typeof CCN_PARTIEL_API==='undefined') return;
+  const results=CCN_PARTIEL_API.search(term);
+  if(!results.length) { res.style.display='none'; return; }
+  res.style.display='block';
+  res.innerHTML=results.slice(0,8).map(ccn=>`
+    <div onclick="wizPickCCN(${ccn.i},'${ccn.n.replace(/'/g,"\'")}','${ccn.s}',${ccn.cap})"
+      style="padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--miz-border);">
+      <div style="font-weight:600;">${ccn.n}</div>
+      <div style="font-size:11px;color:var(--miz-text3);">${ccn.s} — plafond <strong>${ccn.cap===0.33?'33%':'10%'}</strong></div>
+    </div>`).join('');
+}
+
+function wizPickCCN(idcc, nom, secteur, cap) {
+  _wizCCN={i:idcc, n:nom, s:secteur, cap};
+  const res=document.getElementById('wiz-ccn-results');
+  const sel=document.getElementById('wiz-ccn-selected');
+  const inp=document.getElementById('wiz-ccn-search');
+  if(res) res.style.display='none';
+  if(inp) inp.value=nom;
+  if(sel) {
+    sel.style.display='block';
+    sel.innerHTML=`<strong>${nom}</strong><br>
+      <span style="font-size:11px;color:var(--miz-text3);">Plafond HC : <strong>${cap===0.33?'33% (accord de branche)':'10% (droit commun)'}</strong></span>`;
+  }
+}
+
+function wizSelectDC() {
+  _wizCCN=null;
+  const inp=document.getElementById('wiz-ccn-search');
+  const sel=document.getElementById('wiz-ccn-selected');
+  const res=document.getElementById('wiz-ccn-results');
+  if(inp) inp.value='';
+  if(res) res.style.display='none';
+  if(sel) { sel.style.display='block'; sel.innerHTML='<strong>Droit commun</strong><br><span style="font-size:11px;color:var(--miz-text3);">Plafond HC : 10%</span>'; }
+  wizNext(4);
+}
+
+function wizSelectMode(mode) {
+  _wizMode=mode;
+  ['hebdo','mensuel','annuel'].forEach(m=>{
+    const el=document.getElementById('wiz-mode-'+m);
+    if(el) el.classList.toggle('active', m.toUpperCase()===mode);
+  });
+}
+
+function wizSelectFeries(val) {
+  _wizNeutraliseFeries=val;
+  document.getElementById('wiz-feries-oui')?.classList.toggle('active', val);
+  document.getElementById('wiz-feries-non')?.classList.toggle('active', !val);
+  _wizUpdateSummary();
+}
+
+function _wizUpdateSummary() {
+  const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
+  const rate=parseFloat(document.getElementById('wiz-rate')?.value||'0');
+  const modeLbls={HEBDO:'Par semaine',MENSUEL:'Par mois',ANNUEL:"Sur l'année"};
+  _set('wiz-sum-hours', `⏱️ Contrat : <strong>${h}h/semaine</strong>${rate>0?' · '+rate.toFixed(2)+' €/h':''}`);
+  _set('wiz-sum-ccn',   `🏢 CCN : <strong>${_wizCCN?_wizCCN.n+' ('+Math.round(_wizCCN.cap*100)+'%)':'Droit commun (10%)'}</strong>`);
+  _set('wiz-sum-mode',  `📅 Mode : <strong>${modeLbls[_wizMode]||_wizMode}</strong>`);
+  _set('wiz-sum-feries',`🎌 Fériés : <strong>${_wizNeutraliseFeries?"Neutralisés (Art. L3121-29)":"Dans l'assiette (Cass. 2012)"}</strong>`);
+}
+function _set(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
+
+function wizFinish() {
+  const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
+  if(!h||h<=0||h>=35) { _wizGo(2); toast('Saisis tes heures contractuelles','error'); return; }
+  const rate=parseFloat(document.getElementById('wiz-rate')?.value||'0');
+  const name=(document.getElementById('wiz-name')?.value||'').trim();
+  const startDay=parseInt(document.getElementById('wiz-start-day')?.value||'0');
+  const ccnRules=_wizCCN?CCN_PARTIEL_API.getRules(_wizCCN.i):{cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,nom:'Droit commun'};
+
+  M5_Contract.save({
+    hoursBase:h,
+    hourlyRate:rate||0,
+    idcc:_wizCCN?_wizCCN.i:0,
+    ccnNom:_wizCCN?_wizCCN.n:'Droit commun',
+    cap:ccnRules.cap||0.10,
+    rate1:ccnRules.rate1||0.10,
+    rate2:ccnRules.rate2||0.25,
+    threshold:ccnRules.threshold||0.10,
+    weekStartDay:startDay,
+    exerciceStart:'',
+    cloturesDates:{},
+    modeCalcul:_wizMode,
+    neutraliseFeries:_wizNeutraliseFeries,
+  });
+  if(name) localStorage.setItem('M5_USER_NAME', name);
+  calendarMonday=M5_getCurrentMonday();
+  Mizuki.clearCache();
+  toast('Bienvenue '+(name||'')+'! Mizuki est prête 🦊','success');
+  refreshUI();
+}
+
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
@@ -1236,6 +1372,11 @@ window.toggleAvenat=toggleAvenat;
 window.importFeriesAPI=importFeriesAPI;
 window.autofillClotures=autofillClotures;
 window.calChangeYear=calChangeYear;
+window.wizNext=wizNext; window.wizPrev=wizPrev; window.wizSkip=wizSkip;
+window.wizSearchCCN=wizSearchCCN; window.wizPickCCN=wizPickCCN;
+window.wizSelectDC=wizSelectDC; window.wizSelectMode=wizSelectMode;
+window.wizSelectFeries=wizSelectFeries; window.wizFinish=wizFinish;
+window.wizUpdateHoursPreview=wizUpdateHoursPreview;
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
