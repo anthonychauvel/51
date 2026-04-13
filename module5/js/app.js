@@ -142,15 +142,9 @@ function renderCalendar() {
 
   // Badge semaines sauvegardées
   const totalSaved=M5_DataStore.getWeeksSorted(year).length;
-  let badge=document.getElementById('cal-saved-badge');
-  if(!badge){
-    badge=document.createElement('span');
-    badge.id='cal-saved-badge';
-    badge.className='m5-badge-saved';
-    const calBody=document.querySelector('#calendar-grid');
-    if(calBody&&calBody.parentNode) calBody.parentNode.insertAdjacentElement('afterend',badge);
-  }
-  badge.textContent=totalSaved>0?`${totalSaved} sem. sauvegardée${totalSaved>1?'s':''}`:'';
+  // Badge semaines sauvegardées — élément déjà dans le DOM
+  const badge=document.getElementById('cal-saved-badge');
+  if(badge) badge.textContent=totalSaved>0?`${totalSaved} sem. sauvegardée${totalSaved>1?'s':''}`:''
 
   // Noms des jours dans l'ordre de la semaine configurée
   const sd=M5_Contract.get().weekStartDay||0;
@@ -567,13 +561,16 @@ function renderQuickStats(analysis) {
     </div>`;
   } else if(mode==='MENSUEL'&&mensuelResult) {
     const delta=mensuelResult.delta;
+    // Delta négatif = sous le seuil = normal, pas une anomalie
+    const deltaLabel=delta>0?`+${delta.toFixed(1)}h HC`:delta===0?'✓ Équilibré':'Sous le seuil';
+    const deltaCls=delta>0?'warn':'ok';
     html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
       <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalWorked}h</div><div class="m5-stat-label">Heures ce mois</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${delta>0?'warn':'ok'}">${delta>=0?'+':''}${delta.toFixed(1)}h</div><div class="m5-stat-label">vs seuil mensuel</div></div>
-      <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${deltaCls}">${deltaLabel}</div><div class="m5-stat-label">vs seuil mensuel</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${mensuelResult.totalCompH>0?'warn':'ok'}">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
     </div>
     <div class="m5-alert info" style="font-size:12px;padding:6px 10px;">
-      <span>📊</span><div>Seuil mensuel : <strong>${mensuelResult.seuilMensuel}h</strong> (${contract.hoursBase}h × 52 / 12)</div>
+      <span>📊</span><div>Seuil mensuel : <strong>${mensuelResult.seuilMensuel}h</strong> = ${contract.hoursBase}h × 52 / 12</div>
     </div>`;
   } else if(annualStats) {
     html+=`<div class="m5-stat-grid">
@@ -683,32 +680,37 @@ function renderPeriodeNav() {
   const MOIS_COURTS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
   const now=new Date();
 
+  // Mois affiché dans le calendrier courant
+  const calDate=new Date(calendarMonday+'T12:00:00');
+  const calMonth=calDate.getMonth(); // 0-based
+  const calYear=calDate.getFullYear();
+
   if(mode==='HEBDO') {
-    // Chips = semaines sauvegardées (5 dernières) + semaine courante
     const allWeeks=M5_DataStore.getWeeksSorted(year).slice(-6).reverse();
-    chips.innerHTML=`<button class="m5-period-chip active" onclick="calToday()">Auj.</button>`+
+    chips.innerHTML=`<button class="m5-period-chip${calendarMonday===M5_getCurrentMonday()?'active':''}" onclick="calToday()">Auj.</button>`+
       allWeeks.map(w=>{
         const d=new Date(w.monday+'T12:00:00');
-        return `<button class="m5-period-chip" onclick="goToWeek('${w.monday}')">
+        const isActive=w.monday===calendarMonday;
+        return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToWeek('${w.monday}')">
           ${d.getDate()}/${d.getMonth()+1}
         </button>`;
       }).join('');
   } else if(mode==='MENSUEL') {
-    // Chips = mois de l'année courante
     chips.innerHTML=MOIS_COURTS.map((m,i)=>{
-      const isCur=(i===now.getMonth()&&parseInt(year)===now.getFullYear());
-      return `<button class="m5-period-chip${isCur?' active':''}" onclick="goToMonth(${year},${i+1})">${m}</button>`;
+      // Active = le mois affiché dans le calendrier courant
+      const isActive=(i===calMonth && calYear===parseInt(year));
+      return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToMonth(${year},${i+1})">${m}</button>`;
     }).join('');
   } else {
-    // ANNUEL — chips = trimestres
+    const calQ=Math.floor(calMonth/3);
     chips.innerHTML=['T1','T2','T3','T4'].map((t,i)=>{
-      return `<button class="m5-period-chip" onclick="goToMonth(${year},${i*3+1})">${t} ${year}</button>`;
+      const isActive=(i===calQ && calYear===parseInt(year));
+      return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToMonth(${year},${i*3+1})">${t}</button>`;
     }).join('');
   }
 }
 
 function goToMonth(year, month) {
-  // Aller à la première semaine du mois/trimestre
   const d=new Date(year, month-1, 1);
   const target=M5_weekStartOf(
     d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'),
@@ -718,6 +720,11 @@ function goToMonth(year, month) {
   if(String(year)!==M5_DataStore.getYear()) {
     M5_DataStore.setYear(String(year));
   }
+  // Mettre à jour la chip active immédiatement
+  document.querySelectorAll('.m5-period-chip').forEach(b=>b.classList.remove('active'));
+  const chips=document.querySelectorAll('#periode-chips .m5-period-chip');
+  // index = month - 1 pour le mode mensuel
+  if(chips[month-1]) chips[month-1].classList.add('active');
   refreshUI();
 }
 
