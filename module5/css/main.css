@@ -864,3 +864,23 @@ body {
   background: var(--miz-accent-strong, #ede7f6);
   border-color: var(--miz-primary);
 }
+
+/* ── WIZARD BIENVENUE ────────────────────────────────────────────── */
+.wiz-step { display:none; padding-bottom:24px; }
+.wiz-step.active { display:block; }
+
+.wiz-radio-card {
+  display:block;
+  border:2px solid var(--miz-border);
+  border-radius:12px;
+  padding:12px 14px;
+  cursor:pointer;
+  transition:all .2s;
+  background:var(--miz-bg);
+}
+.wiz-radio-card.active,
+.wiz-radio-card:has(input:checked) {
+  border-color:var(--miz-primary);
+  background:var(--miz-accent);
+}
+.wiz-radio-card:active { transform:scale(0.98); }
