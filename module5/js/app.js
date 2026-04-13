@@ -52,7 +52,7 @@ function runAnalysis() {
     } else {
       weekResult=CalcEngine.calcWeek(
         contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
-        { feriesMap, neutraliseFeries:contract.neutraliseFeries!==false, mondayStr:monday }
+        { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday }
       );
     }
   }
@@ -170,7 +170,11 @@ function renderCalendar() {
     const isFerie=!!(  _feriesMap&&_feriesMap[d.dk]&&!isWeekend);
     const worked=d.worked;
     const contract_daily=contract.hoursBase/5;
-    let cellClass='m5-cal-day';
+    // Coloration période mensuelle
+    const _dt2=new Date(d.dk+'T12:00:00');
+    const _monthIdx=_dt2.getMonth();
+    const _monthClass='m5-cal-month-'+ (_monthIdx%2===0?'a':'b');
+    let cellClass='m5-cal-day '+_monthClass;
     let hoursHtml='<span class="m5-cal-day-empty">—</span>';
     if(isFerie&&!isVac) {
       cellClass+=' ferie';
@@ -336,6 +340,7 @@ function saveDaySaisie() {
   closeModal('modal-day-saisie');
   toast('Journée enregistrée ✓','success');
   refreshUI();
+  if(currentSection==='stats') renderStats();
 }
 
 function deleteDaySaisie() {
@@ -461,6 +466,7 @@ function saveWeeklySaisie() {
   closeModal('modal-week-saisie');
   toast('Semaine enregistrée ✓','success');
   refreshUI();
+  if(currentSection==='stats') renderStats();
 }
 
 function deleteWeeklySaisie() {
@@ -690,13 +696,14 @@ function openContractModal() {
   const startDayEl=document.getElementById('contract-start-day');
   if(startDayEl) startDayEl.value=String(c.weekStartDay||0);
   const exEl=document.getElementById('contract-exercice');
-  if(exEl) exEl.value=c.exerciceStart||'01/01';
-  const clEl=document.getElementById('contract-cloture');
-  if(clEl) clEl.value=String(c.clotureJour||0);
+  if(exEl) exEl.value=c.exerciceStart||'';
   const modeEl=document.getElementById('contract-mode');
   if(modeEl) modeEl.value=c.modeCalcul||'HEBDO';
   const feriesEl=document.getElementById('contract-feries');
   if(feriesEl) feriesEl.checked=(c.neutraliseFeries!==false);
+  toggleFeriesLabel(c.neutraliseFeries!==false);
+  // Générer la grille des 12 clôtures
+  buildCloturesGrid(c.cloturesDates||{});
   // Afficher statut dernier import
   const feriesStatus=document.getElementById('feries-import-status');
   if(feriesStatus) {
@@ -721,11 +728,18 @@ function saveContract() {
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
   const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{rate1:0.10,rate2:0.25,threshold:0.10};
   const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
-  const exerciceStart=document.getElementById('contract-exercice')?.value||'01/01';
-  const clotureJour=parseInt(document.getElementById('contract-cloture')?.value||'0');
+  const exerciceStart=document.getElementById('contract-exercice')?.value||'';
   const modeCalcul=document.getElementById('contract-mode')?.value||'HEBDO';
   const neutraliseFeries=document.getElementById('contract-feries')?.checked!==false;
-  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,weekStartDay,exerciceStart,clotureJour,modeCalcul,neutraliseFeries});
+  // Récupérer les 12 clôtures
+  const cloturesDates={};
+  for(let m=1;m<=12;m++){
+    const el=document.getElementById('cloture-m'+m);
+    if(el&&el.value) cloturesDates[m]=el.value;
+  }
+  M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,
+    rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,
+    weekStartDay,exerciceStart,cloturesDates,modeCalcul,neutraliseFeries});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
   // Recalibrer le calendrier avec le nouveau début de semaine
@@ -735,18 +749,69 @@ function saveContract() {
   refreshUI();
 }
 
-function exportPDF() {
+function openPDFModal() {
+  const year=M5_DataStore.getYear();
+  // Préremplir mois courant
+  const now=new Date();
+  document.getElementById('pdf-mois').value=String(now.getMonth()+1);
+  document.getElementById('pdf-date-debut').value=year+'-01-01';
+  document.getElementById('pdf-date-fin').value=year+'-12-31';
+  updatePDFPreview();
+  openModal('modal-pdf');
+}
+
+function updatePDFPreview() {
+  const periode=document.getElementById('pdf-periode')?.value;
+  const mensuelOpts=document.getElementById('pdf-mensuel-opts');
+  const customOpts=document.getElementById('pdf-custom-opts');
+  const info=document.getElementById('pdf-preview-info');
+  if(mensuelOpts) mensuelOpts.style.display=periode==='MENSUEL'?'block':'none';
+  if(customOpts)  customOpts.style.display=periode==='CUSTOM'?'block':'none';
+  const year=M5_DataStore.getYear();
+  const allWeeks=M5_DataStore.getWeeksSorted(year);
+  const weeks=filterWeeksByPeriode(allWeeks, periode, year);
+  if(info) info.textContent=`${weeks.length} semaine(s) dans la période sélectionnée`;
+}
+
+function filterWeeksByPeriode(allWeeks, periode, year) {
+  if(periode==='MENSUEL') {
+    const mois=parseInt(document.getElementById('pdf-mois')?.value||'1');
+    const prefix=year+'-'+String(mois).padStart(2,'0');
+    return allWeeks.filter(w=>w.monday.startsWith(prefix)||
+      (w.monday.slice(0,7)<prefix&&new Date(w.monday+'T12:00:00').getMonth()+1===mois));
+  }
+  if(periode==='CUSTOM') {
+    const debut=document.getElementById('pdf-date-debut')?.value||'';
+    const fin=document.getElementById('pdf-date-fin')?.value||'';
+    return allWeeks.filter(w=>(!debut||w.monday>=debut)&&(!fin||w.monday<=fin));
+  }
+  return allWeeks; // ANNUEL
+}
+
+function launchPDF() {
   try {
     const contract=M5_Contract.get();
     const year=M5_DataStore.getYear();
+    const periode=document.getElementById('pdf-periode')?.value||'ANNUEL';
+    const allWeeks=M5_DataStore.getWeeksSorted(year);
+    const weeks=filterWeeksByPeriode(allWeeks, periode, year);
     const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
-    const weeks=M5_DataStore.getWeeksSorted(year);
     const analysis=currentAnalysis||runAnalysis();
     const userName=localStorage.getItem('M5_USER_NAME')||'';
-    const contractWithName={...contract, userName};
-    M5_PdfReport.generate(contractWithName, stats, weeks, analysis);
-  } catch(e) { toast('Erreur PDF.','error'); console.error(e); }
+    const periodeLabel=periode==='MENSUEL'
+      ? ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][parseInt(document.getElementById('pdf-mois')?.value||'1')-1]+' '+year
+      : periode==='CUSTOM'
+        ? (document.getElementById('pdf-date-debut')?.value||'')+' → '+(document.getElementById('pdf-date-fin')?.value||'')
+        : String(year);
+    const contractWithName={...contract, userName, periodeLabel, periodeMode:periode};
+    closeModal('modal-pdf');
+    setTimeout(()=>{
+      M5_PdfReport.generate(contractWithName, stats, weeks, analysis);
+    }, 200);
+  } catch(e) { toast('Erreur PDF : '+e.message,'error'); console.error(e); }
 }
+
+function exportPDF() { openPDFModal(); }
 
 function initCCNSelect() {
   // Recherche dynamique — pas de select statique avec 422 entrées
@@ -1027,6 +1092,35 @@ function getFeriesImportStatus() {
   return `Dernier import : ${d.toLocaleDateString('fr-FR')} à ${d.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`;
 }
 
+
+// ── Grille clôtures de paie 12 mois ──────────────────────────────
+const MOIS_FR=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
+
+function buildCloturesGrid(stored) {
+  const grid=document.getElementById('clotures-grid'); if(!grid) return;
+  const year=new Date().getFullYear();
+  grid.innerHTML=MOIS_FR.map((m,i)=>{
+    const num=i+1;
+    const val=stored[num]||'';
+    return `<div style="display:flex;flex-direction:column;gap:2px;">
+      <label style="font-size:11px;color:var(--miz-text3);font-weight:600;">${m}</label>
+      <input type="date" id="cloture-m${num}" class="m5-input"
+        style="font-size:12px;padding:4px 6px;" value="${val}">
+    </div>`;
+  }).join('');
+}
+
+function autofillClotures() {
+  const year=new Date().getFullYear();
+  for(let m=1;m<=12;m++){
+    const el=document.getElementById('cloture-m'+m); if(!el) continue;
+    // Dernier jour du mois
+    const last=new Date(year,m,0);
+    const dk=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
+    el.value=dk;
+  }
+}
+
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
@@ -1043,12 +1137,17 @@ window.saveDaySaisieOrClose=saveDaySaisieOrClose;
 window.saveWeeklySaisieOrClose=saveWeeklySaisieOrClose;
 window.toggleAvenat=toggleAvenat;
 window.importFeriesAPI=importFeriesAPI;
+window.autofillClotures=autofillClotures;
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
 window.checkPrevenance=checkPrevenance;
 window.openContractModal=openContractModal; window.saveContract=saveContract;
-window.exportPDF=exportPDF; window.M5_toast=toast;
+window.exportPDF=exportPDF;
+window.openPDFModal=openPDFModal;
+window.launchPDF=launchPDF;
+window.updatePDFPreview=updatePDFPreview;
+window.M5_toast=toast;
 window.filterGlossaire=filterGlossaire;
 window.toggleGlos=toggleGlos;
 
