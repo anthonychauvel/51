@@ -604,9 +604,17 @@ function renderWellbeing(analysis) {
     return;
   }
 
+  // Note données limitées
+  let html='';
+  if(wb.donneesLimitees && wb.noteMin) {
+    html+=`<div style="background:#fff8e1;border:1px solid #f9a825;border-radius:8px;padding:8px 10px;font-size:12px;color:#795548;margin-bottom:10px;">
+      ℹ️ ${wb.noteMin}
+    </div>`;
+  }
+
   // Barre score global
   const col=wb.niveau==='bon'?'#4caf50':wb.niveau==='moyen'?'#ff9800':wb.niveau==='tendu'?'#ff5722':'#c62828';
-  let html=`
+  html+=`
     <div style="text-align:center;padding:12px 0 8px;">
       <div style="font-size:42px;font-weight:900;color:${col};">${wb.scoreGlobal}</div>
       <div style="font-size:13px;color:var(--miz-text3);margin-bottom:4px;">Score bien-être / 100</div>
@@ -636,7 +644,7 @@ function renderWellbeing(analysis) {
     <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">`;
 
   wb.messages.forEach(m=>{
-    const icon={ ok:'✅', info:'ℹ️', warn:'⚠️', alerte:'🔴', critique:'🚨' }[m.type]||'•';
+    const icon={ ok:'✅', info:'ℹ️', warn:'⚠️', alerte:'🔴', critique:'🔴' }[m.type]||'•';
     const bg={ ok:'var(--miz-bg2)', info:'var(--miz-accent)', warn:'#fff3e0', alerte:'#fce4ec', critique:'#ffebee' }[m.type]||'var(--miz-bg2)';
     html+=`<div style="background:${bg};border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;display:flex;gap:8px;align-items:flex-start;">
       <span>${icon}</span>
