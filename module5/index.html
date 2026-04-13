@@ -292,6 +292,51 @@
   </div>
 </div>
 
+<!-- Modale PDF période -->
+<div class="m5-modal-overlay" id="modal-pdf" onclick="closeModal('modal-pdf')">
+  <div class="m5-modal-box" onclick="event.stopPropagation()">
+    <div class="m5-modal-title">📄 Exporter en PDF</div>
+    <div class="m5-input-group">
+      <label class="m5-label">Période</label>
+      <select class="m5-select" id="pdf-periode" onchange="updatePDFPreview()">
+        <option value="ANNUEL">Année complète</option>
+        <option value="MENSUEL">Mois spécifique</option>
+        <option value="CUSTOM">Période personnalisée</option>
+      </select>
+    </div>
+    <div id="pdf-mensuel-opts" style="display:none;">
+      <div class="m5-input-group">
+        <label class="m5-label">Mois</label>
+        <select class="m5-select" id="pdf-mois">
+          <option value="1">Janvier</option><option value="2">Février</option>
+          <option value="3">Mars</option><option value="4">Avril</option>
+          <option value="5">Mai</option><option value="6">Juin</option>
+          <option value="7">Juillet</option><option value="8">Août</option>
+          <option value="9">Septembre</option><option value="10">Octobre</option>
+          <option value="11">Novembre</option><option value="12">Décembre</option>
+        </select>
+      </div>
+    </div>
+    <div id="pdf-custom-opts" style="display:none;">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div class="m5-input-group">
+          <label class="m5-label">Du</label>
+          <input type="date" class="m5-input" id="pdf-date-debut">
+        </div>
+        <div class="m5-input-group">
+          <label class="m5-label">Au</label>
+          <input type="date" class="m5-input" id="pdf-date-fin">
+        </div>
+      </div>
+    </div>
+    <div id="pdf-preview-info" style="font-size:12px;color:var(--miz-text3);padding:6px 0;"></div>
+    <div style="display:flex;gap:8px;margin-top:8px;">
+      <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:0 0 auto" onclick="closeModal('modal-pdf')">Annuler</button>
+      <button class="m5-btn m5-btn-primary" style="flex:1" onclick="launchPDF()">📄 Générer le PDF</button>
+    </div>
+  </div>
+</div>
+
 <!-- Modale Mizuki -->
 <div class="m5-modal-backdrop" id="modal-mizuki" onclick="if(event.target===this)closeModal('modal-mizuki')">
   <div class="m5-modal">
@@ -334,28 +379,19 @@
       <div id="contract-ccn-selected" style="font-size:12px;color:var(--miz-primary);margin-top:4px;"></div>
     </div>
     <div class="m5-input-group">
-      <label class="m5-label">Début d'exercice (paie)</label>
-      <select class="m5-select" id="contract-exercice">
-        <option value="01/01">1er janvier</option>
-        <option value="01/02">1er février</option>
-        <option value="01/03">1er mars</option>
-        <option value="01/04">1er avril</option>
-        <option value="01/05">1er mai</option>
-        <option value="01/06">1er juin</option>
-        <option value="01/07">1er juillet</option>
-        <option value="01/08">1er août</option>
-        <option value="01/09">1er septembre</option>
-        <option value="01/10">1er octobre</option>
-        <option value="01/11">1er novembre</option>
-        <option value="01/12">1er décembre</option>
-      </select>
+      <label class="m5-label">Date de début d'exercice</label>
+      <input type="date" class="m5-input" id="contract-exercice"
+        style="font-size:15px;">
+      <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Ex : 01/01/2026 ou 15/06/2025 selon ton contrat</div>
     </div>
 
     <div class="m5-input-group">
-      <label class="m5-label">Jour de clôture de paie (0 = fin de mois)</label>
-      <input type="number" class="m5-input" id="contract-cloture"
-        min="0" max="31" step="1" placeholder="ex: 0 ou 20">
-      <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">0 ou 31 = fin du mois — sinon saisir le jour (ex: 20 pour clôture le 20)</div>
+      <label class="m5-label" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>Dates de clôture de paie (12 mois)</span>
+        <button type="button" class="m5-btn m5-btn-outline m5-btn-sm" onclick="autofillClotures()" style="font-size:11px;padding:2px 8px;">Fin de mois</button>
+      </label>
+      <div id="clotures-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;margin-top:4px;"></div>
+      <div style="font-size:11px;color:var(--miz-text3);margin-top:4px;">Saisir la date de clôture de chaque mois de paie</div>
     </div>
 
     <div class="m5-input-group">
