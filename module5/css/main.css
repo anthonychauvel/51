@@ -851,3 +851,16 @@ body {
   font-size: 12px;
   line-height: 1;
 }
+
+/* ── COLORATION PÉRIODE MENSUELLE CALENDRIER ─────────────────────── */
+.m5-cal-day.m5-cal-month-a {
+  background: var(--miz-bg);
+}
+.m5-cal-day.m5-cal-month-b {
+  background: #f5f0ff;
+}
+.m5-cal-day.m5-cal-month-a.today,
+.m5-cal-day.m5-cal-month-b.today {
+  background: var(--miz-accent-strong, #ede7f6);
+  border-color: var(--miz-primary);
+}
