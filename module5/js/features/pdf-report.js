@@ -9,9 +9,10 @@
 const M5_PdfReport = {
 
   generate(contract, stats, weeks, analysis) {
-    if(typeof jsPDF === 'undefined') { alert('Chargement PDF en cours, réessaie.'); return; }
-    const { jsPDF: J } = window.jspdf || { jsPDF };
-    const doc = new J({ orientation:'portrait', unit:'mm', format:'a4' });
+    // jsPDF UMD : expose window.jspdf.jsPDF
+    const JClass = (window.jspdf && window.jspdf.jsPDF) || window.jsPDF;
+    if(!JClass) { alert('PDF non disponible. Vérifie ta connexion pour charger jsPDF.'); return; }
+    const doc = new JClass({ orientation:'portrait', unit:'mm', format:'a4' });
     const M = 15, PW = 180, pageH = 297;
     let y = 20;
     const mode = contract.modeCalcul || 'HEBDO';
