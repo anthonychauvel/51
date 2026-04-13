@@ -176,6 +176,14 @@ const CalcEngine = {
     const threshold    = ccnRules.threshold || 0.10;
     const maxAllowed   = seuilMensuel * (1 + cap);
 
+    // ⚠️ La limite 35h est HEBDOMADAIRE — elle s'applique même en mode mensuel
+    // On détecte les semaines qui dépassent individuellement (Art. L3123-9)
+    const semainesRequalif = weeks.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
+    const alerts = semainesRequalif.length > 0 ? [{
+      level:'critique', code:'REQUALIFICATION',
+      msg:`${semainesRequalif.length} semaine(s) atteignent ou dépassent 35h. La limite de 35h est hebdomadaire même en mode mensuel (Art. L3123-9). Ces semaines sont illégales sur un contrat temps partiel.`
+    }] : [];
+
     let compH1 = 0, compH2 = 0;
     if(diff > 0) {
       const th1 = seuilMensuel * threshold;
@@ -199,6 +207,9 @@ const CalcEngine = {
       totalCompAmount: Math.round((comp1Amount+comp2Amount)*100)/100,
       maxAllowed: Math.round(maxAllowed*100)/100,
       depassePlafond: totalWorked > maxAllowed,
+      semainesRequalif: semainesRequalif.length,
+      alerts,
+      isLegal: semainesRequalif.length === 0,
     };
   },
 
@@ -246,6 +257,9 @@ const CalcEngine = {
     const solde = Math.round((reelCumule - theoriqueCumule) * 100) / 100;
     const pctAvancement = joursEcoules > 0 ? Math.round(joursEcoules / nbJoursEx * 100) : 0;
 
+    // ⚠️ Détecter les semaines > 35h même en mode annuel (Art. L3123-9)
+    const semainesRequalif = weeksInEx.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
+
     return {
       mode: 'annuel',
       debutEx: debutExStr,
@@ -259,6 +273,8 @@ const CalcEngine = {
       solde,
       enAvance: solde > 0,
       semaines: weeksInEx.length,
+      semainesRequalif: semainesRequalif.length,
+      isLegal: semainesRequalif.length === 0,
     };
   },
 
