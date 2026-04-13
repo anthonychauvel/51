@@ -884,3 +884,25 @@ body {
   background:var(--miz-accent);
 }
 .wiz-radio-card:active { transform:scale(0.98); }
+
+/* ── NAVIGATION PÉRIODE ──────────────────────────────────────────── */
+.m5-period-chip {
+  flex-shrink: 0;
+  background: var(--miz-bg);
+  border: 1.5px solid var(--miz-border);
+  border-radius: 20px;
+  padding: 4px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--miz-text2);
+  cursor: pointer;
+  white-space: nowrap;
+  transition: all .15s;
+}
+.m5-period-chip.active,
+.m5-period-chip:active {
+  background: var(--miz-primary);
+  border-color: var(--miz-primary);
+  color: #fff;
+}
+#periode-nav::-webkit-scrollbar { display:none; }
