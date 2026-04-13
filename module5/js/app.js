@@ -124,15 +124,26 @@ function renderCalendar() {
   const el=document.getElementById('calendar-grid'); if(!el) return;
   document.getElementById('cal-week-label').textContent=label;
 
-  // Badge nombre de semaines sauvegardées
+  // Sélecteur d'année — liste toutes les années avec données + année courante
+  const yearSel=document.getElementById('cal-year-select');
+  if(yearSel) {
+    const existingYears=M5_getExistingYears();
+    const curYear=String(new Date().getFullYear());
+    if(!existingYears.includes(curYear)) existingYears.push(curYear);
+    existingYears.sort();
+    const prevVal=yearSel.value;
+    yearSel.innerHTML=existingYears.map(y=>`<option value="${y}"${y===year?'selected':''}>${y}</option>`).join('');
+    if(!prevVal||prevVal!==year) yearSel.value=year;
+  }
+  // Badge semaines sauvegardées
   const totalSaved=M5_DataStore.getWeeksSorted(year).length;
   let badge=document.getElementById('cal-saved-badge');
   if(!badge){
     badge=document.createElement('span');
     badge.id='cal-saved-badge';
-    badge.style.cssText='font-size:10px;background:var(--miz-accent);color:var(--miz-primary);border-radius:20px;padding:2px 7px;font-weight:600;';
-    const hdr=document.querySelector('.m5-card-header');
-    if(hdr) hdr.appendChild(badge);
+    badge.className='m5-badge-saved';
+    const calBody=document.querySelector('#calendar-grid');
+    if(calBody&&calBody.parentNode) calBody.parentNode.insertAdjacentElement('afterend',badge);
   }
   badge.textContent=totalSaved>0?`${totalSaved} sem. sauvegardée${totalSaved>1?'s':''}`:'';
 
@@ -234,6 +245,26 @@ function renderCalendar() {
 }
 
 // ── Navigation semaines ───────────────────────────────────────────
+function calChangeYear(newYear) {
+  // Changer l'année active et aller au début de l'année sélectionnée
+  M5_DataStore.setYear(newYear);
+  // Aller à la semaine courante de cette année (ou la 1ère semaine avec données)
+  const weeks=M5_DataStore.getWeeksSorted(newYear);
+  if(weeks.length) {
+    calendarMonday=weeks[weeks.length-1].monday; // dernière semaine saisie
+  } else {
+    // Aller au 1er janvier de cette année
+    calendarMonday=M5_getCurrentMonday();
+    // Si l'année est différente, aller au début
+    if(newYear!==String(new Date().getFullYear())) {
+      const jan1=newYear+'-01-01';
+      calendarMonday=M5_weekStartOf(jan1, M5_Contract.get().weekStartDay||0);
+    }
+  }
+  Mizuki.clearCache();
+  refreshUI();
+}
+
 function calPrev() {
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()-7);
@@ -1138,6 +1169,7 @@ window.saveWeeklySaisieOrClose=saveWeeklySaisieOrClose;
 window.toggleAvenat=toggleAvenat;
 window.importFeriesAPI=importFeriesAPI;
 window.autofillClotures=autofillClotures;
+window.calChangeYear=calChangeYear;
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
