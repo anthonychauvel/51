@@ -124,17 +124,6 @@ function renderCalendar() {
   const el=document.getElementById('calendar-grid'); if(!el) return;
   document.getElementById('cal-week-label').textContent=label;
 
-  // Sélecteur d'année — liste toutes les années avec données + année courante
-  const yearSel=document.getElementById('cal-year-select');
-  if(yearSel) {
-    const existingYears=M5_getExistingYears();
-    const curYear=String(new Date().getFullYear());
-    if(!existingYears.includes(curYear)) existingYears.push(curYear);
-    existingYears.sort();
-    const prevVal=yearSel.value;
-    yearSel.innerHTML=existingYears.map(y=>`<option value="${y}"${y===year?'selected':''}>${y}</option>`).join('');
-    if(!prevVal||prevVal!==year) yearSel.value=year;
-  }
   // Badge semaines sauvegardées
   const totalSaved=M5_DataStore.getWeeksSorted(year).length;
   let badge=document.getElementById('cal-saved-badge');
