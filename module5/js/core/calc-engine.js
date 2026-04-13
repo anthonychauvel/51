@@ -207,14 +207,23 @@ const CalcEngine = {
    * Proratisation au jour depuis le début de l'exercice
    */
   calcAnnuel(contractH, exerciceStart, allWeeks, today) {
-    // exerciceStart = "01/01" ou "01/06" etc.
-    const [jourEx, moisEx] = exerciceStart.split('/').map(Number);
+    // exerciceStart = date ISO "2026-01-01" ou ancienne forme "01/01"
     const todayDate = today || new Date();
-    const year = todayDate.getFullYear();
 
-    // Début de l'exercice courant
-    let debutEx = new Date(year, moisEx-1, jourEx);
-    if(debutEx > todayDate) debutEx = new Date(year-1, moisEx-1, jourEx);
+    let debutEx;
+    if(exerciceStart && exerciceStart.includes('-')) {
+      // Format ISO date input type="date"
+      debutEx = new Date(exerciceStart+'T12:00:00');
+    } else if(exerciceStart && exerciceStart.includes('/')) {
+      // Ancien format "01/06"
+      const [j,m] = exerciceStart.split('/').map(Number);
+      const year = todayDate.getFullYear();
+      debutEx = new Date(year, m-1, j);
+      if(debutEx > todayDate) debutEx = new Date(year-1, m-1, j);
+    } else {
+      debutEx = new Date(todayDate.getFullYear(), 0, 1);
+    }
+    const year = debutEx.getFullYear();
 
     // Bissextile ?
     const finEx = new Date(debutEx); finEx.setFullYear(finEx.getFullYear()+1);
