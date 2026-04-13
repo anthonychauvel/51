@@ -28,6 +28,10 @@ function showSection(id) {
   if(id==='historique') renderHistorique();
   if(id==='stats')      renderStats();
   if(id==='glossaire')  renderGlossaire();
+  if(id==='stats') {
+    const a=currentAnalysis||runAnalysis();
+    if(a) renderWellbeing(a);
+  }
 }
 
 function openModal(id)  { const m=document.getElementById(id); if(m) m.classList.add('open'); }
@@ -76,8 +80,14 @@ function runAnalysis() {
     mensuelResult=CalcEngine.calcMonth(contract.hoursBase,weeksMois,contract,contract.hourlyRate||0);
   }
 
+  // Score bien-être (Higgins, Karasek, Sonnentag, Voydanoff)
+  let wellbeing=null;
+  if(typeof M5_Wellbeing!=='undefined' && allWeeks.length>=2) {
+    wellbeing=M5_Wellbeing.compute(allWeeks, contract.hoursBase, contract);
+  }
+
   currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,
-    weeks:last12,weekMode:wk.mode,feriesMap,annuelResult,mensuelResult};
+    weeks:last12,weekMode:wk.mode,feriesMap,annuelResult,mensuelResult,wellbeing};
   return currentAnalysis;
 }
 
@@ -103,7 +113,12 @@ function refreshUI() {
   updateYearBadge();
   const analysis=runAnalysis();
   if(!analysis) return;
-  const bubbleText=Mizuki.getBubbleText(analysis);
+  // Bulle Mizuki — wellbeing en priorité si signal fort
+  let bubbleText=Mizuki.getBubbleText(analysis);
+  if(analysis.wellbeing&&analysis.wellbeing.available&&analysis.wellbeing.niveau==='critique') {
+    const name=localStorage.getItem('M5_USER_NAME')||'';
+    bubbleText=M5_Wellbeing.getMizukiText(analysis.wellbeing,name)||bubbleText;
+  }
   const bubbleEl=document.getElementById('mizuki-bubble-text');
   if(bubbleEl) bubbleEl.textContent=bubbleText;
   renderCalendar();
@@ -570,6 +585,68 @@ function renderQuickStats(analysis) {
   }
 
   if(rule12.msg) html+=`<div class="m5-alert ${rule12.triggered?'critique':'warn'}" style="margin-top:8px;"><span>${rule12.triggered?'⚖️':'👀'}</span><div style="font-size:12px;">${rule12.msg}</div></div>`;
+
+  el.innerHTML=html;
+}
+
+
+// ── Bien-être M5 ─────────────────────────────────────────────────
+function renderWellbeing(analysis) {
+  const el=document.getElementById('wellbeing-content'); if(!el) return;
+  const wb=analysis&&analysis.wellbeing;
+
+  if(!wb||!wb.available) {
+    el.innerHTML=`<div class="m5-empty">
+      <div class="m5-empty-icon">🧬</div>
+      <div class="m5-empty-text">${wb?wb.reason:'Saisis au moins 2 semaines pour voir ton analyse bien-être.'}</div>
+    </div>`;
+    return;
+  }
+
+  // Barre score global
+  const col=wb.niveau==='bon'?'#4caf50':wb.niveau==='moyen'?'#ff9800':wb.niveau==='tendu'?'#ff5722':'#c62828';
+  let html=`
+    <div style="text-align:center;padding:12px 0 8px;">
+      <div style="font-size:42px;font-weight:900;color:${col};">${wb.scoreGlobal}</div>
+      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:4px;">Score bien-être / 100</div>
+      <div style="font-size:20px;">${wb.emoji}</div>
+    </div>
+
+    <!-- Barres 4 composantes -->
+    <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">`;
+
+  const colors={ bon:'#4caf50', moyen:'#ff9800', tendu:'#ff5722', critique:'#c62828' };
+  wb.scores.forEach(s=>{
+    const niv=s.val>=75?'bon':s.val>=50?'moyen':s.val>=25?'tendu':'critique';
+    const c=colors[niv];
+    html+=`<div>
+      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
+        <span style="font-weight:600;color:var(--miz-text);">${s.nom}</span>
+        <span style="color:${c};font-weight:700;">${s.val}/100 <span style="font-weight:400;color:var(--miz-text3);font-size:10px;">${s.ref}</span></span>
+      </div>
+      <div style="height:8px;background:var(--miz-border);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${s.val}%;background:${c};border-radius:4px;transition:width .4s;"></div>
+      </div>
+    </div>`;
+  });
+
+  html+=`</div>
+    <!-- Messages -->
+    <div style="display:flex;flex-direction:column;gap:8px;margin-top:4px;">`;
+
+  wb.messages.forEach(m=>{
+    const icon={ ok:'✅', info:'ℹ️', warn:'⚠️', alerte:'🔴', critique:'🚨' }[m.type]||'•';
+    const bg={ ok:'var(--miz-bg2)', info:'var(--miz-accent)', warn:'#fff3e0', alerte:'#fce4ec', critique:'#ffebee' }[m.type]||'var(--miz-bg2)';
+    html+=`<div style="background:${bg};border-radius:8px;padding:8px 10px;font-size:12px;line-height:1.5;display:flex;gap:8px;align-items:flex-start;">
+      <span>${icon}</span>
+      <div>${m.ref?`<span style="font-size:10px;color:var(--miz-text3);font-weight:600;">${m.ref}</span><br>`:''}${m.text}</div>
+    </div>`;
+  });
+
+  html+=`</div>
+    <div style="font-size:10px;color:var(--miz-text3);text-align:center;margin-top:12px;padding-top:8px;border-top:1px solid var(--miz-border);">
+      Modèle basé sur Higgins et al. 2010 · Karasek 1979 · Sonnentag 2003 · Voydanoff 2005
+    </div>`;
 
   el.innerHTML=html;
 }
