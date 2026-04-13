@@ -286,15 +286,22 @@ function getCurrentMonday() {
   return weekStartOf(localDK(new Date()), sd);
 }
 function formatMonday(mondayStr) {
-  // Début = mondayStr, Fin = début + 6 jours (semaine de 7 jours)
-  const d=new Date(mondayStr+'T12:00:00');
-  const fn=new Date(mondayStr+'T12:00:00');
+  // Début = mondayStr, fin = début + 6 jours (toujours 7 jours)
+  const sd = Contract.get().weekStartDay || 0; // 0=Lun, 1=Mar, ...
+  const JOURS_ABR = ['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
+  const d  = new Date(mondayStr+'T12:00:00');
+  const fn = new Date(mondayStr+'T12:00:00');
   fn.setDate(fn.getDate()+6);
-  const mn=d.toLocaleDateString('fr-FR',{month:'long'});
-  const mnFin=fn.toLocaleDateString('fr-FR',{month:'long'});
-  // Si même mois
-  if(mn===mnFin) return `${d.getDate()} → ${fn.getDate()} ${mn} ${d.getFullYear()}`;
-  return `${d.getDate()} ${mn} → ${fn.getDate()} ${mnFin} ${fn.getFullYear()}`;
+  // Noms du premier et dernier jour
+  const nomDebut = JOURS_ABR[sd];                    // ex: "Mar"
+  const nomFin   = JOURS_ABR[(sd+6)%7];              // ex: "Lun"
+  const mn    = d.toLocaleDateString('fr-FR',{month:'long'});
+  const mnFin = fn.toLocaleDateString('fr-FR',{month:'long'});
+  // Si même mois : "Mar 24 → Lun 30 mars 2026"
+  if(mn===mnFin) return `${nomDebut} ${d.getDate()} → ${nomFin} ${fn.getDate()} ${mn} ${fn.getFullYear()}`;
+  // Mois différents : "Mar 31 mars → Lun 6 avr. 2026"
+  const mnFinCourt = fn.toLocaleDateString('fr-FR',{month:'short'}).replace('.','');
+  return `${nomDebut} ${d.getDate()} ${mn.slice(0,3)} → ${nomFin} ${fn.getDate()} ${mnFinCourt} ${fn.getFullYear()}`;
 }
 function getExistingYears() {
   const years=new Set();
