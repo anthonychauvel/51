@@ -578,11 +578,16 @@ function renderQuickStats(analysis) {
       <span>📊</span><div>Seuil mensuel : <strong>${mensuelResult.seuilMensuel}h</strong> = ${contract.hoursBase}h × 52 / 12</div>
     </div>`;
   } else if(annualStats) {
+    // Semaines avec au moins 1h de HC (toutes les semaines en dépassement)
+    const weeksWithHC=annualStats.weeksWithComp||0;
     html+=`<div class="m5-stat-grid">
       <div class="m5-stat"><div class="m5-stat-val">${annualStats.totalWeeks}</div><div class="m5-stat-label">Semaines saisies</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${annualStats.totalComp>0?'warn':'ok'}">${annualStats.totalComp.toFixed(1)}h</div><div class="m5-stat-label">Total comp. année</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${r12Cls}">${rule12.maxConsec}</div><div class="m5-stat-label">Sem. consécutives</div></div>
-    </div>`;
+      <div class="m5-stat"><div class="m5-stat-val ${weeksWithHC>0?'warn':'ok'}">${weeksWithHC}</div><div class="m5-stat-label">Sem. avec HC</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${r12Cls}" title="Semaines consécutives avec +2h ou plus (Art. L3123-13)">${rule12.maxConsec}</div><div class="m5-stat-label">Consécutives +2h</div></div>
+    </div>
+    ${weeksWithHC>0&&rule12.maxConsec<weeksWithHC?`<div style="font-size:11px;color:var(--miz-text3);padding:4px 2px;">
+      ℹ️ ${weeksWithHC} sem. avec des HC — mais la règle des 12 sem. ne s'applique que si tu dépasses de <strong>+2h ou plus</strong> chaque semaine (Art. L3123-13).
+    </div>`:''}`;
   } else {
     html='<div style="font-size:13px;color:var(--miz-text3);text-align:center;padding:8px;">Saisis des semaines pour voir les statistiques.</div>';
   }
@@ -656,7 +661,7 @@ function renderWellbeing(analysis) {
 
   html+=`</div>
     <div style="font-size:10px;color:var(--miz-text3);text-align:center;margin-top:12px;padding-top:8px;border-top:1px solid var(--miz-border);">
-      Modèle basé sur Higgins et al. 2010 · Karasek 1979 · Sonnentag 2003 · Voydanoff 2005
+      Higgins 2010 · Karasek 1979 · Sonnentag 2003 · Voydanoff 2005 · Janssen 2004 · Bambra 2008
     </div>`;
 
   el.innerHTML=html;
@@ -769,18 +774,30 @@ function renderPeriodeNav() {
 
 function goToPeriode(val) {
   if(!val) return;
+  const contract=M5_Contract.get();
+  const sd=contract.weekStartDay||0;
+
   if(val.startsWith('week:')) {
     const monday=val.replace('week:','');
     calendarMonday=monday;
     _currentPeriode=null;
+    // Sync année si besoin
+    const yr=monday.slice(0,4);
+    if(yr!==M5_DataStore.getYear()) M5_DataStore.setYear(yr);
     refreshUI();
+
   } else if(val.startsWith('periode:')) {
-    const parts=val.split(':');
-    const debutStr=parts[1];
-    const finStr=parts[2];
+    // Format: "periode:YYYY-MM-DD:YYYY-MM-DD"
+    const rest=val.slice('periode:'.length); // "2026-04-01:2026-04-30"
+    // Les dates ISO sont de longueur fixe 10 chars
+    const debutStr=rest.slice(0,10);
+    const finStr=rest.slice(11,21);
     _currentPeriode={debutStr, finStr};
-    // Aller au début de la période
-    calendarMonday=M5_weekStartOf(debutStr, M5_Contract.get().weekStartDay||0);
+    // Aller à la semaine qui CONTIENT le premier jour de la période
+    calendarMonday=M5_weekStartOf(debutStr, sd);
+    // Sync année
+    const yr=debutStr.slice(0,4);
+    if(yr!==M5_DataStore.getYear()) M5_DataStore.setYear(yr);
     refreshUI();
   }
 }
@@ -824,7 +841,7 @@ function renderHistorique() {
     const diff=Math.max(0,worked-contract.hoursBase);
     const pct35=Math.round(worked/35*100);
     const d=new Date(w.monday+'T12:00:00'),fn=new Date(w.monday+'T12:00:00');
-    fn.setDate(fn.getDate()+4);
+    fn.setDate(fn.getDate()+6); // semaine complète 7 jours
     const label=`${d.getDate()}/${d.getMonth()+1} → ${fn.getDate()}/${fn.getMonth()+1}`;
     let cls='normal';
     if(isVac) cls='vacances'; else if(pct35>=95) cls='danger'; else if(diff>0) cls='warn';
@@ -854,8 +871,17 @@ function renderStats() {
   const mode=contract.modeCalcul||'HEBDO';
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
   const caps=CalcEngine.calcAnnualCap(contract.hoursBase,contract);
-  const exStart=contract.exerciceStart||'01/01';
-  const exLabel=`${exStart.slice(3,5)}/${year}`;
+  const exStart=contract.exerciceStart||'';
+  // Formater le label d'exercice selon le format stocké
+  let exLabel=year;
+  if(exStart && exStart.includes('-')) {
+    // Format ISO "2025-12-16" → "16 déc 2025"
+    const dEx=new Date(exStart+'T12:00:00');
+    exLabel=dEx.toLocaleDateString('fr-FR',{day:'numeric',month:'short',year:'numeric'});
+  } else if(exStart && exStart.includes('/')) {
+    // Ancien format "01/01" → "01/01/year"
+    exLabel=exStart+'/'+year;
+  }
   let html='';
 
   if(mode==='ANNUEL'&&analysis&&analysis.annuelResult) {
