@@ -215,8 +215,10 @@ const M5_Wellbeing = {
     }
 
     if (ratioRecup < SONNENTAG_RECOVERY_MIN) {
-      msgs.push({ type:'warn', ref:'Sonnentag 2003',
-        text:`Seulement ${Math.round(ratioRecup*100)}% de semaines sous ton contrat. Sonnentag montre qu'en dessous de 30% de semaines légères, la récupération psychologique est insuffisante.` });
+      const _recupTxt = ratioRecup === 0
+        ? `Aucune semaine n'est sous ton contrat. Si ces heures te sont imposées, Sonnentag 2003 montre que l'absence totale de semaines légères empêche la récupération psychologique. Essaie d'avoir au moins quelques semaines proches de ton contrat.`
+        : `Seulement ${Math.round(ratioRecup*100)}% de semaines sous ton contrat. Sonnentag montre qu'en dessous de 30% de semaines légères, la récupération psychologique est insuffisante.`;
+      msgs.push({ type:'warn', ref:'Sonnentag 2003', text:_recupTxt });
     } else {
       msgs.push({ type:'ok', ref:'Sonnentag 2003',
         text:`${Math.round(ratioRecup*100)}% de tes semaines sont sous ton contrat. Ces périodes légères permettent une vraie récupération psychologique.` });
