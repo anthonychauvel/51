@@ -235,17 +235,34 @@
         </div>
       </div>
 
-      <!-- Clôtures mensuelles — visible uniquement en mode MENSUEL -->
-      <div id="wiz-clotures-bloc" style="display:none;">
-        <div class="m5-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px;">
-          <span>Dates de clôture de paie</span>
-          <button type="button" class="m5-btn m5-btn-outline m5-btn-sm"
-            onclick="wizAutofillClotures()" style="font-size:11px;padding:2px 8px;">Fin de mois</button>
+      <!-- Clôtures mensuelles — pour TOUS les modes -->
+      <div id="wiz-clotures-bloc">
+        <div class="m5-label" style="margin-bottom:8px;">Est-ce que tu connais tes dates de clôture de paie ?</div>
+        <div style="font-size:12px;color:var(--miz-text3);margin-bottom:10px;">
+          C'est la date où ton employeur "ferme" le mois pour calculer ta paie.
         </div>
-        <div style="font-size:11px;color:var(--miz-text3);margin-bottom:8px;">
-          Quand ton employeur clôture-t-il la paie chaque mois ? (la date où les heures du mois sont comptées)
+        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
+          <label class="wiz-radio-card active" id="wiz-cloture-auto-card" onclick="wizSetClotureMode('auto')" style="display:flex;gap:12px;align-items:center;">
+            <input type="radio" name="wiz-cloture-mode" value="auto" checked style="accent-color:var(--miz-primary);">
+            <div>
+              <div style="font-weight:700;font-size:13px;">📅 Fin de chaque mois</div>
+              <div style="font-size:11px;color:var(--miz-text3);">31 jan, 28 fév, 31 mar… — le plus courant</div>
+            </div>
+          </label>
+          <label class="wiz-radio-card" id="wiz-cloture-manual-card" onclick="wizSetClotureMode('manual')" style="display:flex;gap:12px;align-items:center;">
+            <input type="radio" name="wiz-cloture-mode" value="manual" style="accent-color:var(--miz-primary);">
+            <div>
+              <div style="font-weight:700;font-size:13px;">✏️ Je connais mes dates exactes</div>
+              <div style="font-size:11px;color:var(--miz-text3);">Ex : clôture le 15 de chaque mois, ou des dates variables</div>
+            </div>
+          </label>
         </div>
-        <div id="wiz-clotures-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+        <div id="wiz-clotures-grid-bloc" style="display:none;">
+          <div style="font-size:11px;color:var(--miz-text3);margin-bottom:8px;">
+            Saisis la date de fin de chaque période de paie
+          </div>
+          <div id="wiz-clotures-grid" style="display:grid;grid-template-columns:1fr 1fr;gap:6px;"></div>
+        </div>
       </div>
 
       <!-- Résumé -->
@@ -293,12 +310,15 @@
     </div>
 
     <!-- Sélecteur période / navigation rapide -->
-    <div style="padding:4px 12px 0;" id="periode-nav">
-      <div style="display:flex;align-items:center;gap:6px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none;">
-        <span style="font-size:11px;color:var(--miz-text3);white-space:nowrap;flex-shrink:0;">Aller à :</span>
-        <div id="periode-chips" style="display:flex;gap:6px;flex-wrap:nowrap;"></div>
+    <div style="padding:6px 12px 0;" id="periode-nav">
+      <div style="display:flex;align-items:center;gap:6px;">
+        <select id="periode-select" class="m5-select"
+          style="flex:1;font-size:12px;padding:5px 8px;"
+          onchange="goToPeriode(this.value)">
+          <option value="">— Choisir une période —</option>
+        </select>
         <select id="periode-year-sel" class="m5-select"
-          style="font-size:11px;padding:3px 6px;height:26px;min-width:64px;flex-shrink:0;"
+          style="font-size:12px;padding:5px 6px;width:70px;flex-shrink:0;"
           onchange="calChangeYear(this.value)"></select>
       </div>
     </div>
