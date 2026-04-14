@@ -180,11 +180,16 @@ function renderCalendar() {
     const isFerie=!!(  _feriesMap&&_feriesMap[d.dk]&&!isWeekend);
     const worked=d.worked;
     const contract_daily=contract.hoursBase/5;
-    // Coloration période mensuelle
-    const _dt2=new Date(d.dk+'T12:00:00');
-    const _monthIdx=_dt2.getMonth();
-    const _monthClass='m5-cal-month-'+ (_monthIdx%2===0?'a':'b');
-    let cellClass='m5-cal-day '+_monthClass;
+    // Coloration : si une période est sélectionnée, colorier ses jours
+    let cellClass='m5-cal-day';
+    if(_currentPeriode) {
+      const inPeriode=d.dk>=_currentPeriode.debutStr && d.dk<=_currentPeriode.finStr;
+      cellClass+= inPeriode?' m5-cal-period-active':' m5-cal-period-out';
+    } else {
+      // Alternance mois par défaut
+      const _mIdx=new Date(d.dk+'T12:00:00').getMonth();
+      cellClass+=' m5-cal-month-'+(_mIdx%2===0?'a':'b');
+    }
     let hoursHtml='<span class="m5-cal-day-empty">—</span>';
     if(isFerie&&!isVac) {
       cellClass+=' ferie';
@@ -659,10 +664,52 @@ function renderWellbeing(analysis) {
 
 
 // ── Navigation période page principale ───────────────────────────
+// Génère les périodes selon les clôtures configurées
+function buildPeriodes(year, contract) {
+  const periodes=[];
+  const clotures=contract.cloturesDates||{};
+  const hasClotures=Object.keys(clotures).length>0;
+
+  if(hasClotures) {
+    // Périodes basées sur les dates de clôture réelles
+    // On reconstruit les périodes : debut = clôture_mois_precedent + 1 jour, fin = clôture_mois
+    const sortedMonths=Object.keys(clotures).map(Number).sort((a,b)=>a-b);
+    let prevEnd=null;
+    sortedMonths.forEach(m=>{
+      const finStr=clotures[m];
+      const fin=new Date(finStr+'T12:00:00');
+      let debut;
+      if(prevEnd) {
+        debut=new Date(prevEnd+'T12:00:00'); debut.setDate(debut.getDate()+1);
+      } else {
+        // Début de la première période = 1er jour du mois ou début exercice
+        debut=new Date(fin.getFullYear(), fin.getMonth(), 1);
+      }
+      const debutStr=debut.getFullYear()+'-'+String(debut.getMonth()+1).padStart(2,'0')+'-'+String(debut.getDate()).padStart(2,'0');
+      const MOIS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+      const label=`${debut.getDate()} ${MOIS[debut.getMonth()]} → ${fin.getDate()} ${MOIS[fin.getMonth()]}`;
+      periodes.push({ label, debutStr, finStr, mois:m });
+      prevEnd=finStr;
+    });
+  } else {
+    // Fin de mois automatique
+    const MOIS_L=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    for(let m=1;m<=12;m++){
+      const fin=new Date(parseInt(year),m,0); // dernier jour du mois
+      const debut=new Date(parseInt(year),m-1,1);
+      const dStr=debut.getFullYear()+'-'+String(debut.getMonth()+1).padStart(2,'0')+'-01';
+      const fStr=fin.getFullYear()+'-'+String(fin.getMonth()+1).padStart(2,'0')+'-'+String(fin.getDate()).padStart(2,'0');
+      periodes.push({ label:MOIS_L[m-1]+' '+year, debutStr:dStr, finStr:fStr, mois:m });
+    }
+  }
+  return periodes;
+}
+
+let _currentPeriode=null; // { debutStr, finStr }
+
 function renderPeriodeNav() {
   const contract=M5_Contract.get(); if(!contract.hoursBase) return;
   const year=M5_DataStore.getYear();
-  const mode=contract.modeCalcul||'HEBDO';
 
   // Sélecteur année
   const yearSel=document.getElementById('periode-year-sel');
@@ -675,38 +722,66 @@ function renderPeriodeNav() {
     yearSel.value=year;
   }
 
-  // Chips de navigation rapide selon le mode
-  const chips=document.getElementById('periode-chips'); if(!chips) return;
-  const MOIS_COURTS=['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'];
-  const now=new Date();
-
-  // Mois affiché dans le calendrier courant
+  // Select des périodes
+  const sel=document.getElementById('periode-select'); if(!sel) return;
+  const periodes=buildPeriodes(year, contract);
   const calDate=new Date(calendarMonday+'T12:00:00');
-  const calMonth=calDate.getMonth(); // 0-based
-  const calYear=calDate.getFullYear();
+
+  // Trouver la période active (celle qui contient calendarMonday)
+  let activeIdx=-1;
+  periodes.forEach((p,i)=>{
+    if(calendarMonday>=p.debutStr && calendarMonday<=p.finStr) activeIdx=i;
+  });
+
+  // Ajouter option semaines sauvegardées en mode HEBDO
+  const mode=contract.modeCalcul||'HEBDO';
+  let options='<option value="">— Aller à une période —</option>';
 
   if(mode==='HEBDO') {
-    const allWeeks=M5_DataStore.getWeeksSorted(year).slice(-6).reverse();
-    chips.innerHTML=`<button class="m5-period-chip${calendarMonday===M5_getCurrentMonday()?'active':''}" onclick="calToday()">Auj.</button>`+
-      allWeeks.map(w=>{
+    // Semaines avec données
+    const allWeeks=M5_DataStore.getWeeksSorted(year);
+    if(allWeeks.length) {
+      options+='<optgroup label="Semaines sauvegardées">';
+      allWeeks.slice().reverse().slice(0,12).forEach(w=>{
         const d=new Date(w.monday+'T12:00:00');
+        const fn=new Date(w.monday+'T12:00:00'); fn.setDate(fn.getDate()+6);
         const isActive=w.monday===calendarMonday;
-        return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToWeek('${w.monday}')">
-          ${d.getDate()}/${d.getMonth()+1}
-        </button>`;
-      }).join('');
-  } else if(mode==='MENSUEL') {
-    chips.innerHTML=MOIS_COURTS.map((m,i)=>{
-      // Active = le mois affiché dans le calendrier courant
-      const isActive=(i===calMonth && calYear===parseInt(year));
-      return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToMonth(${year},${i+1})">${m}</button>`;
-    }).join('');
+        const MOIS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+        const lbl=`${d.getDate()} ${MOIS[d.getMonth()]} → ${fn.getDate()} ${MOIS[fn.getMonth()]}${w.worked?` (${w.worked}h)`:''}`;
+        options+=`<option value="week:${w.monday}"${isActive?' selected':''}>${lbl}</option>`;
+      });
+      options+='</optgroup>';
+    }
+    options+='<optgroup label="Mois">';
+    periodes.forEach((p,i)=>{
+      options+=`<option value="periode:${p.debutStr}:${p.finStr}"${i===activeIdx?' selected':''}>${p.label}</option>`;
+    });
+    options+='</optgroup>';
   } else {
-    const calQ=Math.floor(calMonth/3);
-    chips.innerHTML=['T1','T2','T3','T4'].map((t,i)=>{
-      const isActive=(i===calQ && calYear===parseInt(year));
-      return `<button class="m5-period-chip${isActive?' active':''}" onclick="goToMonth(${year},${i*3+1})">${t}</button>`;
-    }).join('');
+    // Mode mensuel ou annuel — toutes les périodes
+    periodes.forEach((p,i)=>{
+      options+=`<option value="periode:${p.debutStr}:${p.finStr}"${i===activeIdx?' selected':''}>${p.label}</option>`;
+    });
+  }
+
+  sel.innerHTML=options;
+}
+
+function goToPeriode(val) {
+  if(!val) return;
+  if(val.startsWith('week:')) {
+    const monday=val.replace('week:','');
+    calendarMonday=monday;
+    _currentPeriode=null;
+    refreshUI();
+  } else if(val.startsWith('periode:')) {
+    const parts=val.split(':');
+    const debutStr=parts[1];
+    const finStr=parts[2];
+    _currentPeriode={debutStr, finStr};
+    // Aller au début de la période
+    calendarMonday=M5_weekStartOf(debutStr, M5_Contract.get().weekStartDay||0);
+    refreshUI();
   }
 }
 
@@ -1407,9 +1482,20 @@ function _wizUpdateSummary() {
 function _set(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
 
 
+let _wizClotureMode='auto';
+
+function wizSetClotureMode(mode) {
+  _wizClotureMode=mode;
+  document.getElementById('wiz-cloture-auto-card')?.classList.toggle('active', mode==='auto');
+  document.getElementById('wiz-cloture-manual-card')?.classList.toggle('active', mode==='manual');
+  const grid=document.getElementById('wiz-clotures-grid-bloc');
+  if(grid) grid.style.display=mode==='manual'?'block':'none';
+  if(mode==='manual') _wizBuildCloturesGrid();
+}
+
 function _wizShowClotures() {
   const bloc=document.getElementById('wiz-clotures-bloc');
-  if(bloc) bloc.style.display=_wizMode==='MENSUEL'?'block':'none';
+  if(bloc) bloc.style.display='block'; // toujours visible à l'étape 6
 }
 
 function _wizBuildCloturesGrid() {
@@ -1443,11 +1529,20 @@ function wizFinish() {
   const startDay=parseInt(document.getElementById('wiz-start-day')?.value||'0');
   const exercice=document.getElementById('wiz-exercice')?.value||'';
   const ccnRules=_wizCCN?CCN_PARTIEL_API.getRules(_wizCCN.i):{cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,nom:'Droit commun'};
-  // Récupérer les 12 clôtures si mode mensuel
+  // Récupérer les 12 clôtures
   const cloturesDates={};
-  for(let m=1;m<=12;m++){
-    const el=document.getElementById('wiz-cloture-m'+m);
-    if(el&&el.value) cloturesDates[m]=el.value;
+  if(_wizClotureMode==='auto') {
+    // Fin de chaque mois de l'année courante
+    const yr=new Date().getFullYear();
+    for(let m=1;m<=12;m++){
+      const last=new Date(yr,m,0);
+      cloturesDates[m]=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
+    }
+  } else {
+    for(let m=1;m<=12;m++){
+      const el=document.getElementById('wiz-cloture-m'+m);
+      if(el&&el.value) cloturesDates[m]=el.value;
+    }
   }
   M5_Contract.save({
     hoursBase:h, hourlyRate:rate||0,
@@ -1494,8 +1589,11 @@ window.wizSelectDC=wizSelectDC; window.wizSelectMode=wizSelectMode;
 window.wizSelectFeries=wizSelectFeries; window.wizFinish=wizFinish;
 window.wizUpdateHoursPreview=wizUpdateHoursPreview;
 window.wizAutofillClotures=wizAutofillClotures;
+window.wizSetClotureMode=wizSetClotureMode;
 window.goToMonth=goToMonth;
 window.renderPeriodeNav=renderPeriodeNav;
+window.goToPeriode=goToPeriode;
+window.buildPeriodes=buildPeriodes;
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
