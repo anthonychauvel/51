@@ -906,3 +906,20 @@ body {
   color: #fff;
 }
 #periode-nav::-webkit-scrollbar { display:none; }
+
+/* ── COLORATION PÉRIODE SÉLECTIONNÉE ────────────────────────────── */
+.m5-cal-day.m5-cal-period-active {
+  background: var(--miz-accent);
+  border: 2px solid var(--miz-primary);
+}
+.m5-cal-day.m5-cal-period-active.today {
+  background: #ede0f7;
+  border-color: var(--miz-primary);
+}
+.m5-cal-day.m5-cal-period-out {
+  opacity: 0.45;
+  background: var(--miz-bg);
+}
+.m5-cal-day.m5-cal-period-out.today {
+  opacity: 0.7;
+}
