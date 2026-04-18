@@ -166,18 +166,21 @@ const CalcEngine = {
    * Calcul mensuel
    * Période : [clotureJour+1 du mois précédent] → [clotureJour du mois courant]
    */
-  calcMonth(contractH, weeks, ccnRules, hourlyRate=0) {
-    const seuilMensuel = Math.round(contractH * 52 / 12 * 100) / 100;
+  calcMonth(contractH, weeks, ccnRules, hourlyRate=0, nbJours=null) {
+    // Seuil proratisé si la période est non-standard (nbJours fourni) : contractH * N / 7
+    // Sinon formule légale standard : contractH * 52 / 12
+    const seuilMensuel = nbJours
+      ? Math.round(contractH * nbJours / 7 * 100) / 100
+      : Math.round(contractH * 52 / 12 * 100) / 100;
     const totalWorked  = weeks.reduce((s,w) => s + (w.worked||0), 0);
     const diff         = totalWorked - seuilMensuel;
     const cap          = ccnRules.cap || 0.10;
     const rate1        = ccnRules.rate1 || 0.10;
     const rate2        = ccnRules.rate2 || 0.25;
     const threshold    = ccnRules.threshold || 0.10;
-    const maxAllowed   = seuilMensuel * (1 + cap);
+    const maxAllowed   = Math.round(seuilMensuel * (1 + cap) * 100) / 100;
 
     // ⚠️ La limite 35h est HEBDOMADAIRE — elle s'applique même en mode mensuel
-    // On détecte les semaines qui dépassent individuellement (Art. L3123-9)
     const semainesRequalif = weeks.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
     const alerts = semainesRequalif.length > 0 ? [{
       level:'critique', code:'REQUALIFICATION',
@@ -189,6 +192,12 @@ const CalcEngine = {
       const th1 = seuilMensuel * threshold;
       compH1 = Math.min(diff, th1);
       compH2 = Math.max(0, diff - th1);
+      // Alerte si dépassement du plafond conventionnel
+      if(totalWorked > maxAllowed) {
+        alerts.push({ level:'alerte', code:'PLAFOND_CCN',
+          msg:`Tes heures ce mois (${totalWorked}h) dépassent le plafond conventionnel de ${Math.round(cap*100)}% du seuil mensuel (max ${maxAllowed}h). Conserve ces relevés — Art. L3123-28.`
+        });
+      }
     }
 
     const comp1Amount = compH1 * hourlyRate * (1 + rate1);
@@ -205,7 +214,7 @@ const CalcEngine = {
       comp1Amount: Math.round(comp1Amount*100)/100,
       comp2Amount: Math.round(comp2Amount*100)/100,
       totalCompAmount: Math.round((comp1Amount+comp2Amount)*100)/100,
-      maxAllowed: Math.round(maxAllowed*100)/100,
+      maxAllowed,
       depassePlafond: totalWorked > maxAllowed,
       semainesRequalif: semainesRequalif.length,
       alerts,
@@ -320,7 +329,7 @@ const CalcEngine = {
    * Règle des 12 semaines consécutives (Art. L3123-13)
    */
   check12WeeksRule(weeklyData, contractH) {
-    if(!weeklyData.length) return { triggered:false, count:0 };
+    if(!weeklyData.length) return { triggered:false, maxConsec:0 };
     let consecCount=0, maxConsec=0, triggerStart=null;
     for(let i=0;i<weeklyData.length;i++) {
       if((weeklyData[i].worked||0) >= contractH+2) {
@@ -329,10 +338,22 @@ const CalcEngine = {
         if(consecCount>=12&&!triggerStart) triggerStart=i-11;
       } else { consecCount=0; }
     }
+    // Art. L3123-13 al.2 : variante "12 sem. parmi 15 sem. consécutives"
+    let triggered15=false;
+    if(maxConsec<12 && weeklyData.length>=15) {
+      for(let i=0;i<=weeklyData.length-15;i++) {
+        const w15=weeklyData.slice(i,i+15);
+        const cnt=w15.filter(w=>(w.worked||0)>=contractH+2).length;
+        if(cnt>=12){ triggered15=true; break; }
+      }
+    }
+    const triggered=maxConsec>=12||triggered15;
     return {
-      triggered: maxConsec>=12, maxConsec, triggerStart,
-      msg: maxConsec>=12
-        ? `Depuis ${maxConsec} semaines consécutives, tes heures dépassent le contrat de +2h/sem. L'Art. L3123-13 prévoit une révision du contrat — tu peux en faire la demande.`
+      triggered, maxConsec, triggerStart, triggered15,
+      msg: triggered
+        ? (triggered15&&maxConsec<12)
+          ? `12 semaines sur une période de 15 ont dépassé ton contrat de +2h/sem. L'Art. L3123-13 s'applique — tu peux demander une révision de ton contrat à la hausse.`
+          : `Depuis ${maxConsec} semaines consécutives, tes heures dépassent le contrat de +2h/sem. L'Art. L3123-13 prévoit une révision du contrat — tu peux en faire la demande.`
         : maxConsec>=8
           ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12-maxConsec} semaines avant que la règle des 12 semaines s'applique.`
           : null
