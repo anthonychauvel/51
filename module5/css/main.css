@@ -859,6 +859,27 @@ body {
 .m5-cal-day.m5-cal-month-b {
   background: #f5f0ff;
 }
+.m5-cal-day.m5-cal-period-start {
+  border-left: 3px solid var(--miz-primary) !important;
+}
+
+/* ── INPUT DATE — rendu calendrier explicite sur iOS ────────────── */
+.m5-date-wrapper {
+  position: relative;
+}
+.m5-date-wrapper::after {
+  content: '📅';
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  pointer-events: none;
+  font-size: 16px;
+}
+.m5-date-wrapper input[type="date"] {
+  padding-right: 36px;
+  cursor: pointer;
+}
 .m5-cal-day.m5-cal-month-a.today,
 .m5-cal-day.m5-cal-month-b.today {
   background: var(--miz-accent-strong, #ede7f6);
