@@ -532,11 +532,11 @@
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Date de la demande de l'employeur</label>
-      <input type="date" class="m5-input" id="prev-date-demande">
+      <div class="m5-date-wrapper"><input type="date" class="m5-input" id="prev-date-demande"></div>
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Date prévue pour travailler</label>
-      <input type="date" class="m5-input" id="prev-date-travail">
+      <div class="m5-date-wrapper"><input type="date" class="m5-input" id="prev-date-travail"></div>
     </div>
     <button class="m5-btn m5-btn-primary m5-btn-full" onclick="checkPrevenance()" style="margin-bottom:12px;">
       Vérifier le délai
@@ -577,11 +577,11 @@
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
         <div class="m5-input-group">
           <label class="m5-label">Du</label>
-          <input type="date" class="m5-input" id="pdf-date-debut">
+          <div class="m5-date-wrapper"><input type="date" class="m5-input" id="pdf-date-debut"></div>
         </div>
         <div class="m5-input-group">
           <label class="m5-label">Au</label>
-          <input type="date" class="m5-input" id="pdf-date-fin">
+          <div class="m5-date-wrapper"><input type="date" class="m5-input" id="pdf-date-fin"></div>
         </div>
       </div>
     </div>
@@ -636,8 +636,7 @@
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Date de début d'exercice</label>
-      <input type="date" class="m5-input" id="contract-exercice"
-        style="font-size:15px;">
+      <div class="m5-date-wrapper"><input type="date" class="m5-input" id="contract-exercice" style="font-size:15px;"></div>
       <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Ex : 01/01/2026 ou 15/06/2025 selon ton contrat</div>
     </div>
 
