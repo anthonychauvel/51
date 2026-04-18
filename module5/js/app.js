@@ -216,9 +216,20 @@ function renderCalendar() {
       const inPeriode=d.dk>=_currentPeriode.debutStr && d.dk<=_currentPeriode.finStr;
       cellClass+= inPeriode?' m5-cal-period-active':' m5-cal-period-out';
     } else {
-      // Alternance mois par défaut
-      const _mIdx=new Date(d.dk+'T12:00:00').getMonth();
-      cellClass+=' m5-cal-month-'+(_mIdx%2===0?'a':'b');
+      // Séparation par période de paie (si contrat a des clôtures) sinon par mois
+      const _periodes=typeof buildPeriodes==='function'?buildPeriodes(year,contract):[];
+      let _pIdx=-1;
+      for(let _pi=0;_pi<_periodes.length;_pi++){
+        if(d.dk>=_periodes[_pi].debutStr && d.dk<=_periodes[_pi].finStr){ _pIdx=_pi; break; }
+      }
+      if(_pIdx>=0) {
+        cellClass+=' m5-cal-month-'+(_pIdx%2===0?'a':'b');
+        // Bordure gauche si premier jour de la période
+        if(d.dk===_periodes[_pIdx].debutStr) cellClass+=' m5-cal-period-start';
+      } else {
+        const _mIdx=new Date(d.dk+'T12:00:00').getMonth();
+        cellClass+=' m5-cal-month-'+(_mIdx%2===0?'a':'b');
+      }
     }
     let hoursHtml='<span class="m5-cal-day-empty">—</span>';
     if(isFerie&&!isVac) {
@@ -598,13 +609,26 @@ function renderQuickStats(analysis) {
     const delta=mensuelResult.delta;
     const deltaLabel=delta>0?`+${delta.toFixed(1)}h HC`:delta===0?'✓ Équilibré':'Sous le seuil';
     const deltaCls=delta>0?'warn':'ok';
+    // Barre de progression vers le seuil
+    const pct=Math.min(100,Math.round(mensuelResult.totalWorked/mensuelResult.seuilMensuel*100));
+    const reste=Math.max(0,Math.round((mensuelResult.seuilMensuel-mensuelResult.totalWorked)*10)/10);
+    const barColor=pct>=100?'var(--miz-warning)':'var(--miz-primary)';
     html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
-      <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalWorked}h</div><div class="m5-stat-label">Heures ce mois</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${deltaCls}">${deltaLabel}</div><div class="m5-stat-label">vs seuil période</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${mensuelResult.totalCompH>0?'warn':'ok'}">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
+      <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalWorked}h</div><div class="m5-stat-label">Réalisées</div></div>
+      <div class="m5-stat"><div class="m5-stat-val" style="color:var(--miz-text3);font-size:16px;">${mensuelResult.seuilMensuel}h</div><div class="m5-stat-label">Seuil période</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${mensuelResult.totalCompH>0?'warn':'ok'}">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">HC générées</div></div>
     </div>
-    <div class="m5-alert info" style="font-size:12px;padding:6px 10px;">
-      <span>📊</span><div>Seuil période : <strong>${mensuelResult.seuilMensuel}h</strong></div>
+    <div style="margin-bottom:8px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
+        <span style="font-size:11px;color:var(--miz-text3);">Progression vers le seuil</span>
+        <span style="font-size:11px;font-weight:700;color:${barColor};">${pct}%</span>
+      </div>
+      <div style="height:8px;background:var(--miz-bg2);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${pct}%;background:${barColor};border-radius:4px;transition:width .3s;"></div>
+      </div>
+      <div style="font-size:11px;color:var(--miz-text3);margin-top:4px;text-align:right;">
+        ${pct<100?`Il reste <strong>${reste}h</strong> pour atteindre le seuil`:'<span style="color:var(--miz-warning)">⚠️ Seuil dépassé — heures comp. en cours</span>'}
+      </div>
     </div>`;
     if(mensuelResult.alerts&&mensuelResult.alerts.length) {
       mensuelResult.alerts.forEach(a=>{
@@ -718,13 +742,18 @@ function buildPeriodes(year, contract) {
 
     // Calculer le debut réel de la 1ère période depuis exerciceStart (peut être en n-1)
     let firstDebut=null;
-    const exStart=contract.exerciceStart||'01/01';
-    if(exStart && exStart!=='01/01') {
-      const parts=exStart.split('/');
-      const dd=parseInt(parts[0]||'1');
-      const mm=parseInt(parts[1]||'1');
-      const prevYear=parseInt(year)-1;
-      firstDebut=new Date(prevYear, mm-1, dd);
+    const exStart=contract.exerciceStart||'';
+    if(exStart) {
+      if(exStart.match(/^\d{4}-\d{2}-\d{2}$/)) {
+        // Format ISO stocké par input type="date" — contient déjà l'année
+        firstDebut=new Date(exStart+'T12:00:00');
+      } else if(exStart.includes('/')) {
+        // Ancien format "DD/MM" — reconstituer avec l'année n-1
+        const parts=exStart.split('/');
+        const dd=parseInt(parts[0]||'1'), mm=parseInt(parts[1]||'1');
+        const prevYear=parseInt(year)-1;
+        firstDebut=new Date(prevYear, mm-1, dd);
+      }
     }
 
     let prevEnd=null;
@@ -1433,8 +1462,8 @@ function buildCloturesGrid(stored) {
     const val=stored[num]||'';
     return `<div style="display:flex;flex-direction:column;gap:2px;">
       <label style="font-size:11px;color:var(--miz-text3);font-weight:600;">${m}</label>
-      <input type="date" id="cloture-m${num}" class="m5-input"
-        style="font-size:12px;padding:4px 6px;" value="${val}">
+      <div class="m5-date-wrapper"><input type="date" id="cloture-m${num}" class="m5-input"
+        style="font-size:12px;padding:4px 6px;" value="${val}"></div>
     </div>`;
   }).join('');
 }
