@@ -670,11 +670,20 @@ function renderWellbeing(analysis) {
     return;
   }
 
-  // Note données limitées
+  // Note données limitées — bannière proéminente
   let html='';
   if(wb.donneesLimitees && wb.noteMin) {
-    html+=`<div style="background:#fff8e1;border:1px solid #f9a825;border-radius:8px;padding:8px 10px;font-size:12px;color:#795548;margin-bottom:10px;">
-      ℹ️ ${wb.noteMin}
+    html+=`<div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:10px 12px;font-size:12px;color:#e65100;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;">
+      <span style="font-size:16px;">📊</span>
+      <div><strong>Analyse en cours de construction</strong><br>${wb.noteMin}<br>
+      <span style="font-size:11px;opacity:0.8;">Les scores en 0/100 avec peu de semaines sont normaux — ils reflètent que tu n'as pas encore de semaines de récupération.</span></div>
+    </div>`;
+  }
+
+  // Si score global disponible, afficher une aide à la lecture
+  if(!wb.donneesLimitees) {
+    html+=`<div style="font-size:11px;color:var(--miz-text3);padding:4px 2px 8px;text-align:center;">
+      Basé sur ${wb.stats.n} semaines de données
     </div>`;
   }
 
@@ -767,8 +776,11 @@ function buildPeriodes(year, contract) {
         // 1ère période : débute à exerciceStart en n-1
         debut=firstDebut;
       } else {
-        // Fallback : 1er jour du mois de fin
-        debut=new Date(fin.getFullYear(), fin.getMonth(), 1);
+        // Fallback intelligent : 1er jour du mois PRÉCÉDANT la première clôture
+        // Ex : clôture Jan 31 → début Dec 1 (n-1) ; clôture Mar 31 → début Fév 1
+        const mPrec = fin.getMonth() === 0 ? 11 : fin.getMonth() - 1;
+        const yrPrec = fin.getMonth() === 0 ? fin.getFullYear() - 1 : fin.getFullYear();
+        debut = new Date(yrPrec, mPrec, 1);
       }
       const debutStr=debut.getFullYear()+'-'+String(debut.getMonth()+1).padStart(2,'0')+'-'+String(debut.getDate()).padStart(2,'0');
       // Afficher l'année si le début est en n-1
@@ -813,13 +825,25 @@ function renderPeriodeNav() {
   // Select des périodes
   const sel=document.getElementById('periode-select'); if(!sel) return;
   const periodes=buildPeriodes(year, contract);
-  const calDate=new Date(calendarMonday+'T12:00:00');
 
   // Trouver la période active (celle qui contient calendarMonday)
   let activeIdx=-1;
   periodes.forEach((p,i)=>{
     if(calendarMonday>=p.debutStr && calendarMonday<=p.finStr) activeIdx=i;
   });
+
+  // Auto-sélection : si aucune période trouvée, trouver celle qui contient aujourd'hui
+  if(activeIdx===-1) {
+    const todayStr=M5_localDK(new Date());
+    periodes.forEach((p,i)=>{
+      if(todayStr>=p.debutStr && todayStr<=p.finStr) activeIdx=i;
+    });
+    // Si trouvée, mettre à jour _currentPeriode et calendarMonday
+    if(activeIdx>=0) {
+      const pAuto=periodes[activeIdx];
+      _currentPeriode={debutStr:pAuto.debutStr, finStr:pAuto.finStr};
+    }
+  }
 
   // Ajouter option semaines sauvegardées en mode HEBDO
   const mode=contract.modeCalcul||'HEBDO';
@@ -1462,8 +1486,8 @@ function buildCloturesGrid(stored) {
     const val=stored[num]||'';
     return `<div style="display:flex;flex-direction:column;gap:2px;">
       <label style="font-size:11px;color:var(--miz-text3);font-weight:600;">${m}</label>
-      <div class="m5-date-wrapper"><input type="date" id="cloture-m${num}" class="m5-input"
-        style="font-size:12px;padding:4px 6px;" value="${val}"></div>
+      <input type="date" id="cloture-m${num}" class="m5-input"
+        style="font-size:12px;padding:4px 6px;" value="${val}">
     </div>`;
   }).join('');
 }
