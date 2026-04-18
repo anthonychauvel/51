@@ -74,10 +74,40 @@ function runAnalysis() {
   // Mode MENSUEL
   let mensuelResult=null;
   if(contract.modeCalcul==='MENSUEL') {
-    const now=new Date();
-    const moisDebut=new Date(now.getFullYear(),now.getMonth(),1);
-    const weeksMois=allWeeks.filter(w=>new Date(w.monday+'T12:00:00')>=moisDebut);
-    mensuelResult=CalcEngine.calcMonth(contract.hoursBase,weeksMois,contract,contract.hourlyRate||0);
+    // Trouver la période courante depuis buildPeriodes (respecte clôtures + n-1)
+    const periodesMensuel=buildPeriodes(year, contract);
+    let pCourante=null;
+    // 1. Période contenant calendarMonday (vue calendrier)
+    for(const p of periodesMensuel) {
+      if(calendarMonday>=p.debutStr && calendarMonday<=p.finStr){ pCourante=p; break; }
+    }
+    // 2. Sinon : période contenant aujourd'hui
+    if(!pCourante) {
+      const todayStr=M5_localDK(new Date());
+      for(const p of periodesMensuel) {
+        if(todayStr>=p.debutStr && todayStr<=p.finStr){ pCourante=p; break; }
+      }
+    }
+    // 3. Sinon : fallback mois calendaire
+    if(!pCourante) {
+      const now=new Date();
+      const lastDay=new Date(now.getFullYear(),now.getMonth()+1,0);
+      pCourante={
+        debutStr:`${now.getFullYear()}-${String(now.getMonth()+1).padStart(2,'0')}-01`,
+        finStr:`${lastDay.getFullYear()}-${String(lastDay.getMonth()+1).padStart(2,'0')}-${String(lastDay.getDate()).padStart(2,'0')}`
+      };
+    }
+    // Inclure toute semaine qui chevauche la période (lundi<=fin ET fin_semaine>=debut)
+    const weeksMois=allWeeks.filter(w=>{
+      const wEnd=new Date(w.monday+'T12:00:00'); wEnd.setDate(wEnd.getDate()+6);
+      const wEndStr=wEnd.getFullYear()+'-'+String(wEnd.getMonth()+1).padStart(2,'0')+'-'+String(wEnd.getDate()).padStart(2,'0');
+      return w.monday<=pCourante.finStr && wEndStr>=pCourante.debutStr;
+    });
+    // Nombre de jours réels dans la période pour proratiser le seuil
+    const debutDate=new Date(pCourante.debutStr+'T12:00:00');
+    const finDate=new Date(pCourante.finStr+'T12:00:00');
+    const nbJoursPeriode=Math.round((finDate-debutDate)/86400000)+1;
+    mensuelResult=CalcEngine.calcMonth(contract.hoursBase,weeksMois,contract,contract.hourlyRate||0,nbJoursPeriode);
   }
 
   // Score bien-être (Higgins, Karasek, Sonnentag, Voydanoff)
@@ -566,17 +596,22 @@ function renderQuickStats(analysis) {
     </div>`;
   } else if(mode==='MENSUEL'&&mensuelResult) {
     const delta=mensuelResult.delta;
-    // Delta négatif = sous le seuil = normal, pas une anomalie
     const deltaLabel=delta>0?`+${delta.toFixed(1)}h HC`:delta===0?'✓ Équilibré':'Sous le seuil';
     const deltaCls=delta>0?'warn':'ok';
     html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
       <div class="m5-stat"><div class="m5-stat-val">${mensuelResult.totalWorked}h</div><div class="m5-stat-label">Heures ce mois</div></div>
-      <div class="m5-stat"><div class="m5-stat-val ${deltaCls}">${deltaLabel}</div><div class="m5-stat-label">vs seuil mensuel</div></div>
+      <div class="m5-stat"><div class="m5-stat-val ${deltaCls}">${deltaLabel}</div><div class="m5-stat-label">vs seuil période</div></div>
       <div class="m5-stat"><div class="m5-stat-val ${mensuelResult.totalCompH>0?'warn':'ok'}">${mensuelResult.totalCompH}h</div><div class="m5-stat-label">Heures comp.</div></div>
     </div>
     <div class="m5-alert info" style="font-size:12px;padding:6px 10px;">
-      <span>📊</span><div>Seuil mensuel : <strong>${mensuelResult.seuilMensuel}h</strong> = ${contract.hoursBase}h × 52 / 12</div>
+      <span>📊</span><div>Seuil période : <strong>${mensuelResult.seuilMensuel}h</strong></div>
     </div>`;
+    if(mensuelResult.alerts&&mensuelResult.alerts.length) {
+      mensuelResult.alerts.forEach(a=>{
+        const cls=a.level==='critique'?'critique':a.level==='alerte'?'alerte':'warn';
+        html+=`<div class="m5-alert ${cls}" style="margin-top:6px;font-size:12px;"><span>${a.level==='critique'?'⚖️':'⚠️'}</span><div>${a.msg}</div></div>`;
+      });
+    }
   } else if(annualStats) {
     // Semaines avec au moins 1h de HC (toutes les semaines en dépassement)
     const weeksWithHC=annualStats.weeksWithComp||0;
@@ -679,20 +714,39 @@ function buildPeriodes(year, contract) {
     // Périodes basées sur les dates de clôture réelles
     // On reconstruit les périodes : debut = clôture_mois_precedent + 1 jour, fin = clôture_mois
     const sortedMonths=Object.keys(clotures).map(Number).sort((a,b)=>a-b);
+    const MOIS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+
+    // Calculer le debut réel de la 1ère période depuis exerciceStart (peut être en n-1)
+    let firstDebut=null;
+    const exStart=contract.exerciceStart||'01/01';
+    if(exStart && exStart!=='01/01') {
+      const parts=exStart.split('/');
+      const dd=parseInt(parts[0]||'1');
+      const mm=parseInt(parts[1]||'1');
+      const prevYear=parseInt(year)-1;
+      firstDebut=new Date(prevYear, mm-1, dd);
+    }
+
     let prevEnd=null;
-    sortedMonths.forEach(m=>{
+    sortedMonths.forEach((m,idx)=>{
       const finStr=clotures[m];
       const fin=new Date(finStr+'T12:00:00');
       let debut;
       if(prevEnd) {
         debut=new Date(prevEnd+'T12:00:00'); debut.setDate(debut.getDate()+1);
+      } else if(firstDebut) {
+        // 1ère période : débute à exerciceStart en n-1
+        debut=firstDebut;
       } else {
-        // Début de la première période = 1er jour du mois ou début exercice
+        // Fallback : 1er jour du mois de fin
         debut=new Date(fin.getFullYear(), fin.getMonth(), 1);
       }
       const debutStr=debut.getFullYear()+'-'+String(debut.getMonth()+1).padStart(2,'0')+'-'+String(debut.getDate()).padStart(2,'0');
-      const MOIS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
-      const label=`${debut.getDate()} ${MOIS[debut.getMonth()]} → ${fin.getDate()} ${MOIS[fin.getMonth()]}`;
+      // Afficher l'année si le début est en n-1
+      const showYear=debut.getFullYear()!==parseInt(year);
+      const labelDebut=`${debut.getDate()} ${MOIS[debut.getMonth()]}${showYear?' '+debut.getFullYear():''}`;
+      const labelFin=`${fin.getDate()} ${MOIS[fin.getMonth()]}`;
+      const label=`${labelDebut} → ${labelFin}`;
       periodes.push({ label, debutStr, finStr, mois:m });
       prevEnd=finStr;
     });
