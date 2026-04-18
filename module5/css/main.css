@@ -854,7 +854,7 @@ body {
 
 /* ── COLORATION PÉRIODE MENSUELLE CALENDRIER ─────────────────────── */
 .m5-cal-day.m5-cal-month-a {
-  background: var(--miz-bg);
+  background: #f0eeff;
 }
 .m5-cal-day.m5-cal-month-b {
   background: #f5f0ff;
