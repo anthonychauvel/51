@@ -802,6 +802,30 @@ function buildPeriodes(year, contract) {
       periodes.push({ label:MOIS_L[m-1]+' '+year, debutStr:dStr, finStr:fStr, mois:m });
     }
   }
+  // ── Snap début/fin au weekStartDay ──────────────────────────────
+  // Si weekStartDay=0 (lundi), le début de chaque période doit être un lundi
+  // et la fin un dimanche — pour coller avec les semaines de travail
+  const sd = (contract.weekStartDay !== undefined ? contract.weekStartDay : 0);
+  if(sd >= 0 && typeof M5_weekStartOf === 'function') {
+    periodes.forEach(p => {
+      // Début → snap vers le DÉBUT de la semaine qui contient cette date
+      p.debutStr = M5_weekStartOf(p.debutStr, sd);
+      // Fin → snap vers la FIN de la semaine qui contient la date de fin
+      // = start de la semaine suivante - 1 jour
+      const finSnap = new Date(M5_weekStartOf(p.finStr, sd)+'T12:00:00');
+      finSnap.setDate(finSnap.getDate() + 6);
+      p.finStr = finSnap.getFullYear()+'-'+String(finSnap.getMonth()+1).padStart(2,'0')+'-'+String(finSnap.getDate()).padStart(2,'0');
+      // Recalculer le label avec les dates snappées
+      const MOIS_S=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
+      const deb = new Date(p.debutStr+'T12:00:00');
+      const fin = new Date(p.finStr+'T12:00:00');
+      const showYear = deb.getFullYear() !== parseInt(year);
+      const lDebut = `${deb.getDate()} ${MOIS_S[deb.getMonth()]}${showYear?' '+deb.getFullYear():''}`;
+      const lFin   = `${fin.getDate()} ${MOIS_S[fin.getMonth()]}`;
+      p.label = `${lDebut} → ${lFin}`;
+    });
+  }
+
   return periodes;
 }
 
@@ -857,26 +881,30 @@ function renderPeriodeNav() {
       allWeeks.slice().reverse().slice(0,12).forEach(w=>{
         const d=new Date(w.monday+'T12:00:00');
         const fn=new Date(w.monday+'T12:00:00'); fn.setDate(fn.getDate()+6);
-        const isActive=w.monday===calendarMonday;
         const MOIS=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
         const lbl=`${d.getDate()} ${MOIS[d.getMonth()]} → ${fn.getDate()} ${MOIS[fn.getMonth()]}${w.worked?` (${w.worked}h)`:''}`;
-        options+=`<option value="week:${w.monday}"${isActive?' selected':''}>${lbl}</option>`;
+        options+=`<option value="week:${w.monday}">${lbl}</option>`;
       });
       options+='</optgroup>';
     }
     options+='<optgroup label="Mois">';
     periodes.forEach((p,i)=>{
-      options+=`<option value="periode:${p.debutStr}:${p.finStr}"${i===activeIdx?' selected':''}>${p.label}</option>`;
+      options+=`<option value="periode:${p.debutStr}:${p.finStr}">${p.label}</option>`;
     });
     options+='</optgroup>';
   } else {
     // Mode mensuel ou annuel — toutes les périodes
     periodes.forEach((p,i)=>{
-      options+=`<option value="periode:${p.debutStr}:${p.finStr}"${i===activeIdx?' selected':''}>${p.label}</option>`;
+      options+=`<option value="periode:${p.debutStr}:${p.finStr}">${p.label}</option>`;
     });
   }
 
   sel.innerHTML=options;
+  // Pré-positionner APRÈS innerHTML — évite le blocage onchange au 1er clic
+  if(activeIdx>=0) {
+    const pActive=periodes[activeIdx];
+    sel.value=`periode:${pActive.debutStr}:${pActive.finStr}`;
+  }
 }
 
 function goToPeriode(val) {
@@ -1619,11 +1647,13 @@ let _wizClotureMode='auto';
 
 function wizSetClotureMode(mode) {
   _wizClotureMode=mode;
-  document.getElementById('wiz-cloture-auto-card')?.classList.toggle('active', mode==='auto');
-  document.getElementById('wiz-cloture-manual-card')?.classList.toggle('active', mode==='manual');
+  // Boutons m5-quick-btn : classe selected
+  document.getElementById('wiz-cloture-auto-card')?.classList.toggle('selected', mode==='auto');
+  document.getElementById('wiz-cloture-manual-card')?.classList.toggle('selected', mode==='manual');
   const grid=document.getElementById('wiz-clotures-grid-bloc');
   if(grid) grid.style.display=mode==='manual'?'block':'none';
   if(mode==='manual') _wizBuildCloturesGrid();
+  _wizUpdateSummary();
 }
 
 function _wizShowClotures() {
