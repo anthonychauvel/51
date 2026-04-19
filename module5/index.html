@@ -11,7 +11,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Syne:wght@600;800&display=swap">
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&display=swap">
   <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
@@ -295,65 +295,68 @@
   <!-- Section ACCUEIL -->
   <div id="sec-accueil" class="m5-section active">
 
-    <!-- Calendrier semaine -->
-    <div class="m5-card">
-      <div class="m5-card-header">
-        <button class="m5-cal-nav-btn" onclick="calPrev()">‹</button>
-        <span class="m5-card-title" id="cal-week-label" style="text-transform:none;font-size:12px;flex:1;text-align:center;"></span>
-        <button class="m5-cal-nav-btn" onclick="calNext()">›</button>
-        <button class="m5-cal-today-btn" onclick="calToday()">Auj.</button>
+    <!-- ══ BLOC SEMAINE : fond sombre immersif ══ -->
+    <div class="acc-week-hero">
+      <!-- Nav semaine -->
+      <div class="acc-week-nav">
+        <button class="acc-nav-btn" onclick="calPrev()">‹</button>
+        <span id="cal-week-label" class="acc-week-label"></span>
+        <button class="acc-nav-btn" onclick="calNext()">›</button>
+        <button class="acc-today-btn" onclick="calToday()">Auj.</button>
       </div>
-      <div class="m5-card-body" style="padding:10px 12px;">
-        <div id="calendar-grid"></div>
-        <div id="week-total-bar" style="margin-top:8px;display:none;"></div>
-        <div style="display:flex;align-items:center;justify-content:space-between;margin-top:6px;">
-          <span id="cal-saved-badge" style="font-size:11px;color:var(--miz-text3);"></span>
+      <!-- Calendrier -->
+      <div id="calendar-grid" style="padding:0 2px;"></div>
+      <div id="week-total-bar" style="margin-top:6px;display:none;"></div>
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-top:8px;padding:0 2px;">
+        <span id="cal-saved-badge" class="acc-saved-badge"></span>
+      </div>
+    </div>
+
+    <!-- ══ NAVIGATION PÉRIODE : pill sombre ══ -->
+    <div class="acc-periode-bar" id="periode-nav">
+      <select id="periode-select" class="acc-periode-sel"
+        onchange="goToPeriode(this.value)">
+        <option value="">— Période —</option>
+      </select>
+      <select id="periode-year-sel" class="acc-periode-year"
+        onchange="calChangeYear(this.value)"></select>
+    </div>
+
+    <!-- ══ ALERTES SEMAINE ══ -->
+    <div id="week-summary" class="acc-alerts"></div>
+
+    <!-- ══ BILAN / STATS : card glassmorphisme violet ══ -->
+    <div class="acc-stats-card" id="card-quick-stats">
+      <div class="acc-stats-header">
+        <span class="acc-stats-title" id="quick-stats-title">📊 Cette année</span>
+      </div>
+      <div id="quick-stats" class="acc-stats-body"></div>
+    </div>
+
+    <!-- ══ DROITS EN BREF : fond sombre ══ -->
+    <div class="acc-droits-card">
+      <div class="acc-droits-title">⚖️ Tes droits</div>
+      <div class="acc-droits-grid">
+        <div class="acc-droit-item">
+          <span class="acc-droit-icon">📌</span>
+          <span>Plafond <strong>10%</strong> (ou <strong>33%</strong> avec accord)</span>
+        </div>
+        <div class="acc-droit-item">
+          <span class="acc-droit-icon">💰</span>
+          <span>Majoration <strong>+10%</strong> puis <strong>+25%</strong></span>
+        </div>
+        <div class="acc-droit-item">
+          <span class="acc-droit-icon">🚫</span>
+          <span>Limite absolue : jamais <strong>35h</strong></span>
+        </div>
+        <div class="acc-droit-item">
+          <span class="acc-droit-icon">📅</span>
+          <span><strong>12 sem.</strong> consécutives → révision contrat</span>
         </div>
       </div>
-    </div>
-
-    <!-- Sélecteur période / navigation rapide -->
-    <div style="padding:6px 12px 0;" id="periode-nav">
-      <div style="display:flex;align-items:center;gap:6px;">
-        <select id="periode-select" class="m5-select"
-          style="flex:1;font-size:12px;padding:5px 8px;"
-          onchange="goToPeriode(this.value)">
-          <option value="">— Choisir une période —</option>
-        </select>
-        <select id="periode-year-sel" class="m5-select"
-          style="font-size:12px;padding:5px 6px;width:70px;flex-shrink:0;"
-          onchange="calChangeYear(this.value)"></select>
-      </div>
-    </div>
-
-    <!-- Résumé / alertes semaine -->
-    <div style="padding:0 16px;" id="week-summary"></div>
-
-    <!-- Stats rapides + mode -->
-    <div class="m5-card" id="card-quick-stats">
-      <div class="m5-card-header">
-        <span class="m5-card-title" id="quick-stats-title">📊 Cette année</span>
-      </div>
-      <div class="m5-card-body" id="quick-stats"></div>
-    </div>
-
-    <!-- Info légale compacte -->
-    <div class="m5-card" style="margin-bottom:16px;">
-      <div class="m5-card-header"><span class="m5-card-title">⚖️ Tes droits en bref</span></div>
-      <div class="m5-card-body">
-        <div style="display:flex;flex-direction:column;gap:6px;font-size:13px;color:var(--miz-text2);line-height:1.5;">
-          <div>📌 Plafond&nbsp;: 10% du contrat (ou 33% avec accord de branche)</div>
-          <div>💰 Majoration&nbsp;: +10% jusqu'au 1/10e, +25% au-delà</div>
-          <div>⚠️ Jamais 35h&nbsp;: tes heures ne peuvent atteindre le temps plein</div>
-          <div>📅 Règle 12 sem.&nbsp;: +2h/sem × 12 sem = modification de contrat obligatoire</div>
-          <div style="margin-top:8px;">
-            <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openModal('modal-prevenance')" style="font-size:12px;">
-              ⏰ Vérifier le délai de prévenance
-            </button>
-          </div>
-
-        </div>
-      </div>
+      <button class="acc-prevenance-btn" onclick="openModal('modal-prevenance')">
+        ⏰ Vérifier mon délai de prévenance
+      </button>
     </div>
 
   </div>
