@@ -76,7 +76,12 @@ const M5_Wellbeing = {
     // ── 4. SCORE CHOIX (Voydanoff 2005) ──────────────────────────
     // Temps partiel choisi si heures réelles << plafond légal
     // Seuil 95% du plafond = vraiment "proche" (pas juste légèrement au-dessus du contrat)
-    const cap = contract.cap || 0.10;
+    // Cap réel : priorité à la CCN sélectionnée (évite les bugs si contrat mal sauvegardé)
+    let cap = contract.cap || 0.10;
+    if(contract.idcc > 0 && typeof CCN_PARTIEL_API !== 'undefined') {
+      const ccnRules = CCN_PARTIEL_API.getRules(contract.idcc);
+      if(ccnRules && ccnRules.cap) cap = ccnRules.cap;
+    }
     const plafondH = contractH * (1 + cap);
     const semainesProchePlafond = worked.filter(h => h >= plafondH * 0.95).length;
     const ratioSubi = semainesProchePlafond / n;
@@ -133,10 +138,9 @@ const M5_Wellbeing = {
     // ── INTERPRÉTATIONS ──────────────────────────────────────────
     const niveau = scoreGlobal >= 75 ? 'bon'
                  : scoreGlobal >= 50 ? 'moyen'
-                 : scoreGlobal >= 25 ? 'tendu'
-                 : 'critique';
+                 : 'tendu'; // On évite "critique" — trop alarmiste pour un outil d'information
 
-    const emoji = { bon:'🟢', moyen:'🟡', tendu:'🟠', critique:'🔴' };
+    const emoji = { bon:'🟢', moyen:'🟡', tendu:'🟠' };
 
     // Identifier le facteur le plus dégradé
     const scores = [
@@ -200,7 +204,7 @@ const M5_Wellbeing = {
     } else if (niveau === 'tendu') {
       msgs.push({ type:'alerte', text:`Ton rythme de travail est sous tension. Les études montrent que ce type de schéma maintenu plusieurs mois affecte la qualité de récupération.` });
     } else {
-      msgs.push({ type:'critique', text:`Ton schéma de travail s'apparente à un temps partiel subi. Le niveau d'imprévisibilité et d'intensité est comparable à un temps plein, sans les protections associées.` });
+      msgs.push({ type:'alerte', text:`Ton rythme actuel combine une forte variabilité et une intensité élevée. Ce type de schéma prolongé mérite attention — l'objectif est de t'informer, pas de t'alarmer.` });
     }
 
     // Messages spécifiques par composante
@@ -234,8 +238,8 @@ const M5_Wellbeing = {
     }
 
     if (ratioSubi >= 0.5) {
-      msgs.push({ type:'alerte', ref:'Voydanoff 2005',
-        text:`Plus de la moitié de tes semaines approchent le plafond légal. Voydanoff montre que ce schéma caractérise un temps partiel subi, avec les mêmes effets négatifs sur la santé que le temps plein.` });
+      msgs.push({ type:'warn', ref:'Voydanoff 2005',
+        text:`Plusieurs semaines approchent le plafond légal. Voydanoff distingue le temps partiel choisi du temps partiel contraint — si ces heures te sont imposées, c'est utile à noter pour toi.` });
     }
 
     // Janssen & Nachreiner 2004 — variations soudaines
@@ -256,8 +260,8 @@ const M5_Wellbeing = {
     // Bambra et al. 2008 — santé mentale
     const ratioSubiB = semainesProchePlafond / Math.max(1, worked.length);
     if (ratioSubiB >= BAMBRA_SUBI_SEUIL) {
-      msgs.push({ type:'critique', ref:'Bambra et al. 2008',
-        text:`Temps partiel subi chronique. La méta-analyse Bambra montre un risque de dépression 1,5× plus élevé dans cette situation. Ce signal mérite attention sur le long terme.` });
+      msgs.push({ type:'warn', ref:'Bambra et al. 2008',
+        text:`Beaucoup de tes semaines approchent le plafond légal. La recherche Bambra associe ce schéma à plus de fatigue sur la durée. C'est un signal à surveiller — pas une certitude.` });
     } else if (ratioSubiB >= 0.30) {
       msgs.push({ type:'warn', ref:'Bambra et al. 2008',
         text:`Tendance vers un temps partiel subi (${Math.round(ratioSubiB*100)}% de semaines proches du plafond). Bambra identifie cette zone comme facteur de risque pour la santé mentale.` });
