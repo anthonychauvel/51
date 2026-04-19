@@ -9,7 +9,10 @@
 <meta charset="UTF-8">
 <title>Temps Partiel — Mizuki</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
-<link rel="stylesheet" href="css/main.css">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Syne:wght@600;800&display=swap">
+  <link rel="stylesheet" href="css/main.css">
 </head>
 <body>
 
@@ -363,6 +366,25 @@
         <button class="m5-btn m5-btn-outline m5-btn-sm" onclick="openYearsPopup()" id="hist-year-btn">2026</button>
       </div>
       <div id="historique-list"></div>
+    </div>
+    <!-- Sauvegarde / Import -->
+    <div class="m5-card" style="margin:12px 0;">
+      <div class="m5-card-header">
+        <span class="m5-card-title">💾 Mes données</span>
+      </div>
+      <div class="m5-card-body" style="display:flex;flex-direction:column;gap:8px;">
+        <div style="font-size:12px;color:var(--miz-text3);margin-bottom:4px;">
+          Exporte ou importe toutes tes semaines et ton contrat au format JSON.
+        </div>
+        <button class="m5-btn m5-btn-outline m5-btn-full" onclick="exportDataJSON()" style="display:flex;align-items:center;justify-content:center;gap:8px;">
+          <span>⬇️</span><span>Exporter mes données (JSON)</span>
+        </button>
+        <label class="m5-btn m5-btn-outline m5-btn-full" style="display:flex;align-items:center;justify-content:center;gap:8px;cursor:pointer;margin:0;">
+          <span>⬆️</span><span>Importer des données (JSON)</span>
+          <input type="file" accept=".json,application/json" onchange="importDataJSON(this)" style="display:none;">
+        </label>
+        <div id="import-status" style="font-size:11px;color:var(--miz-text3);text-align:center;min-height:16px;"></div>
+      </div>
     </div>
   </div>
 
