@@ -166,6 +166,7 @@ function refreshUI() {
 
 // ── CALENDRIER SEMAINE ────────────────────────────────────────────
 function renderCalendar() {
+  try {
   const contract=M5_Contract.get();
   const year=M5_DataStore.getYear();
   const days=M5_DataStore.getWeekDays(calendarMonday,year);
@@ -225,6 +226,14 @@ function renderCalendar() {
   }
 
   // Mode journalier
+  // ── Calculer les périodes UNE SEULE FOIS hors boucle ──────────
+  let _periodesCache=[];
+  try {
+    if(!_currentPeriode && typeof buildPeriodes==='function') {
+      _periodesCache=buildPeriodes(year,contract)||[];
+    }
+  } catch(_e){ _periodesCache=[]; }
+
   let html='<div class="m5-cal-grid">';
   days.forEach(d=>{
     const dt=new Date(d.dk+'T12:00:00');
@@ -244,16 +253,14 @@ function renderCalendar() {
       const inPeriode=d.dk>=_currentPeriode.debutStr && d.dk<=_currentPeriode.finStr;
       cellClass+= inPeriode?' m5-cal-period-active':' m5-cal-period-out';
     } else {
-      // Séparation par période de paie (si contrat a des clôtures) sinon par mois
-      const _periodes=typeof buildPeriodes==='function'?buildPeriodes(year,contract):[];
+      // Séparation par période de paie — cache calculé hors boucle
       let _pIdx=-1;
-      for(let _pi=0;_pi<_periodes.length;_pi++){
-        if(d.dk>=_periodes[_pi].debutStr && d.dk<=_periodes[_pi].finStr){ _pIdx=_pi; break; }
+      for(let _pi=0;_pi<_periodesCache.length;_pi++){
+        if(d.dk>=_periodesCache[_pi].debutStr && d.dk<=_periodesCache[_pi].finStr){ _pIdx=_pi; break; }
       }
       if(_pIdx>=0) {
         cellClass+=' m5-cal-month-'+(_pIdx%2===0?'a':'b');
-        // Bordure gauche si premier jour de la période
-        if(d.dk===_periodes[_pIdx].debutStr) cellClass+=' m5-cal-period-start';
+        if(d.dk===_periodesCache[_pIdx].debutStr) cellClass+=' m5-cal-period-start';
       } else {
         const _mIdx=new Date(d.dk+'T12:00:00').getMonth();
         cellClass+=' m5-cal-month-'+(_mIdx%2===0?'a':'b');
@@ -315,6 +322,11 @@ function renderCalendar() {
   </div>`;
 
   el.innerHTML=html;
+  } catch(renderErr) {
+    console.error('renderCalendar crash:', renderErr);
+    const elErr=document.getElementById('calendar-grid');
+    if(elErr) elErr.innerHTML='<div class="m5-cal-total-empty" style="color:rgba(255,255,255,0.6);">Rafraîchissement en cours… tap sur Auj.</div>';
+  }
 }
 
 // ── Navigation semaines ───────────────────────────────────────────
