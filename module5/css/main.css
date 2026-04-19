@@ -1248,3 +1248,144 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .m5-bottom-btn.active::before {
   background: linear-gradient(90deg, #A78BFA, #7C3AED);
 }
+
+/* ══════════════════════════════════════════════════════════════
+   WIZARD + ONBOARDING — Fond sombre immersif
+══════════════════════════════════════════════════════════════ */
+
+/* Fond dégradé pour le wizard et l'écran no-contract */
+.wiz-dark-bg {
+  min-height: 100vh;
+  background: linear-gradient(160deg, #0F0528 0%, #1A0A3E 30%, #2D1467 65%, #1A0A3E 100%);
+  position: relative;
+  overflow: hidden;
+}
+/* Points lumineux décoratifs */
+.wiz-dark-bg::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(196,168,255,0.25) 1px, transparent 1px),
+    radial-gradient(circle, rgba(139,92,246,0.15) 1px, transparent 1px);
+  background-size: 48px 48px, 30px 30px;
+  background-position: 0 0, 15px 15px;
+  opacity: 0.35;
+  pointer-events: none;
+}
+
+/* Barre de progression wizard */
+#wiz-progress {
+  background: transparent;
+  position: relative; z-index: 1;
+}
+#wiz-progress-bar { background: linear-gradient(90deg, #A78BFA, #7C3AED); }
+#wiz-progress [style*="background:var(--miz-border)"] { background: rgba(255,255,255,0.12) !important; }
+#wiz-step-label { color: rgba(196,168,255,0.70) !important; }
+#wiz-progress button { color: rgba(196,168,255,0.50) !important; }
+
+/* Étapes du wizard sur fond sombre */
+.wiz-step {
+  position: relative; z-index: 1;
+  color: rgba(255,255,255,0.85);
+}
+
+/* Cards dans le wizard */
+.wiz-step .m5-card {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(167,139,250,0.22);
+  backdrop-filter: blur(8px);
+}
+.wiz-step .m5-card-body { color: rgba(255,255,255,0.80); }
+.wiz-step strong { color: #E9D5FF; }
+.wiz-step [style*="color:var(--miz-text3)"] { color: rgba(196,168,255,0.55) !important; }
+.wiz-step [style*="color:var(--miz-text2)"] { color: rgba(196,168,255,0.70) !important; }
+.wiz-step [style*="color:var(--miz-text)"]  { color: rgba(255,255,255,0.85) !important; }
+.wiz-step [style*="color:var(--miz-primary)"] { color: #E9D5FF !important; }
+
+/* Inputs dans le wizard */
+.wiz-step .m5-input,
+.wiz-step .m5-select {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(167,139,250,0.30);
+  color: #fff;
+}
+.wiz-step .m5-input:focus,
+.wiz-step .m5-select:focus {
+  border-color: #A78BFA;
+  box-shadow: 0 0 0 3px rgba(167,139,250,0.18);
+}
+.wiz-step .m5-input::placeholder { color: rgba(255,255,255,0.30); }
+.wiz-step .m5-label { color: rgba(196,168,255,0.80); }
+.wiz-step select option { background: #1A0A3E; color: #fff; }
+
+/* Radio cards dans wizard */
+.wiz-step .wiz-radio-card {
+  background: rgba(255,255,255,0.06);
+  border-color: rgba(167,139,250,0.20);
+  color: rgba(255,255,255,0.80);
+}
+.wiz-step .wiz-radio-card.active,
+.wiz-step .wiz-radio-card:has(input:checked) {
+  background: rgba(109,40,217,0.30);
+  border-color: #A78BFA;
+}
+
+/* Quick-buttons dans wizard */
+.wiz-step .m5-quick-btn {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(167,139,250,0.25);
+  color: rgba(255,255,255,0.80);
+}
+.wiz-step .m5-quick-btn.selected {
+  background: linear-gradient(135deg, #7C3AED, #4C1D95);
+  border-color: #A78BFA;
+  color: #fff;
+  box-shadow: 0 3px 12px rgba(109,40,217,0.40);
+}
+
+/* Récapitulatif final */
+.wiz-step #wiz-summary {
+  background: rgba(255,255,255,0.06);
+  border: 1px solid rgba(167,139,250,0.20);
+  border-radius: var(--miz-radius);
+  padding: 14px 16px;
+}
+.wiz-step #wiz-summary [style*="color:var(--miz-primary)"] { color: #A78BFA !important; }
+
+/* Alertes dans wizard */
+.wiz-step .m5-alert.info    { background: rgba(59,130,246,0.14); color: #BFDBFE; }
+.wiz-step .m5-alert.ok      { background: rgba(16,185,129,0.14); color: #A7F3D0; }
+.wiz-step .m5-alert.warn    { background: rgba(245,158,11,0.14); color: #FDE68A; }
+
+/* Texte secondaire dans les cards features */
+.wiz-step [style*="font-size:12px"] { color: rgba(196,168,255,0.55); }
+
+/* Bouton primaire wizard — plus brillant */
+.wiz-step .m5-btn-primary {
+  box-shadow: 0 6px 24px rgba(109,40,217,0.50);
+}
+.wiz-step .m5-btn-outline {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(167,139,250,0.35);
+  color: #DDD6FE;
+}
+
+/* Avatar Mizuki dans step 1 */
+.wiz-step img[alt="Mizuki"] {
+  filter: drop-shadow(0 8px 24px rgba(109,40,217,0.50));
+  animation: float 4s ease-in-out infinite;
+}
+
+/* Champ date obligatoire — highlight */
+.wiz-step input[required]:invalid { border-color: rgba(248,113,113,0.50); }
+.wiz-step input[required]:valid   { border-color: rgba(52,211,153,0.50); }
+
+/* Lien "Passer" plus visible */
+#wiz-progress > div > button {
+  color: rgba(196,168,255,0.50) !important;
+  font-size: 12px !important;
+}
+
+/* Étoile obligatoire */
+.wiz-step span[style*="color:#F87171"] { color: #F87171 !important; }
