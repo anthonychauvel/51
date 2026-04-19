@@ -42,7 +42,7 @@
 
 <!-- ══ VUE : PAS DE CONTRAT ══════════════════════════════════════ -->
 <!-- ══ WIZARD BIENVENUE ══════════════════════════════════════════ -->
-<div id="view-no-contract">
+<div id="view-no-contract" class="wiz-dark-bg">
 
   <!-- Barre de progression -->
   <div id="wiz-progress" style="padding:16px 16px 0;">
@@ -61,7 +61,7 @@
       <img src="../images/Mizuki.PNG" alt="Mizuki"
         style="width:130px;margin:0 auto 12px;display:block;"
         onerror="this.src='assets/mizuki.svg'">
-      <div style="font-size:22px;font-weight:800;color:var(--miz-primary);margin-bottom:8px;">Bonjour ! Je suis Mizuki 🦊</div>
+      <div style="font-size:22px;font-weight:800;color:#E9D5FF;margin-bottom:8px;">Bonjour ! Je suis Mizuki 🦊</div>
       <div style="font-size:14px;color:var(--miz-text2);line-height:1.7;margin-bottom:20px;">
         Je suis là pour surveiller tes heures complémentaires et t'informer de tes droits en tant que salariée à temps partiel.
       </div>
@@ -223,18 +223,18 @@
   <div class="wiz-step" id="wStep6">
     <div style="padding:20px 16px 8px;text-align:center;">
       <div style="font-size:32px;margin-bottom:8px;">📆</div>
-      <div style="font-size:18px;font-weight:700;color:var(--miz-primary);margin-bottom:6px;">Ton calendrier de paie</div>
-      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:16px;">Optionnel — tu pourras le modifier plus tard.</div>
+      <div style="font-size:18px;font-weight:700;color:#E9D5FF;margin-bottom:6px;">Ton calendrier de paie</div>
+      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:16px;">Indique quand commence ton année de paie — c'est nécessaire pour calculer tes périodes.</div>
     </div>
     <div style="padding:0 16px;display:flex;flex-direction:column;gap:14px;">
 
       <!-- Date de début d'exercice -->
       <div class="m5-input-group">
-        <label class="m5-label">Quand commence ton année de paie ?</label>
+        <label class="m5-label">Date de début de ton exercice de paie <span style="color:#F87171;">*</span></label>
         <input type="date" class="m5-input" id="wiz-exercice"
-          style="font-size:15px;">
+          style="font-size:15px;" required>
         <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">
-          Ex : 01/01 pour janvier, ou 01/06 si ton contrat démarre en juin. Laisse vide si tu ne sais pas.
+          Ex : 08/12/2025 si ta paie commence en décembre. Regarde ton bulletin de salaire.
         </div>
       </div>
 
