@@ -1454,13 +1454,23 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   color: #E9D5FF !important;
   margin-top: 6px;
 }
-/* Même pour le modal contrat */
+/* Modal contrat — résultats CCN fond sombre */
 #contract-ccn-results {
-  background: #fff;
-  border: 1.5px solid var(--miz-border2);
+  background: rgba(20,8,52,0.97) !important;
+  border: 1px solid rgba(167,139,250,0.28) !important;
+  border-radius: var(--miz-radius-sm) !important;
+  backdrop-filter: blur(8px);
+  max-height: 200px;
+  overflow-y: auto;
 }
 #contract-ccn-selected {
-  color: var(--miz-primary) !important;
+  background: rgba(109,40,217,0.25) !important;
+  border: 1px solid rgba(167,139,250,0.35) !important;
+  border-radius: var(--miz-radius-sm) !important;
+  padding: 10px 14px !important;
+  margin-top: 6px;
+  color: #E9D5FF !important;
+  display: block;
 }
 
 /* ── Calendrier — halo du jour plus lumineux ── */
