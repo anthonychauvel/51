@@ -177,19 +177,22 @@ function renderCalendar() {
   // ── Saisie rapide : boutons heures prédéfinies ─────────────────
   const quickEl=document.getElementById('acc-quick-btns');
   if(quickEl&&contract.hoursBase) {
-    const base=contract.hoursBase;
-    const presets=[
-      {h:base,lbl:`${base}h ✓`,cls:'ok'},
-      {h:base+1,lbl:`${base+1}h`,cls:''},
-      {h:base+2,lbl:`${base+2}h`,cls:''},
-      {h:base+3,lbl:`${base+3}h`,cls:'warn'},
-      {h:base+5,lbl:`${base+5}h`,cls:'warn'},
-    ].filter(p=>p.h<35);
-    quickEl.innerHTML=presets.map(p=>`
-      <button class="acc-quick-btn ${wk.total===p.h?'active':''}" onclick="quickSave(${p.h})">
-        ${p.lbl}
-      </button>`).join('')+
-      `<button class="acc-quick-btn acc-quick-custom" onclick="openWeeklySaisie()" title="Saisir un autre total">✏️</button>`;
+    try {
+      const base=contract.hoursBase;
+      const currentTotal=wk&&wk.total!==null&&wk.total!==undefined?wk.total:null;
+      const presets=[
+        {h:base,lbl:`${base}h ✓`},
+        {h:base+1,lbl:`${base+1}h`},
+        {h:base+2,lbl:`${base+2}h`},
+        {h:base+3,lbl:`${base+3}h`},
+        {h:base+5,lbl:`${base+5}h`},
+      ].filter(p=>p.h<35);
+      quickEl.innerHTML=presets.map(p=>`
+        <button class="acc-quick-btn ${currentTotal===p.h?'active':''}" onclick="quickSave(${p.h})">
+          ${p.lbl}
+        </button>`).join('')+
+        `<button class="acc-quick-btn acc-quick-custom" onclick="openWeeklySaisie()" title="Saisir un autre total">✏️</button>`;
+    } catch(e){ quickEl.innerHTML=''; }
   }
 
   const el=document.getElementById('calendar-grid'); if(!el) return;
@@ -745,7 +748,8 @@ function renderQuickStats(analysis) {
     </div>`;
     // Plafond HC annuel Art. L3123-28 = contractH × cap × 52
     const hcCapAnnuel=Math.round(contract.hoursBase*contract.cap*52*10)/10;
-    const weeksEx=allWeeks.filter(w=>w.monday>=annuelResult.debutEx&&w.monday<=annuelResult.finEx);
+    const allWeeksForCap=M5_DataStore.getWeeksSorted(M5_DataStore.getYear())||[];
+    const weeksEx=allWeeksForCap.filter(w=>w.monday>=annuelResult.debutEx&&w.monday<=annuelResult.finEx);
     const totalHcAnnuel=Math.round(weeksEx.reduce((s,w)=>s+Math.max(0,(w.worked||0)-contract.hoursBase),0)*10)/10;
     const hcPct=hcCapAnnuel>0?Math.round(totalHcAnnuel/hcCapAnnuel*100):0;
     const hcCol=hcPct>=100?'var(--miz-danger)':hcPct>=80?'var(--miz-warning)':'var(--miz-primary)';
@@ -1275,9 +1279,10 @@ function renderStats() {
   }
 
   // ── HEATMAP annuelle ─────────────────────────────────────────
-  const allWeeksYear=M5_DataStore.getWeeksSorted(year);
+  const allWeeksYear=M5_DataStore.getWeeksSorted(year)||[];
   if(allWeeksYear.length>0) {
-    const maxHours=Math.max(...allWeeksYear.map(w=>w.worked||0),contract.hoursBase*1.2);
+    const hoursArr=allWeeksYear.map(w=>w.worked||0).filter(h=>h>0);
+    const maxHours=hoursArr.length>0?Math.max(...hoursArr,contract.hoursBase*1.2):contract.hoursBase*1.2;
     html+=`<div class="m5-card" style="margin:0 0 12px;">
       <div class="m5-card-header"><span class="m5-card-title">🗓️ Heatmap ${year}</span></div>
       <div class="m5-card-body" style="padding:12px;">
@@ -2048,10 +2053,15 @@ window.genererRefusPDF=genererRefusPDF;
 
 // ── Saisie rapide depuis l'accueil ────────────────────────────────
 function quickSave(hours) {
-  const year=M5_DataStore.getYear();
-  M5_DataStore.saveWeekTotal(calendarMonday, hours, year);
-  toast(`${hours}h sauvegardées ✓`,'success');
-  refreshUI();
+  try {
+    if(!hours||isNaN(hours)||hours<=0||hours>=35) return;
+    const year=M5_DataStore.getYear();
+    M5_DataStore.saveWeekTotal(calendarMonday, hours, year);
+    Mizuki.clearCache();
+    toast(`${hours}h sauvegardées ✓`,'success');
+    refreshUI();
+    if(currentSection==='stats') renderStats();
+  } catch(e) { toast('Erreur sauvegarde: '+e.message,'error'); }
 }
 window.quickSave=quickSave;
 window.showSection=showSection;
