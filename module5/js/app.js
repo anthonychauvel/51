@@ -113,7 +113,14 @@ function runAnalysis() {
   // Score bien-être (Higgins, Karasek, Sonnentag, Voydanoff)
   let wellbeing=null;
   if(typeof M5_Wellbeing!=='undefined' && allWeeks.length>=2) {
-    wellbeing=M5_Wellbeing.compute(allWeeks, contract.hoursBase, contract);
+    // Bien-être = fenêtre glissante des 12 dernières semaines réelles
+    // (le corps ne se souvient pas de janvier — Sonnentag, Karasek mesurent sur cycles courts)
+    const todayStr=M5_localDK(new Date());
+    const weeksPassees=allWeeks.filter(w=>w.monday<=todayStr);
+    const weeksWellbeing=weeksPassees.slice(-12); // 12 dernières semaines MAX
+    if(weeksWellbeing.length>=2) {
+      wellbeing=M5_Wellbeing.compute(weeksWellbeing, contract.hoursBase, contract);
+    }
   }
 
   currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,
