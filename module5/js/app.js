@@ -174,6 +174,24 @@ function renderCalendar() {
   const label=M5_formatMonday(calendarMonday);
   const isVac=M5_DataStore.isVacWeek(calendarMonday,year);
 
+  // ── Saisie rapide : boutons heures prédéfinies ─────────────────
+  const quickEl=document.getElementById('acc-quick-btns');
+  if(quickEl&&contract.hoursBase) {
+    const base=contract.hoursBase;
+    const presets=[
+      {h:base,lbl:`${base}h ✓`,cls:'ok'},
+      {h:base+1,lbl:`${base+1}h`,cls:''},
+      {h:base+2,lbl:`${base+2}h`,cls:''},
+      {h:base+3,lbl:`${base+3}h`,cls:'warn'},
+      {h:base+5,lbl:`${base+5}h`,cls:'warn'},
+    ].filter(p=>p.h<35);
+    quickEl.innerHTML=presets.map(p=>`
+      <button class="acc-quick-btn ${wk.total===p.h?'active':''}" onclick="quickSave(${p.h})">
+        ${p.lbl}
+      </button>`).join('')+
+      `<button class="acc-quick-btn acc-quick-custom" onclick="openWeeklySaisie()" title="Saisir un autre total">✏️</button>`;
+  }
+
   const el=document.getElementById('calendar-grid'); if(!el) return;
   document.getElementById('cal-week-label').textContent=label;
 
@@ -562,25 +580,137 @@ function deleteWeeklySaisie() {
 }
 
 // ── Résumé semaine sous le calendrier ────────────────────────────
+// ── Prévenance auto : vérifie si la semaine affichée est dans les 3 jours ──
+function checkPrevenanceAuto(mondayStr, contract) {
+  const today=M5_localDK(new Date());
+  const monday=new Date(mondayStr+'T12:00:00');
+  const todayDate=new Date(today+'T12:00:00');
+  const diffDays=Math.round((monday-todayDate)/86400000);
+  // Si on est déjà dans la semaine ou que c'est la semaine passée → pas d'alerte prévenance
+  if(diffDays<=0) return null;
+  // Calculer les jours ouvrés entre aujourd'hui et le lundi
+  let joursOuvres=0;
+  const d=new Date(todayDate);
+  while(d<monday) {
+    d.setDate(d.getDate()+1);
+    const dow=d.getDay();
+    if(dow!==0&&dow!==6) joursOuvres++; // pas sam/dim
+  }
+  const prevenanceRequise=contract.noticeDays||3;
+  if(joursOuvres<prevenanceRequise) {
+    return { joursOuvres, prevenanceRequise };
+  }
+  return null;
+}
+
 function renderWeekSummary(analysis) {
   const {weekResult,isVacWeek,contract,weekMode}=analysis;
   const el=document.getElementById('week-summary'); if(!el) return;
   if(isVacWeek) { el.innerHTML=`<div class="m5-alert ok"><span>🌴</span><div>Semaine de congés — bon repos !</div></div>`; return; }
-  if(!weekResult||weekResult.workedH<=0) { el.innerHTML=''; return; }
+  let html='';
+
+  // ── Alerte prévenance automatique ──────────────────────────────
+  const prevenanceAlert=checkPrevenanceAuto(calendarMonday, contract);
+  if(prevenanceAlert) {
+    html+=`<div class="m5-alert alerte" style="margin-bottom:6px;">
+      <span>⏰</span>
+      <div>
+        <strong>Délai de prévenance insuffisant</strong> — seulement <strong>${prevenanceAlert.joursOuvres} jour(s) ouvré(s)</strong> avant cette semaine (minimum légal : ${prevenanceAlert.prevenanceRequise} jours, Art. L3123-21).<br>
+        <span style="font-size:12px;">Si des HC t'ont été demandées pour cette semaine, tu peux les refuser légalement.</span>
+        <div style="margin-top:6px;">
+          <button onclick="genererRefusPDF()" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.40);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;color:rgba(255,220,180,0.90);cursor:pointer;">
+            📄 Générer mon refus
+          </button>
+        </div>
+      </div>
+    </div>`;
+  }
+
+  if(!weekResult||weekResult.workedH<=0) { el.innerHTML=html||''; return; }
   // Note fériés
   if(weekResult.feriesNote) {
     html+=`<div class="m5-alert info" style="margin-bottom:6px;"><span>📅</span><div style="font-size:12px;">${weekResult.feriesNote}</div></div>`;
   }
   const alerts=weekResult.alerts||[];
-  let html='';
   if(alerts.length) alerts.forEach(a=>{
     html+=`<div class="m5-alert ${a.level}"><span>${a.level==='critique'?'🚨':'⚠️'}</span><div>${a.msg}</div></div>`;
   });
-  if(weekResult.totalCompH>0&&contract.hourlyRate>0&&!html) {
+  if(weekResult.totalCompH>0&&contract.hourlyRate>0&&!prevenanceAlert) {
     const _cw=(weekResult.comp1Amount||0)+(weekResult.comp2Amount||0);
     html+=`<div class="m5-alert info"><span>💰</span><div>Majoration estimée : <strong>${_cw.toFixed(2)} € brut</strong> sur ${weekResult.totalCompH}h comp.</div></div>`;
   }
   el.innerHTML=html;
+}
+
+// ── Génération du refus en PDF ──────────────────────────────────
+function genererRefusPDF() {
+  const contract=M5_Contract.get();
+  const JClass=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
+  if(!JClass) { toast('PDF non disponible','error'); return; }
+  const doc=new JClass({orientation:'portrait',unit:'mm',format:'a4'});
+  const M=20, PW=170, pageH=297;
+  let y=30;
+
+  doc.setFillColor(30,12,74);
+  doc.rect(0,0,210,22,'F');
+  doc.setTextColor(255,255,255);
+  doc.setFontSize(13); doc.setFont('helvetica','bold');
+  doc.text('Modèle de refus — Heures complémentaires',M,10);
+  doc.setFontSize(9); doc.setFont('helvetica','normal');
+  doc.text('Art. L3123-21 Code du travail — Délai de prévenance non respecté',M,17);
+  doc.setTextColor(0,0,0);
+
+  const name=localStorage.getItem('M5_USER_NAME')||'[Prénom Nom]';
+  const d=new Date(calendarMonday+'T12:00:00');
+  const fn=new Date(calendarMonday+'T12:00:00'); fn.setDate(fn.getDate()+6);
+  const semLbl=`du ${d.toLocaleDateString('fr-FR')} au ${fn.toLocaleDateString('fr-FR')}`;
+  const today=new Date().toLocaleDateString('fr-FR');
+
+  const lines=[
+    name,
+    `Salarié(e) à temps partiel — ${contract.hoursBase}h/semaine`,
+    contract.ccnNom||'Droit commun',
+    '',
+    `Fait le ${today}`,
+    '',
+    "À l'attention de [Nom de l'employeur / Service RH]",
+    '',
+    "Objet : Refus d'heures complémentaires — Art. L3123-21 Code du travail",
+    '',
+    "Madame, Monsieur,",
+    '',
+    `Je soussigné(e) ${name}, employé(e) à temps partiel, vous informe par la présente`,
+    `que je refuse les heures complémentaires qui m'ont été demandées pour la semaine ${semLbl}.`,
+    '',
+    "Ce refus est motivé par le non-respect du délai légal de prévenance prévu par l'article",
+    "L3123-21 du Code du travail, qui impose une information préalable d'au moins 3 jours",
+    "ouvrés avant toute heure complémentaire. Ce délai n'ayant pas été respecté,",
+    "je suis en droit de décliner cette demande sans que cela ne constitue une faute.",
+    '',
+    "Je vous rappelle que le non-respect de ce délai est une violation du Code du travail.",
+    "Je conserve une copie de ce document à titre de preuve.",
+    '',
+    "Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.",
+    '',
+    '',
+    'Signature : _______________________',
+    'Date : ___________________________',
+    '',
+    "(Envoi recommandé avec accusé de réception recommandé)",
+  ];
+
+  doc.setFontSize(10); doc.setFont('helvetica','normal');
+  lines.forEach(line=>{
+    if(y>pageH-20){ doc.addPage(); y=20; }
+    if(line==='') y+=4;
+    else { doc.text(line,M,y); y+=6; }
+  });
+
+  doc.setFontSize(7); doc.setTextColor(150,150,150);
+  doc.text('Source : Art. L3123-21 Code du travail — Document informatif, non un avis juridique.',105,pageH-8,{align:'center'});
+
+  doc.save(`refus-heures-complementaires-${new Date().toISOString().slice(0,10)}.pdf`);
+  toast('Modèle de refus téléchargé ✓','success');
 }
 
 // ── Historique ────────────────────────────────────────────────────
@@ -1142,6 +1272,39 @@ function renderStats() {
       </div></div>`;
   } else {
     html='<div class="m5-empty"><div class="m5-empty-icon">📊</div><div class="m5-empty-text">Aucune semaine saisie pour '+year+'.</div></div>';
+  }
+
+  // ── HEATMAP annuelle ─────────────────────────────────────────
+  const allWeeksYear=M5_DataStore.getWeeksSorted(year);
+  if(allWeeksYear.length>0) {
+    const maxHours=Math.max(...allWeeksYear.map(w=>w.worked||0),contract.hoursBase*1.2);
+    html+=`<div class="m5-card" style="margin:0 0 12px;">
+      <div class="m5-card-header"><span class="m5-card-title">🗓️ Heatmap ${year}</span></div>
+      <div class="m5-card-body" style="padding:12px;">
+        <div class="m5-heatmap-wrap">
+          <div style="display:flex;flex-wrap:wrap;gap:3px;">`;
+    allWeeksYear.forEach(w=>{
+      const wh=w.worked||0;
+      const ratio=maxHours>0?Math.min(wh/maxHours,1):0;
+      let bg='rgba(108,63,197,0.08)', border='rgba(108,63,197,0.15)', txt='rgba(255,255,255,0.40)';
+      if(wh>=35){ bg='rgba(239,68,68,0.80)'; border='rgba(239,68,68,1)'; txt='#fff'; }
+      else if(wh>contract.hoursBase){ const i=Math.min(Math.round(ratio*255),255); bg=`rgba(245,${Math.round(158*(1-ratio*0.5))},11,${0.4+ratio*0.5})`; border=`rgba(245,158,11,0.7)`; txt='#fff'; }
+      else if(wh>0){ bg=`rgba(16,185,129,${0.25+ratio*0.5})`; border='rgba(16,185,129,0.5)'; txt='#fff'; }
+      const d=new Date(w.monday+'T12:00:00');
+      const lbl=`${d.getDate()}/${d.getMonth()+1}`;
+      html+=`<div title="${lbl} : ${wh}h" style="width:38px;height:38px;border-radius:6px;background:${bg};border:1px solid ${border};display:flex;flex-direction:column;align-items:center;justify-content:center;cursor:default;transition:transform .1s;" onmouseover="this.style.transform='scale(1.1)'" onmouseout="this.style.transform='scale(1)'">
+        <span style="font-size:9px;color:rgba(255,255,255,0.50);line-height:1;">${lbl}</span>
+        <span style="font-size:12px;font-weight:700;color:${txt};line-height:1.2;">${wh>0?wh+'h':'—'}</span>
+      </div>`;
+    });
+    html+=`</div></div>
+        <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--miz-text3);">
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(16,185,129,0.5);border-radius:3px;display:inline-block;"></span>Conforme</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(245,158,11,0.6);border-radius:3px;display:inline-block;"></span>HC</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(239,68,68,0.7);border-radius:3px;display:inline-block;"></span>≥35h</span>
+        </div>
+      </div>
+    </div>`;
   }
 
   html+=`<button class="m5-btn m5-btn-primary m5-btn-full" onclick="exportPDF()" style="margin:0 0 16px;">📄 Exporter en PDF</button>`;
@@ -1787,11 +1950,19 @@ function wizFinish() {
   // Récupérer les 12 clôtures
   const cloturesDates={};
   if(_wizClotureMode==='auto') {
-    // Fin de chaque mois de l'année courante
+    // Fin de mois — utiliser le jour de clôture configuré si différent du dernier jour
     const yr=new Date().getFullYear();
+    const clotureJour=parseInt(document.getElementById('wiz-cloture-jour')?.value||'0')||0;
     for(let m=1;m<=12;m++){
-      const last=new Date(yr,m,0);
-      cloturesDates[m]=last.getFullYear()+'-'+String(last.getMonth()+1).padStart(2,'0')+'-'+String(last.getDate()).padStart(2,'0');
+      let jour;
+      if(clotureJour>0&&clotureJour<=28) {
+        // Jour fixe (ex: 25 de chaque mois)
+        jour=new Date(yr,m-1,clotureJour);
+      } else {
+        // Dernier jour du mois
+        jour=new Date(yr,m,0);
+      }
+      cloturesDates[m]=jour.getFullYear()+'-'+String(jour.getMonth()+1).padStart(2,'0')+'-'+String(jour.getDate()).padStart(2,'0');
     }
   } else {
     for(let m=1;m<=12;m++){
@@ -1873,6 +2044,16 @@ function importDataJSON(input) {
 }
 
 window.exportDataJSON=exportDataJSON; window.importDataJSON=importDataJSON;
+window.genererRefusPDF=genererRefusPDF;
+
+// ── Saisie rapide depuis l'accueil ────────────────────────────────
+function quickSave(hours) {
+  const year=M5_DataStore.getYear();
+  M5_DataStore.saveWeekTotal(calendarMonday, hours, year);
+  toast(`${hours}h sauvegardées ✓`,'success');
+  refreshUI();
+}
+window.quickSave=quickSave;
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
