@@ -1389,3 +1389,98 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 
 /* Étoile obligatoire */
 .wiz-step span[style*="color:#F87171"] { color: #F87171 !important; }
+
+/* ══════════════════════════════════════════════════════════════
+   CORRECTIONS LISIBILITÉ — v3
+══════════════════════════════════════════════════════════════ */
+
+/* ── Bulle Mizuki — fond sombre immersif ── */
+.mizuki-bubble-wrap {
+  background: rgba(25,10,60,0.85) !important;
+  backdrop-filter: blur(12px);
+  border-bottom: 1px solid rgba(167,139,250,0.18) !important;
+}
+.mizuki-bubble-text { color: rgba(255,255,255,0.88) !important; }
+.mizuki-bubble-chevron { color: rgba(167,139,250,0.60) !important; }
+.mizuki-bubble-wrap::before { background: linear-gradient(to bottom, #A78BFA, #7C3AED); }
+.mizuki-bubble-wrap:active { background: rgba(40,15,90,0.90) !important; }
+
+/* ── Popup Mizuki — niveaux lisibles ── */
+#modal-mizuki .mizuki-popup-level.ok {
+  background: rgba(16,185,129,0.22);
+  color: #6EE7B7;
+  font-weight: 700;
+}
+#modal-mizuki .mizuki-popup-level.info {
+  background: rgba(59,130,246,0.20);
+  color: #93C5FD;
+  font-weight: 700;
+}
+#modal-mizuki .mizuki-popup-level.vigilance {
+  background: rgba(245,158,11,0.20);
+  color: #FCD34D;
+  font-weight: 700;
+}
+#modal-mizuki .mizuki-popup-level.alerte {
+  background: rgba(249,115,22,0.20);
+  color: #FCA5A5;
+  font-weight: 700;
+}
+#modal-mizuki .mizuki-popup-level.critique {
+  background: rgba(239,68,68,0.22);
+  color: #FCA5A5;
+  font-weight: 700;
+}
+#modal-mizuki .mizuki-popup-msg { color: rgba(255,255,255,0.85) !important; }
+#modal-mizuki .mizuki-popup-action {
+  background: rgba(255,255,255,0.08) !important;
+  border-color: rgba(167,139,250,0.22) !important;
+  color: rgba(255,255,255,0.80) !important;
+}
+#modal-mizuki .mizuki-popup-action::before { color: #A78BFA !important; }
+
+/* ── Wizard — résultats CCN et sélection ── */
+#wiz-ccn-results {
+  background: rgba(20,8,52,0.96) !important;
+  border: 1px solid rgba(167,139,250,0.25) !important;
+  border-radius: var(--miz-radius-sm) !important;
+  backdrop-filter: blur(8px);
+}
+#wiz-ccn-selected {
+  background: rgba(109,40,217,0.25) !important;
+  border: 1px solid rgba(167,139,250,0.35) !important;
+  border-radius: var(--miz-radius-sm) !important;
+  padding: 10px 14px !important;
+  color: #E9D5FF !important;
+  margin-top: 6px;
+}
+/* Même pour le modal contrat */
+#contract-ccn-results {
+  background: #fff;
+  border: 1.5px solid var(--miz-border2);
+}
+#contract-ccn-selected {
+  color: var(--miz-primary) !important;
+}
+
+/* ── Calendrier — halo du jour plus lumineux ── */
+.acc-week-hero .m5-cal-day.today {
+  background: rgba(255,255,255,0.28) !important;
+  border: 2px solid #fff !important;
+  box-shadow:
+    0 0 0 3px rgba(255,255,255,0.15),
+    0 0 20px rgba(255,255,255,0.25),
+    inset 0 0 12px rgba(255,255,255,0.08) !important;
+}
+.acc-week-hero .m5-cal-day.today .m5-cal-day-num {
+  color: #fff !important;
+  text-shadow: 0 0 8px rgba(255,255,255,0.60);
+}
+/* Sam/Dim — plus visible (moins opacity) */
+.acc-week-hero .m5-cal-day.weekend {
+  opacity: 0.75 !important;
+  background: rgba(255,255,255,0.06) !important;
+}
+.acc-week-hero .m5-cal-day.future {
+  opacity: 0.50 !important;
+}
