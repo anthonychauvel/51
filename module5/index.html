@@ -237,25 +237,25 @@
 
       <!-- Clôtures mensuelles — pour TOUS les modes -->
       <div id="wiz-clotures-bloc">
-        <div class="m5-label" style="margin-bottom:8px;">Est-ce que tu connais tes dates de clôture de paie ?</div>
+        <div class="m5-label" style="margin-bottom:6px;">Tes dates de clôture de paie</div>
         <div style="font-size:12px;color:var(--miz-text3);margin-bottom:10px;">
-          C'est la date où ton employeur "ferme" le mois pour calculer ta paie.
+          C'est la date où ton employeur ferme le mois pour calculer ta paie.
         </div>
-        <div style="display:flex;flex-direction:column;gap:8px;margin-bottom:12px;">
-          <label class="wiz-radio-card active" id="wiz-cloture-auto-card" onclick="wizSetClotureMode('auto')" style="display:flex;gap:12px;align-items:center;">
-            <input type="radio" name="wiz-cloture-mode" value="auto" checked style="accent-color:var(--miz-primary);">
-            <div>
-              <div style="font-weight:700;font-size:13px;">📅 Fin de chaque mois</div>
-              <div style="font-size:11px;color:var(--miz-text3);">31 jan, 28 fév, 31 mar… — le plus courant</div>
-            </div>
-          </label>
-          <label class="wiz-radio-card" id="wiz-cloture-manual-card" onclick="wizSetClotureMode('manual')" style="display:flex;gap:12px;align-items:center;">
-            <input type="radio" name="wiz-cloture-mode" value="manual" style="accent-color:var(--miz-primary);">
-            <div>
-              <div style="font-weight:700;font-size:13px;">✏️ Je connais mes dates exactes</div>
-              <div style="font-size:11px;color:var(--miz-text3);">Ex : clôture le 15 de chaque mois, ou des dates variables</div>
-            </div>
-          </label>
+        <div style="display:flex;gap:8px;margin-bottom:14px;">
+          <button type="button" class="m5-quick-btn selected" id="wiz-cloture-auto-card"
+            onclick="wizSetClotureMode('auto')"
+            style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;">
+            <span style="font-size:20px;">📅</span>
+            <span style="font-size:13px;font-weight:700;">Fin de mois</span>
+            <span style="font-size:11px;font-weight:400;opacity:.75;">31 jan, 28 fév…</span>
+          </button>
+          <button type="button" class="m5-quick-btn" id="wiz-cloture-manual-card"
+            onclick="wizSetClotureMode('manual')"
+            style="flex:1;display:flex;flex-direction:column;align-items:center;gap:4px;padding:12px 8px;">
+            <span style="font-size:20px;">✏️</span>
+            <span style="font-size:13px;font-weight:700;">Dates exactes</span>
+            <span style="font-size:11px;font-weight:400;opacity:.75;">Le 15, ou variables</span>
+          </button>
         </div>
         <div id="wiz-clotures-grid-bloc" style="display:none;">
           <div style="font-size:11px;color:var(--miz-text3);margin-bottom:8px;">
