@@ -1131,11 +1131,11 @@ function openMizukiPopup() {
   document.getElementById('mizuki-popup-body').innerHTML=`
     <div class="mizuki-popup-icon">${popup.icon}</div>
     <div><span class="mizuki-popup-level ${popup.level}">${lvlMap[popup.level]||popup.level}</span></div>
-    <div style="font-size:17px;font-weight:700;color:var(--miz-dark);margin-bottom:10px;">${popup.titre}</div>
+    <div style="font-size:17px;font-weight:700;color:#E9D5FF;margin-bottom:10px;">${popup.titre}</div>
     <div class="mizuki-popup-msg">${popup.message}</div>
-    ${popup.actions&&popup.actions.length?`<div style="font-size:12px;color:var(--miz-text2);font-weight:600;letter-spacing:.05em;margin-bottom:6px;">À FAIRE</div>
+    ${popup.actions&&popup.actions.length?`<div style="font-size:12px;color:#A78BFA;font-weight:700;letter-spacing:.06em;text-transform:uppercase;margin-bottom:8px;">À faire</div>
     <div class="mizuki-popup-actions">${popup.actions.map(a=>`<div class="mizuki-popup-action">${a}</div>`).join('')}</div>`:''}
-    <div style="font-size:11px;color:var(--miz-text3);text-align:center;margin-top:14px;">🦊 Mizuki est ton alliée — pas un avis juridique</div>`;
+    <div style="font-size:11px;color:rgba(196,168,255,0.50);text-align:center;margin-top:14px;">🦊 Mizuki est ton alliée — pas un avis juridique</div>`;
   openModal('modal-mizuki');
 }
 
@@ -1635,9 +1635,9 @@ function wizSearchCCN(term) {
   res.style.display='block';
   res.innerHTML=results.slice(0,8).map(ccn=>`
     <div onclick="wizPickCCN(${ccn.i},'${ccn.n.replace(/'/g,"\'")}','${ccn.s}',${ccn.cap})"
-      style="padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--miz-border);">
-      <div style="font-weight:600;">${ccn.n}</div>
-      <div style="font-size:11px;color:var(--miz-text3);">${ccn.s} — plafond <strong>${ccn.cap===0.33?'33%':'10%'}</strong></div>
+      style="padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(167,139,250,0.15);">
+      <div style="font-weight:600;color:#E9D5FF;">${ccn.n}</div>
+      <div style="font-size:11px;color:#A78BFA;">${ccn.s} — plafond <strong style="color:#DDD6FE;">${ccn.cap===0.33?'33%':'10%'}</strong></div>
     </div>`).join('');
 }
 
@@ -1650,8 +1650,8 @@ function wizPickCCN(idcc, nom, secteur, cap) {
   if(inp) inp.value=nom;
   if(sel) {
     sel.style.display='block';
-    sel.innerHTML=`<strong>${nom}</strong><br>
-      <span style="font-size:11px;color:var(--miz-text3);">Plafond HC : <strong>${cap===0.33?'33% (accord de branche)':'10% (droit commun)'}</strong></span>`;
+    sel.innerHTML=`<strong style="color:#E9D5FF;">${nom}</strong><br>
+      <span style="font-size:11px;color:#A78BFA;">Plafond HC : <strong style="color:#DDD6FE;">${cap===0.33?'33% (accord de branche)':'10% (droit commun)'}</strong></span>`;
   }
 }
 
@@ -1662,7 +1662,7 @@ function wizSelectDC() {
   const res=document.getElementById('wiz-ccn-results');
   if(inp) inp.value='';
   if(res) res.style.display='none';
-  if(sel) { sel.style.display='block'; sel.innerHTML='<strong>Droit commun</strong><br><span style="font-size:11px;color:var(--miz-text3);">Plafond HC : 10%</span>'; }
+  if(sel) { sel.style.display='block'; sel.innerHTML='<strong style="color:#E9D5FF;">Droit commun</strong><br><span style="font-size:11px;color:#A78BFA;">Plafond HC : 10%</span>'; }
   wizNext(4);
 }
 
