@@ -189,21 +189,77 @@ const GLOSSAIRE = [
     exemple: 'Si sur 20 semaines, 13 ou plus approchent ton plafond légal d\'heures complémentaires → zone critique Bambra. Mizuki t\'en alerte dans le score "Santé mentale".',
     tags: ['dépression','santé mentale','subi','choisi','méta-analyse','Bambra']
   },
+
+  // ── NOUVEAUX TERMES TEMPS PARTIEL
+  {
+    terme: "Durée minimale légale (24h)",
+    article: "Art. L3123-5",
+    definition: "Tout contrat à temps partiel doit être d'au moins 24h/semaine. En dessous, l'employeur doit justifier d'une dérogation légale ou d'un accord de branche.",
+    exemple: "Un contrat à 20h/sem est possible s'il existe un accord de branche ou une demande du salarié pour raisons personnelles.",
+    tags: ["durée","minimum","24h","contrat"]
+  },
+  {
+    terme: "Complément d'heures (avenant)",
+    article: "Art. L3123-22",
+    definition: "Accord temporaire pour augmenter ponctuellement la durée de travail. Les heures dans l'avenant sont payées sans majoration ; celles au-delà à +25%.",
+    exemple: "Contrat 20h, avenant à 28h : les 8h supplémentaires sont payées normalement. Si on travaille 30h, les 2h au-delà de l'avenant sont à +25%.",
+    tags: ["avenant","complément","temporaire","accord"]
+  },
+  {
+    terme: "Clause de garantie du temps de travail",
+    article: "Art. L3123-22 et accord de branche",
+    definition: "Certains accords collectifs prévoient que si un avenant est utilisé trop souvent dans l'année, le contrat doit être modifié à la hausse.",
+    exemple: "Dans certaines CCN : si un avenant est signé 8 fois sur 12 mois, le contrat doit être augmenté à la durée habituelle.",
+    tags: ["garantie","avenant","abus","recours"]
+  },
+  {
+    terme: "Temps partiel choisi vs subi",
+    article: "Voydanoff 2005 / Art. L3123-5",
+    definition: "Le temps partiel choisi est décidé librement. Le temps partiel subi est imposé faute de temps plein disponible. La loi protège davantage le temps partiel subi.",
+    exemple: "Une aide soignante à 24h/sem qui voulait travailler plus = temps partiel subi. Elle a un droit de priorité sur les postes à temps plein.",
+    tags: ["choix","subi","imposé","priorité"]
+  },
+  {
+    terme: "Priorité d'accès au temps plein",
+    article: "Art. L3123-8",
+    definition: "Tout salarié à temps partiel a priorité pour occuper un emploi à temps plein dans sa qualification. L'employeur doit l'informer des postes disponibles.",
+    exemple: "Si un poste à temps plein s'ouvre dans ton établissement, tu dois en être informée avant toute candidature externe.",
+    tags: ["priorité","temps plein","poste","accès"]
+  },
+  {
+    terme: "Coupures et interruptions journalières",
+    article: "Art. L3123-16",
+    definition: "La journée d'un salarié à temps partiel ne peut comporter plus d'une interruption d'activité. Sa durée ne peut dépasser 2 heures sauf accord de branche.",
+    exemple: "Travailler de 8h à 11h puis de 16h à 20h = 5h d'interruption. Illégal sans accord de branche.",
+    tags: ["coupure","interruption","journée","horaires"]
+  },
+  {
+    terme: "Modification des horaires",
+    article: "Art. L3123-24",
+    definition: "L'employeur ne peut modifier la répartition des horaires sans respecter un délai de 7 jours ouvrés minimum (ou 3 jours par accord collectif).",
+    exemple: "Si ton employeur veut changer tes jours de travail, il doit te prévenir 7 jours ouvrés à l'avance.",
+    tags: ["horaires","modification","délai","prévenance"]
+  },
+  {
+    terme: "Pencavel 2014 — Productivité décroissante",
+    article: "Pencavel (Stanford) 2014",
+    definition: "Au-delà d'un certain seuil d'heures, chaque heure supplémentaire produit moins. Le cumul d'HC crée une fatigue comparable au temps plein.",
+    exemple: "Un salarié à 20h avec 8h comp (28h) produit proportionnellement moins que s'il travaillait 20h — la surcharge du temps partiel subi.",
+    tags: ["productivité","Pencavel","surcharge","efficacité"]
+  },
 ];
 
 const GLOSSAIRE_API = {
   getAll() { return GLOSSAIRE; },
   search(term) {
-    if (!term || term.length < 2) return GLOSSAIRE;
-    const t = term.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    return GLOSSAIRE.filter(g => {
-      const txt = (g.terme + ' ' + g.def + ' ' + g.tags.join(' ')).toLowerCase()
-        .normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    if(!term||term.length<2) return GLOSSAIRE;
+    const t=term.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
+    return GLOSSAIRE.filter(g=>{
+      const txt=(g.terme+' '+g.definition+' '+(g.tags||[]).join(' ')).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'');
       return txt.includes(t);
     });
   }
 };
 
 global.GLOSSAIRE_API = GLOSSAIRE_API;
-
 }(typeof window !== 'undefined' ? window : global));
