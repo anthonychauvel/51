@@ -1739,10 +1739,15 @@ function wizAutofillClotures() {
 function wizFinish() {
   const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
   if(!h||h<=0||h>=35) { _wizGo(2); toast('Saisis tes heures contractuelles','error'); return; }
+  const exercice=document.getElementById('wiz-exercice')?.value||'';
+  if(!exercice) {
+    toast("La date de début d'exercice est obligatoire",'error');
+    document.getElementById('wiz-exercice')?.focus();
+    return;
+  }
   const rate=parseFloat(document.getElementById('wiz-rate')?.value||'0');
   const name=(document.getElementById('wiz-name')?.value||'').trim();
   const startDay=parseInt(document.getElementById('wiz-start-day')?.value||'0');
-  const exercice=document.getElementById('wiz-exercice')?.value||'';
   const ccnRules=_wizCCN?CCN_PARTIEL_API.getRules(_wizCCN.i):{cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,nom:'Droit commun'};
   // Récupérer les 12 clôtures
   const cloturesDates={};
@@ -1780,6 +1785,59 @@ function wizFinish() {
   refreshUI();
 }
 
+
+// ── Export / Import JSON ──────────────────────────────────────────
+function exportDataJSON() {
+  try {
+    const backup = { version:1, exportedAt:new Date().toISOString(), data:{} };
+    // Récupérer toutes les clés M5_
+    for(let i=0;i<localStorage.length;i++) {
+      const k=localStorage.key(i);
+      if(k&&k.startsWith('M5_')) backup.data[k]=localStorage.getItem(k);
+    }
+    const json=JSON.stringify(backup,null,2);
+    const blob=new Blob([json],{type:'application/json'});
+    const url=URL.createObjectURL(blob);
+    const a=document.createElement('a');
+    a.href=url;
+    a.style.display='none';
+    const d=new Date();
+    a.download=`mizuki-backup-${d.getFullYear()}${String(d.getMonth()+1).padStart(2,'0')}${String(d.getDate()).padStart(2,'0')}.json`;
+    document.body.appendChild(a);
+    a.click();
+    setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); }, 500);
+    toast('Données exportées ✓','success');
+  } catch(e) {
+    toast('Erreur export : '+e.message,'error');
+  }
+}
+
+function importDataJSON(input) {
+  const file=input.files&&input.files[0]; if(!file) return;
+  const reader=new FileReader();
+  reader.onload=e=>{
+    try {
+      const backup=JSON.parse(e.target.result);
+      if(!backup.data||typeof backup.data!=='object') throw new Error('Format invalide');
+      const keys=Object.keys(backup.data);
+      if(keys.length===0) throw new Error('Aucune donnée trouvée');
+      // Restaurer toutes les clés M5_
+      keys.forEach(k=>{ if(k.startsWith('M5_')) localStorage.setItem(k,backup.data[k]); });
+      const status=document.getElementById('import-status');
+      if(status) status.textContent=`✓ ${keys.length} clés restaurées depuis ${backup.exportedAt?new Date(backup.exportedAt).toLocaleDateString('fr-FR'):'fichier inconnu'}`;
+      Mizuki.clearCache();
+      calendarMonday=M5_getCurrentMonday();
+      toast('Données importées avec succès ✓','success');
+      setTimeout(()=>refreshUI(),300);
+    } catch(err) {
+      toast('Erreur import : '+err.message,'error');
+    }
+    input.value=''; // reset pour permettre un re-import du même fichier
+  };
+  reader.readAsText(file);
+}
+
+window.exportDataJSON=exportDataJSON; window.importDataJSON=importDataJSON;
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
