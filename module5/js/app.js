@@ -688,43 +688,63 @@ function renderWellbeing(analysis) {
   }
 
   // Barre score global
-  const col=wb.niveau==='bon'?'#4caf50':wb.niveau==='moyen'?'#ff9800':wb.niveau==='tendu'?'#ff5722':'#c62828';
+  // Couleur globale : jamais rouge vif — orange foncé au minimum
+  const col=wb.niveau==='bon'?'#4caf50':wb.niveau==='moyen'?'#ff9800':'#f57c00';
   const scoreAffiche = wb.donneesLimitees ? wb.scoreGlobalFiable : wb.scoreGlobal;
-  const labelScore = wb.donneesLimitees
-    ? `<div style="font-size:11px;color:var(--miz-text3);margin-top:2px;">Sur les indicateurs disponibles (${wb.nbSemaines} sem.)</div>`
-    : `<div style="font-size:11px;color:var(--miz-text3);">Score global sur ${wb.nbSemaines} semaines</div>`;
+  // Label global humain
+  const niveauLabel = wb.niveau==='bon'?'Bon équilibre':wb.niveau==='moyen'?'Quelques signaux':wb.niveau==='tendu'?'Rythme chargé':'Rythme chargé';
   html+=`
     <div style="text-align:center;padding:12px 0 8px;">
       <div style="font-size:42px;font-weight:900;color:${col};">${scoreAffiche}</div>
-      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:2px;">Score bien-être / 100${wb.donneesLimitees?' <span style="font-size:11px;">(provisoire)</span>':''}</div>
-      ${labelScore}
-      <div style="font-size:20px;margin-top:4px;">${wb.emoji}</div>
+      <div style="font-size:13px;font-weight:600;color:${col};margin-bottom:2px;">${niveauLabel}</div>
+      <div style="font-size:11px;color:var(--miz-text3);">${wb.donneesLimitees?`Provisoire — ${wb.nbSemaines} sem. saisies`:`Basé sur ${wb.nbSemaines} semaines`}</div>
+      <div style="font-size:20px;margin-top:6px;">${wb.emoji}</div>
     </div>
 
     <!-- Barres 4 composantes -->
     <div style="display:flex;flex-direction:column;gap:8px;margin:12px 0;">`;
 
-  const colors={ bon:'#4caf50', moyen:'#ff9800', tendu:'#ff5722', critique:'#c62828' };
+  // Labels humains pour chaque score selon sa valeur — jamais "0/100" seul
+  const scoreLabel = (s) => {
+    if(s.limited) return { txt:'En attente', color:'var(--miz-text3)', italic:true };
+    if(s.val >= 80) return { txt:'Très bien',   color:'#4caf50' };
+    if(s.val >= 60) return { txt:'Correct',      color:'#7cb342' };
+    if(s.val >= 40) return { txt:'À surveiller', color:'#ff9800' };
+    if(s.val >= 20) return { txt:'Fragile',      color:'#f57c00' };
+    // val < 20 — label contextuel selon l'indicateur
+    const contexte = {
+      'Stabilité':     'Heures très variables',
+      'Intensité':     'Charge élevée',
+      'Récupération':  'Aucune semaine légère',
+      'Choix':         'Plafond souvent atteint',
+      'Prévisibilité': 'Variations soudaines',
+      'Santé mentale': 'Signal à long terme',
+    };
+    return { txt: contexte[s.nom] || 'Signal détecté', color:'#f57c00' };
+  };
+
+  // Couleur de barre : uniquement orange/vert, jamais rouge pour un indicateur seul
+  const barColor = (s) => {
+    if(s.limited) return 'var(--miz-border2)';
+    if(s.val >= 60) return '#4caf50';
+    if(s.val >= 30) return '#ff9800';
+    return '#f57c00'; // orange foncé — pas rouge
+  };
+
   wb.scores.forEach(s=>{
-    const niv=s.limited?'neutre':s.val>=75?'bon':s.val>=50?'moyen':s.val>=25?'tendu':'critique';
-    const col=s.limited?'var(--miz-text3)':colors[niv==='neutre'?'moyen':niv];
-    const barCol=s.limited?'var(--miz-border2)':colors[niv==='neutre'?'moyen':niv];
-    const barW=s.limited?50:s.val; // score neutralisé → barre à 50%
-    const labelScore=s.limited
-      ? `<span style="font-style:italic;color:var(--miz-text3);font-size:11px;">En attente</span>`
-      : `<span style="color:${col};font-weight:700;">${s.val}/100</span>`;
+    const lbl = scoreLabel(s);
+    const bCol = barColor(s);
+    const barW = s.limited ? 50 : Math.max(s.val, 3); // min 3% pour que la barre soit visible
     html+=`<div>
-      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:3px;">
-        <span style="font-weight:600;color:${s.limited?'var(--miz-text3)':'var(--miz-text)'};">
-          ${s.nom}${s.limited?' <span style="font-size:10px;">⏳</span>':''}
-        </span>
-        <span style="display:flex;gap:4px;align-items:center;">
-          ${labelScore}
-          <span style="font-weight:400;color:var(--miz-text3);font-size:10px;">${s.ref}</span>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:4px;">
+        <span style="font-weight:600;color:var(--miz-text);">${s.nom}</span>
+        <span style="display:flex;gap:6px;align-items:center;">
+          <span style="font-size:11px;font-weight:600;color:${lbl.color};${lbl.italic?'font-style:italic;':''}">${lbl.txt}</span>
+          <span style="font-size:10px;color:var(--miz-text3);">${s.ref}</span>
         </span>
       </div>
       <div style="height:6px;background:var(--miz-border);border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${barW}%;background:${barCol};border-radius:4px;transition:width .4s;${s.limited?'opacity:0.4;':''}"></div>
+        <div style="height:100%;width:${barW}%;background:${bCol};border-radius:4px;transition:width .4s;${s.limited?'opacity:0.35;':''}"></div>
       </div>
     </div>`;
   });
@@ -1118,7 +1138,13 @@ function openContractModal() {
   document.getElementById('contract-hours').value   =c.hoursBase||'';
   document.getElementById('contract-rate').value    =c.hourlyRate||'';
   document.getElementById('contract-ccn').value     =c.idcc||'0';
-  document.getElementById('contract-cap').value     =c.cap===0.33?'0.33':'0.10';
+  // Cap : priorité à la CCN sélectionnée
+  let capToShow = c.cap||0.10;
+  if(c.idcc>0 && typeof CCN_PARTIEL_API!=='undefined') {
+    const ccnR=CCN_PARTIEL_API.getRules(c.idcc);
+    if(ccnR && ccnR.cap) capToShow=ccnR.cap;
+  }
+  document.getElementById('contract-cap').value = capToShow===0.33?'0.33':'0.10';
   document.getElementById('contract-name').value    =localStorage.getItem('M5_USER_NAME')||'';
   const startDayEl=document.getElementById('contract-start-day');
   if(startDayEl) startDayEl.value=String(c.weekStartDay||0);
@@ -1150,10 +1176,12 @@ function saveContract() {
   const hoursBase =parseFloat(document.getElementById('contract-hours').value);
   const hourlyRate=parseFloat(document.getElementById('contract-rate').value)||0;
   const idcc      =parseInt(document.getElementById('contract-ccn').value)||0;
-  const cap       =parseFloat(document.getElementById('contract-cap').value)||0.10;
+  const capManuel =parseFloat(document.getElementById('contract-cap').value)||0.10;
   const name      =document.getElementById('contract-name').value.trim();
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
-  const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{rate1:0.10,rate2:0.25,threshold:0.10};
+  const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{cap:capManuel,rate1:0.10,rate2:0.25,threshold:0.10};
+  // Si une CCN est sélectionnée, son cap fait foi — sinon le sélecteur manuel
+  const cap = (idcc>0 && ccnRules.cap) ? ccnRules.cap : capManuel;
   const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
   const exerciceStart=document.getElementById('contract-exercice')?.value||'';
   const modeCalcul=document.getElementById('contract-mode')?.value||'HEBDO';
