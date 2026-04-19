@@ -1494,3 +1494,44 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .acc-week-hero .m5-cal-day.future {
   opacity: 0.50 !important;
 }
+
+/* ══ SAISIE RAPIDE ══════════════════════════════════════════════ */
+.acc-quick-saisie {
+  padding: 8px 4px 10px;
+  position: relative; z-index: 1;
+}
+.acc-quick-label {
+  display: block;
+  font-size: 10px; font-weight: 700;
+  color: rgba(196,168,255,0.55);
+  letter-spacing: 0.06em; text-transform: uppercase;
+  margin-bottom: 7px;
+}
+.acc-quick-btns {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+.acc-quick-btn {
+  background: rgba(255,255,255,0.10);
+  border: 1.5px solid rgba(255,255,255,0.15);
+  border-radius: 8px;
+  padding: 7px 14px;
+  font-family: var(--miz-font);
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.75);
+  cursor: pointer;
+  transition: all .15s;
+}
+.acc-quick-btn:active { transform: scale(.93); }
+.acc-quick-btn.active {
+  background: rgba(52,211,153,0.28);
+  border-color: rgba(52,211,153,0.55);
+  color: #6EE7B7;
+}
+.acc-quick-btn.acc-quick-custom {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.12);
+  font-size: 16px;
+  padding: 7px 10px;
+}
