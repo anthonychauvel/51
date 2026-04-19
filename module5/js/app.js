@@ -1289,11 +1289,11 @@ function searchCCN(term) {
   res.style.display='block';
   res.innerHTML=results.map(ccn=>`
     <div onclick="selectCCN(${ccn.i},'${ccn.n.replace(/'/g,"\\'")}','${ccn.s}')"
-      style="padding:8px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid var(--miz-border);display:flex;flex-direction:column;gap:2px;"
-      onmouseenter="this.style.background='var(--miz-accent)'"
+      style="padding:10px 12px;font-size:13px;cursor:pointer;border-bottom:1px solid rgba(167,139,250,0.15);display:flex;flex-direction:column;gap:3px;"
+      onmouseenter="this.style.background='rgba(109,40,217,0.20)'"
       onmouseleave="this.style.background=''">
-      <span style="font-weight:600;color:var(--miz-text)">${ccn.n}</span>
-      <span style="font-size:11px;color:var(--miz-text3)">${ccn.s} — IDCC ${ccn.i} — plafond ${ccn.cap===0.33?'1/3':'10%'}</span>
+      <span style="font-weight:600;color:#E9D5FF;">${ccn.n}</span>
+      <span style="font-size:11px;color:#A78BFA;">${ccn.s} — IDCC ${ccn.i} — plafond <strong style="color:#DDD6FE;">${ccn.cap===0.33?'33%':'10%'}</strong></span>
     </div>`).join('');
 }
 
@@ -1301,7 +1301,12 @@ function selectCCN(idcc, nom, secteur) {
   document.getElementById('contract-ccn').value=idcc;
   document.getElementById('contract-ccn-search').value=nom;
   const sel=document.getElementById('contract-ccn-selected');
-  if(sel) sel.textContent='✓ IDCC '+idcc+' — '+secteur;
+  if(sel) {
+    const rules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):null;
+    const capTxt=rules&&rules.cap===0.33?'33% (accord de branche)':'10% (droit commun)';
+    sel.innerHTML=`<strong style="color:#E9D5FF;">✓ ${nom}</strong><br>
+      <span style="font-size:11px;color:#A78BFA;">IDCC ${idcc} · Plafond <strong style="color:#DDD6FE;">${capTxt}</strong></span>`;
+  }
   const res=document.getElementById('contract-ccn-results');
   if(res) res.style.display='none';
   // Auto-appliquer le plafond si CCN a un accord étendu
