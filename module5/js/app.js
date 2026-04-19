@@ -589,7 +589,8 @@ function renderWeekSummary(analysis) {
 function renderQuickStats(analysis) {
   const el=document.getElementById('quick-stats');
   if(!el) return;
-  const {annualStats,rule12,contract,annuelResult,mensuelResult}=analysis;
+  const {annualStats,rule12,contract,annuelResult,mensuelResult,weeks}=analysis;
+  const allWeeks=weeks||[];
   const mode=contract.modeCalcul||'HEBDO';
   const r12Cls=rule12.triggered?'danger':rule12.maxConsec>=8?'warn':'ok';
   let html='';
@@ -611,6 +612,23 @@ function renderQuickStats(analysis) {
     <div class="m5-alert ${solde>1?'ok':solde<-2?'warn':'info'}" style="margin-bottom:6px;">
       <span>${solde>1?'🚀':solde<-2?'⏳':'➡️'}</span>
       <div style="font-size:12px;">Objectif : <strong>${annuelResult.objectifAnnuel}h/an</strong> — Théorique cumulé : ${annuelResult.theoriqueCumule}h</div>
+    </div>`;
+    // Plafond HC annuel Art. L3123-28 = contractH × cap × 52
+    const hcCapAnnuel=Math.round(contract.hoursBase*contract.cap*52*10)/10;
+    const weeksEx=allWeeks.filter(w=>w.monday>=annuelResult.debutEx&&w.monday<=annuelResult.finEx);
+    const totalHcAnnuel=Math.round(weeksEx.reduce((s,w)=>s+Math.max(0,(w.worked||0)-contract.hoursBase),0)*10)/10;
+    const hcPct=hcCapAnnuel>0?Math.round(totalHcAnnuel/hcCapAnnuel*100):0;
+    const hcCol=hcPct>=100?'var(--miz-danger)':hcPct>=80?'var(--miz-warning)':'var(--miz-primary)';
+    html+=`<div style="margin-top:6px;padding:10px 12px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:10px;">
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:5px;">
+        <span style="color:var(--miz-text2);">Plafond HC annuel</span>
+        <span style="font-weight:700;color:${hcCol}">${totalHcAnnuel}h / ${hcCapAnnuel}h (${hcPct}%)</span>
+      </div>
+      <div style="height:6px;background:var(--miz-bg3);border-radius:3px;overflow:hidden;">
+        <div style="height:100%;width:${Math.min(hcPct,100)}%;background:${hcCol};border-radius:3px;transition:width .4s;"></div>
+      </div>
+      <div style="font-size:10px;color:var(--miz-text3);margin-top:4px;">Art. L3123-28 — plafond ${Math.round(contract.cap*100)}% du contrat × 52 sem.</div>
+      ${hcPct>=100?'<div style="font-size:11px;color:var(--miz-danger);margin-top:4px;font-weight:600;">⚠️ Plafond annuel dépassé — signale-le à ton employeur</div>':''}
     </div>`;
   } else if(mode==='MENSUEL'&&mensuelResult) {
     const delta=mensuelResult.delta;
@@ -658,7 +676,14 @@ function renderQuickStats(analysis) {
     html='<div style="font-size:13px;color:var(--miz-text3);text-align:center;padding:8px;">Saisis des semaines pour voir les statistiques.</div>';
   }
 
-  if(rule12.msg) html+=`<div class="m5-alert ${rule12.triggered?'critique':'warn'}" style="margin-top:8px;"><span>${rule12.triggered?'⚖️':'👀'}</span><div style="font-size:12px;">${rule12.msg}</div></div>`;
+  if(rule12.msg) {
+    html+=`<div class="m5-alert ${rule12.triggered?'critique':'warn'}" style="margin-top:8px;"><span>${rule12.triggered?'⚖️':'👀'}</span><div style="font-size:12px;">${rule12.msg}</div></div>`;
+    if(rule12.triggered) {
+      html+=`<div class="m5-alert info" style="margin-top:6px;font-size:12px;">
+        <span>📋</span><div><strong>Art. L3123-14 al.2</strong> — Tu peux demander par écrit à ton employeur la modification de ton contrat à la hausse. Il a 1 mois pour répondre. Sans réponse, il doit justifier le refus. Garde ce relevé comme preuve.</div>
+      </div>`;
+    }
+  }
 
   el.innerHTML=html;
 }
@@ -1186,6 +1211,11 @@ function saveContract() {
   const capManuel =parseFloat(document.getElementById('contract-cap').value)||0.10;
   const name      =document.getElementById('contract-name').value.trim();
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
+  // L3123-5 : contrat <24h/sem = durée minimale légale (sauf dérogations : accord branche, accord salarié, secteur particulier)
+  // On informe sans bloquer car les dérogations légales sont nombreuses (moins de 24h peut être légal)
+  if(hoursBase < 24) {
+    toast("⚠️ Contrat < 24h/sem : vérifiez qu'une dérogation légale s'applique (Art. L3123-5)",'warn');
+  }
   const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{cap:capManuel,rate1:0.10,rate2:0.25,threshold:0.10};
   // Si une CCN est sélectionnée, son cap fait foi — sinon le sélecteur manuel
   const cap = (idcc>0 && ccnRules.cap) ? ccnRules.cap : capManuel;
