@@ -1,11 +1,11 @@
 /* ═══════════════════════════════════════════════════════════════
    MIZUKI M5 — Design System v2
    Palette : violet profond + blanc nacré + accents ambre
-   Typographie : DM Sans (arrondi, vivant) + Syne (titres)
+   Typographie : DM Sans (arrondi, vivant, lisible)
    Mood : compagnon de confiance, douceur professionnelle
 ═══════════════════════════════════════════════════════════════ */
 
-@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&family=Syne:wght@600;800&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&display=swap');
 
 :root {
   /* Couleurs */
@@ -36,7 +36,7 @@
   --miz-radius-sm:  10px;
   --miz-radius-lg:  22px;
   --miz-font:       'DM Sans', system-ui, sans-serif;
-  --miz-font-title: 'Syne', 'DM Sans', sans-serif;
+  --miz-font-title: 'DM Sans', system-ui, sans-serif;
 }
 
 /* ── RESET ──────────────────────────────────────────────────── */
@@ -90,14 +90,14 @@ body::before {
 }
 .m5-header-title {
   flex: 1;
-  font-family: var(--miz-font-title);
-  font-size: 16px;
-  font-weight: 800;
-  letter-spacing: -0.01em;
+  font-family: var(--miz-font);
+  font-size: 14px;
+  font-weight: 700;
   color: #fff;
-  line-height: 1.2;
+  line-height: 1.25;
+  min-width: 0; /* permet au flex item de rétrécir */
 }
-.m5-header-sub { font-size: 11px; opacity: 0.70; margin-top: 2px; font-weight: 300; }
+.m5-header-sub { font-size: 10.5px; opacity: 0.68; margin-top: 1px; font-weight: 400; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .m5-nav-btn {
   background: rgba(255,255,255,0.15);
   backdrop-filter: blur(8px);
@@ -220,12 +220,11 @@ body::before {
   text-align: center;
 }
 .m5-stat-val {
-  font-family: var(--miz-font-title);
-  font-size: 24px;
-  font-weight: 800;
+  font-family: var(--miz-font);
+  font-size: 22px;
+  font-weight: 700;
   color: var(--miz-primary);
   line-height: 1.1;
-  letter-spacing: -0.02em;
 }
 .m5-stat-val.ok     { color: var(--miz-success); }
 .m5-stat-val.warn   { color: var(--miz-warning); }
@@ -259,8 +258,8 @@ body::before {
   font-weight: 500;
 }
 .m5-week-hours {
-  font-family: var(--miz-font-title);
-  font-size: 16px;
+  font-family: var(--miz-font);
+  font-size: 15px;
   font-weight: 700;
   color: var(--miz-text);
 }
@@ -386,11 +385,10 @@ body::before {
 }
 .m5-modal-title {
   flex: 1;
-  font-family: var(--miz-font-title);
-  font-size: 18px;
-  font-weight: 800;
+  font-family: var(--miz-font);
+  font-size: 17px;
+  font-weight: 700;
   color: var(--miz-dark);
-  letter-spacing: -0.02em;
 }
 .m5-modal-close {
   background: var(--miz-bg2);
@@ -512,10 +510,9 @@ body::before {
 /* ── ONBOARDING ──────────────────────────────────────────────── */
 .m5-onboarding { padding: 28px 20px; text-align: center; }
 .m5-onboarding-title {
-  font-family: var(--miz-font-title);
-  font-size: 22px; font-weight: 800;
+  font-family: var(--miz-font);
+  font-size: 20px; font-weight: 700;
   color: var(--miz-dark); margin-bottom: 8px;
-  letter-spacing: -0.02em;
 }
 .m5-onboarding-sub {
   font-size: 14px; color: var(--miz-text2);
@@ -701,8 +698,8 @@ body::before {
 }
 .m5-cal-week-total-cell:active { background: var(--miz-accent); }
 .m5-cal-week-total-val {
-  font-family: var(--miz-font-title);
-  font-size: 36px; font-weight: 800;
+  font-family: var(--miz-font);
+  font-size: 34px; font-weight: 700;
   color: var(--miz-primary);
 }
 .m5-cal-week-total-sub { font-size: 12px; color: var(--miz-text3); margin-top: 4px; }
@@ -821,3 +818,294 @@ select, textarea { font-size: 16px !important; }
 
 /* ── SAFE AREA ───────────────────────────────────────────────── */
 body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
+
+/* ══════════════════════════════════════════════════════════════
+   ACCUEIL — Design immersif sombre / violet
+══════════════════════════════════════════════════════════════ */
+
+/* Hero calendrier — fond sombre profond */
+.acc-week-hero {
+  background: linear-gradient(160deg, #1A0A3E 0%, #2D1467 60%, #3B1F8C 100%);
+  padding: 14px 14px 16px;
+  position: relative;
+  overflow: hidden;
+}
+/* Étoiles / points lumineux décoratifs */
+.acc-week-hero::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    radial-gradient(circle, rgba(196,168,255,0.35) 1px, transparent 1px),
+    radial-gradient(circle, rgba(139,92,246,0.20) 1px, transparent 1px);
+  background-size: 40px 40px, 25px 25px;
+  background-position: 0 0, 12px 12px;
+  opacity: 0.4;
+}
+/* Halo lumineux */
+.acc-week-hero::after {
+  content: '';
+  position: absolute;
+  bottom: -40px; left: 50%;
+  transform: translateX(-50%);
+  width: 200px; height: 80px;
+  background: radial-gradient(ellipse, rgba(139,92,246,0.30) 0%, transparent 70%);
+}
+
+/* Nav semaine */
+.acc-week-nav {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+  position: relative; z-index: 1;
+}
+.acc-nav-btn {
+  background: rgba(255,255,255,0.10);
+  border: 1px solid rgba(255,255,255,0.18);
+  border-radius: 8px;
+  width: 30px; height: 30px;
+  font-size: 18px; color: rgba(255,255,255,0.85);
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+  transition: background .15s;
+  flex-shrink: 0;
+}
+.acc-nav-btn:active { background: rgba(255,255,255,0.22); }
+.acc-week-label {
+  flex: 1; text-align: center;
+  font-size: 13px; font-weight: 700;
+  color: rgba(255,255,255,0.92);
+  letter-spacing: 0.02em;
+}
+.acc-today-btn {
+  background: rgba(196,168,255,0.22);
+  border: 1px solid rgba(196,168,255,0.35);
+  border-radius: 8px;
+  padding: 5px 10px;
+  font-size: 11px; font-weight: 700;
+  color: #C4A8FF; cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* Cellules calendrier sur fond sombre */
+.acc-week-hero .m5-cal-day {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.08);
+}
+.acc-week-hero .m5-cal-day-name  { color: rgba(255,255,255,0.45); }
+.acc-week-hero .m5-cal-day-num   { color: rgba(255,255,255,0.90); }
+.acc-week-hero .m5-cal-day-hours { color: #C4A8FF; }
+.acc-week-hero .m5-cal-day-diff  { color: #FCD34D; }
+.acc-week-hero .m5-cal-day-empty { color: rgba(255,255,255,0.25); }
+.acc-week-hero .m5-cal-day.today {
+  background: rgba(196,168,255,0.28);
+  border-color: #C4A8FF;
+}
+.acc-week-hero .m5-cal-day.normal  { background: rgba(16,185,129,0.20); }
+.acc-week-hero .m5-cal-day.over    { background: rgba(251,191,36,0.20); }
+.acc-week-hero .m5-cal-day.under   { background: rgba(139,92,246,0.22); }
+.acc-week-hero .m5-cal-day.weekend { background: rgba(255,255,255,0.04); }
+.acc-week-hero .m5-cal-day.future  { background: rgba(255,255,255,0.03); }
+.acc-week-hero .m5-cal-day.vac     { background: rgba(20,184,166,0.22); }
+.acc-week-hero .m5-cal-day.ferie   { background: rgba(251,191,36,0.18); border-color: rgba(251,191,36,0.35); }
+.acc-week-hero .m5-cal-day.m5-cal-month-a { background: rgba(108,63,197,0.20); }
+.acc-week-hero .m5-cal-day.m5-cal-month-b { background: rgba(139,92,246,0.14); }
+.acc-week-hero .m5-cal-day.m5-cal-period-active {
+  background: rgba(196,168,255,0.28);
+  border: 2px solid #C4A8FF;
+}
+.acc-week-hero .m5-cal-day.m5-cal-period-out { opacity: 0.30; }
+/* Mode hebdo sur fond sombre */
+.acc-week-hero .m5-cal-weekly-badge {
+  background: rgba(196,168,255,0.20);
+  color: #C4A8FF;
+}
+.acc-week-hero .m5-cal-week-total-cell {
+  border-color: rgba(196,168,255,0.35);
+  background: rgba(255,255,255,0.05);
+}
+.acc-week-hero .m5-cal-week-total-val { color: #E0D0FF; }
+.acc-week-hero .m5-cal-week-total-sub { color: rgba(255,255,255,0.45); }
+.acc-week-hero .m5-cal-total {
+  background: rgba(255,255,255,0.07);
+  border-color: rgba(255,255,255,0.10);
+  color: rgba(255,255,255,0.60);
+}
+.acc-week-hero .m5-btn-outline {
+  background: rgba(255,255,255,0.10);
+  border-color: rgba(255,255,255,0.22);
+  color: rgba(255,255,255,0.85);
+}
+.acc-week-hero .m5-btn-primary { box-shadow: 0 4px 16px rgba(196,168,255,0.30); }
+
+/* Badge semaines sauvegardées */
+.acc-saved-badge {
+  font-size: 11px;
+  color: rgba(255,255,255,0.40);
+  position: relative; z-index: 1;
+}
+
+/* ── BARRE PÉRIODE ────────────────────────────────────────────── */
+.acc-periode-bar {
+  display: flex;
+  gap: 6px;
+  padding: 8px 14px;
+  background: rgba(45,20,103,0.85);
+  backdrop-filter: blur(8px);
+  border-bottom: 1px solid rgba(196,168,255,0.15);
+}
+.acc-periode-sel {
+  flex: 1;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(196,168,255,0.25);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.85);
+  font-family: var(--miz-font);
+  font-size: 12px; font-weight: 600;
+  padding: 7px 10px;
+  -webkit-appearance: none;
+  cursor: pointer;
+}
+.acc-periode-year {
+  width: 70px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(196,168,255,0.25);
+  border-radius: 8px;
+  color: rgba(255,255,255,0.85);
+  font-family: var(--miz-font);
+  font-size: 12px; font-weight: 700;
+  padding: 7px 6px;
+  -webkit-appearance: none;
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+/* ── ALERTES SEMAINE ──────────────────────────────────────────── */
+.acc-alerts {
+  padding: 0;
+  background: rgba(45,20,103,0.70);
+}
+.acc-alerts:empty { display: none; }
+.acc-alerts .m5-alert {
+  border-radius: 0;
+  border-left: none;
+  border-bottom: 1px solid rgba(196,168,255,0.12);
+  margin: 0;
+  background: rgba(255,255,255,0.05);
+  color: rgba(255,255,255,0.85);
+  font-size: 13px;
+}
+.acc-alerts .m5-alert.ok      { background: rgba(16,185,129,0.15); }
+.acc-alerts .m5-alert.info    { background: rgba(59,130,246,0.12); }
+.acc-alerts .m5-alert.warn    { background: rgba(245,158,11,0.14); }
+.acc-alerts .m5-alert.alerte  { background: rgba(249,115,22,0.15); }
+.acc-alerts .m5-alert.critique{ background: rgba(239,68,68,0.15);  }
+
+/* ── CARD STATS / BILAN ───────────────────────────────────────── */
+.acc-stats-card {
+  margin: 12px 14px;
+  background: linear-gradient(135deg,
+    rgba(108,63,197,0.18) 0%,
+    rgba(139,92,246,0.10) 100%);
+  border: 1px solid rgba(196,168,255,0.25);
+  border-radius: var(--miz-radius);
+  backdrop-filter: blur(12px);
+  overflow: hidden;
+  box-shadow: 0 8px 32px rgba(59,31,140,0.18);
+}
+.acc-stats-header {
+  padding: 12px 16px 10px;
+  border-bottom: 1px solid rgba(196,168,255,0.15);
+  background: rgba(255,255,255,0.04);
+}
+.acc-stats-title {
+  font-size: 11px; font-weight: 700;
+  color: #C4A8FF;
+  letter-spacing: 0.08em; text-transform: uppercase;
+}
+.acc-stats-body { padding: 14px 16px; }
+
+/* Stat grid sur fond violet */
+.acc-stats-body .m5-stat {
+  background: rgba(255,255,255,0.08);
+  border-color: rgba(196,168,255,0.20);
+}
+.acc-stats-body .m5-stat-val { color: #E0D0FF; }
+.acc-stats-body .m5-stat-val.ok     { color: #6EE7B7; }
+.acc-stats-body .m5-stat-val.warn   { color: #FCD34D; }
+.acc-stats-body .m5-stat-val.danger { color: #FCA5A5; }
+.acc-stats-body .m5-stat-label { color: rgba(255,255,255,0.45); }
+
+/* Alertes dans le bilan */
+.acc-stats-body .m5-alert {
+  background: rgba(255,255,255,0.06);
+  color: rgba(255,255,255,0.80);
+}
+.acc-stats-body .m5-alert.ok   { background: rgba(16,185,129,0.14); color: #A7F3D0; }
+.acc-stats-body .m5-alert.info { background: rgba(59,130,246,0.12); color: #BFDBFE; }
+.acc-stats-body .m5-alert.warn { background: rgba(245,158,11,0.13); color: #FDE68A; }
+.acc-stats-body .m5-alert.alerte { background: rgba(249,115,22,0.14); color: #FED7AA; }
+.acc-stats-body .m5-alert.critique{ background: rgba(239,68,68,0.14); color: #FECACA; }
+
+/* Barre de progression dans le bilan */
+.acc-stats-body strong { color: #E0D0FF; }
+
+/* ── DROITS EN BREF ───────────────────────────────────────────── */
+.acc-droits-card {
+  margin: 0 14px 20px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(196,168,255,0.15);
+  border-radius: var(--miz-radius);
+  padding: 16px;
+  backdrop-filter: blur(8px);
+}
+.acc-droits-title {
+  font-size: 11px; font-weight: 700;
+  color: rgba(196,168,255,0.70);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  margin-bottom: 12px;
+}
+.acc-droits-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+.acc-droit-item {
+  display: flex;
+  align-items: flex-start;
+  gap: 7px;
+  font-size: 12px;
+  color: rgba(255,255,255,0.60);
+  line-height: 1.5;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(196,168,255,0.10);
+  border-radius: 8px;
+  padding: 8px 10px;
+}
+.acc-droit-item strong { color: rgba(255,255,255,0.85); }
+.acc-droit-icon { font-size: 14px; flex-shrink: 0; margin-top: 1px; }
+.acc-prevenance-btn {
+  width: 100%;
+  background: rgba(108,63,197,0.30);
+  border: 1px solid rgba(196,168,255,0.30);
+  border-radius: 10px;
+  padding: 11px;
+  font-family: var(--miz-font);
+  font-size: 13px; font-weight: 700;
+  color: #C4A8FF;
+  cursor: pointer;
+  transition: background .15s;
+}
+.acc-prevenance-btn:active { background: rgba(108,63,197,0.50); }
+
+/* Fond global de la section accueil */
+#sec-accueil {
+  background: linear-gradient(to bottom,
+    #1A0A3E 0%,
+    #2D1467 30%,
+    #1F0D52 55%,
+    var(--miz-bg2) 100%);
+  min-height: 100vh;
+}
