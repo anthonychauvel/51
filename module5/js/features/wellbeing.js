@@ -100,21 +100,30 @@ const M5_Wellbeing = {
       100 * (1 - Math.min(ratioVariations / JANSSEN_DELAI_SEUIL, 1))
     ));
 
+    // ── 5b. PENCAVEL 2014 — Courbe de productivité décroissante ──
+    // Au-delà d'un certain ratio d'HC/contrat, la productivité effective diminue
+    // Pencavel (Stanford 2014) : output/heure chute significativement au-delà de 49h totales/sem
+    // Pour le temps partiel : on adapte avec le ratio HC moyen > 30% du contrat = zone de rendement décroissant
+    const PENCAVEL_SEUIL = 0.30; // > 30% HC = zone rouge Pencavel (adapté au temps partiel)
+    const pencavelZone = ratioMoyen >= PENCAVEL_SEUIL;
+    // Ce signal enrichit le message Karasek sans créer de score séparé
+
     // ── 6. SCORE PROTECTION SANTÉ MENTALE (Bambra et al. 2008) ──
     // Gradient temps partiel choisi (protecteur) vs subi (risque dépression ×1.5)
     // Nuance par rapport à Voydanoff : on mesure l'intensité du subi, pas juste sa présence
     const ratioSubiBambra = semainesProchePlafond / n;
     // Minimum 4 semaines pour Bambra (indicateur long terme)
     let scoreProtection;
+    const bambra_seuil = typeof BAMBRA_SEUIL_SECTEUR !== 'undefined' ? BAMBRA_SEUIL_SECTEUR : BAMBRA_SUBI_SEUIL;
     if(n < 4) {
       scoreProtection = 50;
     } else if(ratioSubiBambra < 0.20) {
       scoreProtection = 100;
-    } else if(ratioSubiBambra >= BAMBRA_SUBI_SEUIL) {
+    } else if(ratioSubiBambra >= bambra_seuil) {
       scoreProtection = 0;
     } else {
       scoreProtection = Math.round(
-        100 * (1 - (ratioSubiBambra - 0.20) / (BAMBRA_SUBI_SEUIL - 0.20))
+        100 * (1 - (ratioSubiBambra - 0.20) / (bambra_seuil - 0.20))
       );
     }
 
@@ -226,6 +235,11 @@ const M5_Wellbeing = {
       msgs.push({ type:'warn', ref:'Karasek 1979',
         text:`${Math.round(ratioMoyen*100)}% d'HC en moyenne. Tu travailles souvent au-delà du contrat — surveille que ça reste ponctuel.` });
     }
+    // Pencavel 2014 : signal si ratio HC > 30%
+    if (pencavelZone) {
+      msgs.push({ type:'warn', ref:'Pencavel 2014',
+        text:`Avec ${Math.round(ratioMoyen*100)}% d'HC en moyenne, tu approches la zone où la recherche Pencavel (Stanford) observe une baisse d'efficacité : chaque heure supplémentaire produit moins que la précédente. C'est un signal de surcharge à surveiller.` });
+    }
 
     if (ratioRecup < SONNENTAG_RECOVERY_MIN) {
       const _recupTxt = ratioRecup === 0
@@ -238,8 +252,10 @@ const M5_Wellbeing = {
     }
 
     if (ratioSubi >= 0.5) {
-      msgs.push({ type:'warn', ref:'Voydanoff 2005',
-        text:`Plusieurs semaines approchent le plafond légal. Voydanoff distingue le temps partiel choisi du temps partiel contraint — si ces heures te sont imposées, c'est utile à noter pour toi.` });
+      const txtSecteur = secteurContraint
+        ? `Ton secteur (${contract.ccnNom?.split(' ').slice(0,3).join(' ')||'secteur contraint'}) est reconnu comme à temps partiel structurellement imposé — la recherche Voydanoff 2005 montre que l'absence de choix amplifie l'impact sur la santé.`
+        : `Voydanoff distingue le temps partiel choisi du temps partiel contraint — si ces heures te sont imposées, c'est utile à noter pour toi.`;
+      msgs.push({ type:'warn', ref:'Voydanoff 2005', text:`Plusieurs semaines approchent le plafond légal. ${txtSecteur}` });
     }
 
     // Janssen & Nachreiner 2004 — variations soudaines
