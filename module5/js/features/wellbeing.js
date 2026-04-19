@@ -140,12 +140,12 @@ const M5_Wellbeing = {
 
     // Identifier le facteur le plus dégradé
     const scores = [
-      { nom:'Stabilité',     val:scoreStabilite,     ref:'Higgins 2010' },
-      { nom:'Intensité',     val:scoreIntensite,     ref:'Karasek 1979' },
-      { nom:'Récupération',  val:scoreRecup,         ref:'Sonnentag 2003' },
-      { nom:'Choix',         val:scoreChoix,         ref:'Voydanoff 2005' },
-      { nom:'Prévisibilité', val:scorePrevisibilite, ref:'Janssen 2004' },
-      { nom:'Santé mentale', val:scoreProtection,    ref:'Bambra 2008' },
+      { nom:'Stabilité',     val:scoreStabilite,     ref:'Higgins 2010',    limited:false },
+      { nom:'Intensité',     val:scoreIntensite,     ref:'Karasek 1979',    limited:false },
+      { nom:'Récupération',  val:scoreRecup,         ref:'Sonnentag 2003',  limited:n<4 },
+      { nom:'Choix',         val:scoreChoix,         ref:'Voydanoff 2005',  limited:n<4 },
+      { nom:'Prévisibilité', val:scorePrevisibilite, ref:'Janssen 2004',    limited:n<3 },
+      { nom:'Santé mentale', val:scoreProtection,    ref:'Bambra 2008',     limited:n<4 },
     ];
     const plusFaible = [...scores].sort((a,b)=>a.val-b.val)[0];
 
@@ -156,11 +156,20 @@ const M5_Wellbeing = {
       worked, semainesProchePlafond
     );
 
+    // Score global fiable = calculé uniquement sur les scores non-neutralisés
+    // (Stabilité + Intensité toujours fiables, les autres neutralisés à 50 si n<4)
+    const nbFiables = scores.filter(s=>!s.limited).length;
+    const scoreGlobalFiable = nbFiables > 0
+      ? Math.round(scores.filter(s=>!s.limited).reduce((sum,s)=>sum+s.val,0)/nbFiables)
+      : scoreGlobal;
+
     return {
       available: true,
       donneesLimitees: n < 4,
-      noteMin: n < 4 ? `Analyse basée sur ${n} semaine${n>1?'s':''} — certains indicateurs nécessitent 4+ semaines pour être fiables.` : null,
+      nbSemaines: n,
+      noteMin: n < 4 ? `Analyse basée sur ${n} semaine${n>1?'s':''} — les scores en italique seront plus précis avec 4+ semaines.` : null,
       scoreGlobal,
+      scoreGlobalFiable,
       niveau,
       emoji: emoji[niveau],
       scores,
