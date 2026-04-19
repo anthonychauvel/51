@@ -689,11 +689,16 @@ function renderWellbeing(analysis) {
 
   // Barre score global
   const col=wb.niveau==='bon'?'#4caf50':wb.niveau==='moyen'?'#ff9800':wb.niveau==='tendu'?'#ff5722':'#c62828';
+  const scoreAffiche = wb.donneesLimitees ? wb.scoreGlobalFiable : wb.scoreGlobal;
+  const labelScore = wb.donneesLimitees
+    ? `<div style="font-size:11px;color:var(--miz-text3);margin-top:2px;">Sur les indicateurs disponibles (${wb.nbSemaines} sem.)</div>`
+    : `<div style="font-size:11px;color:var(--miz-text3);">Score global sur ${wb.nbSemaines} semaines</div>`;
   html+=`
     <div style="text-align:center;padding:12px 0 8px;">
-      <div style="font-size:42px;font-weight:900;color:${col};">${wb.scoreGlobal}</div>
-      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:4px;">Score bien-être / 100</div>
-      <div style="font-size:20px;">${wb.emoji}</div>
+      <div style="font-size:42px;font-weight:900;color:${col};">${scoreAffiche}</div>
+      <div style="font-size:13px;color:var(--miz-text3);margin-bottom:2px;">Score bien-être / 100${wb.donneesLimitees?' <span style="font-size:11px;">(provisoire)</span>':''}</div>
+      ${labelScore}
+      <div style="font-size:20px;margin-top:4px;">${wb.emoji}</div>
     </div>
 
     <!-- Barres 4 composantes -->
@@ -701,15 +706,25 @@ function renderWellbeing(analysis) {
 
   const colors={ bon:'#4caf50', moyen:'#ff9800', tendu:'#ff5722', critique:'#c62828' };
   wb.scores.forEach(s=>{
-    const niv=s.val>=75?'bon':s.val>=50?'moyen':s.val>=25?'tendu':'critique';
-    const c=colors[niv];
+    const niv=s.limited?'neutre':s.val>=75?'bon':s.val>=50?'moyen':s.val>=25?'tendu':'critique';
+    const col=s.limited?'var(--miz-text3)':colors[niv==='neutre'?'moyen':niv];
+    const barCol=s.limited?'var(--miz-border2)':colors[niv==='neutre'?'moyen':niv];
+    const barW=s.limited?50:s.val; // score neutralisé → barre à 50%
+    const labelScore=s.limited
+      ? `<span style="font-style:italic;color:var(--miz-text3);font-size:11px;">En attente</span>`
+      : `<span style="color:${col};font-weight:700;">${s.val}/100</span>`;
     html+=`<div>
-      <div style="display:flex;justify-content:space-between;font-size:12px;margin-bottom:3px;">
-        <span style="font-weight:600;color:var(--miz-text);">${s.nom}</span>
-        <span style="color:${c};font-weight:700;">${s.val}/100 <span style="font-weight:400;color:var(--miz-text3);font-size:10px;">${s.ref}</span></span>
+      <div style="display:flex;justify-content:space-between;align-items:center;font-size:12px;margin-bottom:3px;">
+        <span style="font-weight:600;color:${s.limited?'var(--miz-text3)':'var(--miz-text)'};">
+          ${s.nom}${s.limited?' <span style="font-size:10px;">⏳</span>':''}
+        </span>
+        <span style="display:flex;gap:4px;align-items:center;">
+          ${labelScore}
+          <span style="font-weight:400;color:var(--miz-text3);font-size:10px;">${s.ref}</span>
+        </span>
       </div>
-      <div style="height:8px;background:var(--miz-border);border-radius:4px;overflow:hidden;">
-        <div style="height:100%;width:${s.val}%;background:${c};border-radius:4px;transition:width .4s;"></div>
+      <div style="height:6px;background:var(--miz-border);border-radius:4px;overflow:hidden;">
+        <div style="height:100%;width:${barW}%;background:${barCol};border-radius:4px;transition:width .4s;${s.limited?'opacity:0.4;':''}"></div>
       </div>
     </div>`;
   });
@@ -810,10 +825,12 @@ function buildPeriodes(year, contract) {
     periodes.forEach(p => {
       // Début → snap vers le DÉBUT de la semaine qui contient cette date
       p.debutStr = M5_weekStartOf(p.debutStr, sd);
-      // Fin → snap vers la FIN de la semaine qui contient la date de fin
-      // = start de la semaine suivante - 1 jour
+      // Fin → DERNIER jour de semaine ≤ clôture (ne dépasse jamais le mois)
+      // Ex: clôture 30 avr (jeudi) → dimanche 26 avr, PAS le 3 mai
       const finSnap = new Date(M5_weekStartOf(p.finStr, sd)+'T12:00:00');
-      finSnap.setDate(finSnap.getDate() + 6);
+      finSnap.setDate(finSnap.getDate() + 6); // fin de la semaine contenant p.finStr
+      const finSnapStr = finSnap.getFullYear()+'-'+String(finSnap.getMonth()+1).padStart(2,'0')+'-'+String(finSnap.getDate()).padStart(2,'0');
+      if(finSnapStr > p.finStr) finSnap.setDate(finSnap.getDate()-7); // reculer si dépasse
       p.finStr = finSnap.getFullYear()+'-'+String(finSnap.getMonth()+1).padStart(2,'0')+'-'+String(finSnap.getDate()).padStart(2,'0');
       // Recalculer le label avec les dates snappées
       const MOIS_S=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
