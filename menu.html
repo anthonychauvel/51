@@ -349,7 +349,37 @@
     <div class="wiz-progress">
       <div class="wiz-progress-fill" id="wizProg" style="width:33%"></div>
     </div>
-    <div class="wiz-step active" id="wStep1">
+    <div class="wiz-step active" id="wStep0">
+      <h2 style="text-align:center;margin-bottom:6px;">👋 Bienvenue !</h2>
+      <p style="text-align:center;color:#555;font-size:12px;margin:0 0 16px;">
+        Aucune donnée transmise — tout reste sur votre appareil.
+      </p>
+      <p style="font-size:14px;font-weight:700;color:#222;margin-bottom:12px;text-align:center;">
+        Quel est votre type de contrat ?
+      </p>
+      <div style="display:flex;flex-direction:column;gap:10px;margin-bottom:14px;">
+        <button onclick="wizChoixContrat('plein')"
+          style="padding:15px 14px;font-size:13px;text-align:left;display:flex;align-items:center;gap:12px;border-radius:12px;border:2px solid rgba(0,200,255,0.35);background:rgba(0,200,255,0.07);cursor:pointer;width:100%;">
+          <span style="font-size:26px;flex-shrink:0;">⏱️</span>
+          <div>
+            <div style="font-weight:700;color:#1a1a2e;">Temps plein</div>
+            <div style="font-size:11px;color:#666;margin-top:2px;">35h/sem ou plus — heures supplémentaires</div>
+          </div>
+        </button>
+        <button onclick="wizChoixContrat('partiel')"
+          style="padding:15px 14px;font-size:13px;text-align:left;display:flex;align-items:center;gap:12px;border-radius:12px;border:2px solid rgba(123,79,212,0.50);background:linear-gradient(135deg,rgba(123,79,212,0.10),rgba(123,79,212,0.05));cursor:pointer;width:100%;">
+          <span style="font-size:26px;flex-shrink:0;">🦊</span>
+          <div>
+            <div style="font-weight:700;color:#6C3FC5;">Temps partiel</div>
+            <div style="font-size:11px;color:#8B5CF6;margin-top:2px;">Moins de 35h — heures complémentaires · Mizuki</div>
+          </div>
+        </button>
+      </div>
+      <p style="font-size:10px;color:#aaa;text-align:center;margin:0;">
+        ⚠️ Calculs indicatifs — seul le bulletin de paie fait foi.
+      </p>
+    </div>
+    <div class="wiz-step" id="wStep1">
       <h2>👋 Bienvenue !</h2>
       <p style="text-align:center;color:#555;font-size:13px;margin:8px 0">
         Outil personnel de suivi des heures supplémentaires.<br>
@@ -504,6 +534,11 @@
   <span class="ccn-edit">✎ modifier</span>
 </div>
 
+<div class="btn" id="btn-module5" onclick="go('module5')" style="border:2px solid rgba(108,63,197,0.55);background:linear-gradient(160deg,#ede8ff,#f4f0fd);">
+  <img src="images/Temps partiel.PNG" loading="eager" alt="Temps partiel — Mizuki" onerror="this.style.display='none'">
+  <div class="title" style="color:#6C3FC5;">🦊 Mizuki — Temps partiel</div>
+</div>
+
 <div class="btn" onclick="go('heures')">
   <img src="images/renard-annuel.png.jpg" loading="lazy" alt="Compteur annuel">
   <div class="title">Simulateur de compteur annuel</div>
@@ -522,11 +557,6 @@
 <div class="btn" onclick="go('module4')">
   <img src="foxpredit.jpg" loading="eager" alt="Ma prédiction santé" onerror="this.style.display='none'">
   <div class="title">🩺 Ma prédiction santé</div>
-</div>
-
-<div class="btn" onclick="go('module5')" style="border:2px solid rgba(123,79,212,0.35);background:linear-gradient(160deg,#f8f4ff,#fff);">
-  <img src="images/Temps partiel.PNG" loading="lazy" alt="Temps partiel — Mizuki" onerror="this.style.display='none'">
-  <div class="title" style="color:#7B4FD4;">🦊 Mizuki — Temps partiel</div>
 </div>
 
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
@@ -640,6 +670,23 @@
     lockScroll();
   }
 
+  // Surligner module5 si l'utilisateur a un contrat à temps partiel
+  (function() {
+    const contratType = _safeLS.get('menuContratType');
+    const btn5 = document.getElementById('btn-module5');
+    if(btn5 && contratType === 'partiel') {
+      btn5.style.border = '3px solid rgba(123,79,212,0.80)';
+      btn5.style.background = 'linear-gradient(160deg,#e8deff,#ddd0ff)';
+      btn5.style.boxShadow = '0 4px 20px rgba(123,79,212,0.25)';
+      // Badge "Mon contrat" en haut du bouton
+      const badge = document.createElement('div');
+      badge.textContent = '✓ Mon contrat';
+      badge.style.cssText = 'position:absolute;top:8px;right:8px;background:#7B4FD4;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.04em;';
+      btn5.style.position = 'relative';
+      btn5.appendChild(badge);
+    }
+  })();
+
   let selectedMode = null;
   let selectedGlossaireMode = 'debutant';
 
@@ -682,9 +729,25 @@
 
   function goStep(n) {
     document.querySelectorAll(".wiz-step").forEach(el => el.classList.remove("active"));
-    document.getElementById("wStep" + n).classList.add("active");
-    const prog = { 1: "25%", 2: "50%", 3: "75%", 4: "100%" };
-    document.getElementById("wizProg").style.width = prog[n] || "25%";
+    const target = document.getElementById("wStep" + n);
+    if(target) target.classList.add("active");
+    // Progression : 0=0%, 1=20%, 2=40%, 3=60%, 4=80%, 5=100%
+    const prog = { 0:"0%", 1:"20%", 2:"40%", 3:"60%", 4:"80%", 5:"100%" };
+    document.getElementById("wizProg").style.width = prog[n] || "20%";
+  }
+
+  function wizChoixContrat(type) {
+    if(type === 'partiel') {
+      // Mémoriser le choix + marquer le wizard comme vu
+      try { localStorage.setItem('menuContratType','partiel'); } catch(e){}
+      // Fermer le wizard et aller directement sur Mizuki
+      closeWizard();
+      go('module5');
+    } else {
+      // Temps plein : continuer le wizard normal
+      try { localStorage.setItem('menuContratType','plein'); } catch(e){}
+      goStep(1);
+    }
   }
 
   function selectMode(mode) {
@@ -707,11 +770,26 @@
     document.getElementById("cardMensuel").classList.remove("selected");
     document.getElementById("explainAnnuel").style.display = "none";
     document.getElementById("explainMensuel").style.display = "none";
-    goStep(1);
+    goStep(0);
     document.getElementById("welcomeWizard").style.display = "flex";
   }
 
   function goApp(app) { closeWizard(); go(app); }
+
+  function wizChoixContrat(type) {
+    if(type === 'partiel') {
+      // Sauvegarder le choix + fermer le wizard + aller vers module5
+      _safeLS.set('menuContratType', 'partiel');
+      _safeLS.set('menuWizardDone', '1');
+      document.getElementById('welcomeWizard').style.display = 'none';
+      unlockScroll();
+      go('module5');
+    } else {
+      // Temps plein → wizard normal
+      _safeLS.set('menuContratType', 'plein');
+      goStep(1);
+    }
+  }
 
   function openPresentation() { document.getElementById("presentationPopup").style.display = "flex"; lockScroll(); }
   function closePresentation() { document.getElementById("presentationPopup").style.display = "none"; unlockScroll(); }
@@ -799,6 +877,24 @@
     _safeLS.set("lastApp", app);
     window.location.href = app + "/index.html";
   }
+
+  // Surbrillance du dernier module utilisé
+  (function highlightLastApp() {
+    try {
+      const last = localStorage.getItem('lastApp');
+      if(!last) return;
+      const btn = document.getElementById('btn-' + last);
+      if(btn) {
+        btn.style.boxShadow = '0 0 0 3px rgba(108,63,197,0.45), 0 4px 20px rgba(108,63,197,0.20)';
+        // Badge "Reprendre"
+        const badge = document.createElement('div');
+        badge.textContent = '▶ Reprendre';
+        badge.style.cssText = 'position:absolute;top:8px;right:8px;background:rgba(108,63,197,0.85);color:#fff;font-size:10px;font-weight:700;padding:3px 8px;border-radius:20px;pointer-events:none;';
+        btn.style.position = 'relative';
+        btn.appendChild(badge);
+      }
+    } catch(e){}
+  })();
 
   let _ccnSelected = null;
   let _ccnCustom = false;
