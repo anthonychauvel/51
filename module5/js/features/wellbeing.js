@@ -235,8 +235,9 @@ const M5_Wellbeing = {
       msgs.push({ type:'warn', ref:'Karasek 1979',
         text:`${Math.round(ratioMoyen*100)}% d'HC en moyenne. Tu travailles souvent au-delà du contrat — surveille que ça reste ponctuel.` });
     }
-    // Pencavel 2014 : signal si ratio HC > 30%
-    if (pencavelZone) {
+    // Pencavel 2014 : signal si ratio HC > 30% (recalcul local — pencavelZone est hors portée ici)
+    const _pencavelZone = ratioMoyen >= (typeof PENCAVEL_SEUIL !== 'undefined' ? PENCAVEL_SEUIL : 0.30);
+    if (_pencavelZone) {
       msgs.push({ type:'warn', ref:'Pencavel 2014',
         text:`Avec ${Math.round(ratioMoyen*100)}% d'HC en moyenne, tu approches la zone où la recherche Pencavel (Stanford) observe une baisse d'efficacité : chaque heure supplémentaire produit moins que la précédente. C'est un signal de surcharge à surveiller.` });
     }
