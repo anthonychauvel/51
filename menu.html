@@ -679,23 +679,32 @@
     if(!btn5) return;
 
     if(contratType === 'partiel') {
-      // Temps partiel → module5 en premier, badge "Mon contrat"
-      btn5.style.order = '-1';
+      // Temps partiel → module5 en premier (déplacer avant le 1er .btn)
+      const firstBtn = document.querySelector('.btn:not(#btn-module5)');
+      if(firstBtn && firstBtn !== btn5.nextElementSibling) {
+        btn5.parentNode.insertBefore(btn5, firstBtn);
+      }
       btn5.style.border = '3px solid rgba(123,79,212,0.80)';
       btn5.style.background = 'linear-gradient(160deg,#e8deff,#ddd0ff)';
       btn5.style.boxShadow = '0 4px 20px rgba(123,79,212,0.25)';
-      const badge = document.createElement('div');
-      badge.id = 'badge-mon-contrat';
-      badge.textContent = '✓ Mon contrat';
-      badge.style.cssText = 'position:absolute;top:8px;right:8px;background:#7B4FD4;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.04em;';
       btn5.style.position = 'relative';
-      btn5.appendChild(badge);
+      if(!document.getElementById('badge-mon-contrat')) {
+        const badge = document.createElement('div');
+        badge.id = 'badge-mon-contrat';
+        badge.textContent = '✓ Mon contrat';
+        badge.style.cssText = 'position:absolute;top:8px;right:8px;background:#7B4FD4;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.04em;';
+        btn5.appendChild(badge);
+      }
     } else {
-      // Temps plein ou non défini → module5 en dernière position, style neutre
-      btn5.style.order = '99';
+      // Temps plein → module5 après module4 (avant le bouton "Présentation")
+      const infoBtn = document.querySelector('.info-btn');
+      if(infoBtn) {
+        btn5.parentNode.insertBefore(btn5, infoBtn);
+      }
       btn5.style.border = '2px solid rgba(123,79,212,0.35)';
       btn5.style.background = 'linear-gradient(160deg,#f8f4ff,#fff)';
       btn5.style.boxShadow = '';
+      btn5.style.position = '';
       const badge = document.getElementById('badge-mon-contrat');
       if(badge) badge.remove();
     }
