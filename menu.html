@@ -338,6 +338,8 @@
     border-radius: 22px; padding: 11px 32px;
     font-size: 15px; font-weight: 600; cursor: pointer; width: 100%;
   }
+  /* Ordre dynamique des modules selon type de contrat */
+  #btn-module5 { transition: order 0s; }
 </style>
 
 </head>
@@ -670,20 +672,32 @@
     lockScroll();
   }
 
-  // Surligner module5 si l'utilisateur a un contrat à temps partiel
+  // Positionner et surligner module5 selon le type de contrat
   (function() {
     const contratType = _safeLS.get('menuContratType');
     const btn5 = document.getElementById('btn-module5');
-    if(btn5 && contratType === 'partiel') {
+    if(!btn5) return;
+
+    if(contratType === 'partiel') {
+      // Temps partiel → module5 en premier, badge "Mon contrat"
+      btn5.style.order = '-1';
       btn5.style.border = '3px solid rgba(123,79,212,0.80)';
       btn5.style.background = 'linear-gradient(160deg,#e8deff,#ddd0ff)';
       btn5.style.boxShadow = '0 4px 20px rgba(123,79,212,0.25)';
-      // Badge "Mon contrat" en haut du bouton
       const badge = document.createElement('div');
+      badge.id = 'badge-mon-contrat';
       badge.textContent = '✓ Mon contrat';
       badge.style.cssText = 'position:absolute;top:8px;right:8px;background:#7B4FD4;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.04em;';
       btn5.style.position = 'relative';
       btn5.appendChild(badge);
+    } else {
+      // Temps plein ou non défini → module5 en dernière position, style neutre
+      btn5.style.order = '99';
+      btn5.style.border = '2px solid rgba(123,79,212,0.35)';
+      btn5.style.background = 'linear-gradient(160deg,#f8f4ff,#fff)';
+      btn5.style.boxShadow = '';
+      const badge = document.getElementById('badge-mon-contrat');
+      if(badge) badge.remove();
     }
   })();
 
