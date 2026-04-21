@@ -556,7 +556,7 @@
   <div class="title">Mon compagnon d'analyse</div>
 </div>
 
-<div class="btn" onclick="go('module4')">
+<div class="btn" id="btn-module4" onclick="go('module4')">
   <img src="foxpredit.jpg" loading="eager" alt="Ma prédiction santé" onerror="this.style.display='none'">
   <div class="title">🩺 Ma prédiction santé</div>
 </div>
@@ -696,10 +696,12 @@
         btn5.appendChild(badge);
       }
     } else {
-      // Temps plein → module5 après module4 (avant le bouton "Présentation")
-      const infoBtn = document.querySelector('.info-btn');
-      if(infoBtn) {
-        btn5.parentNode.insertBefore(btn5, infoBtn);
+      // Temps plein → module5 juste après module4
+      const btn4 = document.getElementById('btn-module4');
+      if(btn4 && btn4.nextSibling) {
+        btn4.parentNode.insertBefore(btn5, btn4.nextSibling);
+      } else if(btn4) {
+        btn4.parentNode.appendChild(btn5);
       }
       btn5.style.border = '2px solid rgba(123,79,212,0.35)';
       btn5.style.background = 'linear-gradient(160deg,#f8f4ff,#fff)';
