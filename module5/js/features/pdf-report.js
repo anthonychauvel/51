@@ -168,7 +168,7 @@ const M5_PdfReport = {
         const c2=Math.max(0,diff-thr);
         const d=new Date(w.monday+'T12:00:00');
         const fn=new Date(w.monday+'T12:00:00'); fn.setDate(fn.getDate()+6);
-        const lbl=`${d.getDate()}/${d.getMonth()+1} → ${fn.getDate()}/${fn.getMonth()+1}/${fn.getFullYear()}`;
+        const lbl=`${d.getDate()}/${d.getMonth()+1} au ${fn.getDate()}/${fn.getMonth()+1}/${fn.getFullYear()}`;
         if(alt){ doc.setFillColor(248,245,255); doc.rect(M,y-3,PW,5.5,'F'); }
         alt=!alt;
         doc.text(lbl,cols[0],y);
