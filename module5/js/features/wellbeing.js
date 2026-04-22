@@ -253,7 +253,15 @@ const M5_Wellbeing = {
     }
 
     if (ratioSubi >= 0.5) {
-      const txtSecteur = secteurContraint
+      // Recalcul local de secteurContraint (variable hors portée de compute())
+      const _contraintKeywords = ['domicile','nettoyage','propreté','hcr','hôtel','restaurant','cafés',
+        'sécurité','gardiennage','animation','aide','accompagnement','soins','commerce de détail',
+        'grande distribution','restauration','blanchisserie'];
+      const _secteurContraint = (() => {
+        const nom = (contract.ccnNom||'').toLowerCase();
+        return _contraintKeywords.some(k => nom.includes(k));
+      })();
+      const txtSecteur = _secteurContraint
         ? `Ton secteur (${contract.ccnNom?.split(' ').slice(0,3).join(' ')||'secteur contraint'}) est reconnu comme à temps partiel structurellement imposé — la recherche Voydanoff 2005 montre que l'absence de choix amplifie l'impact sur la santé.`
         : `Voydanoff distingue le temps partiel choisi du temps partiel contraint — si ces heures te sont imposées, c'est utile à noter pour toi.`;
       msgs.push({ type:'warn', ref:'Voydanoff 2005', text:`Plusieurs semaines approchent le plafond légal. ${txtSecteur}` });
