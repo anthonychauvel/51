@@ -18,6 +18,7 @@
       margin: 0;
       background: #4FB3C2;
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      transition: background 0.5s ease, color 0.3s ease;
       display: flex;
       flex-direction: column;
       align-items: center;
@@ -679,7 +680,7 @@
     if(!btn5) return;
 
     if(contratType === 'partiel') {
-      // Temps partiel → module5 en premier (déplacer avant le 1er .btn)
+      // Temps partiel → module5 en premier + fond violet
       const firstBtn = document.querySelector('.btn:not(#btn-module5)');
       if(firstBtn && firstBtn !== btn5.nextElementSibling) {
         btn5.parentNode.insertBefore(btn5, firstBtn);
@@ -695,8 +696,11 @@
         badge.style.cssText = 'position:absolute;top:8px;right:8px;background:#7B4FD4;color:#fff;font-size:10px;font-weight:700;padding:2px 7px;border-radius:10px;letter-spacing:0.04em;';
         btn5.appendChild(badge);
       }
+      // Fond violet M5
+      document.body.style.background = 'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#2D1467');
     } else {
-      // Temps plein → module5 juste après module4
+      // Temps plein → module5 après module4 + fond teal original
       const btn4 = document.getElementById('btn-module4');
       if(btn4 && btn4.nextSibling) {
         btn4.parentNode.insertBefore(btn5, btn4.nextSibling);
@@ -709,6 +713,9 @@
       btn5.style.position = '';
       const badge = document.getElementById('badge-mon-contrat');
       if(badge) badge.remove();
+      // Fond teal original
+      document.body.style.background = '#4FB3C2';
+      document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#4FB3C2');
     }
   })();
 
@@ -803,15 +810,18 @@
 
   function wizChoixContrat(type) {
     if(type === 'partiel') {
-      // Sauvegarder le choix + fermer le wizard + aller vers module5
       _safeLS.set('menuContratType', 'partiel');
       _safeLS.set('menuWizardDone', '1');
+      // Transition fond violet avant de partir
+      document.body.style.transition = 'background 0.4s ease';
+      document.body.style.background = 'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
       document.getElementById('welcomeWizard').style.display = 'none';
       unlockScroll();
-      go('module5');
+      setTimeout(() => go('module5'), 400);
     } else {
-      // Temps plein → wizard normal
+      // Temps plein → wizard normal + fond teal
       _safeLS.set('menuContratType', 'plein');
+      document.body.style.background = '#4FB3C2';
       goStep(1);
     }
   }
