@@ -221,6 +221,11 @@ function renderCalendar() {
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:1" onclick="openWeeklySaisie()">📊 Total semaine</button>
         <button class="m5-btn m5-btn-sm ${isVacH?'m5-btn-primary':'m5-btn-outline'}" onclick="toggleVacSemaine()">🌴 ${isVacH?'Congés ✓':'Congés'}</button>
+      </div>
+      <div style="text-align:center;margin-top:8px;">
+        <button onclick="switchToDayMode('${calendarMonday}')" style="background:none;border:none;font-size:11px;color:rgba(196,168,255,0.60);cursor:pointer;text-decoration:underline;">
+          Passer en saisie journalière →
+        </button>
       </div>`;
     return;
   }
@@ -1384,6 +1389,18 @@ function openContractModal() {
   openModal('modal-contract');
 }
 
+
+// ── Snap exerciceStart au début de semaine du contrat ────────────────
+// Si l'utilisateur saisit un mercredi avec un contrat lun-dim,
+// on recule au lundi précédent (ou au mardi si weekStartDay=1, etc.)
+function snapExerciceStart(dateStr, weekStartDay) {
+  if(!dateStr) return dateStr;
+  try {
+    return M5_weekStartOf(dateStr, weekStartDay||0);
+  } catch(_) { return dateStr; }
+}
+window.snapExerciceStart=snapExerciceStart;
+
 function saveContract() {
   const hoursBase =parseFloat(document.getElementById('contract-hours').value);
   const hourlyRate=parseFloat(document.getElementById('contract-rate').value)||0;
@@ -1400,7 +1417,11 @@ function saveContract() {
   // Si une CCN est sélectionnée, son cap fait foi — sinon le sélecteur manuel
   const cap = (idcc>0 && ccnRules.cap) ? ccnRules.cap : capManuel;
   const weekStartDay=parseInt(document.getElementById('contract-start-day')?.value||'0');
-  const exerciceStart=document.getElementById('contract-exercice')?.value||'';
+  const exerciceStartRaw=document.getElementById('contract-exercice')?.value||'';
+  const exerciceStart=snapExerciceStart(exerciceStartRaw, weekStartDay);
+  if(exerciceStart && exerciceStart!==exerciceStartRaw) {
+    toast('Date ajustée au début de semaine : '+exerciceStart,'info');
+  }
   const modeCalcul=document.getElementById('contract-mode')?.value||'HEBDO';
   const neutraliseFeries=document.getElementById('contract-feries')?.checked!==false;
   // Récupérer les 12 clôtures
@@ -1954,11 +1975,17 @@ function wizAutofillClotures() {
 function wizFinish() {
   const h=parseFloat(document.getElementById('wiz-hours')?.value||'0');
   if(!h||h<=0||h>=35) { _wizGo(2); toast('Saisis tes heures contractuelles','error'); return; }
-  const exercice=document.getElementById('wiz-exercice')?.value||'';
-  if(!exercice) {
+  const exerciceRaw=document.getElementById('wiz-exercice')?.value||'';
+  if(!exerciceRaw) {
     toast("La date de début d'exercice est obligatoire",'error');
     document.getElementById('wiz-exercice')?.focus();
     return;
+  }
+  // Snap au début de semaine du contrat
+  const _wizStartDay=parseInt(document.getElementById('wiz-start-day')?.value||'0')||0;
+  const exercice=snapExerciceStart(exerciceRaw, _wizStartDay);
+  if(exercice!==exerciceRaw) {
+    toast('Date ajustée au début de semaine : '+exercice,'info');
   }
   const rate=parseFloat(document.getElementById('wiz-rate')?.value||'0');
   const name=(document.getElementById('wiz-name')?.value||'').trim();
@@ -2076,6 +2103,17 @@ function quickSave(hours) {
   } catch(e) { toast('Erreur sauvegarde: '+e.message,'error'); }
 }
 window.quickSave=quickSave;
+
+function switchToDayMode(mondayStr) {
+  if(!confirm('Passer en saisie journalière ? Le total hebdomadaire sera supprimé pour cette semaine.')) return;
+  const year=M5_DataStore.getYear();
+  // Supprimer la saisie hebdomadaire via deleteWeek
+  M5_DataStore.deleteWeek(mondayStr, year);
+  Mizuki.clearCache();
+  refreshUI();
+  toast('Mode journalier activé — tap sur chaque jour pour saisir','success');
+}
+window.switchToDayMode=switchToDayMode;
 window.showSection=showSection;
 window.searchCCN=searchCCN;
 window.selectCCN=selectCCN; window.openModal=openModal; window.closeModal=closeModal;
