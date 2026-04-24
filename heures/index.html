@@ -1,14 +1,17 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<link rel="manifest" href="/hs/manifest.json">
-<link rel="apple-touch-icon" href="/hs/apple-touch-icon.png">
+<link rel="manifest" href="../manifest.json">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Compteur Heures & Paie">
 <meta name="theme-color" content="#4FB3C2">
+<meta name="color-scheme" content="light dark">
 <meta charset="UTF-8">
 <title>Simulateur de compteur annuel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <style>
 .popup-content input[type=number]{box-sizing:border-box;width:100%;}
 .saisie-toggle{display:flex;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid #ddd}
@@ -27,7 +30,11 @@
 .month-nav select{flex:1;min-height:40px;display:block;width:100%;box-sizing:border-box;background-color:#fff;-webkit-appearance:menulist;border:1px solid #ccc;border-radius:4px}
 .calc-details summary{cursor:pointer;font-weight:bold;background:#e3f2fd;padding:8px;border-radius:6px;margin-bottom:8px}
 .calc-details[open] summary{background:#bbdefb}
-body{font-family:Arial,sans-serif;background:#f2f2f2;padding:15px}
+body{font-family:Arial,sans-serif;background:#f2f2f2;padding:calc(env(safe-area-inset-top) + 15px) calc(env(safe-area-inset-right) + 15px) calc(env(safe-area-inset-bottom) + 15px) calc(env(safe-area-inset-left) + 15px)}
+@media (min-width: 900px) {
+  body { padding-left: calc(env(safe-area-inset-left) + 40px); padding-right: calc(env(safe-area-inset-right) + 40px); }
+  .main, .calendar-wrapper, .container { max-width: 900px; margin: 0 auto; }
+}
 h1,h2{text-align:center}
 .config,.totaux{background:#fff;padding:15px;border-radius:8px;max-width:900px;margin:15px auto}
 .calendar-wrapper{max-width:900px;margin:20px auto}
@@ -77,6 +84,20 @@ button,input,textarea{width:100%;padding:8px;margin:5px 0}
 .wiz-closures-grid input{margin:0;font-size:13px;padding:6px}
 .wiz-check-row{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:#f9f9f9;border:1px solid #eee;margin-bottom:10px;cursor:pointer}
 .wiz-check-row input[type=checkbox]{width:18px;height:18px;margin:0;flex-shrink:0;cursor:pointer}
+.wiz-step input[type="date"],.wiz-step input[type="number" inputmode="decimal"],.wiz-step input[type="text"]{
+  width:100%;box-sizing:border-box;padding:16px;font-size:17px;
+  border:2px solid #e0e0e0;border-radius:12px;background:#fff;color:#222;
+  -webkit-appearance:none;appearance:none;margin-bottom:4px;display:block;
+  min-height:56px;line-height:1.4;
+}
+/* Fix champ date iOS — affichage pleine largeur */
+.wiz-step input[type="date"]::-webkit-date-and-time-value {
+  text-align:left;
+  min-height:24px;
+}
+.wiz-step input[type="date"]:focus,.wiz-step input[type="number" inputmode="decimal"]:focus{
+  border-color:#4FB3C2;outline:none;
+}
 .wiz-check-row span{font-size:14px;font-weight:500}
 .wiz-summary{background:#f1f8e9;border:1px solid #aed581;border-radius:10px;padding:14px;font-size:13px;line-height:1.8;margin-bottom:16px}
 .wiz-summary b{color:#33691e}
@@ -136,7 +157,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   input, select, textarea { font-size: 16px !important; }
 </style>
 </head>
-<body>
+<body><script>try{var _m=localStorage.getItem("APP_MODE")||localStorage.getItem("GLOSSAIRE_MODE");if(_m==="expert")document.body.classList.add("mode-expert");}catch(_e){}</script>
 <div class="top-nav-bar">
   <button class="menu-btn" onclick="goMenu()">&#8592; Retour au menu</button>
   <button class="kitsune-btn" onclick="window.location.href='../fox/index.html'" title="Mon compagnon d'analyse — suit tes heures et te récompense">&#x1F98A; Mon compagnon</button>
@@ -184,7 +205,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <label style="font-size:13px;margin-top:8px;margin-bottom:4px;display:block;">Date de cl&ocirc;ture annuelle</label>
       <input type="date" id="annualDateInput">
     </div>
-    <input type="number" step="0.5" id="baseHebdoInput" style="display:none;">
+    <input type="number" inputmode="decimal" step="0.5" id="baseHebdoInput" style="display:none;">
     <hr class="settings-divider">
     <div class="settings-group">
       <span class="settings-group-label">&#128198; Cl&ocirc;tures comptables</span>
@@ -197,11 +218,29 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     </div>
     <hr class="settings-divider">
     <div class="settings-group">
-      <span class="settings-group-label">&#x1F38C; Jours f&eacute;ri&eacute;s</span>
-      <button onclick="importFeries()">&#x1F1EB;&#x1F1F7; Importer jours f&eacute;ri&eacute;s officiels</button>
-      <label style="display:flex;align-items:center;gap:8px;margin-top:10px;font-size:14px;cursor:pointer;">
+      <span class="settings-group-label">🎌 Jours fériés</span>
+
+      <!-- Toggle import API -->
+      <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;">
+        <div>
+          <div style="font-size:14px;font-weight:600;color:#2c3e50;">🇫🇷 Import API Gouvernement</div>
+          <div style="font-size:11px;color:#888;margin-top:2px;">Importer automatiquement les jours fériés officiels</div>
+        </div>
+        <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
+          <input type="checkbox" id="autoImportFeriesToggle" style="width:18px;height:18px;accent-color:#4FB3C2;margin:0;">
+          <span id="autoImportFeriesLabel" style="font-size:12px;font-weight:600;color:#888;">OFF</span>
+        </label>
+      </div>
+
+      <!-- Bouton import manuel (toujours disponible) -->
+      <button onclick="importFeries()" id="btnImportFeries" style="width:100%;margin-bottom:8px;">
+        🇫🇷 Importer maintenant les jours fériés
+      </button>
+
+      <!-- Toggle mode auto-férié -->
+      <label style="display:flex;align-items:center;gap:8px;margin-top:4px;font-size:14px;cursor:pointer;">
         <input type="checkbox" id="autoFerieToggle" style="width:auto;margin:0;">
-        Mode f&eacute;ri&eacute; automatique (&minus;7h en semaine)
+        Mode férié automatique (−7h en semaine)
       </label>
     </div>
     <hr class="settings-divider">
@@ -314,7 +353,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <select id="monthSelect"></select>
     <select id="yearSelect"></select>
   </div>
-  <div class="weekdays">
+  <div class="weekdays" id="calWeekdays">
     <div class="weekday">Lun</div><div class="weekday">Mar</div><div class="weekday">Mer</div>
     <div class="weekday">Jeu</div><div class="weekday">Ven</div><div class="weekday">Sam</div><div class="weekday">Dim</div>
   </div>
@@ -336,6 +375,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   <div class="popup-content">
     <div class="sheet-handle"></div>
     <h3 id="popupDate"></h3>
+    <div id="popup-ferie-info" style="display:none;background:#e3f2fd;border:1px solid #1976d2;border-radius:8px;padding:10px;font-size:13px;color:#1565c0;margin-bottom:10px;line-height:1.5;"></div>
 
     <!-- MODE TOGGLE -->
     <div class="saisie-toggle">
@@ -347,7 +387,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <div id="saisieWorked" style="display:none">
       <div class="saisie-worked">
         <label>&#x1F551; Total heures travaill&eacute;es ce jour</label>
-        <input id="workedHours" type="number" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()" style="font-size:16px;">
+        <input id="workedHours" type="number" inputmode="decimal" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()" style="font-size:16px;">
         <div class="calc-result" id="workedResult"></div>
       </div>
     </div>
@@ -360,7 +400,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
         <button onclick="addExtra(0.5)">+30 min</button>
         <button onclick="addExtra(1)">+1 h</button>
         <button onclick="addExtra(2)">+2 h</button>
-        <input id="manualExtra" type="number" step="0.25">
+        <input id="manualExtra" type="number" inputmode="decimal" step="0.25">
       </fieldset>
     </div>
 
@@ -369,12 +409,12 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <button onclick="addRecup(0.25)">-15 min</button>
       <button onclick="addRecup(0.5)">-30 min</button>
       <button onclick="addRecup(1)">-1 h</button>
-      <input id="manualRecup" type="number" step="0.25">
+      <input id="manualRecup" type="number" inputmode="decimal" step="0.25">
     </fieldset>
     <fieldset class="block absence">
       <legend>&#10060; Absence</legend>
       <label><input type="checkbox" id="isAbsent"> Heures d&apos;absence</label>
-      <input id="absentHours" type="number" step="0.25">
+      <input id="absentHours" type="number" inputmode="decimal" step="0.25">
     </fieldset>
     <div class="popup-actions">
       <button onclick="saveManual()">Valider</button>
@@ -432,7 +472,7 @@ function toast(msg,type,duration){type=type||"info";duration=duration||2800;var 
 
 function confirmModal(msg,onOk,okLabel,danger){okLabel=okLabel||"Confirmer";danger=danger||false;var m=document.getElementById("confirmModal");document.getElementById("cmMsg").textContent=msg;var okBtn=document.getElementById("cmOk");okBtn.textContent=okLabel;okBtn.style.background=danger?"#c0392b":"var(--accent,#21959a)";var ops=document.querySelectorAll(".popup");ops.forEach(function(p){p.dataset.peb=p.style.pointerEvents;p.style.pointerEvents="none";});m.classList.add("open");var close=function(){m.classList.remove("open");ops.forEach(function(p){p.style.pointerEvents=p.dataset.peb||"";});okBtn.onclick=null;document.getElementById("cmCancel").onclick=null;};okBtn.onclick=function(){close();onOk();};document.getElementById("cmCancel").onclick=close;}
 
-let APP_CRASHED=false,RECOVERY_MODE=false,DEBUG_MODE=true;
+let APP_CRASHED=false,RECOVERY_MODE=false,DEBUG_MODE=false;
 document.querySelectorAll('.popup').forEach(p=>{p.addEventListener('click',e=>{if(e.target===p&&p.id==="popup")closePopup();});});
 let midnightTimer=null;
 function enterRecoveryMode(source,error){
@@ -445,8 +485,8 @@ function enterRecoveryMode(source,error){
   const isCritical=source!=="window.onerror"&&source!=="promise";
   if(isCritical)toast("⚠️ Mode récupération activé — données intactes","warn",5000);
 }
-function simulateCrash(){console.warn("💥 Crash simulé");undefinedVariable.forceCrash();}
-function protectedCrash(){const code=prompt("🔒 Zone protégée\n\nEntrez le code :");if(code===null)return;if(code==="1234")simulateCrash();else toast("❌ Code incorrect","error");}
+function simulateCrash(){if(!DEBUG_MODE)return;console.warn("💥 Crash simulé");undefinedVariable.forceCrash();}
+function protectedCrash(){if(!DEBUG_MODE){toast("Fonction désactivée","info");return;}const code=prompt("🔒 Zone protégée\n\nEntrez le code :");if(code===null)return;if(code==="1234")simulateCrash();else toast("❌ Code incorrect","error");}
 function safe(fn,label){return function(...args){try{return fn.apply(this,args);}catch(e){console.error("💥 CRASH:",label,e);enterRecoveryMode(label,e);return undefined;}};}
 window.onerror=(msg,src,l,c,err)=>{
   if(src && src!=='' && !src.startsWith(location.origin) && !src.startsWith('file://')) return false;
@@ -551,6 +591,10 @@ let exerciseStart=localStorage.getItem(STORAGE.exerciseStart)||"";
 let periodMeta=JSON.parse(localStorage.getItem(STORAGE.periodMeta))||{};
 let BASE_HEBDO=Number(localStorage.getItem("BASE_HEBDO_"+currentSuffix))||35;
 let AUTO_FERIE=localStorage.getItem("AUTO_FERIE_"+currentSuffix)==="true";
+// Auto-import fériés au démarrage si l'option est activée
+if(localStorage.getItem('AUTO_IMPORT_FERIES')==='true'){
+  setTimeout(()=>{ if(typeof importFeries==='function') importFeries(); }, 2000);
+}
 const DAILY_WORK_HOURS=7,ALLOW_RECUP_FREE=true;
 
 /* ── CCN : règles actives ── */
@@ -562,6 +606,18 @@ function getCCNRules() {
   return { seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50, contingent:220, debutSemaine:1 };
 }
 // Retourne le premier jour (ou debut CCN) de la semaine contenant 'date'
+
+// Vérifie si un jour (JS getDay()) est un jour de repos selon la CCN
+function _isCCNRestDay(dow) {
+  const rules = getCCNRules();
+  const ds = (rules.debutSemaine || 1); // 1=lun..7=dim
+  const dsJS = ds === 7 ? 0 : ds;
+  // Jours ouvrés = debutSemaine + 5 jours consécutifs
+  // Jours repos = les 2 jours restants
+  const workedDays = new Set();
+  for (let i = 0; i < 5; i++) workedDays.add((dsJS + i) % 7);
+  return !workedDays.has(dow);
+}
 function getWeekStart(date){
   const rules=getCCNRules();
   const ds=rules.debutSemaine||1; // 1=lun..7=dim
@@ -623,25 +679,47 @@ function initSelectors(){
 function openClosures(){const box=document.getElementById("closuresInputs");box.innerHTML="";for(let i=0;i<13;i++){const inp=document.createElement("input");inp.type="date";inp.value=closures[i]||"";box.appendChild(inp);}document.getElementById("popupClosures").style.display="flex";}
 function closeClosures(){document.getElementById("popupClosures").style.display="none";}
 
+// Retourne le dernier jour de la semaine CCN contenant dateStr
+// Si debutSemaine=2 (mar), la fin de semaine = lundi suivant
 function forceSunday(dateStr){
   if(!dateStr)return dateStr;
+  const rules=getCCNRules();
+  const ds=(rules.debutSemaine||1); // 1=lun..7=dim
+  const dsJS=ds===7?0:ds; // JS: 0=dim..6=sam
+  const finJS=(dsJS+6)%7; // dernier jour de la semaine CCN en JS
   const d=new Date(dateStr+'T12:00:00');
   const day=d.getDay();
-  if(day!==0)d.setDate(d.getDate()-day);
+  // Avancer jusqu'au dernier jour de la semaine CCN
+  let diff=(finJS-day+7)%7;
+  if(diff!==0)d.setDate(d.getDate()+diff);
+  // Si on est déjà sur le bon jour → diff=0 → pas de changement
   return dateKeyLocal(d);
 }
 
+// Retourne le premier jour de la semaine CCN contenant dateStr
 function forceMonday(dateStr){
   if(!dateStr)return dateStr;
+  const rules=getCCNRules();
+  const ds=(rules.debutSemaine||1);
+  const dsJS=ds===7?0:ds;
   const d=new Date(dateStr+'T12:00:00');
   const day=d.getDay();
-  if(day!==1){const diff=day===0?1:(8-day);d.setDate(d.getDate()+diff);}
+  let diff=(day-dsJS+7)%7;
+  if(diff!==0)d.setDate(d.getDate()-diff);
   return dateKeyLocal(d);
 }
 
 function saveClosures(){
   let adj=false;
   closures=[...document.querySelectorAll("#closuresInputs input")].map(i=>{const f=forceSunday(i.value);if(i.value&&i.value!==f)adj=true;return f;}).filter(v=>v).sort();
+  // S'assurer que la dernière clôture = annualDate si définie
+  if(annualDate && closures.length>0){
+    if(closures[closures.length-1]!==annualDate){
+      closures=closures.filter(c=>c<=annualDate);
+      if(!closures.includes(annualDate))closures.push(annualDate);
+      closures.sort();
+    }
+  }
   localStorage.setItem(STORAGE.closures,JSON.stringify(closures));
   if(adj)toast("ℹ️ Dates ajustées au dernier jour de la semaine","info");
   buildPeriods();closeClosures();
@@ -693,9 +771,25 @@ function generateCalendar(){
     calendar.appendChild(guide);
   }
   const firstDay=new Date(viewYear,viewMonth,1).getDay();
-  const offset=firstDay===0?6:firstDay-1;
   const days=new Date(viewYear,viewMonth+1,0).getDate();
-  for(let i=0;i<offset;i++)calendar.appendChild(document.createElement("div"));
+  // Adapter l'offset selon le jour de début de semaine CCN (1=lun..7=dim, JS: 0=dim..6=sam)
+  const _rules=getCCNRules();
+  const _ds=(_rules.debutSemaine||1); // 1=lun par défaut
+  const _dsJS=_ds===7?0:_ds; // convertir en JS (0=dim,1=lun..6=sam)
+  // Mettre à jour l'en-tête des jours selon le début de semaine
+  const _JOURS_COURTS=['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const _wdEl=document.getElementById('calWeekdays');
+  if(_wdEl){
+    _wdEl.innerHTML='';
+    for(let i=0;i<7;i++){
+      const div=document.createElement('div');div.className='weekday';
+      div.textContent=_JOURS_COURTS[(_dsJS+i)%7];
+      _wdEl.appendChild(div);
+    }
+  }
+  // Calculer offset : combien de cases vides avant le 1er du mois
+  let _offset=(firstDay-_dsJS+7)%7;
+  for(let i=0;i<_offset;i++)calendar.appendChild(document.createElement("div"));
   const period=getCurrentPeriod();
   let pStartKey=null,pEndKey=null;
   if(period){
@@ -741,10 +835,17 @@ function calculate(){
       // Si la CCN ne chôme que le 1er mai, ignorer les autres fériés
       if(_fr.seul1erMaiChome && !date.endsWith('-05-01'))return;
       const d=new Date(date);if(d<pStart||d>pEnd)return;
-      const dow=d.getDay();if(dow===0||dow===6)return;
-      if(!data[date]||!data[date].absent){
-        const iso=dow===0?7:dow;const monday=new Date(d);monday.setDate(monday.getDate()-(iso-1));
-        const wk=dateKeyLocal(monday);absences[wk]=(absences[wk]||0)+DAILY_WORK_HOURS;
+      const dow=d.getDay();if(_isCCNRestDay(dow))return;
+      // Appliquer -7h virtuel SAUF si l'utilisateur a explicitement saisi une absence
+      // (si data[date].absent > 0 = saisi manuellement → on ne double-compte pas)
+      // (si data[date] a seulement extra → le férié continue d'être chômé)
+      const _hasManualAbsent = data[date] && (data[date].absent || 0) > 0;
+      if(!_hasManualAbsent){
+        // Utiliser getWeekKey() = même clé que la boucle data → cohérence garantie
+        const wk=getWeekKey(d);
+        absences[wk]=(absences[wk]||0)+DAILY_WORK_HOURS;
+        // S'assurer que la semaine existe dans weeks même sans extra (pour que absent soit pris en compte)
+        if(!weeks[wk])weeks[wk]=0;
       }
     });
   }
@@ -759,7 +860,7 @@ function calculate(){
     const iso=dow===0?7:dow;
     const wk=getWeekKey(dd);
     weeks[wk]=(weeks[wk]||0)+(v.extra||0);
-    if(dow!==0&&dow!==6)absences[wk]=(absences[wk]||0)+(v.absent||0);
+    if(!_isCCNRestDay(dow))absences[wk]=(absences[wk]||0)+(v.absent||0);
     recups[wk]=(recups[wk]||0)+(v.recup||0);
     totalRecup+=v.recup||0;
   });
@@ -785,15 +886,27 @@ function calculate(){
   const interLine=rules.taux_inter?`<br>${rules.taux_inter}% : ${fmtH(hInter)} × ${coefInter.toFixed(2)} = ${fmtH(brutInter)}`:'';
   totaux.innerHTML=`<details class="calc-details"><summary>📊 Détails des calculs</summary><div class="breakdown">${details.join("<br>")}<hr>${rules.taux1}% : ${fmtH(h1)} × ${coef1.toFixed(2)} = ${fmtH(brut1)}${interLine}<br>${rules.taux2}% : ${fmtH(h2)} × ${coef2.toFixed(2)} = ${fmtH(brut2)}<br>Report précédent : ${fmtH(reportPrev)}</div></details><hr><b>Solde brut :</b> ${fmtH(brut)}<br>Récup : ${fmtH(totalRecup)}<br><b>Solde net :</b> ${fmtH(net)}`;
   const rateContainer=document.getElementById("rateContainer");rateContainer.innerHTML="";
-  if(shouldShowAnnualClosure()){rateContainer.innerHTML=`<div style="background:#e0f4f7;padding:10px;border-radius:6px;border:1px solid #4FB3C2;margin-top:10px;box-sizing:border-box;width:100%;"><label style="display:block;font-weight:bold;margin-bottom:4px;">Taux horaire (€)</label><input type="number" id="hourlyRateInput" step="0.5" value="${annualRate}" style="width:100%;box-sizing:border-box;margin:0;"></div>`;document.getElementById("hourlyRateInput").oninput=()=>{const v=Number(document.getElementById("hourlyRateInput").value);annualRate=isNaN(v)?10:v;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);calculate();};totaux.innerHTML+=`<hr><div style="background:#e0f4f7;padding:15px;border:2px solid #2196a6;border-radius:8px;"><h3 style="margin:0;color:#2196a6;">🎯 Clôture Annuelle</h3><b>Paiement (${annualRate}€/h) :</b> ${(net*annualRate).toFixed(2)} €</div>`;}
+  if(shouldShowAnnualClosure()){rateContainer.innerHTML=`<div style="background:#e0f4f7;padding:10px;border-radius:6px;border:1px solid #4FB3C2;margin-top:10px;box-sizing:border-box;width:100%;"><label style="display:block;font-weight:bold;margin-bottom:4px;">Taux horaire (€)</label><input type="number" inputmode="decimal" id="hourlyRateInput" step="0.5" value="${annualRate}" style="width:100%;box-sizing:border-box;margin:0;"></div>`;document.getElementById("hourlyRateInput").oninput=()=>{const v=Number(document.getElementById("hourlyRateInput").value);annualRate=isNaN(v)?10:v;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);calculate();};totaux.innerHTML+=`<hr><div style="background:#e0f4f7;padding:15px;border:2px solid #2196a6;border-radius:8px;"><h3 style="margin:0;color:#2196a6;">🎯 Clôture Annuelle</h3><b>Paiement (${annualRate}€/h) :</b> ${(net*annualRate).toFixed(2)} €</div>`;}
 }
 
 function openNotice(){document.getElementById("popupNotice").style.display="flex";}
 function closeNotice(){document.getElementById("popupNotice").style.display="none";}
 function openPopup(date){
   selectedDate=date;
-  if(specialDays[date]==="ferie"&&!AUTO_FERIE){if(!data[date])data[date]={extra:0,recup:0,absent:0};data[date].absent=DAILY_WORK_HOURS;}
+  // NE PAS écrire absent automatiquement — le bloc AUTO_FERIE dans calculate() gère les -7h
   const d=data[date]||{extra:0,recup:0,absent:0};
+  // Afficher bannière info si c'est un férié avec AUTO_FERIE actif
+  const _ferieInfo=document.getElementById('popup-ferie-info');
+  if(_ferieInfo){
+    const _isFerie=specialDays[date]==="ferie";
+    _ferieInfo.style.display=_isFerie&&AUTO_FERIE?'block':'none';
+    if(_isFerie&&AUTO_FERIE){
+      const _hasAbsent=d.absent>0;
+      _ferieInfo.innerHTML=_hasAbsent
+        ?'🎌 <b>Jour férié</b> — Absence manuelle saisie (−'+d.absent+'h). Le mode automatique −7h ne s\'applique pas.'
+        :'🎌 <b>Jour férié chômé</b> — Mode automatique actif : <b>−7h</b> appliquées sur la semaine. Vous pouvez ajouter des HS si vous avez travaillé ce jour.';
+    }
+  }
   popupDate.textContent=date;manualExtra.value=d.extra;manualRecup.value=d.recup;
   absentHours.value=d.absent||0;isAbsent.checked=(d.absent||0)>0;
   // Restore saisie mode
@@ -910,9 +1023,9 @@ function updateContingent(){
       if(type!=="ferie")return;
       if(_fr2.seul1erMaiChome && !date.endsWith('-05-01'))return;
       const d=new Date(date);const dow=d.getDay();
-      if(dow===0||dow===6)return;
-      if(!data[date]||!data[date].absent){
-        const wk=getWeekKey(d);
+      if(_isCCNRestDay(dow))return;
+      const _hmA4 = data[date] && (data[date].absent||0) > 0;
+      if(!_hmA4){ const wk=getWeekKey(d);
         absences[wk]=(absences[wk]||0)+DAILY_WORK_HOURS;
       }
     });
@@ -923,7 +1036,7 @@ function updateContingent(){
     const dd=new Date(y,m-1,d);const dow=dd.getDay();
     const wk=getWeekKey(dd);
     weeks[wk]=(weeks[wk]||0)+(v.extra||0);
-    if(dow!==0&&dow!==6)absences[wk]=(absences[wk]||0)+(v.absent||0);
+    if(!_isCCNRestDay(dow))absences[wk]=(absences[wk]||0)+(v.absent||0);
   });
   let total=0;
   Object.entries(weeks).forEach(([wk,extra])=>{
@@ -988,6 +1101,21 @@ function update(){
   const _adi=document.getElementById("annualDateInput");if(_adi)_adi.value=annualDate;
   const aft=document.getElementById("autoFerieToggle");
   if(aft){aft.checked=AUTO_FERIE;aft.onchange=()=>{AUTO_FERIE=aft.checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);update();};}
+  // Toggle auto-import fériés
+  const _aitEl=document.getElementById('autoImportFeriesToggle');
+  const _ailEl=document.getElementById('autoImportFeriesLabel');
+  const _autoImport=localStorage.getItem('AUTO_IMPORT_FERIES')==='true';
+  if(_aitEl){
+    _aitEl.checked=_autoImport;
+    if(_ailEl)_ailEl.textContent=_autoImport?'ON':'OFF';
+    if(_ailEl)_ailEl.style.color=_autoImport?'#4FB3C2':'#888';
+    _aitEl.onchange=()=>{
+      const v=_aitEl.checked;
+      localStorage.setItem('AUTO_IMPORT_FERIES',v);
+      if(_ailEl){_ailEl.textContent=v?'ON':'OFF';_ailEl.style.color=v?'#4FB3C2':'#888';}
+      if(v){importFeries();} // importer immédiatement si on active
+    };
+  }
   const banner=document.getElementById("activePeriodBanner"),period=getCurrentPeriod();
   if(banner){if(period&&exerciseStart){const s=period.start.toLocaleDateString(),e=period.end.getFullYear()===2099?"en cours":period.end.toLocaleDateString();banner.innerHTML=`📘 Période ${period.index+1} : ${s} \u2192 ${e}`;}else banner.innerHTML="";}
 }
@@ -1222,23 +1350,24 @@ function calcPeriodWeeks(pStart,pEnd){
       if(type!=="ferie")return;
       if(_fr3.seul1erMaiChome && !date.endsWith('-05-01'))return;
       const d=new Date(date);if(d<pS||d>pE)return;
-      const dow=d.getDay();if(dow===0||dow===6)return;
-      if(!data[date]||!data[date].absent){
-        const iso=dow===0?7:dow;const mon=new Date(d);mon.setDate(mon.getDate()-(iso-1));
-        const wk=dateKeyLocal(mon);abs[wk]=(abs[wk]||0)+DAILY_WORK_HOURS;
+      const dow=d.getDay();if(_isCCNRestDay(dow))return;
+      const _hmA5 = data[date] && (data[date].absent||0) > 0;
+      if(!_hmA5){
+        const wk=getWeekKey(d);
+        abs[wk]=(abs[wk]||0)+DAILY_WORK_HOURS;
+        if(!wks[wk])wks[wk]=0; // s'assurer que la semaine existe
       }
     });
   }
   Object.entries(data).forEach(([date,v])=>{
     const[y,m,d]=date.split("-").map(Number);
     const dd=new Date(y,m-1,d);if(dd<pS||dd>pE)return;
-    const dow=dd.getDay(),iso=dow===0?7:dow;
-    const mon=new Date(dd);mon.setDate(mon.getDate()-(iso-1));
-    if(mon<pS||mon>pE)return;
-    const wk=dateKeyLocal(mon);
+    const dow=dd.getDay();
+    const wk=getWeekKey(dd);
+    if(getWeekStart(dd)<pS||getWeekStart(dd)>pE)return;
     wks[wk]=(wks[wk]||0)+(v.extra||0);
     rec[wk]=(rec[wk]||0)+(v.recup||0);
-    if(dow!==0&&dow!==6)abs[wk]=(abs[wk]||0)+(v.absent||0);
+    if(!_isCCNRestDay(dow))abs[wk]=(abs[wk]||0)+(v.absent||0);
   });
   let t1=0,tInter=0,t2=0,tR=0,tExtra=0,tAbs=0;
   const rules=getCCNRules();
@@ -1478,7 +1607,7 @@ function exportAnnualPDF(){
   );
 
   // Précalcul toutes périodes
-  let annualNet=0,annualH25=0,annualH50=0,annualR=0,annualExtra=0;
+  let annualNet=0,annualH25=0,annualH50=0,annualInter=0,annualR=0,annualExtra=0;
   const aRules=getCCNRules();
   const aCoef1=1+aRules.taux1/100,aCoef2=1+aRules.taux2/100,aCoefI=aRules.taux_inter?(1+aRules.taux_inter/100):0;
   const periodResults=[];
@@ -1491,7 +1620,7 @@ function exportAnnualPDF(){
     const rp=getLastValidReport(idx);
     const net=t25*aCoef1+(tInterA||0)*aCoefI+t50*aCoef2+rp-tR;
     const contrib=t25*aCoef1+(tInterA||0)*aCoefI+t50*aCoef2-tR;
-    annualNet+=contrib;annualH25+=t25;annualH50+=t50;annualR+=tR;annualExtra+=tExtra;
+    annualNet+=contrib;annualH25+=t25;annualH50+=t50;annualInter+=(tInterA||0);annualR+=tR;annualExtra+=tExtra;
     periodResults.push({idx,start,end,weekRows,t25,t50,tInter:tInterA||0,tR,tExtra,tAbs,rp,net});
   });
 
@@ -1502,10 +1631,9 @@ function exportAnnualPDF(){
   ];
   
   if (aRules.taux_inter) {
-    // HCR : 3 paliers
+    // HCR : 3 paliers — annualInter correctement cumulé
     recapLines.push([`Total à ${aRules.taux1}%`, fmtH(annualH25)]);
-    // TODO: stocker tInter séparément dans le calcul annuel
-    recapLines.push([`Total à ${aRules.taux_inter}%`, "0h"]);
+    recapLines.push([`Total à ${aRules.taux_inter}%`, fmtH(annualInter)]);
     recapLines.push([`Total à ${aRules.taux2}%`, fmtH(annualH50)]);
   } else {
     // Droit commun : 2 paliers
@@ -1684,7 +1812,7 @@ function protectFunctions(){
     <div id="yearsList"></div>
     <hr>
     <label>Créer / ouvrir un nouvel exercice</label>
-    <input type="number" id="newYearInput" placeholder="Ex : 2039">
+    <input type="number" inputmode="decimal" id="newYearInput" placeholder="Ex : 2039">
     <button onclick="confirmSwitchYear()">Ouvrir</button>
     <button onclick="closeYearsPopup()">Fermer</button>
   </div>
@@ -1729,7 +1857,19 @@ function protectFunctions(){
       <div class="wiz-question">🇫🇷 Configurer pour la France ?</div>
       <p class="wiz-hint">Ces options sont recommandées pour les contrats relevant du droit français.</p>
       <label class="wiz-check-row"><input type="checkbox" id="wizImportFeries" checked><span>🎌 Importer les jours fériés officiels (API Gouvernement)</span></label>
-      <label class="wiz-check-row"><input type="checkbox" id="wizAutoFerie" checked><span>⚙️ Mode férié automatique : appliquer −7h les jours fériés en semaine</span></label>
+
+      <div style="background:#f8f9fa;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden;margin-top:4px;">
+        <label class="wiz-check-row" style="border-bottom:1px solid #e0e0e0;margin:0;padding:12px 14px;cursor:pointer;">
+          <input type="checkbox" id="wizAutoFerie" checked>
+          <span>
+            <b>Calcul basé sur les heures réellement travaillées (hors jours fériés)</b>
+            <span style="display:block;font-size:12px;color:#888;margin-top:3px;">👉 Selon le Code du travail — Art. L3121-28 (+ Cass. Soc. 2012) : les heures supplémentaires se calculent sur les heures réellement travaillées, les fériés chômés étant assimilés au temps de travail effectif.</span>
+          </span>
+        </label>
+        <div style="padding:10px 14px;font-size:12px;color:#aaa;background:#f0f0f0;">
+          <b style="color:#555;">Si décoché :</b> La semaine est considérée comme complète même les jours fériés — selon la jurisprudence Cass. Soc. 2012 : certains accords d'entreprise peuvent intégrer les jours fériés chômés dans l'assiette de calcul des HS.
+        </div>
+      </div>
       <div class="wiz-nav">
         <button onclick="wizGoTo(3)" style="flex:0 0 auto;width:auto;padding:8px 16px;">← Retour</button>
         <button class="kitsune-btn" onclick="wizGoTo(5)">Suivant →</button>
@@ -1738,7 +1878,7 @@ function protectFunctions(){
     <div class="wiz-step" id="wizStep5">
       <div class="wiz-question">💶 Quel est ton taux horaire brut (€) ?</div>
       <p class="wiz-hint">Utilisé pour estimer le montant des heures supplémentaires lors de la clôture annuelle.</p>
-      <input type="number" id="wizHourlyRate" step="0.5" min="0" value="10" placeholder="Ex : 12.50">
+      <input type="number" inputmode="decimal" id="wizHourlyRate" step="0.5" min="0" value="10" placeholder="Ex : 12.50">
       <div class="wiz-summary" id="wizSummary" style="display:none;margin-top:16px;"><b>Récapitulatif</b><br><span id="wizSummaryContent"></span></div>
       <div class="wiz-nav">
         <button onclick="wizGoTo(4)" style="flex:0 0 auto;width:auto;padding:8px 16px;">← Retour</button>
@@ -1797,7 +1937,18 @@ function wizBuildManualGrid(){
     wrap.appendChild(lbl);wrap.appendChild(inp);grid.appendChild(wrap);
   }
 }
-function wizLastSunday(year,month){const last=new Date(year,month+1,0,12,0,0);const dow=last.getDay();if(dow!==0)last.setDate(last.getDate()-dow);return dateKeyLocal(last);}
+function wizLastSunday(year,month){
+  const rules=getCCNRules();
+  const ds=(rules.debutSemaine||1);
+  const dsJS=ds===7?0:ds;
+  const finJS=(dsJS+6)%7; // dernier jour de semaine CCN
+  const last=new Date(year,month+1,0,12,0,0); // dernier jour du mois
+  const dow=last.getDay();
+  // Reculer jusqu'au dernier "finJS" du mois
+  let diff=(dow-finJS+7)%7;
+  if(diff!==0)last.setDate(last.getDate()-diff);
+  return dateKeyLocal(last);
+}
 function wizShowSummary(){const sd=document.getElementById("wizStartDate").value;const ad=document.getElementById("wizAnnualDate").value;const rate=document.getElementById("wizHourlyRate").value||"—";const feries=document.getElementById("wizImportFeries").checked?"Oui":"Non";const autoF=document.getElementById("wizAutoFerie").checked?"Oui":"Non";const cm=wizClosureMode==="auto"?"Automatique (derniers jours de mois)":"Manuel (12 dates saisies)";document.getElementById("wizSummaryContent").innerHTML=`📅 Début d'exercice : <b>${sd?new Date(sd).toLocaleDateString():"Non définie"}</b><br>🏁 Clôture annuelle : <b>${ad?new Date(ad).toLocaleDateString():"Non définie"}</b><br>📆 Clôtures : <b>${cm}</b><br>⏱️ Base hebdomadaire : <b>35 h</b><br>🎌 Jours fériés importés : <b>${feries}</b><br>⚙️ Mode auto-férié : <b>${autoF}</b><br>💶 Taux horaire : <b>${rate} €/h</b>`;document.getElementById("wizSummary").style.display="block";document.getElementById("wizSummaryBtn").style.display="none";document.getElementById("wizFinishBtn").style.display="inline-block";}
 async function finishWiz(){
   let sd=document.getElementById("wizStartDate").value;if(!sd){toast("❌ Date de début manquante","error");return;}
@@ -1808,8 +1959,26 @@ async function finishWiz(){
   if(wizClosureMode==="auto"){closures=[];const _sd=new Date(sd+'T12:00:00');const _startDay=_sd.getDate();const _sm=_sd.getMonth(),_sy=_sd.getFullYear();// Si l'exercice ne commence pas le 1er du mois, on saute le mois de départ
 const _skipFirst=_startDay>1;let _i=_skipFirst?1:0,_count=0;while(_count<12&&_i<50){const _m=(_sm+_i)%12;const _y=_sy+Math.floor((_sm+_i)/12);closures.push(wizLastSunday(_y,_m));_count++;_i++;}}
   else{closures=[];for(let m=0;m<12;m++){const v=document.getElementById("wizManDate_"+m)?.value;if(v)closures.push(forceSunday(v));}closures=closures.filter(Boolean).sort();}
+  // La dernière clôture = date de fin d'exercice (annualDate)
+  const ra=document.getElementById("wizAnnualDate").value;
+  if(ra){
+    annualDate=forceSunday(ra);
+    localStorage.setItem(STORAGE.annualDate,annualDate);
+    // Remplacer ou ajouter la dernière clôture = clôture annuelle
+    if(closures.length>0){
+      closures[closures.length-1]=annualDate; // remplacer la dernière
+    } else {
+      closures.push(annualDate);
+    }
+    // Si la clôture annuelle est inférieure aux autres → trier
+    closures=closures.filter(Boolean).sort();
+    // S'assurer que annualDate est bien la dernière
+    if(closures[closures.length-1]!==annualDate){
+      closures=closures.filter(c=>c<annualDate);
+      closures.push(annualDate);
+    }
+  }
   localStorage.setItem(STORAGE.closures,JSON.stringify(closures));
-  const ra=document.getElementById("wizAnnualDate").value;if(ra){annualDate=forceSunday(ra);localStorage.setItem(STORAGE.annualDate,annualDate);}
   annualRate=Number(document.getElementById("wizHourlyRate").value)||10;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);
   AUTO_FERIE=document.getElementById("wizAutoFerie").checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
   if(document.getElementById("wizImportFeries").checked){try{const years=[by-1,by,by+1];for(const y of years){const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);const f=await res.json();Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});}localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));}catch(e){console.warn("Import jours fériés échoué:",e);}}
@@ -1822,7 +1991,7 @@ function wizReset(){wizClosureMode=null;wizCurrentStep=1;document.querySelectorA
 </script>
 <script>sessionStorage.setItem("appAlive","true");</script>
 
-<div id="toastContainer"></div>
+<div id="toastContainer" aria-live="polite" aria-atomic="true" role="status"></div>
 <div id="confirmModal"><div class="cm-box"><p class="cm-msg" id="cmMsg"></p><div class="cm-btns"><button class="secondary" id="cmCancel">Annuler</button><button id="cmOk">Confirmer</button></div></div></div>
 
 <!-- TOOLTIP BOTTOM-SHEET -->
@@ -1862,7 +2031,7 @@ const TIPS={
   seuil:{
     title:'⏱️ Seuil de déclenchement des HS',
     body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence selon le jour fixé par votre accord d\'entreprise ou votre CCN.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
-    ref:'Art. L3121-27 · Art. L3121-32 Code du travail'
+    ref:'Art. L3121-27 · Art. L3121-28 Code du travail'
   }
 };
 function showTip(key){
