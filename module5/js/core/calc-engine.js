@@ -1,7 +1,7 @@
 /**
  * CALC-ENGINE — Moteur de calcul heures complémentaires (temps partiel)
  * Modes : HEBDO / MENSUEL / ANNUEL
- * Jours fériés : neutralisation du seuil (Art. L3121-29) ou assiette normale
+ * Jours fériés : neutralisation du seuil (Art. L3133-3 + jurisprudence) ou assiette normale
  */
 (function(global) {
 'use strict';
@@ -58,10 +58,14 @@ function getFeriesYear(year) {
   return getFeriesLocal(year);
 }
 
-function countFeriesInWeek(mondayStr, feriesMap) {
-  // Compte uniquement les fériés tombant Lun-Ven (jours normalement ouvrés)
+function countFeriesInWeek(mondayStr, feriesMap, joursOuvresContrat) {
+  // Compte les fériés tombant sur les jours normalement travaillés.
+  // joursOuvresContrat : nombre de jours/semaine (défaut 5). On compte à partir
+  // du début de semaine (mondayStr représente le 1er jour de la semaine du salarié,
+  // pas forcément lundi — peut être samedi pour HCR, mardi, etc.)
   let count=0;
-  for(let d=0;d<5;d++){
+  const nbJours = Math.max(1, Math.min(7, Math.round(joursOuvresContrat||5)));
+  for(let d=0;d<nbJours;d++){
     const dt=new Date(mondayStr+'T12:00:00'); dt.setDate(dt.getDate()+d);
     const key=dk(dt);
     if(feriesMap&&feriesMap[key]) count++;
@@ -96,10 +100,12 @@ const CalcEngine = {
     let feriesCount = 0;
     let feriesNote = null;
     if(options.feriesMap && neutralise) {
-      // ✅ Mode Art. L3121-29 : on abaisse le seuil
+      // ✅ Art. L3133-3 + jurisprudence : le chômage d'un jour férié ne peut entraîner
+      // de perte, donc le seuil est abaissé proportionnellement aux fériés tombant
+      // sur des jours normalement travaillés.
       const mondayStr = options.mondayStr;
       if(mondayStr) {
-        feriesCount = countFeriesInWeek(mondayStr, options.feriesMap);
+        feriesCount = countFeriesInWeek(mondayStr, options.feriesMap, joursOuvres);
         if(feriesCount > 0) {
           const valJour = contractH / joursOuvres;
           contractAjuste = Math.max(0, contractH - feriesCount * valJour);
@@ -107,7 +113,7 @@ const CalcEngine = {
         }
       }
     }
-    // ⬜ Mode Cass. Soc. 2012 : seuil normal, fériés intégrés dans l'assiette
+    // ⬜ Mode alternatif (jurisprudence) : seuil normal, fériés intégrés dans l'assiette
 
     const maxAllowed  = contractAjuste * (1 + cap);
     const threshold1H = contractAjuste * threshold;
@@ -184,7 +190,7 @@ const CalcEngine = {
     const semainesRequalif = weeks.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
     const alerts = semainesRequalif.length > 0 ? [{
       level:'critique', code:'REQUALIFICATION',
-      msg:`${semainesRequalif.length} semaine(s) atteignent ou dépassent 35h. La limite de 35h est hebdomadaire même en mode mensuel (Art. L3123-9). Ces semaines sont illégales sur un contrat temps partiel.`
+      msg:`${semainesRequalif.length} semaine(s) atteignent ou dépassent 35h. La durée légale du travail ne peut jamais être atteinte sur un contrat temps partiel (Art. L3123-9). Conserve cet historique.`
     }] : [];
 
     let compH1 = 0, compH2 = 0;
@@ -352,8 +358,8 @@ const CalcEngine = {
       triggered, maxConsec, triggerStart, triggered15,
       msg: triggered
         ? (triggered15&&maxConsec<12)
-          ? `12 semaines sur une période de 15 ont dépassé ton contrat de +2h/sem. L'Art. L3123-13 s'applique — tu peux demander une révision de ton contrat à la hausse.`
-          : `Depuis ${maxConsec} semaines consécutives, tes heures dépassent le contrat de +2h/sem. L'Art. L3123-13 prévoit une révision du contrat — tu peux en faire la demande.`
+          ? `12 semaines sur une période de 15 ont dépassé ton contrat de +2h/sem. L'Art. L3123-13 s'applique — tu peux demander par écrit la modification de ton contrat à la hausse (préavis 7j, sauf opposition de ta part).`
+          : `Depuis ${maxConsec} semaines consécutives, tes heures dépassent le contrat de +2h/sem. L'Art. L3123-13 prévoit la modification du contrat — tu peux en faire la demande écrite, ou t'y opposer pour conserver ton horaire actuel.`
         : maxConsec>=8
           ? `${maxConsec} semaines consécutives au-dessus du contrat. Encore ${12-maxConsec} semaines avant que la règle des 12 semaines s'applique.`
           : null
@@ -370,7 +376,19 @@ const CalcEngine = {
   },
 
   estimateNet(grossComp) {
+    // Estimation heures complémentaires nettes après exonération TEPA/Avenir Pro (2019).
+    // Cotisations résiduelles estimées ~11.31% (CSG/CRDS + cotisations résiduelles après exo).
+    // ⚠️ Ce chiffre ne tient PAS compte de la mutuelle/prévoyance ni des cotisations CCN.
+    // Pour un net "en poche" réel, compter plutôt -18 à -22%.
     return Math.round(grossComp*(1-0.1131)*100)/100;
+  },
+
+  /**
+   * Estimation plus réaliste du net réellement perçu (approximation).
+   * Inclut CSG/CRDS + cotisations résiduelles + mutuelle/prévoyance moyenne.
+   */
+  estimateNetReel(grossComp) {
+    return Math.round(grossComp*(1-0.22)*100)/100;
   }
 };
 
