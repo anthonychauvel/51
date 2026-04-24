@@ -727,7 +727,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -748,7 +748,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -769,7 +769,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -790,7 +790,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -811,7 +811,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -832,7 +832,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -853,7 +853,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -874,7 +874,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -895,7 +895,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -916,7 +916,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 1,
 "question": "Comment gérer cette fatigue légère ?"
@@ -937,7 +937,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -958,7 +958,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -979,7 +979,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -1000,7 +1000,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -1021,7 +1021,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -1042,7 +1042,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-20 C. trav. — Durée max hebdomadaire 48h",
-"Art. L3121-23 — Moyenne sur 12 semaines (44h)"
+"Art. L3121-22 — Moyenne sur 12 semaines (44h)"
 ],
 "urgence": 2,
 "question": "Comment gérer cette fatigue légère ?"
@@ -12580,8 +12580,8 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-9 C. trav. — Heures complémentaires",
-"Art. L3123-17 — Majoration 10% à 25%"
+"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -12601,8 +12601,8 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-9 C. trav. — Heures complémentaires",
-"Art. L3123-17 — Majoration 10% à 25%"
+"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -12622,8 +12622,8 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-9 C. trav. — Heures complémentaires",
-"Art. L3123-17 — Majoration 10% à 25%"
+"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -12643,8 +12643,8 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-9 C. trav. — Heures complémentaires",
-"Art. L3123-17 — Majoration 10% à 25%"
+"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -12664,8 +12664,8 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-9 C. trav. — Heures complémentaires",
-"Art. L3123-17 — Majoration 10% à 25%"
+"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
