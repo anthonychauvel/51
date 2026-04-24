@@ -24,9 +24,9 @@ const ARTICLES_LOI = [
     ]
   },
   {
-    art: 'Art. L3121-10',
+    art: 'Art. L3121-27',
     titre: 'Durée légale hebdomadaire — 35h',
-    def: 'La durée légale du travail est fixée à 35 heures par semaine civile. Toute heure travaillée au-delà est une heure supplémentaire.',
+    def: 'La durée légale du travail effectif des salariés à temps complet est fixée à 35 heures par semaine civile. Toute heure travaillée au-delà est une heure supplémentaire.',
     ex: 'Si tu travailles 38h dans la semaine, tu as 3h supplémentaires.',
     mots: ['35h', 'durée légale', 'semaine', 'temps plein'],
     liens: [
@@ -68,13 +68,24 @@ const ARTICLES_LOI = [
     ]
   },
   {
-    art: 'Art. L3121-30',
-    titre: 'Heures supplémentaires — définition et majorations',
-    def: 'Heures accomplies au-delà de la durée légale de 35h. Elles ouvrent droit à une majoration de salaire (25% pour les 8 premières, 50% au-delà) ou à un repos compensateur.',
-    ex: 'De la 36e à la 43e heure : +25%. De la 44e heure et au-delà : +50%.',
-    mots: ['heures sup', 'majoration', '25%', '50%', 'compensation', 'HS'],
+    art: 'Art. L3121-28',
+    titre: 'Heures supplémentaires — définition',
+    def: 'Toute heure accomplie au-delà de la durée légale hebdomadaire (35h) ou de la durée considérée comme équivalente est une heure supplémentaire qui ouvre droit à une majoration salariale ou à un repos compensateur équivalent.',
+    ex: 'La 36e heure de la semaine est ta 1ère heure supplémentaire.',
+    mots: ['heures sup', 'HS', 'définition', 'au-delà 35h'],
     liens: [
-      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006072050/LEGISCTA000006178009' },
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020376' },
+      { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
+    ]
+  },
+  {
+    art: 'Art. L3121-36',
+    titre: 'Heures supplémentaires — majorations 25% / 50%',
+    def: 'À défaut d\'accord, la majoration des heures supplémentaires est de 25% pour les 8 premières heures (36e à 43e) et 50% au-delà (à partir de la 44e heure). Un accord collectif peut prévoir un taux différent, sans descendre sous 10%.',
+    ex: 'De la 36e à la 43e heure : +25%. De la 44e heure et au-delà : +50%.',
+    mots: ['majoration', '25%', '50%', 'HS', 'taux'],
+    liens: [
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020384' },
       { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
     ]
   },
@@ -90,13 +101,13 @@ const ARTICLES_LOI = [
     ]
   },
   {
-    art: 'Art. L3121-38',
+    art: 'Art. L3121-37',
     titre: 'Repos compensateur de remplacement (RCR)',
-    def: 'Alternative à la majoration financière des heures supplémentaires. L\'employeur peut, avec accord collectif, remplacer le paiement majoré par un repos de durée équivalente.',
+    def: 'Dans les entreprises dépourvues de délégué syndical, l\'employeur peut remplacer, en tout ou partie, le paiement des heures supplémentaires (et des majorations) par un repos compensateur équivalent, à condition que le CSE (s\'il existe) ne s\'y oppose pas.',
     ex: '1h sup à 25% = 1h15 de repos compensateur.',
     mots: ['RCR', 'récup', 'repos compensateur', 'remplacement', 'récupération'],
     liens: [
-      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006072050/LEGISCTA000006178009' },
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020386' },
       { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
     ]
   },
@@ -145,35 +156,35 @@ const ARTICLES_LOI = [
     ]
   },
   {
-    art: 'Art. L3121-27',
+    art: 'Art. L3121-28 (alinéa 2)',
     titre: 'Heures supplémentaires — Paiement ou repos compensateur',
-    def: 'Les heures supplémentaires donnent lieu soit à un paiement majoré, soit à un repos compensateur équivalent majoré. Le choix appartient à l\'employeur, sauf disposition conventionnelle contraire.',
-    ex: '10h supplémentaires → soit 12.5h en paiement (majoration 25%), soit 12.5h de repos compensateur.',
+    def: 'Les heures supplémentaires ouvrent droit à une majoration salariale ou, le cas échéant, à un repos compensateur équivalent. L\'arbitrage entre les deux s\'opère selon l\'accord collectif applicable ou les règles supplétives (L3121-37).',
+    ex: '10h supplémentaires → soit paiement majoré (25%), soit 12.5h de repos compensateur équivalent.',
     mots: ['paiement', 'repos compensateur', 'équivalent', 'choix employeur'],
     liens: [
-      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006072050/LEGISCTA000006178009' },
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020376' },
       { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
     ]
   },
   {
-    art: 'Art. L3121-34',
+    art: 'Art. L3121-30',
     titre: 'Contingent annuel d\'heures supplémentaires',
-    def: 'Volume d\'heures supplémentaires qu\'un salarié peut effectuer au-delà de la durée légale sans autorisation de l\'inspecteur du travail. Au-delà du contingent, une contrepartie obligatoire en repos (COR) est due.',
-    ex: 'Contingent 220h : au-delà, chaque heure donne droit à 50% de repos (1h travaillée = 0.5h repos).',
-    mots: ['contingent', 'autorisation', 'COR', 'contrepartie obligatoire'],
+    def: 'Volume d\'heures supplémentaires qu\'un salarié peut effectuer au-delà de la durée légale. Défini par accord collectif (L3121-33) ou à défaut par décret à 220h (D3121-24). Au-delà du contingent, une contrepartie obligatoire en repos (COR) est due (L3121-38).',
+    ex: 'Contingent 220h : au-delà, chaque heure donne droit à 50% de repos (≤20 sal.) ou 100% (>20 sal.).',
+    mots: ['contingent', 'COR', 'contrepartie obligatoire', '220h'],
     liens: [
-      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006072050/LEGISCTA000006178009' },
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020378' },
       { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
     ]
   },
   {
-    art: 'Art. L3121-41',
+    art: 'Art. L3121-9',
     titre: 'Astreinte',
     def: 'Période pendant laquelle le salarié, sans être sur son lieu de travail et sans être à la disposition permanente de l\'employeur, doit être en mesure d\'intervenir pour accomplir un travail. Seul le temps d\'intervention est du temps de travail effectif.',
-    ex: 'Astreinte le week-end : si intervention de 2h, seules ces 2h comptent comme temps de travail.',
+    ex: 'Astreinte le week-end : si intervention de 2h, seules ces 2h comptent comme temps de travail effectif.',
     mots: ['astreinte', 'disponibilité', 'intervention', 'temps effectif'],
     liens: [
-      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/section_lc/LEGITEXT000006072050/LEGISCTA000006178009' },
+      { label: 'Code du travail - Légifrance', url: 'https://www.legifrance.gouv.fr/codes/article_lc/LEGIARTI000033020331' },
       { label: 'Ministère du Travail', url: 'https://travail-emploi.gouv.fr/droit-du-travail/temps-de-travail/' }
     ]
   },
@@ -274,9 +285,9 @@ const ARTICLES_LOI = [
     mots: ["déplacement", "trajet", "domicile", "mission", "contrepartie", "professionnel"]
   },
   {
-    art: "Art. L3121-11", titre: "Heures supplémentaires — refus",
-    def: "Dans la limite du contingent annuel, l'accomplissement d'heures supplémentaires est à l'initiative de l'employeur. Le salarié ne peut en principe pas les refuser, sauf en cas de délai de prévenance insuffisant ou de disposition conventionnelle contraire.",
-    ex: "Un salarié peut légitimement refuser des HS imposées 5 minutes avant la fin du poste si aucun accord collectif ne l'impose.",
+    art: "Art. L3121-28 + Jurisprudence Cass. Soc.", titre: "Heures supplémentaires — refus",
+    def: "Dans la limite du contingent annuel, l'accomplissement d'heures supplémentaires est à l'initiative de l'employeur. Le salarié ne peut en principe pas les refuser, sauf en cas de délai de prévenance insuffisant, d'atteinte disproportionnée à sa vie personnelle, ou de disposition conventionnelle contraire (Cass. Soc. jurisprudence constante).",
+    ex: "Un salarié peut légitimement refuser des HS imposées 5 minutes avant la fin du poste si aucun accord collectif ne l'impose, ou si cela porte atteinte à sa vie personnelle.",
     mots: ["heures supplémentaires", "refus", "obligation", "initiative employeur", "contingent"]
   },
   {
