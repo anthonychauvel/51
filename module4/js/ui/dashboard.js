@@ -126,7 +126,7 @@ class Dashboard {
       source: 'INRS · J.Occup.Health 2021 (Taiwan, 6 mois) · Thompson 2022',
       facteurs_heures: [
         { label:'Heures supplémentaires/sem', key:'_avgExtra7', fmt: v => v>0 ? '+'+v.toFixed(1)+'h/j × 0.09' : '0h supp.' },
-        { label:'Jours consécutifs',          key:'_consecOT',  fmt: v => v > 10 ? v+'j ouvrés de surcharge ⚠️' : v > 5 ? v+'j ouvrés de surcharge' : v+'j consécutifs cette semaine' },
+        { label:'Jours consécutifs',          key:'_consecOT',  fmt: v => v > 10 ? v+'j ouvrés de surcharge ⚠️' : v > 5 ? v+'j ouvrés de surcharge' : v+'j ouvrés avec HS' },
         { label:'Semaines de surcharge', key:'_cumulWeeks', fmt: v => {
             const vR = Math.round(v * 10) / 10;
             return vR > 0 ? vR+' sem. cumulées (×'+(vR>=24?'1.55':vR>=16?'1.40':vR>=8?'1.25':vR>=4?'1.12':'1.00')+')' : 'Pas de cumul';
@@ -413,6 +413,9 @@ class Dashboard {
               })()}
             </div>
           </div>
+
+          <!-- Note explicative (optionnelle) -->
+          ${meta.note ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);padding:7px 8px;margin-bottom:6px;background:rgba(255,255,255,0.04);border-left:2px solid rgba(0,200,255,0.3);">ℹ️ ${meta.note}</div>` : ''}
 
           <!-- Source -->
           <div style="font-size:10px;color:rgba(255,255,255,0.35);padding:6px 0;font-style:italic;">
