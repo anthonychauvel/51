@@ -3,10 +3,12 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="dark light">
   <title>Ma prédiction santé</title>
   <meta name="theme-color" content="#00060f">
   <link rel="apple-touch-icon" href="/hs/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Digital Twin">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
@@ -118,7 +120,7 @@
       <nav class="header-nav">
         <button class="nav-btn active" data-view="dashboard">MON ÉTAT</button>
         <button class="nav-btn" data-view="predictions">PRÉVISIONS</button>
-        <button class="nav-btn" data-view="schedule">HORAIRES</button>
+        <!-- Onglet HORAIRES masqué — géré via Mon Profil + Check-in -->
         <button class="nav-btn" data-view="whatif">SIMULATION</button>
         <button class="nav-btn" data-view="heatmap">CALENDRIER</button>
       </nav>
@@ -151,7 +153,7 @@
         <div class="panel panel--actions" id="panel-actions">
           <div class="panel-label">ACTIONS</div>
           <div class="panel-corner-br"></div>
-          <div style="display:flex;flex-direction:column;gap:5px;">
+          <div style="display:flex;flex-direction:column;gap:5px;align-items:stretch;width:100%;">
 
             <!-- CHECK-IN en premier, plus grand -->
             <button class="action-block-btn" id="btn-checkin" style="
@@ -178,54 +180,173 @@
               </div>
             </button>
 
-            <!-- Jours de repos -->
+            <!-- MON PROFIL -->
+            <button class="action-block-btn" id="btn-profil"
+              onclick="window._openProfilPopup&&window._openProfilPopup()"
+              style="background:rgba(255,179,0,0.08);border:1px solid rgba(255,179,0,0.25);">
+              <span class="abtn-icon">👤</span>
+              <div class="abtn-text">
+                <div class="abtn-label" style="color:#FFB300;">MON PROFIL</div>
+                <div class="abtn-sub">Type de travail & rythme</div>
+              </div>
+            </button>
+
+            <!-- Jours de repos — lecture seule + wizard -->
             <div style="padding:8px 9px;background:rgba(0,10,25,.8);
               border:1px solid rgba(255,255,255,0.1);text-align:center;">
               <div style="font-family:var(--font-mono);font-size:9px;color:rgba(255,255,255,0.5);
                 letter-spacing:.08em;margin-bottom:6px;">⏰ MES JOURS DE REPOS</div>
-              <div style="display:flex;flex-wrap:wrap;gap:4px 8px;justify-content:center;">
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-0" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Dim</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-1" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Lun</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-2" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Mar</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-3" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Mer</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-4" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Jeu</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-5" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Ven</span>
-                </label>
-                <label style="display:flex;align-items:center;gap:5px;cursor:pointer;">
-                  <input type="checkbox" id="dte-rest-6" onchange="window._updateRestDays()"
-                    style="width:14px;height:14px;accent-color:var(--sync);">
-                  <span style="font-size:11px;color:#fff;">Sam</span>
-                </label>
+              <!-- Affichage lecture seule (cases non cliquables) -->
+              <div id="dte-rest-display" style="display:flex;flex-wrap:wrap;gap:4px 8px;justify-content:center;margin-bottom:8px;">
+                <!-- Rempli dynamiquement par JS -->
               </div>
+              <button onclick="window._openRestWizard && window._openRestWizard()"
+                style="font-size:10px;font-family:var(--font-mono);color:var(--animus);
+                background:rgba(0,200,255,0.08);border:1px solid rgba(0,200,255,0.3);
+                padding:4px 10px;border-radius:4px;cursor:pointer;letter-spacing:.06em;">
+                ✏️ MODIFIER
+              </button>
+            </div>
+
+            <!-- Wizard jours de repos -->
+            <div id="rest-wizard-overlay" style="display:none;position:fixed;inset:0;
+              background:rgba(0,0,0,0.85);z-index:9999;align-items:center;justify-content:center;">
+              <div style="background:#070f1e;border:1px solid rgba(0,200,255,0.3);
+                border-radius:8px;width:90%;max-width:420px;max-height:90vh;overflow-y:auto;padding:20px;">
+
+                <!-- Écran 1 : Avertissement -->
+                <div id="rwiz-screen-1">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--animus);
+                    letter-spacing:.1em;margin-bottom:12px;">⏰ MODIFIER LES JOURS DE REPOS</div>
+                  <div style="font-size:13px;color:#fff;font-weight:700;margin-bottom:8px;">⚠️ Action importante</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.7);line-height:1.6;margin-bottom:12px;">
+                    Modifier vos jours de travail <strong>ne recalculera pas votre historique passé</strong>.<br>
+                    Votre historique restera basé sur votre ancienne configuration.<br>
+                    La nouvelle configuration s'appliquera à partir de la date que vous choisirez.
+                  </div>
+                  <div style="background:rgba(0,200,255,0.06);border-left:3px solid var(--animus);
+                    padding:8px 10px;font-size:10px;color:rgba(255,255,255,0.6);margin-bottom:16px;">
+                    💡 À utiliser uniquement si votre contrat de travail a changé.
+                  </div>
+                  <div style="display:flex;gap:8px;justify-content:flex-end;">
+                    <button onclick="window._closeRestWizard()"
+                      style="font-size:11px;padding:6px 14px;background:rgba(255,255,255,0.05);
+                      border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;cursor:pointer;">
+                      Annuler
+                    </button>
+                    <button onclick="window._rwizGoTo(2)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(0,200,255,0.15);
+                      border:1px solid var(--animus);color:var(--animus);border-radius:4px;cursor:pointer;">
+                      Continuer →
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Écran 2 : Sélection des jours -->
+                <div id="rwiz-screen-2" style="display:none;">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--animus);
+                    letter-spacing:.1em;margin-bottom:12px;">ÉTAPE 1 — JOURS DE REPOS</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:10px;">
+                    Sélectionnez vos jours de repos (non travaillés) :
+                  </div>
+                  <div id="rwiz-days-grid" style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px;">
+                    <!-- Rempli dynamiquement -->
+                  </div>
+                  <!-- Alerte légale -->
+                  <div id="rwiz-legal-warn" style="display:none;background:rgba(255,100,0,0.1);
+                    border-left:3px solid #ff6400;padding:8px 10px;font-size:10px;
+                    color:rgba(255,150,80,0.9);margin-bottom:10px;line-height:1.5;">
+                  </div>
+                  <div id="rwiz-days-summary" style="font-size:11px;color:var(--sync);
+                    margin-bottom:14px;font-weight:600;"></div>
+                  <div style="display:flex;gap:8px;justify-content:space-between;">
+                    <button onclick="window._rwizGoTo(1)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(255,255,255,0.05);
+                      border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;cursor:pointer;">
+                      ← Retour
+                    </button>
+                    <button id="rwiz-btn-step2" onclick="window._rwizGoTo(3)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(0,200,255,0.15);
+                      border:1px solid var(--animus);color:var(--animus);border-radius:4px;cursor:pointer;">
+                      Suivant →
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Écran 3 : Date d'application -->
+                <div id="rwiz-screen-3" style="display:none;">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--animus);
+                    letter-spacing:.1em;margin-bottom:12px;">ÉTAPE 2 — DATE D'APPLICATION</div>
+                  <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-bottom:10px;">
+                    À partir de quelle date appliquer la nouvelle configuration ?
+                  </div>
+                  <input type="date" id="rwiz-date-input"
+                    style="width:100%;padding:8px;background:rgba(0,10,25,0.8);
+                    border:1px solid rgba(0,200,255,0.3);color:#fff;border-radius:4px;
+                    font-size:13px;margin-bottom:8px;box-sizing:border-box;">
+                  <div style="font-size:10px;color:rgba(255,255,255,0.4);margin-bottom:14px;">
+                    Les semaines avant cette date conservent votre ancienne configuration.
+                  </div>
+                  <div style="display:flex;gap:8px;justify-content:space-between;">
+                    <button onclick="window._rwizGoTo(2)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(255,255,255,0.05);
+                      border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;cursor:pointer;">
+                      ← Retour
+                    </button>
+                    <button onclick="window._rwizGoTo(4)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(0,200,255,0.15);
+                      border:1px solid var(--animus);color:var(--animus);border-radius:4px;cursor:pointer;">
+                      Suivant →
+                    </button>
+                  </div>
+                </div>
+
+                <!-- Écran 4 : Récapitulatif + Confirmation -->
+                <div id="rwiz-screen-4" style="display:none;">
+                  <div style="font-family:var(--font-mono);font-size:11px;color:var(--animus);
+                    letter-spacing:.1em;margin-bottom:12px;">RÉCAPITULATIF</div>
+                  <div id="rwiz-summary" style="font-size:11px;line-height:1.8;
+                    color:rgba(255,255,255,0.8);margin-bottom:16px;
+                    background:rgba(0,200,255,0.04);border:1px solid rgba(0,200,255,0.15);
+                    padding:10px;border-radius:4px;">
+                  </div>
+                  <div style="display:flex;gap:8px;justify-content:space-between;">
+                    <button onclick="window._rwizGoTo(3)"
+                      style="font-size:11px;padding:6px 14px;background:rgba(255,255,255,0.05);
+                      border:1px solid rgba(255,255,255,0.2);color:#fff;border-radius:4px;cursor:pointer;">
+                      ← Retour
+                    </button>
+                    <button onclick="window._rwizConfirm()"
+                      style="font-size:11px;padding:6px 16px;background:rgba(0,255,150,0.15);
+                      border:1px solid var(--sync);color:var(--sync);border-radius:4px;
+                      cursor:pointer;font-weight:700;">
+                      ✓ Confirmer
+                    </button>
+                  </div>
+                </div>
+
+              </div>
+            </div>
+
+            <!-- Checkboxes cachées pour compatibilité -->
+            <div style="display:none;">
+              <input type="checkbox" id="dte-rest-0">
+              <input type="checkbox" id="dte-rest-1">
+              <input type="checkbox" id="dte-rest-2">
+              <input type="checkbox" id="dte-rest-3">
+              <input type="checkbox" id="dte-rest-4">
+              <input type="checkbox" id="dte-rest-5">
+              <input type="checkbox" id="dte-rest-6">
             </div>
 
             <!-- Vacances & Fériés -->
             <button class="action-block-btn" id="btn-vacances" onclick="window._openVacances && window._openVacances()"
               style="background:rgba(255,179,0,0.07);border-color:rgba(255,179,0,0.25);">
-              &#x1F3D6;&#xFE0F; VACANCES &amp; F&Eacute;RI&Eacute;S
+              <span class="abtn-icon">🏖️</span>
+              <div class="abtn-text">
+                <div class="abtn-label">VACANCES &amp; FÉRIÉS</div>
+                <div class="abtn-sub" id="vacances-sub">Congés &amp; jours fériés</div>
+              </div>
             </button>
 
             <!-- RYTHME DE VIE -->
@@ -440,6 +561,170 @@ document.addEventListener('DOMContentLoaded', function(){
     showApp();
   }
 });
+</script>
+
+
+<!-- ── MODAL PROFIL TRAVAIL ─────────────────────────────────── -->
+<div id="profil-modal" class="modal-overlay hidden" style="z-index:9000;">
+  <div class="modal-panel" style="max-width:420px;">
+    <div class="modal-header">
+      <span style="font-family:var(--font-h);font-size:14px;font-weight:700;letter-spacing:.08em;">👤 MON PROFIL DE TRAVAIL</span>
+      <button class="modal-close" onclick="document.getElementById('profil-modal').classList.add('hidden')">✕</button>
+    </div>
+    <div id="profil-content" style="padding:var(--gap);"></div>
+  </div>
+</div>
+
+<script>
+// ── Popup profil travail ──────────────────────────────────────────
+window._openProfilPopup = function() {
+  const modal = document.getElementById('profil-modal');
+  if (!modal) return;
+  modal.classList.remove('hidden');
+  // Charger les données sauvegardées pour pré-remplir le popup
+  let saved = {};
+  try { saved = JSON.parse(localStorage.getItem('M4_USER_PROFILE') || '{}'); } catch(_) {}
+  _renderProfilStep(0, saved);
+};
+
+const PROFIL_QUESTIONS = [
+  {
+    id: 'workType',
+    text: 'Quel est votre type de travail ?',
+    emoji: '🏢',
+    opts: [
+      {v:'standard',         e:'💻', l:'Bureau / Télétravail', key:'standard'},
+      {v:'travail_physique', e:'💪', l:'Travail physique / Terrain', key:'travail_physique'},
+      {v:'poste_3x8',        e:'🔄', l:'Travail posté (3×8 / nuit)', key:'poste_3x8'},
+      {v:'poste_2x8',        e:'↔️', l:'Travail posté (2×8)', key:'poste_2x8'},
+      {v:'astreinte',        e:'📱', l:'Astreinte / On-call', key:'astreinte'},
+      {v:'cadre_dirigeant',  e:'📊', l:'Cadre / Dirigeant', key:'cadre_dirigeant'},
+    ]
+  },
+  {
+    id: 'commute',
+    text: 'Temps de trajet aller-retour ?',
+    emoji: '🚗',
+    opts: [
+      {v:0,   e:'🏠', l:'Aucun (télétravail)'},
+      {v:30,  e:'🚶', l:'Moins de 30 min'},
+      {v:60,  e:'🚌', l:'30 min à 1h'},
+      {v:120, e:'🚆', l:'Plus de 1h'},
+    ]
+  },
+  {
+    id: 'telework',
+    text: 'Fréquence du télétravail ?',
+    emoji: '🏡',
+    opts: [
+      {v:0,   e:'🏢', l:'Jamais — 100% présentiel'},
+      {v:1,   e:'🔀', l:'Parfois (1-2j/sem)'},
+      {v:3,   e:'🏡', l:'Souvent (3-4j/sem)'},
+      {v:5,   e:'💻', l:'Toujours — 100% remote'},
+    ]
+  },
+  {
+    id: 'noise',
+    text: 'Niveau de contraintes physiques / bruit ?',
+    emoji: '🔊',
+    opts: [
+      {v:0, e:'🔇', l:'Aucune contrainte'},
+      {v:1, e:'🔉', l:'Modérée (bruit, posture)'},
+      {v:2, e:'🔊', l:'Forte (vibrations, chaleur, bruit)'},
+    ]
+  },
+  {
+    id: 'seniority',
+    text: 'Depuis combien de temps dans ce rythme ?',
+    emoji: '📅',
+    opts: [
+      {v:0, e:'🌱', l:'Moins de 1 an'},
+      {v:1, e:'📈', l:'1 à 3 ans'},
+      {v:3, e:'⚙️', l:'Plus de 3 ans'},
+    ]
+  },
+];
+
+let _profilAnswers = {};
+
+function _renderProfilStep(step, answers) {
+  _profilAnswers = answers;
+  const content = document.getElementById('profil-content');
+  if (!content) return;
+
+  // Charger les réponses existantes
+  try {
+    const saved = JSON.parse(localStorage.getItem('M4_USER_PROFILE') || '{}');
+    if (!Object.keys(_profilAnswers).length) _profilAnswers = {...saved};
+  } catch(_) {}
+
+  if (step >= PROFIL_QUESTIONS.length) {
+    // Sauvegarder + fermer
+    try {
+      // Tout dans DTE_SETTINGS — clé lue par dte-engine.js
+      const dte = JSON.parse(localStorage.getItem('DTE_SETTINGS') || '{}');
+      if (_profilAnswers.workType) dte.posteType = _profilAnswers.workType;
+      if (_profilAnswers.commute !== undefined) dte.commuteH = _profilAnswers.commute / 60;
+      // Télétravail → pas d'impact direct moteur mais stocké pour futur usage
+      dte._telework  = _profilAnswers.telework;
+      dte._noise     = _profilAnswers.noise;
+      dte._seniority = _profilAnswers.seniority;
+      localStorage.setItem('DTE_SETTINGS', JSON.stringify(dte));
+      // Conserver aussi un profil lisible
+      localStorage.setItem('M4_USER_PROFILE', JSON.stringify(_profilAnswers));
+    } catch(_) {}
+
+    content.innerHTML = `
+      <div style="text-align:center;padding:var(--gap-xl);">
+        <div style="font-size:48px;">✅</div>
+        <div style="font-family:var(--font-h);font-size:18px;font-weight:700;margin:var(--gap) 0;">Profil enregistré !</div>
+        <div style="color:var(--text-dim);font-size:13px;">Vos scores biométriques sont maintenant calibrés selon votre profil de travail.</div>
+        <button class="btn btn--cyan" style="margin-top:var(--gap-l);"
+          onclick="document.getElementById('profil-modal').classList.add('hidden');
+                   if(window._fullSync) window._fullSync();">
+          Fermer
+        </button>
+      </div>`;
+    return;
+  }
+
+  const q   = PROFIL_QUESTIONS[step];
+  const pct = Math.round((step / PROFIL_QUESTIONS.length) * 100);
+
+  content.innerHTML = `
+    <div style="padding:0 4px;">
+      <div style="display:flex;align-items:center;margin-bottom:14px;gap:8px;">
+        <span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:var(--font-mono);">${step+1} / ${PROFIL_QUESTIONS.length}</span>
+        <div style="flex:1;height:3px;background:rgba(255,255,255,0.1);">
+          <div style="height:100%;width:${pct}%;background:#FFB300;transition:width .3s;"></div>
+        </div>
+      </div>
+      <div style="text-align:center;font-size:32px;margin-bottom:8px;">${q.emoji}</div>
+      <div style="font-size:14px;font-weight:600;color:#fff;text-align:center;margin-bottom:16px;line-height:1.4;">${q.text}</div>
+      <div style="display:flex;flex-direction:column;gap:8px;">
+        ${q.opts.map(o => `
+          <button data-val="${o.v}" style="display:flex;align-items:center;gap:12px;padding:11px 14px;
+            background:rgba(0,10,25,.85);
+            border:1px solid ${_profilAnswers[q.id]===o.v?'rgba(255,179,0,0.6)':'rgba(255,255,255,0.12)'};
+            ${_profilAnswers[q.id]===o.v?'background:rgba(255,179,0,0.08);':''}
+            cursor:pointer;transition:all .15s;text-align:left;width:100%;">
+            <span style="font-size:20px;flex-shrink:0;">${o.e}</span>
+            <span style="font-size:13px;color:#fff;">${o.l}</span>
+          </button>`).join('')}
+      </div>
+      ${step > 0 ? `<button onclick="_renderProfilStep(${step-1}, _profilAnswers)"
+        style="margin-top:12px;background:none;border:none;color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;">
+        ← Retour</button>` : ''}
+    </div>`;
+
+  content.querySelectorAll('button[data-val]').forEach(el => {
+    el.addEventListener('click', () => {
+      const val = el.dataset.val;
+      _profilAnswers[q.id] = isNaN(val) ? val : Number(val);
+      setTimeout(() => _renderProfilStep(step + 1, _profilAnswers), 200);
+    });
+  });
+}
 </script>
 
 </body>
