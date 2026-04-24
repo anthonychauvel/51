@@ -1,35 +1,38 @@
 /**
- * CCN_PARTIEL v2.0 — 422 conventions collectives
+ * CCN_PARTIEL v2.1 — 422 conventions collectives (audit avril 2026)
  * Règles heures complémentaires (temps partiel) — vérifiées Légifrance 2026
  *
  * Méthodologie :
  * - cap=0.33 : accord de branche étendu confirmé (Art. L3123-28)
  * - cap=0.10 : droit commun (pas d'accord étendu ou secteur à temps plein dominant)
- * - Sources : Légifrance, Tissot, Payfit, code.travail.gouv.fr, convention.fr
- * - Audit : avril 2026
+ * - notice=7 : délai de prévenance défaut (L3123-31) ; 3 si CCN prévoit un accord (L3123-24)
+ * - avenantPossible : true si la CCN prévoit un accord de branche étendu L3123-22
+ * - Sources : Légifrance, code.travail.gouv.fr, convention.fr
+ * - v2.1 : IDCC 1979 doublons aliasés (19791/19792/19793), IDCC inventés corrigés,
+ *          SYNTEC rate1 ramené à 0.10 (minimum légal)
  */
 (function(global) {
 'use strict';
 
 // ── RÈGLES HC PAR GROUPE ─────────────────────────────────────────────
 const REGLES_HC = {
-  DC:        { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Droit commun — Art. L3123-28 sans accord de branche' },
-  IAA180:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'IAA/BTP/Imprimerie — pas d\'accord branche 1/3 temps partiel' },
-  HCR:       { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'HCR — avenant n°2 du 05/02/2007 étendu, plafond 1/3 (Légifrance)' },
-  BOULAN329: { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Boulangerie artisanale — accord de branche étendu, plafond 1/3' },
-  CHIM130:   { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Chimie — plafond 10% (temps partiel rare)' },
-  PETRO:     { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Pétrole — plafond 10%' },
-  PHARMA:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Industrie pharmaceutique — plafond 10%' },
-  PHARMO150: { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Pharmacie officine — plafond 10% (Art. 13 CCN)' },
-  ASSUR70:   { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Assurances — plafond 10% (majorité forfait jours)' },
-  COIF200:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Coiffure — accord de branche étendu, plafond 1/3' },
-  SECU329:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Sécurité privée — accord de branche étendu, plafond 1/3' },
-  PROP190:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Propreté — Art. 7 CCN 3186, accord étendu, plafond 1/3' },
-  SYNTEC130: { cap:0.10, rate1:0.25, rate2:0.25, threshold:0.10, notice:3, note:'Syntec ETAM — plafond 10%, majoration 25% dès 1ère heure' },
-  HOSPI130:  { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Hospitalisation privée FEHAP — accord branche étendu, plafond 1/3' },
-  TRANSP:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Transport routier — plafond 10% pour les temps partiels' },
-  ANIM70:    { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Animation ÉCLAT — avenant n°201 du 20/09/2023, plafond 1/3' },
-  CSS100:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Centres sociaux — plafond 10%' },
+  DC:        { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Droit commun — Art. L3123-28/L3123-29 sans accord de branche' },
+  IAA180:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'IAA/BTP/Imprimerie — pas d\'accord branche 1/3 temps partiel' },
+  HCR:       { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'HCR — avenant n°2 du 05/02/2007 étendu, plafond 1/3, prévenance 3j par accord (Légifrance)' },
+  BOULAN329: { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Boulangerie artisanale — accord de branche étendu, plafond 1/3' },
+  CHIM130:   { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Chimie — plafond 10% (temps partiel rare)' },
+  PETRO:     { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Pétrole — plafond 10%' },
+  PHARMA:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Industrie pharmaceutique — plafond 10%' },
+  PHARMO150: { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Pharmacie officine — plafond 10% (Art. 13 CCN)' },
+  ASSUR70:   { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Assurances — plafond 10% (majorité forfait jours)' },
+  COIF200:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Coiffure — accord de branche étendu, plafond 1/3' },
+  SECU329:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, note:'Sécurité privée — accord branche étendu, plafond 1/3, prévenance 3j par accord' },
+  PROP190:   { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Propreté — Art. 7 CCN 3186, accord étendu, plafond 1/3' },
+  SYNTEC130: { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Syntec — plafond légal 10%, majoration 10% puis 25% (Art. L3123-29)' },
+  HOSPI130:  { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Hospitalisation privée FEHAP — accord branche étendu, plafond 1/3' },
+  TRANSP:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Transport routier — plafond 10% pour les temps partiels' },
+  ANIM70:    { cap:0.33, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Animation ÉCLAT — avenant n°201 du 20/09/2023, plafond 1/3' },
+  CSS100:    { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, note:'Centres sociaux — plafond 10%' },
 };
 
 // ── 422 CCN FRANCE ───────────────────────────────────────────────────
@@ -109,7 +112,7 @@ const CCN_PARTIEL_ALIASES = [
   {i:9711,n:"Exploitations agricoles Sarthe",s:"Agriculture",g:"DC",cap:0.10,fj:false},
   {i:9721,n:"Exploitations agricoles Savoie",s:"Agriculture",g:"DC",cap:0.10,fj:false},
   {i:9731,n:"Exploitations agricoles Haute-Savoie",s:"Agriculture",g:"DC",cap:0.10,fj:false},
-  {i:9741,n:"Exploitations agricoles Paris Seine Seine-et-Marne",s:"Agriculture",g:"DC",cap:0.10,fj:false},
+  {i:9741,n:"Exploitations agricoles Seine-et-Marne",s:"Agriculture",g:"DC",cap:0.10,fj:false},
   {i:9751,n:"Exploitations agricoles Seine-Maritime",s:"Agriculture",g:"DC",cap:0.10,fj:false},
   {i:9761,n:"Exploitations agricoles Deux-Sèvres",s:"Agriculture",g:"DC",cap:0.10,fj:false},
   {i:9771,n:"Exploitations agricoles Somme",s:"Agriculture",g:"DC",cap:0.10,fj:false},
@@ -302,7 +305,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── COMMERCE DE GROS ALIM. ──
   {i:573,n:"Commerce de gros alimentaire",s:"Commerce de gros alim.",g:"IAA180",cap:0.33,fj:true},
   // ── COMMERCE DE GROS NON ALIM. ──
-  {i:5730,n:"Commerce de gros non alimentaire",s:"Commerce de gros non alim.",g:"DC",cap:0.10,fj:true},
+  {i:5731,n:"Commerce de gros non alimentaire (alias)",s:"Commerce de gros non alim.",g:"DC",cap:0.10,fj:true},
   // ── RESTAURATION RAPIDE ──
   {i:1501,n:"Restauration rapide",s:"Restauration rapide",g:"DC",cap:0.33,fj:false},
   // ── HCR ──
@@ -393,7 +396,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── MUSIQUE ÉDITION ──
   {i:1790,n:"Edition phonographique et musicale",s:"Musique édition",g:"DC",cap:0.10,fj:true},
   // ── EDITION ──
-  {i:3090,n:"Edition livres presse multimédia",s:"Edition",g:"DC",cap:0.10,fj:true},
+  {i:2121,n:"Edition livres presse multimédia",s:"Edition",g:"DC",cap:0.10,fj:true},
   // ── SANTÉ PRIVÉE ──
   {i:413,n:"Hospitalisation privée à but lucratif cliniques",s:"Santé privée",g:"HOSPI130",cap:0.33,fj:false},
   // ── SANTÉ LIBÉRALE ──
@@ -425,7 +428,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── TRANSPORT FERROVIAIRE ──
   {i:2002,n:"Transport ferroviaire opérateurs privés",s:"Transport ferroviaire",g:"DC",cap:0.10,fj:false},
   // ── LOGISTIQUE ──
-  {i:16110,n:"Logistique entreposage",s:"Logistique",g:"DC",cap:0.10,fj:true},
+  {i:3117,n:"Logistique entreposage et manutention",s:"Logistique",g:"DC",cap:0.10,fj:true},
   // ── TRANSPORT FLUVIAL ──
   {i:5021,n:"Navigation intérieure bateliers",s:"Transport fluvial",g:"DC",cap:0.10,fj:false},
   // ── TOURISME ──
@@ -441,7 +444,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── SERVICES TERTIAIRE ──
   {i:1734,n:"Prestataires de services du secteur tertiaire",s:"Services tertiaire",g:"DC",cap:0.10,fj:true},
   // ── PORTAGE FREELANCE ──
-  {i:25960,n:"Portage salarial",s:"Portage freelance",g:"DC",cap:0.10,fj:true},
+  {i:3219,n:"Portage salarial",s:"Portage freelance",g:"DC",cap:0.10,fj:true},
   // ── TRAVAIL TEMPORAIRE ──
   {i:1321,n:"Entreprises de travail temporaire intérim",s:"Travail temporaire",g:"DC",cap:0.10,fj:false},
   // ── EMPLOI À DOMICILE ──
@@ -461,13 +464,13 @@ const CCN_PARTIEL_ALIASES = [
   // ── ACTION SOCIALE ESS ──
   {i:3381,n:"Acteurs du lien social et familial ALISFA",s:"Action sociale ESS",g:"DC",cap:0.33,fj:false},
   // ── SPECTACLE VIVANT ──
-  {i:30900,n:"Spectacle vivant producteurs diffuseurs théâtres",s:"Spectacle vivant",g:"DC",cap:0.33,fj:false},
-  // ── RESTAURATION ENTREPRISE ──
-  {i:1979,n:"Restaurants d entreprise",s:"Restauration entreprise",g:"HCR",cap:0.33,fj:false},
-  // ── RÉSIDENCES VACANCES ──
-  {i:1979,n:"Hôtellerie de vacances et résidences",s:"Résidences vacances",g:"HCR",cap:0.33,fj:false},
-  // ── TRAITEURS CAFÉTÉRIAS ──
-  {i:1979,n:"Traiteurs et cafétérias",s:"Traiteurs cafétérias",g:"HCR",cap:0.33,fj:false},
+  {i:3090,n:"Spectacle vivant producteurs diffuseurs théâtres",s:"Spectacle vivant",g:"DC",cap:0.33,fj:false},
+  // ── RESTAURATION ENTREPRISE (alias IDCC 1979 = HCR) ──
+  {i:19791,n:"Restaurants d entreprise (CCN HCR 1979)",s:"Restauration entreprise",g:"HCR",cap:0.33,fj:false},
+  // ── RÉSIDENCES VACANCES (alias IDCC 1979 = HCR) ──
+  {i:19792,n:"Hôtellerie de vacances et résidences (CCN HCR 1979)",s:"Résidences vacances",g:"HCR",cap:0.33,fj:false},
+  // ── TRAITEURS CAFÉTÉRIAS (alias IDCC 1979 = HCR) ──
+  {i:19793,n:"Traiteurs et cafétérias (CCN HCR 1979)",s:"Traiteurs cafétérias",g:"HCR",cap:0.33,fj:false},
   // ── LOGISTIQUE FROID ──
   {i:1891,n:"Entrepôts frigorifiques manutention",s:"Logistique froid",g:"IAA180",cap:0.10,fj:false},
   // ── IMPRIMERIE SÉRIGRAPHIE ──
@@ -591,7 +594,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── ASSURANCE MUTUALISTE ──
   {i:3257,n:"Mutuelles organismes mutualistes",s:"Assurance mutualiste",g:"DC",cap:0.10,fj:true},
   // ── SÉCURITÉ SOCIALE ──
-  {i:21200,n:"Organismes de sécurité sociale",s:"Sécurité sociale",g:"DC",cap:0.10,fj:true},
+  {i:2130,n:"Organismes de sécurité sociale UCANSS",s:"Sécurité sociale",g:"DC",cap:0.10,fj:true},
   // ── EMPLOI CADRES ──
   {i:1851,n:"Personnels APEC",s:"Emploi cadres",g:"DC",cap:0.10,fj:true},
   // ── RECHERCHE ──
@@ -772,7 +775,7 @@ const CCN_PARTIEL_ALIASES = [
   // ── TRANSPORT COURSE ──
   {i:3218,n:"Sociétés course par course",s:"Transport course",g:"DC",cap:0.10,fj:false},
   // ── AUDIOVISUEL DOUBLAGE ──
-  {i:3219,n:"Doublage postsynchronisation oeuvres audiovisuelles",s:"Audiovisuel doublage",g:"DC",cap:0.10,fj:false},
+  {i:1922,n:"Doublage postsynchronisation oeuvres audiovisuelles",s:"Audiovisuel doublage",g:"DC",cap:0.10,fj:false},
   // ── AGRICULTURE FNSEA ──
   {i:3227,n:"FNSEA exploitations entreprises agricoles",s:"Agriculture FNSEA",g:"DC",cap:0.10,fj:false},
   // ── PRESSE ──
@@ -796,12 +799,15 @@ const CCN_PARTIEL_API = {
 
   getRules(idcc) {
     const ccn = this.getById(idcc);
-    if (!ccn) return { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:3, nom:'Droit commun', secteur:'autre' };
+    if (!ccn) return { cap:0.10, rate1:0.10, rate2:0.25, threshold:0.10, notice:7, avenantPossible:false, nom:'Droit commun', secteur:'autre' };
     const base = REGLES_HC[ccn.g] || REGLES_HC['DC'];
     const note = ccn.cap === 0.33
       ? (base.cap === 0.33 ? base.note : 'Accord de branche étendu — plafond 1/3 (Art. L3123-28)')
       : base.note;
-    return { ...base, cap: ccn.cap, note, idcc: ccn.i, nom: ccn.n, secteur: ccn.s, groupe: ccn.g };
+    // Liste des groupes CCN avec accord de branche étendu permettant L3123-22 (avenant complément d'heures)
+    const AVENANT_GROUPES = ['HCR','BOULAN329','COIF200','SECU329','PROP190','HOSPI130','ANIM70'];
+    const avenantPossible = AVENANT_GROUPES.includes(ccn.g);
+    return { ...base, cap: ccn.cap, note, idcc: ccn.i, nom: ccn.n, secteur: ccn.s, groupe: ccn.g, avenantPossible };
   },
 
   search(term) {
