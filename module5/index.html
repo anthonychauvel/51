@@ -4,8 +4,11 @@
 <link rel="manifest" href="../manifest.json">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="Mizuki — Temps partiel">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="theme-color" content="#7B4FD4">
+<meta name="color-scheme" content="light dark">
 <meta charset="UTF-8">
 <title>Temps Partiel — Mizuki</title>
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
@@ -23,9 +26,9 @@
     <div class="m5-header-sub">Heures complémentaires &amp; droits</div>
   <div id="header-contract-badge" class="m5-contract-badge" style="display:none;"></div>
   </div>
-  <button class="m5-nav-btn" onclick="openYearsPopup()" id="year-badge" title="Changer d'exercice" style="font-weight:700;min-width:52px;">2026</button>
-  <a href="../menu.html" class="m5-nav-btn">← Menu</a>
-  <button class="m5-nav-btn" onclick="openContractModal()">⚙️</button>
+  <button class="m5-nav-btn" onclick="openYearsPopup()" id="year-badge" title="Changer d'exercice" aria-label="Changer l'année d'exercice" style="font-weight:700;min-width:52px;">2026</button>
+  <a href="../menu.html" class="m5-nav-btn" aria-label="Retour au menu principal">← Menu</a>
+  <button class="m5-nav-btn" onclick="openContractModal()" aria-label="Paramètres de mon contrat">⚙️</button>
 </header>
 
 <!-- ── BULLE MIZUKI ─────────────────────────────────────────────── -->
@@ -101,7 +104,7 @@
       </div>
       <div class="m5-input-group">
         <label class="m5-label">Combien d'heures par semaine selon ton contrat ?</label>
-        <input type="number" class="m5-input" id="wiz-hours"
+        <input type="number" inputmode="decimal" class="m5-input" id="wiz-hours"
           min="1" max="34.5" step="0.5" placeholder="ex : 25"
           style="font-size:24px;font-weight:700;text-align:center;"
           oninput="wizUpdateHoursPreview()">
@@ -109,7 +112,7 @@
       </div>
       <div class="m5-input-group">
         <label class="m5-label">Ton taux horaire brut (optionnel, pour estimer tes gains)</label>
-        <input type="number" class="m5-input" id="wiz-rate"
+        <input type="number" inputmode="decimal" class="m5-input" id="wiz-rate"
           min="0" step="0.01" placeholder="ex : 11.88 (SMIC 2026)"
           style="font-size:18px;text-align:center;">
       </div>
@@ -202,7 +205,7 @@
         <input type="radio" name="wiz-feries" value="true" checked style="margin-top:3px;accent-color:var(--miz-primary);">
         <div>
           <div style="font-weight:700;font-size:13px;">✅ Oui, neutraliser les fériés chômés</div>
-          <div style="font-size:11px;color:var(--miz-text3);margin-top:2px;">Art. L3121-29 — Le seuil est abaissé. Recommandé dans la plupart des cas.</div>
+          <div style="font-size:11px;color:var(--miz-text3);margin-top:2px;">Art. L3133-3 + jurisprudence — Le seuil est abaissé. Recommandé dans la plupart des cas.</div>
         </div>
       </label>
       <label class="wiz-radio-card" id="wiz-feries-non" onclick="wizSelectFeries(false)" style="display:flex;gap:12px;align-items:flex-start;">
@@ -264,7 +267,7 @@
         <div id="wiz-cloture-jour-bloc" style="margin-bottom:10px;">
           <label class="m5-label" style="margin-bottom:5px;">Quel jour se clôture ton mois de paie ?</label>
           <div style="display:flex;gap:8px;align-items:center;">
-            <input type="number" id="wiz-cloture-jour" class="m5-input"
+            <input type="number" inputmode="decimal" id="wiz-cloture-jour" class="m5-input"
               min="1" max="28" placeholder="ex: 25"
               style="width:80px;flex-shrink:0;">
             <span style="font-size:12px;color:rgba(196,168,255,0.65);">Laisse vide si c'est le dernier jour du mois (31, 28…)</span>
@@ -476,7 +479,7 @@
 
     <div class="m5-input-group">
       <label class="m5-label">Heures travaillées ce jour</label>
-      <input type="number" class="m5-input" id="day-saisie-hours"
+      <input type="number" inputmode="decimal" class="m5-input" id="day-saisie-hours"
         min="0" max="24" step="0.5" placeholder="ex: 5.5"
         oninput="updateDayPreview()"
         style="font-size:26px;font-weight:700;text-align:center;">
@@ -506,7 +509,7 @@
 
     <div class="m5-input-group">
       <label class="m5-label">Total heures travaillées cette semaine</label>
-      <input type="number" class="m5-input" id="week-saisie-hours"
+      <input type="number" inputmode="decimal" class="m5-input" id="week-saisie-hours"
         min="0" max="34.5" step="0.5" placeholder="ex: 28"
         oninput="updateWeekPreview()"
         style="font-size:26px;font-weight:700;text-align:center;">
@@ -524,7 +527,7 @@
       <div style="font-size:11px;color:var(--miz-text3);margin:4px 0 0 28px;">Augmentation temporaire — les heures dans l'avenant ne sont pas majorées</div>
       <div id="week-avenant-section" style="display:none;margin-top:10px;">
         <div class="m5-label">Heures prévues par l'avenant</div>
-        <input type="number" class="m5-input" id="week-avenant-hours"
+        <input type="number" inputmode="decimal" class="m5-input" id="week-avenant-hours"
           min="0" max="34.5" step="0.5" placeholder="ex: 28"
           oninput="updateWeekPreview()"
           style="font-size:18px;font-weight:700;text-align:center;">
@@ -568,7 +571,7 @@
       <button class="m5-modal-close" onclick="closeModal('modal-prevenance')">✕</button>
     </div>
     <div style="font-size:13px;color:var(--miz-text2);margin-bottom:14px;">
-      Vérifie si ton employeur t'a prévenu à temps (Art. L3123-24 — <strong>3 jours ouvrés minimum</strong>).
+      Vérifie si ton employeur t'a prévenu à temps. <strong>Défaut légal : 7 jours ouvrés</strong> (Art. L3123-31). Réductible à <strong>3 jours minimum</strong> uniquement par accord collectif avec contreparties (Art. L3123-24).
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Date de la demande de l'employeur</label>
@@ -583,7 +586,7 @@
     </button>
     <div id="prevenance-result" style="min-height:40px;"></div>
     <div style="font-size:11px;color:var(--miz-text3);margin-top:12px;line-height:1.6;">
-      ⚖️ En cas de non-respect du délai, tu peux légalement refuser d'effectuer ces heures sans que ce soit considéré comme une faute (Art. L3123-24 Code du travail).
+      ⚖️ En cas de non-respect du délai contractuel, tu peux refuser ces heures sans que ce soit considéré comme une faute (Art. L3123-10 du Code du travail).
     </div>
   </div>
 </div>
@@ -658,11 +661,11 @@
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Durée contractuelle (h/semaine) *</label>
-      <input type="number" class="m5-input" id="contract-hours" min="1" max="34" step="0.5" placeholder="ex: 25">
+      <input type="number" inputmode="decimal" class="m5-input" id="contract-hours" min="1" max="34" step="0.5" placeholder="ex: 25">
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Taux horaire brut (€/h)</label>
-      <input type="number" class="m5-input" id="contract-rate" min="0" step="0.01" placeholder="ex: 11.88">
+      <input type="number" inputmode="decimal" class="m5-input" id="contract-rate" min="0" step="0.01" placeholder="ex: 11.88">
     </div>
     <div class="m5-input-group">
       <label class="m5-label">Convention collective</label>
@@ -705,7 +708,7 @@
         <div>
           <div style="font-size:13px;font-weight:600;color:var(--miz-text);">Neutraliser les jours fériés chômés</div>
           <div id="feries-mode-label" style="font-size:11px;color:var(--miz-text3);margin-top:3px;line-height:1.5;">
-            ✅ Art. L3121-29 — Le seuil de déclenchement est abaissé de la valeur du jour férié. Les heures complémentaires ne sont comptées que sur les jours réellement travaillés.
+            ✅ Art. L3133-3 + jurisprudence — Le chômage d'un jour férié ne peut entraîner de perte, donc le seuil de déclenchement est abaissé de la valeur du jour férié. Les heures complémentaires ne sont comptées que sur les jours réellement travaillés.
           </div>
         </div>
       </label>
@@ -739,6 +742,30 @@
       </select>
     </div>
     <div class="m5-input-group">
+      <label class="m5-label">Nombre de jours travaillés par semaine</label>
+      <select class="m5-select" id="contract-jours-ouvres">
+        <option value="3">3 jours/semaine</option>
+        <option value="4">4 jours/semaine</option>
+        <option value="5" selected>5 jours/semaine (défaut)</option>
+        <option value="6">6 jours/semaine</option>
+      </select>
+      <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Utilisé pour répartir les jours fériés chômés sur les bons jours de travail.</div>
+    </div>
+
+    <div style="margin:12px 0;padding:10px 12px;background:var(--miz-bg2);border-radius:var(--miz-radius-sm);border:1px solid var(--miz-border2);">
+      <div style="font-size:13px;font-weight:700;color:var(--miz-text);margin-bottom:8px;">⏰ Délai de prévenance</div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="contract-accord-prev" style="width:18px;height:18px;margin-top:2px;accent-color:var(--miz-primary);">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--miz-text);">Un accord collectif réduit mon délai à 3 jours ouvrés</div>
+          <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;line-height:1.5;">
+            🔵 À cocher uniquement si <strong>ton accord d'entreprise ou ta CCN étendue</strong> le prévoit explicitement avec des contreparties (Art. L3123-24). Par défaut, le délai est de <strong>7 jours ouvrés</strong> (Art. L3123-31).
+          </div>
+        </div>
+      </label>
+    </div>
+
+    <div class="m5-input-group">
       <label class="m5-label">Plafond heures complémentaires</label>
       <select class="m5-select" id="contract-cap">
         <option value="0.10">10% — Droit commun</option>
@@ -753,7 +780,7 @@
 </div>
 
 <!-- ── TOAST ──────────────────────────────────────────────────── -->
-<div class="m5-toast-container" id="m5-toast-container"></div>
+<div class="m5-toast-container" id="m5-toast-container" aria-live="polite" aria-atomic="true" role="status"></div>
 
 <!-- ── SCRIPTS ────────────────────────────────────────────────── -->
 <script>
