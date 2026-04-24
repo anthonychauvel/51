@@ -1,7 +1,8 @@
 /**
  * PDF-REPORT — Export PDF M5 Mizuki
  * Rapport professionnel heures complémentaires
- * Sections : Contrat · Bilan · Heatmap · Détail semaines · Droits · Refus modèle
+ * Sections : Contrat · Bilan · Heatmap · Détail semaines · Droits
+ * v2.1 — Lettre de refus retirée (éviter tout risque juridique pour la salariée)
  */
 (function(global) {
 'use strict';
@@ -72,7 +73,7 @@ const M5_PdfReport = {
     row('Plafond heures comp.',`${capPct}% du contrat (max ${capH}h/sem)`);
     row("Majorations",`+${Math.round((contract.rate1||0.10)*100)}% jusqu'à ${(contract.hoursBase*((contract.threshold||0.10))).toFixed(1)}h · +${Math.round((contract.rate2||0.25)*100)}% au-delà`);
     row('Mode de calcul',modeLabel);
-    row("Jours fériés", contract.neutraliseFeries!==false ? "Neutralisés (Art. L3121-29)" : "Inclus dans l'assiette (Cass. Soc. 2012)");
+    row("Jours fériés", contract.neutraliseFeries!==false ? "Neutralisés (assimilation temps effectif)" : "Inclus dans l'assiette (accord spécifique)");
     row('Début exercice',contract.exerciceStart||String(new Date().getFullYear()));
     y+=4;
 
@@ -197,14 +198,19 @@ const M5_PdfReport = {
     checkPage(50);
     h1('5. Mes droits — Rappels légaux');
     doc.setFontSize(9); doc.setFont('helvetica','normal');
+    const noticeDefaut = contract.noticeDays || 7;
     const droits=[
-      ["Art. L3123-20",`Majoration : +${Math.round((contract.rate1||0.10)*100)}% jusqu'à 1/${Math.round(1/(contract.threshold||0.10))}e du contrat, puis +${Math.round((contract.rate2||0.25)*100)}%`],
-      ["Art. L3123-21","Délai de prévenance : 3 jours ouvrés minimum avant toute HC imposée. Tu peux REFUSER si délai non respecté."],
-      ["Art. L3123-9","Jamais 35h : même en temps partiel, aucune semaine ne peut atteindre la durée légale du temps plein."],
-      ["Art. L3123-13","Règle des 12 semaines : si tes heures dépassent le contrat de +2h ou plus 12 semaines consécutives, tu peux demander une modification de contrat."],
-      ["Art. L3123-14","Modification de contrat : ta demande écrite oblige l'employeur à répondre dans le mois. Refus doit être justifié."],
-      ["Art. L3123-5","Durée minimale : ton contrat doit être de 24h/sem minimum, sauf dérogation légale ou accord de branche."],
-      ["Défiscalisation","Les HC sont exonérées d'impôt sur le revenu et de cotisations salariales depuis la loi TEPA (plafond annuel)."],
+      ["Art. L3123-28",`Plafond heures complémentaires : ${Math.round((contract.cap||0.10)*100)}% du contrat (selon ta CCN : 1/10 ou 1/3).`],
+      ["Art. L3123-29",`Majorations supplétives : +${Math.round((contract.rate1||0.10)*100)}% jusqu'à 1/${Math.round(1/(contract.threshold||0.10))}e du contrat, puis +${Math.round((contract.rate2||0.25)*100)}%.`],
+      ["Art. L3123-9","Jamais 35h : les heures complémentaires ne peuvent jamais porter la durée au niveau du temps plein légal (35h) ou conventionnel."],
+      ["Art. L3123-31","Délai de prévenance par défaut : 7 jours ouvrés minimum pour toute modification de la répartition."],
+      [noticeDefaut===3?"Art. L3123-24":"Application L3123-31",`Ton contrat indique : ${noticeDefaut} jours ouvrés (${noticeDefaut===3?'réduit par accord collectif étendu avec contreparties':'délai légal par défaut, aucun accord dérogatoire'}).`],
+      ["Art. L3123-10","Refus sans faute : tu peux refuser des HC si (1) elles dépassent les limites du contrat, (2) le délai de prévenance n'a pas été respecté, ou (3) ton contrat ne mentionne pas la possibilité d'en faire."],
+      ["Art. L3123-13","Règle des 12 semaines : si tu dépasses ton contrat de +2h/sem pendant 12 semaines consécutives (ou 12 sur 15), ton contrat doit être modifié à la hausse (sauf opposition de ta part)."],
+      ["Art. L3123-22","Avenant complément d'heures : possible uniquement si ta CCN le prévoit. Max 8 avenants / an / salarié."],
+      ["Art. L3123-7","Durée minimale : 24h/sem sauf dérogations légales (demande du salarié, accord de branche, étudiant, CDD court…)."],
+      ["Art. L3123-3","Priorité d'accès au temps plein : l'employeur doit t'informer des postes à temps plein disponibles."],
+      ["Exonération fiscale","Heures comp. exonérées d'impôt sur le revenu jusqu'à 7 500 €/an + réduction cotisations salariales (loi Avenir Pro 2019)."],
     ];
     droits.forEach(([art,txt])=>{
       checkPage(12);
@@ -216,37 +222,6 @@ const M5_PdfReport = {
       y+=lines.length*5+3;
     });
     y+=4;
-
-    // ══ SECTION 6 : MODÈLE DE REFUS ═════════════════════════════
-    checkPage(60);
-    h1('6. Modèle de refus — Heures complémentaires (délai non respecté)');
-    doc.setFontSize(9); doc.setFont('helvetica','italic'); doc.setTextColor(100,100,100);
-    doc.text('À compléter, signer et conserver une copie avant envoi à votre employeur.',M,y); y+=8;
-    doc.setFont('helvetica','normal'); doc.setTextColor(0,0,0);
-    const refusLines=[
-      `${contract.userName||"[Prénom Nom]"}`,
-      `Employé(e) à temps partiel - ${contract.hoursBase}h/semaine`,
-      contract.ccnNom||"Droit commun","",
-      `[Lieu], le [date]`,"",
-      "A l'attention de [Nom de l'employeur / RH]","",
-      "Objet : Refus d'heures complementaires - Art. L3123-21 Code du travail","",
-      "Madame, Monsieur,","",
-      `Je soussigne(e) ${contract.userName||"[Prenom Nom]"} vous informe par la presente que je decline`,
-      "la demande d'heures complementaires pour la semaine concernee.","",
-      "En effet, le delai legal de prevenance de 3 jours ouvres (Art. L3123-21)",
-      "n'a pas ete respecte. Je suis donc en droit de refuser cette demande",
-      "sans que cela ne constitue une faute de ma part.","",
-      "Je conserve ce document a titre de preuve.","",
-      "Veuillez agreer, Madame, Monsieur, l'expression de mes salutations distinguees.","","",
-      "Signature : _______________________",
-      "Date : ___________________________","",
-      "(Envoi recommande avec accuse de reception)",
-    ];
-    refusLines.forEach(line=>{
-      checkPage(6);
-      if(line==='') y+=3;
-      else { doc.text(line,M,y); y+=5; }
-    });
 
     // ══ PIED DE PAGE ═════════════════════════════════════════════
     const totalPages=doc.getNumberOfPages();

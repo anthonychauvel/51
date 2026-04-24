@@ -38,7 +38,16 @@ function weekStartOf(dateStr, startDow) {
 function mondayOf(dateStr) { return weekStartOf(dateStr, Contract.get().weekStartDay || 0); }
 
 const Contract = {
-  get() { return _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0,exerciceStart:'01/01',clotureJour:0,modeCalcul:'HEBDO',neutraliseFeries:true}); },
+  get() {
+    const raw = _json(K.CONTRACT,{hoursBase:0,hourlyRate:0,idcc:0,ccnNom:'',cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,weekStartDay:0,exerciceStart:'01/01',clotureJour:0,modeCalcul:'HEBDO',neutraliseFeries:true});
+    // Rétrocompat : si accordCollectifPrevenance absent, défaut = false (7 jours, L3123-31)
+    if(raw.accordCollectifPrevenance === undefined) raw.accordCollectifPrevenance = false;
+    // noticeDays : 7 par défaut (L3123-31) ; 3 si accord d'entreprise/branche (L3123-24)
+    raw.noticeDays = raw.accordCollectifPrevenance ? 3 : 7;
+    // joursOuvresContrat : nombre de jours travaillés/semaine (défaut 5)
+    if(raw.joursOuvresContrat === undefined) raw.joursOuvresContrat = 5;
+    return raw;
+  },
   save(data) { _save(K.CONTRACT,data); },
   isSet() { return this.get().hoursBase>0; }
 };
@@ -208,9 +217,33 @@ const DataStore = {
     if(avenatH===null||avenatH===undefined||avenatH<=0) {
       delete data[mondayStr];
     } else {
+      // Art. L3123-22 : max 8 avenants par an et par salarié (hors remplacement)
+      const alreadyHas = !!data[mondayStr];
+      const currentCount = Object.keys(data).length;
+      if(!alreadyHas && currentCount >= 8) {
+        if(typeof window!=='undefined' && window.M5_toast) {
+          window.M5_toast("Limite légale atteinte : 8 avenants / an / salarié (Art. L3123-22)", 'error');
+        }
+        return false;
+      }
       data[mondayStr]={ avenatH: Math.round(avenatH*100)/100, savedAt: new Date().toISOString() };
     }
     try { localStorage.setItem(K.AVENANT(yr), JSON.stringify(data)); } catch(_){}
+    return true;
+  },
+
+  // Vérifie si la CCN du contrat autorise les compléments d'heures par avenant
+  isAvenantAllowed() {
+    const c = Contract.get();
+    if(!c.idcc || c.idcc <= 0) return false; // Droit commun → accord de branche obligatoire
+    if(typeof window==='undefined' || !window.CCN_PARTIEL_API) return false;
+    try {
+      const rules = window.CCN_PARTIEL_API.getRules(c.idcc);
+      // Liste des groupes CCN ayant un accord de branche étendu prévoyant L3123-22
+      // (seuls ceux-ci peuvent utiliser les avenants compléments d'heures)
+      const groupesAvecAvenant = ['HCR','BOULAN329','COIF200','SECU329','PROP190','HOSPI130','ANIM70'];
+      return groupesAvecAvenant.includes(rules.groupe);
+    } catch(_) { return false; }
   },
 
   getAvenant(mondayStr, year) {

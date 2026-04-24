@@ -28,8 +28,8 @@ const MSGS_NORMAL = [
   n=>`🦊 ${n}Semaine conforme. Si tu as une semaine chargée à venir, saisis-la dès maintenant.`,
   n=>`🦊 ${n}Dans les clous ! Chaque semaine saisie renforce ton dossier si tu en as besoin un jour.`,
   n=>`🦊 ${n}Aucune anomalie détectée. Mizuki surveille pour toi en permanence.`,
-  n=>`🦊 ${n}Semaine dans les clous ! Note que si on te demande des heures complémentaires, tu dois être prévenue 3 jours ouvrés à l'avance.`,
-  n=>`🦊 ${n}Aucun dépassement cette semaine. Bon à savoir : tu peux refuser des heures complémentaires demandées moins de 3 jours ouvrés avant.`,
+  n=>`🦊 ${n}Semaine dans les clous ! Rappel : sans accord collectif, le délai de prévenance est de 7 jours ouvrés (Art. L3123-31).`,
+  n=>`🦊 ${n}Aucun dépassement cette semaine. Bon à savoir : tu peux refuser des HC demandées moins de 3 jours avant (Art. L3123-10).`,
 ];
 
 const MSGS_COMP_LOW = [
@@ -162,14 +162,14 @@ const Mizuki = {
         msg = {
           titre: '🚨 Risque de requalification',
           icon: '🚨', level: 'critique',
-          message: `Cette semaine tu as atteint ${weekResult.workedH}h — le seuil légal du temps plein. Un contrat à temps partiel ne peut pas atteindre 35h sans modification. Garde une trace de cette semaine, elle peut être utile.`,
-          actions: ['Garder une trace écrite', 'Comparer avec la fiche de paie', 'Consulter un délégué du personnel', 'Voir l\'Art. L3123-13'],
+          message: `Cette semaine tu as atteint ${weekResult.workedH}h — le seuil légal du temps plein. Un contrat à temps partiel ne peut jamais atteindre 35h (Art. L3123-9). Garde une trace de cette semaine, elle peut être utile.`,
+          actions: ['Garder une trace écrite', 'Comparer avec la fiche de paie', 'Consulter un délégué du personnel', 'Voir l\'Art. L3123-9'],
         };
       } else if (has12sem) {
         msg = {
           titre: '⚖️ Règle des 12 semaines',
           icon: '⚖️', level: 'alerte',
-          message: `Depuis ${rule12.maxConsec} semaines consécutives, tes heures dépassent le contrat de plus de 2h/sem. L'Art. L3123-13 prévoit que le contrat peut être modifié dans ce cas. Tu peux en faire la demande, ou conserver ton horaire actuel — c'est ton choix.`,
+          message: `Depuis ${rule12.maxConsec} semaines consécutives, tes heures dépassent le contrat de plus de 2h/sem. L'Art. L3123-13 prévoit que le contrat peut être modifié à la hausse (préavis 7j, sauf opposition). Tu peux en faire la demande écrite, ou conserver ton horaire actuel — c'est ton choix.`,
           actions: ['Demander une modification de contrat', 'Garder l\'historique', 'Voir l\'Art. L3123-13'],
         };
       } else if (hasProche) {
