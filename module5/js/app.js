@@ -56,7 +56,7 @@ function runAnalysis() {
     } else {
       weekResult=CalcEngine.calcWeek(
         contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
-        { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday }
+        { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 }
       );
     }
   }
@@ -467,6 +467,7 @@ function saveDaySaisie() {
 function deleteDaySaisie() {
   const dateStr=document.getElementById('day-saisie-date').value;
   if(!dateStr) return;
+  if(!confirm('Supprimer la saisie de ce jour ? Cette action est irréversible.')) return;
   M5_DataStore.deleteDay(dateStr,M5_DataStore.getYear());
   Mizuki.clearCache();
   closeModal('modal-day-saisie');
@@ -488,20 +489,26 @@ function openWeeklySaisie() {
   const inp=document.getElementById('week-saisie-hours');
   inp.value=wk.total!==null?wk.total:contract.hoursBase;
 
-  // Avenant
+  // Avenant — ne s'affiche que si la CCN le permet (L3123-22 nécessite accord de branche étendu)
+  const avenantBloc=document.getElementById('week-avenant-bloc');
+  const avenantAllowed = typeof M5_DataStore.isAvenantAllowed==='function' && M5_DataStore.isAvenantAllowed();
+  if(avenantBloc) avenantBloc.style.display = avenantAllowed ? 'block' : 'none';
+
   const toggleAv=document.getElementById('week-avenant-toggle');
   const avSection=document.getElementById('week-avenant-section');
   const avInp=document.getElementById('week-avenant-hours');
-  if(av) {
+  if(av && avenantAllowed) {
     toggleAv.checked=true; avSection.style.display='block'; avInp.value=av.avenatH;
   } else {
-    toggleAv.checked=false; avSection.style.display='none'; avInp.value='';
+    if(toggleAv) toggleAv.checked=false;
+    if(avSection) avSection.style.display='none';
+    if(avInp) avInp.value='';
   }
 
   // Compteur avenants
   const count=M5_DataStore.countAvenants(year);
   const counterEl=document.getElementById('avenant-counter');
-  if(counterEl) counterEl.textContent=`${count}/8 avenants utilisés cette année`;
+  if(counterEl) counterEl.textContent=`${count}/8 avenants utilisés cette année (Art. L3123-22)`;
 
   // Propositions rapides semaine
   const base=contract.hoursBase;
@@ -592,6 +599,8 @@ function saveWeeklySaisie() {
 
 function deleteWeeklySaisie() {
   const monday=document.getElementById('week-saisie-monday').value;
+  if(!monday) return;
+  if(!confirm('Supprimer cette semaine complète ? Cette action est irréversible.')) return;
   M5_DataStore.deleteWeek(monday,M5_DataStore.getYear());
   Mizuki.clearCache();
   closeModal('modal-week-saisie');
@@ -600,7 +609,7 @@ function deleteWeeklySaisie() {
 }
 
 // ── Résumé semaine sous le calendrier ────────────────────────────
-// ── Prévenance auto : vérifie si la semaine affichée est dans les 3 jours ──
+// ── Prévenance auto : vérifie si la semaine affichée est dans les jours de préavis ──
 function checkPrevenanceAuto(mondayStr, contract) {
   const today=M5_localDK(new Date());
   const monday=new Date(mondayStr+'T12:00:00');
@@ -616,9 +625,11 @@ function checkPrevenanceAuto(mondayStr, contract) {
     const dow=d.getDay();
     if(dow!==0&&dow!==6) joursOuvres++; // pas sam/dim
   }
-  const prevenanceRequise=contract.noticeDays||3;
+  // noticeDays calculé dans Contract.get() : 7 par défaut (L3123-31), 3 si accord (L3123-24)
+  const prevenanceRequise=contract.noticeDays||7;
+  const articleRef = contract.accordCollectifPrevenance ? 'L3123-24' : 'L3123-31';
   if(joursOuvres<prevenanceRequise) {
-    return { joursOuvres, prevenanceRequise };
+    return { joursOuvres, prevenanceRequise, articleRef };
   }
   return null;
 }
@@ -635,13 +646,8 @@ function renderWeekSummary(analysis) {
     html+=`<div class="m5-alert alerte" style="margin-bottom:6px;">
       <span>⏰</span>
       <div>
-        <strong>Délai de prévenance insuffisant</strong> — seulement <strong>${prevenanceAlert.joursOuvres} jour(s) ouvré(s)</strong> avant cette semaine (minimum légal : ${prevenanceAlert.prevenanceRequise} jours, Art. L3123-21).<br>
-        <span style="font-size:12px;">Si des HC t'ont été demandées pour cette semaine, tu peux les refuser légalement.</span>
-        <div style="margin-top:6px;">
-          <button onclick="genererRefusPDF()" style="background:rgba(249,115,22,0.15);border:1px solid rgba(249,115,22,0.40);border-radius:6px;padding:5px 10px;font-size:11px;font-weight:700;color:rgba(255,220,180,0.90);cursor:pointer;">
-            📄 Générer mon refus
-          </button>
-        </div>
+        <strong>Délai de prévenance insuffisant</strong> — seulement <strong>${prevenanceAlert.joursOuvres} jour(s) ouvré(s)</strong> avant cette semaine (minimum requis : ${prevenanceAlert.prevenanceRequise} jours, Art. ${prevenanceAlert.articleRef}).<br>
+        <span style="font-size:12px;">Si des HC t'ont été demandées pour cette semaine avec moins de 3 jours de préavis, tu peux les refuser sans faute (Art. L3123-10).</span>
       </div>
     </div>`;
   }
@@ -660,77 +666,6 @@ function renderWeekSummary(analysis) {
     html+=`<div class="m5-alert info"><span>💰</span><div>Majoration estimée : <strong>${_cw.toFixed(2)} € brut</strong> sur ${weekResult.totalCompH}h comp.</div></div>`;
   }
   el.innerHTML=html;
-}
-
-// ── Génération du refus en PDF ──────────────────────────────────
-function genererRefusPDF() {
-  const contract=M5_Contract.get();
-  const JClass=(window.jspdf&&window.jspdf.jsPDF)||window.jsPDF;
-  if(!JClass) { toast('PDF non disponible','error'); return; }
-  const doc=new JClass({orientation:'portrait',unit:'mm',format:'a4'});
-  const M=20, PW=170, pageH=297;
-  let y=30;
-
-  doc.setFillColor(30,12,74);
-  doc.rect(0,0,210,22,'F');
-  doc.setTextColor(255,255,255);
-  doc.setFontSize(13); doc.setFont('helvetica','bold');
-  doc.text('Modèle de refus — Heures complémentaires',M,10);
-  doc.setFontSize(9); doc.setFont('helvetica','normal');
-  doc.text('Art. L3123-21 Code du travail — Délai de prévenance non respecté',M,17);
-  doc.setTextColor(0,0,0);
-
-  const name=localStorage.getItem('M5_USER_NAME')||'[Prénom Nom]';
-  const d=new Date(calendarMonday+'T12:00:00');
-  const fn=new Date(calendarMonday+'T12:00:00'); fn.setDate(fn.getDate()+6);
-  const semLbl=`du ${d.toLocaleDateString('fr-FR')} au ${fn.toLocaleDateString('fr-FR')}`;
-  const today=new Date().toLocaleDateString('fr-FR');
-
-  const lines=[
-    name,
-    `Salarié(e) à temps partiel — ${contract.hoursBase}h/semaine`,
-    contract.ccnNom||'Droit commun',
-    '',
-    `Fait le ${today}`,
-    '',
-    "À l'attention de [Nom de l'employeur / Service RH]",
-    '',
-    "Objet : Refus d'heures complémentaires — Art. L3123-21 Code du travail",
-    '',
-    "Madame, Monsieur,",
-    '',
-    `Je soussigné(e) ${name}, employé(e) à temps partiel, vous informe par la présente`,
-    `que je refuse les heures complémentaires qui m'ont été demandées pour la semaine ${semLbl}.`,
-    '',
-    "Ce refus est motivé par le non-respect du délai légal de prévenance prévu par l'article",
-    "L3123-21 du Code du travail, qui impose une information préalable d'au moins 3 jours",
-    "ouvrés avant toute heure complémentaire. Ce délai n'ayant pas été respecté,",
-    "je suis en droit de décliner cette demande sans que cela ne constitue une faute.",
-    '',
-    "Je vous rappelle que le non-respect de ce délai est une violation du Code du travail.",
-    "Je conserve une copie de ce document à titre de preuve.",
-    '',
-    "Veuillez agréer, Madame, Monsieur, l'expression de mes salutations distinguées.",
-    '',
-    '',
-    'Signature : _______________________',
-    'Date : ___________________________',
-    '',
-    "(Envoi recommandé avec accusé de réception recommandé)",
-  ];
-
-  doc.setFontSize(10); doc.setFont('helvetica','normal');
-  lines.forEach(line=>{
-    if(y>pageH-20){ doc.addPage(); y=20; }
-    if(line==='') y+=4;
-    else { doc.text(line,M,y); y+=6; }
-  });
-
-  doc.setFontSize(7); doc.setTextColor(150,150,150);
-  doc.text('Source : Art. L3123-21 Code du travail — Document informatif, non un avis juridique.',105,pageH-8,{align:'center'});
-
-  doc.save(`refus-heures-complementaires-${new Date().toISOString().slice(0,10)}.pdf`);
-  toast('Modèle de refus téléchargé ✓','success');
 }
 
 // ── Historique ────────────────────────────────────────────────────
@@ -831,7 +766,7 @@ function renderQuickStats(analysis) {
     html+=`<div class="m5-alert ${rule12.triggered?'critique':'warn'}" style="margin-top:8px;"><span>${rule12.triggered?'⚖️':'👀'}</span><div style="font-size:12px;">${rule12.msg}</div></div>`;
     if(rule12.triggered) {
       html+=`<div class="m5-alert info" style="margin-top:6px;font-size:12px;">
-        <span>📋</span><div><strong>Art. L3123-14 al.2</strong> — Tu peux demander par écrit à ton employeur la modification de ton contrat à la hausse. Il a 1 mois pour répondre. Sans réponse, il doit justifier le refus. Garde ce relevé comme preuve.</div>
+        <span>📋</span><div><strong>Art. L3123-13</strong> — Tu peux demander par écrit à ton employeur la modification de ton contrat à la hausse (préavis 7 jours, sauf opposition de ta part). Garde ce relevé comme preuve.</div>
       </div>`;
     }
   }
@@ -1372,6 +1307,11 @@ function openContractModal() {
   const feriesEl=document.getElementById('contract-feries');
   if(feriesEl) feriesEl.checked=(c.neutraliseFeries!==false);
   toggleFeriesLabel(c.neutraliseFeries!==false);
+  // Nouveaux champs : accord collectif prévenance + jours ouvrés
+  const accordPrevEl=document.getElementById('contract-accord-prev');
+  if(accordPrevEl) accordPrevEl.checked=!!c.accordCollectifPrevenance;
+  const joursOuvresEl=document.getElementById('contract-jours-ouvres');
+  if(joursOuvresEl) joursOuvresEl.value=String(c.joursOuvresContrat||5);
   // Générer la grille des 12 clôtures
   buildCloturesGrid(c.cloturesDates||{});
   // Afficher statut dernier import
@@ -1408,10 +1348,9 @@ function saveContract() {
   const capManuel =parseFloat(document.getElementById('contract-cap').value)||0.10;
   const name      =document.getElementById('contract-name').value.trim();
   if(!hoursBase||hoursBase<=0||hoursBase>=35) { toast('Saisis une durée entre 1 et 34,5h.','error'); return; }
-  // L3123-5 : contrat <24h/sem = durée minimale légale (sauf dérogations : accord branche, accord salarié, secteur particulier)
-  // On informe sans bloquer car les dérogations légales sont nombreuses (moins de 24h peut être légal)
+  // Art. L3123-7 : contrat <24h/sem = durée minimale légale (sauf dérogations : demande salarié, accord branche, étudiant, CDD court, remplacement)
   if(hoursBase < 24) {
-    toast("⚠️ Contrat < 24h/sem : vérifiez qu'une dérogation légale s'applique (Art. L3123-5)",'warn');
+    toast("⚠️ Contrat < 24h/sem : vérifie qu'une dérogation légale s'applique (Art. L3123-7)",'warn');
   }
   const ccnRules=typeof CCN_PARTIEL_API!=='undefined'?CCN_PARTIEL_API.getRules(idcc):{cap:capManuel,rate1:0.10,rate2:0.25,threshold:0.10};
   // Si une CCN est sélectionnée, son cap fait foi — sinon le sélecteur manuel
@@ -1424,6 +1363,9 @@ function saveContract() {
   }
   const modeCalcul=document.getElementById('contract-mode')?.value||'HEBDO';
   const neutraliseFeries=document.getElementById('contract-feries')?.checked!==false;
+  // Nouveaux champs : accord collectif prévenance (réduit à 3j) et nb jours travaillés/sem
+  const accordCollectifPrevenance=!!document.getElementById('contract-accord-prev')?.checked;
+  const joursOuvresContrat=parseInt(document.getElementById('contract-jours-ouvres')?.value||'5')||5;
   // Récupérer les 12 clôtures
   const cloturesDates={};
   for(let m=1;m<=12;m++){
@@ -1432,7 +1374,8 @@ function saveContract() {
   }
   M5_Contract.save({hoursBase,hourlyRate,idcc,ccnNom:ccnRules.nom||'Droit commun',cap,
     rate1:ccnRules.rate1||0.10,rate2:ccnRules.rate2||0.25,threshold:ccnRules.threshold||0.10,
-    weekStartDay,exerciceStart,cloturesDates,modeCalcul,neutraliseFeries});
+    weekStartDay,exerciceStart,cloturesDates,modeCalcul,neutraliseFeries,
+    accordCollectifPrevenance,joursOuvresContrat});
   if(name) localStorage.setItem('M5_USER_NAME',name);
   Mizuki.clearCache();
   // Recalibrer le calendrier avec le nouveau début de semaine
@@ -1624,7 +1567,7 @@ function toggleVacSemaine() {
 
 // ── Gestion des années ────────────────────────────────────────────
 
-// ── Délai de prévenance (Art. L3123-24) ──────────────────────────
+// ── Délai de prévenance (Art. L3123-31 défaut / L3123-24 accord) ──
 function checkPrevenance() {
   const demande=document.getElementById('prev-date-demande')?.value;
   const travail=document.getElementById('prev-date-travail')?.value;
@@ -1650,17 +1593,29 @@ function checkPrevenance() {
     cur.setDate(cur.getDate()+1);
   }
 
-  const ok=joursOuvres>=3;
+  // Le délai requis dépend du contrat (accord collectif ou pas)
+  const contract=M5_Contract.get();
+  const seuil=contract.noticeDays||7;
+  const article=contract.accordCollectifPrevenance?'L3123-24':'L3123-31';
+  const sourceLabel=contract.accordCollectifPrevenance
+    ?'accord collectif applicable (3 jours min.)'
+    :'défaut légal sans accord (7 jours min.)';
+
+  const ok=joursOuvres>=seuil;
+  // Cas spécifique : refus sans faute L3123-10 possible si délai < seuil contractuel
+  // Le refus est TOUJOURS possible si le délai contractuel n'est pas respecté
+  const refusL3123_10=!ok;
   const demandeFmt=d1.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
   const travailFmt=d2.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});
 
   el.innerHTML=`<div class="m5-alert ${ok?'ok':'critique'}">
     <span>${ok?'✅':'🚨'}</span>
     <div>
-      <strong>${joursOuvres} jour${joursOuvres>1?'s':''} ouvré${joursOuvres>1?'s':''}</strong> entre la demande (${demandeFmt}) et le jour de travail (${travailFmt}).<br><br>
+      <strong>${joursOuvres} jour${joursOuvres>1?'s':''} ouvré${joursOuvres>1?'s':''}</strong> entre la demande (${demandeFmt}) et le jour de travail (${travailFmt}).<br>
+      <span style="font-size:12px;color:var(--miz-text3);">Ton contrat indique : <strong>${seuil} jours min.</strong> — ${sourceLabel}</span><br><br>
       ${ok
-        ?'Le délai légal de 3 jours ouvrés est respecté.'
-        :`<strong>Délai insuffisant</strong> — il manque ${3-joursOuvres} jour${3-joursOuvres>1?'s':''} ouvré${3-joursOuvres>1?'s':''}. Tu peux refuser ces heures sans faute (Art. L3123-24).`}
+        ?`Le délai prévu par ton contrat (${seuil} jours, Art. ${article}) est respecté.`
+        :`<strong>Délai insuffisant</strong> — il manque ${seuil-joursOuvres} jour(s) ouvré(s) selon ton contrat (Art. ${article}).${refusL3123_10?'<br><br>⚖️ <strong>Refus sans faute possible</strong> (Art. L3123-10) : tu peux refuser ces heures, ce refus ne constitue ni faute ni motif de licenciement. Conserve cette analyse comme preuve.':''}`}
     </div>
   </div>`;
 }
@@ -1925,7 +1880,7 @@ function _wizUpdateSummary() {
   _set('wiz-sum-hours', `⏱️ Contrat : <strong>${h}h/semaine</strong>${rate>0?' · '+rate.toFixed(2)+' €/h':''}`);
   _set('wiz-sum-ccn',   `🏢 CCN : <strong>${_wizCCN?_wizCCN.n+' ('+Math.round(_wizCCN.cap*100)+'%)':'Droit commun (10%)'}</strong>`);
   _set('wiz-sum-mode',  `📅 Mode : <strong>${modeLbls[_wizMode]||_wizMode}</strong>`);
-  _set('wiz-sum-feries',`🎌 Fériés : <strong>${_wizNeutraliseFeries?"Neutralisés (Art. L3121-29)":"Dans l'assiette (Cass. 2012)"}</strong>`);
+  _set('wiz-sum-feries',`🎌 Fériés : <strong>${_wizNeutraliseFeries?"Neutralisés (L3133-3 + jurisprudence)":"Dans l'assiette (accord spécifique)"}</strong>`);
   if(exercice) _set('wiz-sum-exercice',`📆 Début exercice : <strong>${new Date(exercice+'T12:00:00').toLocaleDateString('fr-FR')}</strong>`);
 }
 function _set(id, html) { const el=document.getElementById(id); if(el) el.innerHTML=html; }
@@ -2088,7 +2043,6 @@ function importDataJSON(input) {
 }
 
 window.exportDataJSON=exportDataJSON; window.importDataJSON=importDataJSON;
-window.genererRefusPDF=genererRefusPDF;
 
 // ── Saisie rapide depuis l'accueil ────────────────────────────────
 function quickSave(hours) {
