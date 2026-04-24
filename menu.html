@@ -3,11 +3,14 @@
 <head>
   <meta charset="UTF-8">
   <title>Simulateur heures supplémentaires</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="light dark">
   <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#4FB3C2">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Compteur Heures & Paie">
   <script src="ccn/conventions-collectives.js"></script>
 
@@ -24,10 +27,22 @@
       align-items: center;
       min-height: 100vh; min-height: 100dvh; height: 100dvh;
       justify-content: flex-start;
-      padding: calc(env(safe-area-inset-top) + 40px) 20px calc(env(safe-area-inset-bottom) + 20px);
+      padding-top: calc(env(safe-area-inset-top) + 40px);
+      padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+      padding-left: calc(env(safe-area-inset-left) + 20px);
+      padding-right: calc(env(safe-area-inset-right) + 20px);
       gap: 20px;
       overflow-x: hidden;
       -webkit-tap-highlight-color: transparent;
+    }
+
+    /* ── Android 16 Large screens — pliables, tablettes, ChromeOS ── */
+    @media (min-width: 900px) {
+      body { padding-left: calc(env(safe-area-inset-left) + 40px); padding-right: calc(env(safe-area-inset-right) + 40px); }
+      .btn { max-width: 300px; }
+    }
+    @media (orientation: landscape) and (min-width: 800px) {
+      body { flex-direction: row; flex-wrap: wrap; justify-content: center; align-content: center; }
     }
 
     .btn {
@@ -574,19 +589,19 @@
       <div style="font-size:13px;font-weight:600;color:#2196a6">⚙️ Accord d'entreprise / de branche</div>
       <div class="ccn-row">
         <div><label>Nom de l'accord</label><input id="cc-nom" placeholder="Ex: Accord entreprise 2026"></div>
-        <div><label>Seuil HS (h/sem)</label><input id="cc-seuil" type="number" value="35" min="35" max="48"></div>
+        <div><label>Seuil HS (h/sem)</label><input id="cc-seuil" type="number" inputmode="decimal" value="35" min="35" max="48"></div>
       </div>
       <div class="ccn-row">
-        <div><label>Taux palier 1 (%)</label><input id="cc-taux1" type="number" value="25" min="10" max="100"></div>
-        <div><label>Durée palier 1 (h)</label><input id="cc-palier1" type="number" value="8" min="1" max="16"></div>
+        <div><label>Taux palier 1 (%)</label><input id="cc-taux1" type="number" inputmode="decimal" value="25" min="10" max="100"></div>
+        <div><label>Durée palier 1 (h)</label><input id="cc-palier1" type="number" inputmode="decimal" value="8" min="1" max="16"></div>
       </div>
       <div class="ccn-row">
-        <div><label>Taux inter. (% ou vide)</label><input id="cc-taux-inter" type="number" placeholder="Vide = pas de palier inter." min="10" max="100"></div>
-        <div><label>Durée palier inter. (h)</label><input id="cc-palier-inter" type="number" placeholder="Ex: 4" min="1" max="16"></div>
+        <div><label>Taux inter. (% ou vide)</label><input id="cc-taux-inter" type="number" inputmode="decimal" placeholder="Vide = pas de palier inter." min="10" max="100"></div>
+        <div><label>Durée palier inter. (h)</label><input id="cc-palier-inter" type="number" inputmode="decimal" placeholder="Ex: 4" min="1" max="16"></div>
       </div>
       <div class="ccn-row">
-        <div><label>Taux final (%)</label><input id="cc-taux2" type="number" value="50" min="25" max="100"></div>
-        <div><label>Contingent annuel (h)</label><input id="cc-contingent" type="number" value="220" min="90" max="360"></div>
+        <div><label>Taux final (%)</label><input id="cc-taux2" type="number" inputmode="decimal" value="50" min="25" max="100"></div>
+        <div><label>Contingent annuel (h)</label><input id="cc-contingent" type="number" inputmode="decimal" value="220" min="90" max="360"></div>
       </div>
       <div>
         <label>Début de semaine HS</label>
