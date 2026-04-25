@@ -494,25 +494,42 @@ class ModuleReaderPro extends ModuleReader {
     });
 
     allWeeks.sort((a, b) => a.week.localeCompare(b.week));
+
+    // FIX : exclure la semaine en cours si on est lundi-jeudi (semaine pas terminée)
+    // Sinon la moyenne 12 semaines inclut une semaine partielle qui fausse le calcul
+    // (ex: utilisateur a saisi 5h mardi → semaine compte pour 40h alors qu'elle ira à 45h)
+    const _now = new Date();
+    const _dow = _now.getDay(); // 0=dim, 1=lun, ... 6=sam
+    const _isWeekIncomplete = _dow >= 1 && _dow <= 4; // lundi à jeudi = semaine en cours
+    if (_isWeekIncomplete && allWeeks.length > 0) {
+      // Calculer la clé ISO de la semaine en cours
+      const _currentWeekKey = this._getISOWeek(
+        _now.getFullYear() + '-' +
+        String(_now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(_now.getDate()).padStart(2, '0')
+      );
+      // Retirer cette semaine si elle est en fin de liste
+      const _last = allWeeks[allWeeks.length - 1];
+      if (_last && _last.week === _currentWeekKey) {
+        allWeeks.pop();
+      }
+    }
+
     const last = allWeeks.slice(-weeksBack);
 
     if (last.length === 0) return this._emptyRolling();
 
     // Art. L3121-22 — moyenne sur 12 semaines consécutives ne peut excéder 44h
-    // Calcul correct : moyenne arithmétique sur le nombre de semaines effectivement disponibles
-    // (le déclenchement de l'alerte est conditionné à >= 12 semaines dans legal-engine.js)
     const totalHours = last.reduce((s, w) => s + w.totalHours, 0);
     const avgTotal   = totalHours / last.length;
     const avgExtra   = last.reduce((s, w) => s + w.extra, 0) / last.length;
     const maxTotal   = Math.max(...last.map(w => w.totalHours));
     const violations = {
       over48    : last.filter(w => w.totalHours >= 48).length,
-      // L'alerte over44avg n'est juridiquement valide qu'avec >= 12 semaines
       over44avg : last.length >= 12 && avgTotal >= 44,
       over35    : last.filter(w => w.totalHours > 35).length,
     };
 
-    // Tendance uniquement si on a au moins 4 semaines de donnees
     const half   = Math.floor(last.length / 2);
     const avgOld = half > 1 ? last.slice(0, half).reduce((s, w) => s + w.totalHours, 0) / half : 35;
     const avgNew = half > 1 ? last.slice(half).reduce((s, w) => s + w.totalHours, 0) / (last.length - half) : 35;
