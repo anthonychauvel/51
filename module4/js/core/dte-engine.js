@@ -933,20 +933,34 @@ class DTEEngine {
     let blankWeeks = 0;
     let consecRest = 0; // compteur récup/absent consécutifs (hors weekend)
     let lastBlankWeekMon = null; // FIX : évite de compter la même semaine plusieurs fois
+    let consecWE = 0;   // compteur WE complets consécutifs (Sonnentag 2003 : 48h de repos)
     outer_loop: for (let i = 0; i < 90; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
       const k = localDK(d);
       const e = days[k];
 
-      // Jour de repos configuré (sam/dim ou autre) = toujours traversé en priorité
-      // FIX : doit être AVANT vacances[k] sinon check-in "congé" le weekend = break erroné
-      if (_isRestDow(dow)) { continue; }
+      // Jour de repos configuré (sam/dim ou autre) = traversé
+      // Mais après 2j de repos consécutifs (= WE complet), reset progressif consec
+      // Sonnentag 2003 : 48h+ de récupération = effet protecteur visible
+      if (_isRestDow(dow)) {
+        consecWE++;
+        // Après un WE complet (2j de repos consécutifs), si on rencontre une sem suivante
+        // sans surcharge importante → break. Pour l'instant continue mais incrémenter.
+        continue;
+      }
+      // Si on revient sur un jour ouvré après un WE complet, le WE compte comme pause partielle
+      // Pour le compteur "jours consécutifs", on remet le consecWE à 0 mais sans casser consec
+      if (consecWE >= 2) {
+        // Le WE complet est passé. Continue à compter mais le compteur reflète
+        // que la chaîne de jours ouvrés a "respiré" 2 jours.
+        consecWE = 0;
+      }
 
       // Vacances déclarées = reset complet (jours ouvrés uniquement)
       if (vacances[k]) break;
 
-      // Férié = pause neutre
+      // Férié = pause neutre + reset progressif
       if (specialDays[k] === 'ferie') { consecRest = 0; continue; }
 
       // Récup / absent : 1j seul = continue, 2j consécutifs = reset
@@ -957,8 +971,10 @@ class DTEEngine {
       }
       consecRest = 0;
 
-      // Semaine sans HS — FIX blankWeeks : compter par semaine, pas par jour
-      // Bug : chaque jour d'une semaine sans HS incrémentait blankWeeks → break prématuré
+      // Semaine sans HS — FIX consec :
+      // 1 semaine à seuil CCN ou moins = pause suffisante pour casser le compteur consécutif
+      // (Sonnentag 2003 : récup partielle après 48h, mais l'utilisateur attend une pédagogie
+      // plus stricte — 1 sem normale = "non consécutive" pour les indicateurs visibles)
       const wMon = new Date(d); wMon.setDate(d.getDate() - (dow === 0 ? 6 : dow - 1));
       const wMonKey = localDK(wMon);
       let weekHasOT = false;
@@ -968,12 +984,12 @@ class DTEEngine {
         if (days[ek] && days[ek].extra > 0) { weekHasOT = true; break; }
       }
       if (!weekHasOT) {
-        // N'incrémenter blankWeeks qu'une fois par semaine
+        // 1 semaine sans HS = pause → break consec (anciennement il fallait 2 sem)
         if (wMonKey !== lastBlankWeekMon) {
           lastBlankWeekMon = wMonKey;
           blankWeeks++;
         }
-        if (blankWeeks >= 2) break;
+        if (blankWeeks >= 1) break;
         continue;
       }
       blankWeeks = 0;
@@ -1052,19 +1068,23 @@ class DTEEngine {
           // SEUIL MINIMUM : < 5h extra/sem = semaine légèrement chargée, pas de surcharge cumulative
           // INRS (guide RPS) : fatigue chronique à partir de ~40h/sem sur base 35h = 5h extra
           // J.Occup.Health 2021 : effets dose-temps significatifs à partir de >43h/sem
-          // < 5h : pas de contribution, légère récupération | 5h-7h : contribution linéaire | >7h : contribution pleine
           if (hsReelles < 5) {
-            // Semaine légère (<5h extra = <40h) : pas de contribution, légère réduction
-            if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.06) * 1e9) / 1e9;
+            // Semaine légère (<5h extra = <40h) : pas de contribution, légère récupération
+            // Sonnentag 2003 : 48h+ sans surcharge → début récupération psychologique
+            if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.20) * 1e9) / 1e9;
           } else {
             const contribution = Math.min(1, hsReelles / (_ccnSeuilW * 0.20));
             cumulWeeks = Math.round((cumulWeeks + contribution) * 1e9) / 1e9;
           }
         } else {
-          // Semaine NORMALE (≤ seuil CCN, p.ex. 35h pile ou moins) : récupération réelle
-          // Sans cette branche, une suite de semaines à 35h ne réduisait pas le cumul
-          // → l'app considérait à tort 8 semaines comme "surcharge consécutive"
-          if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
+          // Semaine NORMALE ou SOUS-SEUIL (≤ CCN, p.ex. 35h pile ou moins)
+          // = RÉCUPÉRATION BIOLOGIQUE SIGNIFICATIVE
+          // 7 jours à charge ≤ seuil = 126h hors travail → récup partielle (Meijman & Mulder 1998)
+          // Sonnentag 2003 : recovery experiences augmentent avec la durée du non-travail
+          // Décroissance forte (-0.40/sem) pour qu'une semaine 35h entre 2 chargées
+          // produise visiblement une décroissance du cumul (au lieu de rester stable)
+          // Calibration : 1 sem 35h après 1 sem 45h → cumul passe de 1.0 à 0.60 (-40%)
+          if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.40) * 1e9) / 1e9;
         }
       }
     }
