@@ -598,8 +598,14 @@ function saveWeeklySaisie() {
   Mizuki.clearCache();
   closeModal('modal-week-saisie');
   toast('Semaine enregistrée ✓','success');
-  refreshUI();
-  if(currentSection==='stats') renderStats();
+  // Différer le refresh lourd : laisse la modal se fermer + 60fps avant le re-render
+  // → élimine le "freeze" ressenti après save total semaine
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => {
+      refreshUI();
+      if(currentSection==='stats') renderStats();
+    });
+  });
 }
 
 function deleteWeeklySaisie() {
@@ -610,7 +616,9 @@ function deleteWeeklySaisie() {
   Mizuki.clearCache();
   closeModal('modal-week-saisie');
   toast('Semaine supprimée','info');
-  refreshUI();
+  requestAnimationFrame(() => {
+    requestAnimationFrame(() => refreshUI());
+  });
 }
 
 // ── Résumé semaine sous le calendrier ────────────────────────────
