@@ -68,7 +68,7 @@ body::before {
   position: sticky;
   top: 0;
   z-index: 100;
-  padding: 14px 16px 12px;
+  padding: calc(env(safe-area-inset-top) + 14px) calc(env(safe-area-inset-right) + 16px) 12px calc(env(safe-area-inset-left) + 16px);
   display: flex;
   align-items: center;
   gap: 10px;
