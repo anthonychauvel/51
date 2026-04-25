@@ -1134,27 +1134,41 @@ function update(){
   const _bhi=document.getElementById("baseHebdoInput");if(_bhi)_bhi.value=BASE_HEBDO;
   const _adi=document.getElementById("annualDateInput");if(_adi)_adi.value=annualDate;
   const aft=document.getElementById("autoFerieToggle");
-  if(aft){aft.checked=AUTO_FERIE;aft.onchange=async ()=>{
-    AUTO_FERIE=aft.checked;
-    localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
-    // Si AUTO_FERIE vient d'être activé et qu'aucun férié n'est importé, importer maintenant
-    if(AUTO_FERIE && Object.keys(specialDays).filter(k=>specialDays[k]==='ferie').length===0){
-      try{
-        const by=Number(currentSuffix)||new Date().getFullYear();
-        const years=[by-1,by,by+1];
-        for(const y of years){
-          const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);
-          const f=await res.json();
-          Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});
-        }
-        localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));
-        toast("✅ Jours fériés importés automatiquement","success");
-      }catch(e){
-        toast("⚠️ Import fériés impossible — vérifiez la connexion","warn",4000);
-      }
+  if(aft){
+    aft.checked=AUTO_FERIE;
+    // Bind unique : retirer les anciens handlers avant d'attacher (évite la double-exécution)
+    if(aft._ferieHandler){
+      aft.removeEventListener('change', aft._ferieHandler);
     }
-    update();
-  };}
+    aft._ferieHandler = async ()=>{
+      AUTO_FERIE=aft.checked;
+      localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
+      // Si AUTO_FERIE est activé : s'assurer que les fériés de l'année courante ET adjacentes sont importés
+      if(AUTO_FERIE){
+        const by=Number(currentSuffix)||new Date().getFullYear();
+        const yearsToCheck=[by-1,by,by+1];
+        // Vérifier si chaque année cible a au moins un férié connu
+        const yearsMissing=yearsToCheck.filter(y=>{
+          return !Object.keys(specialDays).some(k=>k.startsWith(String(y)+'-')&&specialDays[k]==='ferie');
+        });
+        if(yearsMissing.length>0){
+          try{
+            for(const y of yearsMissing){
+              const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);
+              const f=await res.json();
+              Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});
+            }
+            localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));
+            toast("✅ Jours fériés mis à jour","success");
+          }catch(e){
+            toast("⚠️ Import fériés impossible — vérifiez la connexion","warn",4000);
+          }
+        }
+      }
+      update();
+    };
+    aft.addEventListener('change', aft._ferieHandler);
+  }
   // Toggle auto-import fériés
   const _aitEl=document.getElementById('autoImportFeriesToggle');
   const _ailEl=document.getElementById('autoImportFeriesLabel');
