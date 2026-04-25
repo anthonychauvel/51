@@ -16,6 +16,7 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,opsz,wght@0,9..40,300;0,9..40,500;0,9..40,700;0,9..40,900;1,9..40,400&display=swap">
   <link rel="stylesheet" href="css/main.css">
+  <link rel="preload" as="image" href="../images/Mizuki.PNG" fetchpriority="high">
 </head>
 <body>
 
@@ -34,6 +35,7 @@
 <!-- ── BULLE MIZUKI ─────────────────────────────────────────────── -->
 <div class="mizuki-bubble-wrap" onclick="openMizukiPopup()">
   <img src="../images/Mizuki.PNG" alt="Mizuki" class="mizuki-avatar"
+    loading="eager" decoding="async" fetchpriority="high"
     onerror="this.src='assets/mizuki.svg'">
   <div class="mizuki-bubble-text" id="mizuki-bubble-text">
     🦊 Bonjour ! Je suis Mizuki. Configure ton contrat pour commencer.
