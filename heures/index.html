@@ -57,7 +57,7 @@ input::placeholder,textarea::placeholder{color:#999 !important;opacity:1}
 .block.plus legend{color:#1976d2}
 .block.minus legend{color:#ef6c00}
 .block.absence legend{color:#c62828}
-.popup-actions{position:sticky;bottom:env(safe-area-inset-bottom);background:#fff;padding-top:10px}
+.popup-actions{background:#fff;padding-top:10px;padding-bottom:env(safe-area-inset-bottom);margin-top:auto}
 #openSettingsBtn{display:block;width:calc(100% - 30px);max-width:900px;margin:0 auto 20px;padding:13px 20px;background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 10px rgba(55,71,79,.3);transition:transform .15s,box-shadow .15s;text-align:left}
 #openSettingsBtn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(55,71,79,.45)}
 #openSettingsBtn:active{transform:scale(.98)}
@@ -934,7 +934,37 @@ function exportJSON(){createSnapshot("before_export");const blob=new Blob([JSON.
     if(e.name!=="AbortError"){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
   });return;
 }const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);localStorage.setItem("FILE_SAVE_DATE_"+currentSuffix,new Date().toISOString());updateSaveBadges();}
-function importJSON(){if(isIOS()){jsonTitle.textContent="Collez le texte JSON (Import)";jsonArea.value="";popupJSON.style.display="flex";}else{const inp=document.createElement("input");inp.type="file";inp.accept=".json";inp.onchange=e=>{const r=new FileReader();r.onload=()=>loadJSON(r.result);r.readAsText(e.target.files[0]);};inp.click();}}
+function importJSON(){
+  // iOS supporte parfaitement <input type="file"> depuis iOS 13+
+  // Le file picker est plus pratique que coller du texte
+  const inp=document.createElement("input");
+  inp.type="file";
+  inp.accept=".json,application/json";
+  inp.style.display="none";
+  inp.onchange=e=>{
+    const file=e.target.files[0];
+    if(!file)return;
+    const r=new FileReader();
+    r.onload=()=>{
+      try{ loadJSON(r.result); }
+      catch(err){ toast("❌ Fichier JSON invalide","error"); }
+    };
+    r.onerror=()=>toast("❌ Lecture du fichier impossible","error");
+    r.readAsText(file);
+  };
+  // Fallback : si le picker ne s'ouvre pas (rare), proposer le coller texte
+  document.body.appendChild(inp);
+  inp.click();
+  setTimeout(()=>{ try{ document.body.removeChild(inp); }catch(_){} }, 5000);
+}
+function importJSONFallback(){
+  // Fallback texte — accessible via menu si besoin
+  if(typeof jsonTitle!=='undefined' && jsonTitle){
+    jsonTitle.textContent="Collez le texte JSON (Import)";
+    jsonArea.value="";
+    popupJSON.style.display="flex";
+  }
+}
 function updateSaveBadges(){const ae=document.getElementById("autoSaveBadge"),fe=document.getElementById("fileSaveBadge");if(!ae||!fe)return;const a=localStorage.getItem("AUTO_SAVE_DATE_"+currentSuffix);const f=localStorage.getItem("FILE_SAVE_DATE_"+currentSuffix);ae.textContent=a?"🟢 Dans l'application : "+new Date(a).toLocaleString():"🟢 Dans l'application : —";fe.textContent=f?"💾 Sauvegarde fichier : "+new Date(f).toLocaleString():"💾 Sauvegarde fichier : —";}
 function confirmImportJSON(){loadJSON(jsonArea.value);closeJSONPopup();}
 function loadJSON(text){let obj;try{obj=JSON.parse(text);}catch(e){toast("❌ JSON invalide","error");return;}if(obj.version!==1){toast("❌ Version incompatible","error");return;}if(obj.exercise&&String(obj.exercise)!==String(currentSuffix)){confirmModal(`Ce fichier appartient à l'exercice ${obj.exercise}.\nBasculer dessus ?`,()=>{loadExercise(obj.exercise);},"Basculer");return;}if(!obj.data||!obj.closures){toast("❌ Sauvegarde invalide","error");return;}createSnapshot("before_import");data=obj.data;closures=obj.closures;reports=obj.reports||{};periodMeta=obj.periodMeta||{};exerciseStart=obj.exerciseStart||"";annualDate=obj.annualDate||"";specialDays=obj.specialDays||{};BASE_HEBDO=Number(obj.BASE_HEBDO)||35;annualRate=Number(obj.annualRate)||10;localStorage.setItem(STORAGE.data,JSON.stringify(data));localStorage.setItem(STORAGE.closures,JSON.stringify(closures));localStorage.setItem(STORAGE.reports,JSON.stringify(reports));localStorage.setItem(STORAGE.periodMeta,JSON.stringify(periodMeta));localStorage.setItem(STORAGE.exerciseStart,exerciseStart);localStorage.setItem(STORAGE.annualDate,annualDate);localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));localStorage.setItem("BASE_HEBDO_"+currentSuffix,BASE_HEBDO);localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);if(typeof update==="function")update();toast("✅ Import réussi","success");}
@@ -1104,7 +1134,27 @@ function update(){
   const _bhi=document.getElementById("baseHebdoInput");if(_bhi)_bhi.value=BASE_HEBDO;
   const _adi=document.getElementById("annualDateInput");if(_adi)_adi.value=annualDate;
   const aft=document.getElementById("autoFerieToggle");
-  if(aft){aft.checked=AUTO_FERIE;aft.onchange=()=>{AUTO_FERIE=aft.checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);update();};}
+  if(aft){aft.checked=AUTO_FERIE;aft.onchange=async ()=>{
+    AUTO_FERIE=aft.checked;
+    localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
+    // Si AUTO_FERIE vient d'être activé et qu'aucun férié n'est importé, importer maintenant
+    if(AUTO_FERIE && Object.keys(specialDays).filter(k=>specialDays[k]==='ferie').length===0){
+      try{
+        const by=Number(currentSuffix)||new Date().getFullYear();
+        const years=[by-1,by,by+1];
+        for(const y of years){
+          const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);
+          const f=await res.json();
+          Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});
+        }
+        localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));
+        toast("✅ Jours fériés importés automatiquement","success");
+      }catch(e){
+        toast("⚠️ Import fériés impossible — vérifiez la connexion","warn",4000);
+      }
+    }
+    update();
+  };}
   // Toggle auto-import fériés
   const _aitEl=document.getElementById('autoImportFeriesToggle');
   const _ailEl=document.getElementById('autoImportFeriesLabel');
@@ -1220,6 +1270,15 @@ const PDF_JOURS=["Dim","Lun","Mar","Mer","Jeu","Ven","Sam"];
 function pdfStr(s){
   if(s===null||s===undefined)return"";
   return String(s)
+    .replace(/\u{1F38C}/gu,"[F]")
+    .replace(/\u26A0\uFE0F?/g,"[!]")
+    .replace(/\u2705/g,"[ok]")
+    .replace(/\u274C/g,"[x]")
+    .replace(/\u{1F4C5}|\u{1F4C6}|\u{1F4B6}|\u{1F4B0}|\u{1F3C1}|\u{1F3AF}|\u{1F512}|\u{1F4CA}|\u{1F4C8}|\u{1F4E5}|\u{1F4CB}/gu,"")
+    .replace(/\u{1F1EB}\u{1F1F7}/gu,"FR")
+    .replace(/[\u{1F300}-\u{1FAFF}]/gu,"")
+    .replace(/[\u2600-\u27BF]/g,"")
+    .replace(/[\uFE00-\uFE0F]/g,"")
     .replace(/[àáâãäå]/g,"a").replace(/[ÀÁÂÃÄÅ]/g,"A")
     .replace(/[éèêë]/g,"e").replace(/[ÉÈÊË]/g,"E")
     .replace(/[îï]/g,"i").replace(/[ÎÏ]/g,"I")
@@ -1232,9 +1291,10 @@ function pdfStr(s){
     .replace(/→/g,"->").replace(/←/g,"<-").replace(/↔/g,"<->")
     .replace(/×/g,"x").replace(/÷/g,"/")
     .replace(/€/g,"EUR").replace(/£/g,"GBP")
-    .replace(/°/g," deg").replace(/ /g," ").replace(/’/g,"'")
+    .replace(/°/g," deg").replace(/ /g," ").replace(/\u2019/g,"'")
     .replace(/¹/g,"1").replace(/²/g,"2").replace(/³/g,"3")
-    .replace(/[^ -~]/g,"?");
+    .replace(/[^ -~]/g,"?")
+    .replace(/\s+/g," ").trim();
 }
 
 function fmtH(h){
@@ -1529,16 +1589,21 @@ function exportMonthlyFullPDF(){
     `Généré le ${new Date().toLocaleDateString("fr-FR")}`
   );
 
-  y=pdfRecapBox(pdf,y,[
+  // Récap principal — utiliser les vrais taux de la CCN (HCR = 10/20/50, pas 25/50)
+  const _recap = [
     ["Semaines analysées",weekRows.length],
     ["Heures supplémentaires",fmtH(tExtra)],
-    ["Total à 25%",fmtH(t25)],
-    ["Total à 50%",fmtH(t50)],
-    ["Absences du mois",fmtH(tAbs)],
-    ["Récupérations",fmtH(tR)],
-    ["Solde brut pondéré",fmtH(brut25+brut50)],
-    ["Solde net",fmtH(net)],
-  ]);
+    ["Total à "+mRules.taux1+"%",fmtH(t25)],
+  ];
+  if(mRules.taux_inter){
+    _recap.push(["Total à "+mRules.taux_inter+"%",fmtH(tInter2||0)]);
+  }
+  _recap.push(["Total à "+mRules.taux2+"%",fmtH(t50)]);
+  if(inclAbs)_recap.push(["Absences du mois",fmtH(tAbs)]);
+  if(inclRec)_recap.push(["Récupérations",fmtH(tR)]);
+  _recap.push(["Solde brut pondéré",fmtH(brut25+brutI2+brut50)]);
+  _recap.push(["Solde net",fmtH(net)]);
+  y=pdfRecapBox(pdf,y,_recap);
 
   const C={WK:PDF_M+1,EXTRA:PDF_M+44,ABS:PDF_M+64,REC:PDF_M+84,H25:PDF_M+104,H50:PDF_M+124};
   function chk(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
@@ -1657,11 +1722,11 @@ function exportAnnualPDF(){
   // Tableau synthèse des périodes
   const CP={IDX:PDF_M+1,DATES:PDF_M+14,EXTRA:PDF_M+82,H25:PDF_M+100,H50:PDF_M+118,REC:PDF_M+136,NET:PDF_M+154};
   function chk(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
-    y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],["25%",CP.H25],["50%",CP.H50],["Récup",CP.REC],["Solde net",CP.NET]]);
+    y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],[(aRules.taux1||25)+"%",CP.H25],[(aRules.taux2||50)+"%",CP.H50],["Récup",CP.REC],["Solde net",CP.NET]]);
   }}
 
   y=pdfSectionTitle(pdf,y,"Synthèse par période");
-  y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],["25%",CP.H25],["50%",CP.H50],["Récup.",CP.REC],["Solde net",CP.NET]]);
+  y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],[(aRules.taux1||25)+"%",CP.H25],[(aRules.taux2||50)+"%",CP.H50],["Récup.",CP.REC],["Solde net",CP.NET]]);
 
   periodResults.forEach(({idx,start,end,tExtra,t25,t50,tR,net},i)=>{
     chk();
@@ -1695,7 +1760,7 @@ function exportAnnualPDF(){
 
   // Détail par période si option activée
   if(inclDetail){
-    periodResults.forEach(({idx,start,end,weekRows,t25,t50,tR,tExtra,rp,net})=>{
+    periodResults.forEach(({idx,start,end,weekRows,t25,t50,tInter:tInterA,tR,tExtra,rp,net})=>{
       if(!weekRows.length)return;
       pdfFooter(pdf);pdf.addPage();y=15;
       const endStr=end.getFullYear()===2099?"en cours":end.toLocaleDateString("fr-FR");
@@ -1704,14 +1769,17 @@ function exportAnnualPDF(){
         `${start.toLocaleDateString("fr-FR")} → ${endStr}`,
         `Exercice ${currentSuffix}  |  Base ${BASE_HEBDO} h`
       );
-      y=pdfRecapBox(pdf,y,[
+      const _aRules=getCCNRules();
+      const _recapPeriod=[
         ["Report précédent",fmtH(rp)],
         ["H. supplémentaires",fmtH(tExtra)],
-        ["25%",fmtH(t25)],
-        ["50%",fmtH(t50)],
-        ["Récupérations",fmtH(tR)],
-        ["Solde net",fmtH(net)],
-      ]);
+        [_aRules.taux1+"%",fmtH(t25)],
+      ];
+      if(_aRules.taux_inter)_recapPeriod.push([_aRules.taux_inter+"%",fmtH(tInterA||0)]);
+      _recapPeriod.push([_aRules.taux2+"%",fmtH(t50)]);
+      _recapPeriod.push(["Récupérations",fmtH(tR)]);
+      _recapPeriod.push(["Solde net",fmtH(net)]);
+      y=pdfRecapBox(pdf,y,_recapPeriod);
       const DW={WK:PDF_M+1,EXTRA:PDF_M+44,ABS:PDF_M+64,REC:PDF_M+84,H25:PDF_M+104,H50:PDF_M+124};
       function chkD(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
         y=pdfTableHeader(pdf,y,[["Semaine du",DW.WK],["H.Sup.",DW.EXTRA],["Absence",DW.ABS],["Récup.",DW.REC],["25%",DW.H25],["50%",DW.H50]]);
@@ -1985,7 +2053,9 @@ const _skipFirst=_startDay>1;let _i=_skipFirst?1:0,_count=0;while(_count<12&&_i<
   localStorage.setItem(STORAGE.closures,JSON.stringify(closures));
   annualRate=Number(document.getElementById("wizHourlyRate").value)||10;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);
   AUTO_FERIE=document.getElementById("wizAutoFerie").checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
-  if(document.getElementById("wizImportFeries").checked){try{const years=[by-1,by,by+1];for(const y of years){const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);const f=await res.json();Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});}localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));}catch(e){console.warn("Import jours fériés échoué:",e);}}
+  // Forcer import fériés si AUTO_FERIE actif (sinon le -7h en semaine ne s'applique sur rien)
+  const _shouldImportFeries = document.getElementById("wizImportFeries").checked || AUTO_FERIE;
+  if(_shouldImportFeries){try{const years=[by-1,by,by+1];for(const y of years){const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);const f=await res.json();Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});}localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));}catch(e){console.warn("Import jours fériés échoué:",e);if(AUTO_FERIE)toast("⚠️ Import fériés impossible — le mode férié auto nécessite une connexion internet","warn",4000);}}
   closeWizardModal();if(typeof buildPeriods==="function")buildPeriods();if(typeof update==="function")update();showToast();
 }
 function openWizardModal(){wizReset();document.getElementById("wizardModal").style.display="flex";lockBodyScroll();}
