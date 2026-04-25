@@ -4204,7 +4204,18 @@ function kitsuneNarrateOvertime(deltaH, source) {
       }
     } catch(e) {}
     const _recoveryKey = _isInRecoveryPhase() ? 'r1' : 'r0';
-    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_r4';
+    // Hash global M1+M2 pour invalider le cache popup si modification dans le passé
+    let _globalHash = 0;
+    try {
+      const _yr = new Date().getFullYear().toString();
+      const _m1raw = localStorage.getItem('DATA_REPORT_' + _yr) || '';
+      const _m2raw = localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + _yr) || '';
+      const _s = _m1raw + '|' + _m2raw;
+      for (let _i = 0; _i < _s.length; _i++) {
+        _globalHash = ((_globalHash << 5) - _globalHash + _s.charCodeAt(_i)) | 0;
+      }
+    } catch(e) {}
+    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_r4';
     let _cachedPopup  = null;
     try {
       const _pc = JSON.parse(localStorage.getItem('FOX_POPUP_DAILY') || '{}');
@@ -7616,7 +7627,11 @@ function refreshKitsunePopup() {
         // Il y a des données, déclencher une analyse
         try { kitsuneNarrateOvertime(0, 'POPUP'); } catch(e){}
         foxText.textContent = '🦊 Analyse en cours...';
-        setTimeout(() => {
+        // Retry plusieurs fois pour laisser le temps à la narration async d'écrire dans localStorage
+        let _try = 0;
+        const _maxTry = 6;
+        const _checkNarr = () => {
+          _try++;
           const n = localStorage.getItem('FOX_LAST_NARRATION');
           if (n) {
             try {
@@ -7627,10 +7642,21 @@ function refreshKitsunePopup() {
               let html = '';
               if (narr.titre) html += '<div style="color:#FF8C42;font-weight:900;font-size:0.95rem;margin-bottom:8px;">'+narr.titre+'</div>';
               if (narr.message) html += '<div style="color:#ccc;line-height:1.7;font-size:0.88rem;">'+narr.message+'</div>';
-              foxText.innerHTML = html || '🦊 Analyse terminée';
+              if (html) {
+                foxText.innerHTML = html;
+                return; // narration trouvée et affichée → stop
+              }
             } catch(e){}
           }
-        }, 500);
+          // Narration pas encore prête → retry jusqu'à _maxTry
+          if (_try < _maxTry) {
+            setTimeout(_checkNarr, 500);
+          } else {
+            // Fallback après 6 retries (3 secondes) — afficher message générique
+            foxText.innerHTML = '<div style="color:#FF8C42;font-weight:700;margin-bottom:6px;">🦊 Pas d\'analyse disponible</div><div style="color:#ccc;font-size:0.88rem;">Continue la saisie pour générer un historique fiable.</div>';
+          }
+        };
+        setTimeout(_checkNarr, 500);
       }
     }
   }
