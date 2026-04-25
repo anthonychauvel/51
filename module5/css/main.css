@@ -612,13 +612,19 @@ body::before {
   align-items: center; gap: 2px;
   background: var(--miz-bg2);
   transition: background .1s, border-color .1s, transform .1s;
+  position: relative;
 }
 .m5-cal-day:active { transform: scale(.93); }
+/* Indicateur visuel : jour cliquable non saisi → bordure pointillée discrète */
+.m5-cal-day:not(.future):not(.vac):not(.normal):not(.over):not(.under):not(.today):not(.ferie):hover {
+  border-color: rgba(139,92,246,0.4);
+  background: rgba(139,92,246,0.08);
+}
 .m5-cal-day.today  { border-color: var(--miz-primary); background: var(--miz-accent); }
 .m5-cal-day.normal { background: rgba(16,185,129,0.10); }
 .m5-cal-day.over   { background: rgba(245,158,11,0.12); }
 .m5-cal-day.under  { background: rgba(139,92,246,0.10); }
-.m5-cal-day.weekend{ background: var(--miz-bg2); opacity: 0.55; }
+.m5-cal-day.weekend{ background: var(--miz-bg2); opacity: 0.78; border: 1.5px dashed rgba(139,92,246,0.25); }
 .m5-cal-day.future { background: var(--miz-bg2); opacity: 0.35; cursor: default; }
 .m5-cal-day.vac    { background: rgba(20,184,166,0.12); cursor: default; }
 .m5-cal-day.ferie  { background: rgba(245,158,11,0.13); border: 1.5px solid rgba(245,158,11,0.35); }
