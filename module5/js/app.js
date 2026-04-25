@@ -251,7 +251,7 @@ function renderCalendar() {
     const _feriesMap=currentAnalysis&&currentAnalysis.feriesMap;
     const isFerie=!!(  _feriesMap&&_feriesMap[d.dk]&&!isWeekend);
     const worked=d.worked;
-    const contract_daily=contract.hoursBase/5;
+    const contract_daily=contract.hoursBase / Math.max(1, Math.min(7, contract.joursOuvresContrat || 5));
     // Coloration : si une période est sélectionnée, colorier ses jours
     let cellClass='m5-cal-day';
     if(_currentPeriode) {
@@ -398,9 +398,14 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   inp.value=existing?existing.worked:'';
 
   // Propositions rapides basées sur le contrat
-  const base=contract.hoursBase/5; // base journalière
+  // Utilise joursOuvresContrat (défini par l'utilisatrice) au lieu de 5 en dur
+  const nbJours = Math.max(1, Math.min(7, contract.joursOuvresContrat || 5));
+  const base = contract.hoursBase / nbJours; // base journalière selon vrai pattern
   const proposals=[];
-  const steps=[0, base-1, base-0.5, base, base+0.5, base+1, base+2, base+3];
+  // Range adaptatif : si base < 4h, propose des paliers plus serrés
+  const steps = base < 4
+    ? [0, base-0.5, base, base+0.5, base+1, base+2, base+3, base+4]
+    : [0, base-1, base-0.5, base, base+0.5, base+1, base+2, base+3];
   steps.forEach(h=>{
     if(h>=0&&h<=12) proposals.push(Math.round(h*2)/2);
   });
