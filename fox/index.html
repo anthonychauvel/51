@@ -2507,9 +2507,9 @@ function _analyzeLegalSituation() {
       maxAvg12:     Math.round(maxAvg12 * 100) / 100,
       hasWeekViol:  maxWeekTotal >= 48,
       hasAvgViol:   maxAvg12 >= 44,
-      // OPTION 1 : hasWeekAlert basé sur la MOYENNE 12 sem (L3121-22) et non sur le max ponctuel
-      // Exclut les semaines vacances M4 — conforme à l'esprit de la loi
-      hasWeekAlert: maxAvg12 >= 42 && maxAvg12 < 44,
+      // Alerte uniquement à partir de 44h moyenne 12 sem (Art. L3121-22)
+      // Pas d'alerte sous-seuil — le seuil légal est 44h, point.
+      hasWeekAlert: false,
       totalWeeks:   weekArr.length,
     };
 
@@ -14387,10 +14387,8 @@ function _recordViolation(situation) {
   } else if (situation.weekly?.hasAvgViol) {
     viols.push({ ts: now, niveau:'danger', titre:'Moyenne 12 sem. > 44h',
       detail: 'Moyenne : ' + _fmtH(situation.weekly.maxAvg12), art: 'Art. L3121-22' });
-  } else if (situation.weekly?.hasWeekAlert) {
-    viols.push({ ts: now, niveau:'warning', titre:'Semaine chargée',
-      detail: situation.weekly.maxWeekTotal + 'h cette semaine', art: 'Art. L3121-10' });
   }
+  // Plus d'alerte sous-seuil — la limite légale est 44h moyenne, en dessous = conforme
   if (situation.annual?.hasContingentDanger) {
     viols.push({ ts: now, niveau:'danger', titre:'Contingent annuel dépassé',
       detail: _fmtH(situation.annual.annualOT)+' / '+_fmtH(situation.annual.contingentMax),
