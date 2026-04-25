@@ -1045,21 +1045,26 @@ class DTEEngine {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
-      if (hasAnyDay && !isVacWeekP1 && weekH > _ccnSeuilW) {
-        // Contribution proportionnelle : HS réelles vs seuil CCN
-        // FIX v2 : weekH - _ccnSeuilW (pas daysLogged×base qui gonflait hsReelles)
-        // Exemples (seuil 35h) : +6h HS → 0.86 | +2h HS → 0.29 | +10h HS → 1.0 (cap)
-        const hsReelles = weekH - _ccnSeuilW;
-        // SEUIL MINIMUM : < 5h extra/sem = semaine légèrement chargée, pas de surcharge cumulative
-        // INRS (guide RPS) : fatigue chronique à partir de ~40h/sem sur base 35h = 5h extra
-        // J.Occup.Health 2021 : effets dose-temps significatifs à partir de >43h/sem
-        // < 5h : pas de contribution | 5h-7h : contribution linéaire | >7h : contribution pleine
-        if (hsReelles < 5) {
-          // Semaine légère (<5h extra = <40h) : pas de contribution, réduction partielle
-          if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.06) * 1e9) / 1e9;
+      if (hasAnyDay && !isVacWeekP1) {
+        if (weekH > _ccnSeuilW) {
+          // Semaine en surcharge (>seuil) : contribution proportionnelle aux HS
+          const hsReelles = weekH - _ccnSeuilW;
+          // SEUIL MINIMUM : < 5h extra/sem = semaine légèrement chargée, pas de surcharge cumulative
+          // INRS (guide RPS) : fatigue chronique à partir de ~40h/sem sur base 35h = 5h extra
+          // J.Occup.Health 2021 : effets dose-temps significatifs à partir de >43h/sem
+          // < 5h : pas de contribution, légère récupération | 5h-7h : contribution linéaire | >7h : contribution pleine
+          if (hsReelles < 5) {
+            // Semaine légère (<5h extra = <40h) : pas de contribution, légère réduction
+            if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.06) * 1e9) / 1e9;
+          } else {
+            const contribution = Math.min(1, hsReelles / (_ccnSeuilW * 0.20));
+            cumulWeeks = Math.round((cumulWeeks + contribution) * 1e9) / 1e9;
+          }
         } else {
-          const contribution = Math.min(1, hsReelles / (_ccnSeuilW * 0.20));
-          cumulWeeks = Math.round((cumulWeeks + contribution) * 1e9) / 1e9;
+          // Semaine NORMALE (≤ seuil CCN, p.ex. 35h pile ou moins) : récupération réelle
+          // Sans cette branche, une suite de semaines à 35h ne réduisait pas le cumul
+          // → l'app considérait à tort 8 semaines comme "surcharge consécutive"
+          if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.10) * 1e9) / 1e9;
         }
       }
     }
@@ -1464,6 +1469,12 @@ class DTEEngine {
     try {
       if (typeof LifestylePanel !== 'undefined') {
         lifestyleBoost = LifestylePanel.getBoosts();
+        // Debug : log uniquement si les boosts sont significatifs
+        if (lifestyleBoost.fatigueMult && Math.abs(lifestyleBoost.fatigueMult - 1.0) > 0.05) {
+          console.log('[DTE] lifestyle actif — fatigueMult:', lifestyleBoost.fatigueMult.toFixed(3),
+                      '| stress:', (lifestyleBoost.stress||0).toFixed(3),
+                      '| recovery:', (lifestyleBoost.recovery||0).toFixed(3));
+        }
       }
     } catch(_) {}
     const hasM1   = raw.m1 && (raw.m1.totalExtra > 0 || Object.keys(raw.m1.days || {}).length > 0);
