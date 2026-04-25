@@ -351,15 +351,15 @@ const ARTICLES_LOI = [
     mots: ["travailleur de nuit", "statut", "270h", "deux fois par semaine", "trois heures"]
   },
   {
-    art: "Art. L3122-7", titre: "Durée maximale du travail de nuit",
-    def: "La durée quotidienne du travail de nuit ne peut excéder 8 heures. La durée hebdomadaire, calculée sur une période de 12 semaines consécutives, ne peut dépasser 40 heures.",
-    ex: "Un poste de nuit de 10h contrevient à la durée maximale légale de 8h — une dérogation accordée par l'inspection du travail est nécessaire.",
+    art: "Art. L3122-6", titre: "Durée maximale quotidienne du travail de nuit",
+    def: "La durée quotidienne du travail accomplie par un travailleur de nuit ne peut excéder 8 heures. La durée hebdomadaire moyenne, calculée sur 12 semaines consécutives, ne peut dépasser 40 heures (Art. L3122-7).",
+    ex: "Un poste de nuit de 10h contrevient à la durée maximale légale de 8h — une dérogation par accord collectif ou inspection du travail est nécessaire.",
     mots: ["nuit", "8 heures", "durée maximale", "40 heures", "12 semaines", "plafond"]
   },
   {
-    art: "Art. L3122-9", titre: "Contreparties travail de nuit",
-    def: "Les travailleurs de nuit bénéficient de contreparties fixées par accord collectif, sous forme de repos compensateur et, le cas échéant, de compensation salariale. En l'absence d'accord, des contreparties minimales doivent quand même être accordées.",
-    ex: "Sans accord collectif précisant les contreparties nuit, l'employeur doit verser a minima une compensation financière pour les heures de nuit effectuées.",
+    art: "Art. L3122-8", titre: "Contreparties travail de nuit",
+    def: "Les travailleurs de nuit bénéficient de contreparties au titre des périodes de nuit pendant lesquelles ils sont employés, sous forme de repos compensateur et, le cas échéant, de compensation salariale. Ces contreparties sont fixées par accord collectif (L3122-15 et suiv.).",
+    ex: "Sans accord collectif précisant les contreparties nuit, l'employeur doit a minima accorder des repos compensateurs équivalents.",
     mots: ["contreparties", "nuit", "repos compensateur", "compensation salariale", "accord"]
   },
   {
@@ -687,8 +687,8 @@ const ARTICLES_LOI = [
     mots: ["expression des salariés", "droit d'expression", "contenu du travail", "organisation", "liberté"]
   },
   {
-    art: "Art. L2311-1", titre: "Comité Social et Economique — seuils",
-    def: "Le comité social et économique est mis en place dans les entreprises d'au moins 11 salariés. Ses attributions varient selon l'effectif : elles sont plus étendues au-dessus de 50 salariés.",
+    art: "Art. L2311-2", titre: "Comité Social et Economique — seuils",
+    def: "Un comité social et économique est mis en place dans les entreprises d'au moins 11 salariés. Sa mise en place n'est obligatoire que si l'effectif d'au moins 11 salariés est atteint pendant 12 mois consécutifs. Ses attributions varient selon l'effectif : elles sont plus étendues au-dessus de 50 salariés.",
     ex: "En dessous de 11 salariés, il n'y a pas de CSE obligatoire. Entre 11 et 49, le CSE a des attributions réduites (pas de CSSCT, pas de consultation obligatoire sur la stratégie).",
     mots: ["CSE", "seuils", "11 salariés", "50 salariés", "comité social économique"]
   },
@@ -699,8 +699,8 @@ const ARTICLES_LOI = [
     mots: ["délégation", "heures CSE", "élu", "temps de travail", "rémunération"]
   },
   {
-    art: "Art. L2323-1", titre: "Information et consultation du CSE",
-    def: "L'employeur informe et consulte le CSE sur les questions intéressant l'organisation, la gestion et la marche générale de l'entreprise, notamment sur les conditions de travail. La consultation doit être préalable à toute décision importante.",
+    art: "Art. L2312-8", titre: "Information et consultation du CSE",
+    def: "Le CSE a pour mission d'assurer une expression collective des salariés permettant la prise en compte permanente de leurs intérêts dans les décisions relatives à la gestion et à l'évolution économique et financière de l'entreprise, à l'organisation du travail, à la formation professionnelle et aux techniques de production. La consultation doit être préalable à toute décision importante.",
     ex: "Une restructuration, un plan social, une modification importante des conditions de travail nécessitent la consultation préalable du CSE. Ne pas le consulter peut entraîner la suspension de la décision.",
     mots: ["CSE", "consultation", "information", "organisation", "décision", "préalable"]
   },
@@ -759,10 +759,10 @@ const ARTICLES_LOI = [
     mots: ["travail de nuit", "accord collectif", "obligation", "justification", "mise en place"]
   },
   {
-    art: "Art. L3122-13", titre: "Travail de nuit — repos quotidien",
-    def: "Le repos quotidien des travailleurs de nuit est de 11 heures. Il doit être pris dans les conditions prévues aux articles L3131-1 et suivants. Aucune dérogation n'est possible pour les travailleurs de nuit.",
-    ex: "Un travailleur de nuit finissant à 6h du matin ne peut pas reprendre son poste avant 17h. Le repos de 11h est incompressible, y compris pour le travail de nuit.",
-    mots: ["travail de nuit", "repos quotidien", "11 heures", "incompressible"]
+    art: "Art. L3131-1 (+ L3122-13)", titre: "Travail de nuit — repos quotidien",
+    def: "Le repos quotidien des travailleurs de nuit relève du droit commun : 11 heures consécutives minimum (Art. L3131-1). L'article L3122-13 distinct organise la priorité d'accès à un poste de jour pour les travailleurs de nuit. Aucune dérogation automatique au repos de 11h n'est prévue spécifiquement pour les travailleurs de nuit.",
+    ex: "Un travailleur de nuit finissant à 6h du matin ne peut pas reprendre son poste avant 17h. Le repos de 11h est dû, comme pour les autres salariés.",
+    mots: ["travail de nuit", "repos quotidien", "11 heures", "L3131-1", "priorité poste jour"]
   },
   {
     art: "Art. L3133-3", titre: "Jours fériés — chômage",
@@ -783,8 +783,8 @@ const ARTICLES_LOI = [
     mots: ["congés payés", "assimilation", "accident du travail", "maternité", "acquisition"]
   },
   {
-    art: "Art. L3141-13", titre: "Ordre des départs en congés",
-    def: "A l'intérieur de la période des congés, l'ordre et les dates de départ sont fixés par l'employeur après avis du CSE, en tenant compte de la situation de famille des bénéficiaires et de leur ancienneté.",
+    art: "Art. L3141-15 + L3141-16", titre: "Ordre des départs en congés",
+    def: "L'ordre des départs en congé est fixé par accord d'entreprise ou de branche (Art. L3141-15). À défaut, l'employeur le détermine après avis du CSE, en tenant compte de la situation de famille (présence d'enfants/personne à charge, congés du conjoint), de l'ancienneté et de l'activité chez d'autres employeurs (Art. L3141-16).",
     ex: "L'employeur peut imposer les dates de départ en congés mais doit tenir compte des enfants scolarisés et de la situation familiale (conjoint travaillant dans la même entreprise, etc.).",
     mots: ["congés payés", "ordre de départ", "dates", "famille", "ancienneté", "CSE"]
   },
