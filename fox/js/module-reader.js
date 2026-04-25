@@ -498,17 +498,17 @@ class ModuleReaderPro extends ModuleReader {
 
     if (last.length === 0) return this._emptyRolling();
 
-    // Normaliser sur 52 semaines : 1 semaine a 45h sur 52 semaines
-    // ne doit pas donner une moyenne de 45h - on ramene au pro-rata annuel
-    const totalHoursSurplus = last.reduce((s, w) => s + Math.max(0, w.totalHours - 35), 0);
-    const weeksInYear = 52;
-    const normDivisor = Math.max(last.length, weeksInYear); // toujours au moins 52
-    const avgTotal  = 35 + (totalHoursSurplus / normDivisor);
-    const avgExtra  = last.reduce((s, w) => s + w.extra, 0) / normDivisor;
-    const maxTotal  = Math.max(...last.map(w => w.totalHours));
+    // Art. L3121-22 — moyenne sur 12 semaines consécutives ne peut excéder 44h
+    // Calcul correct : moyenne arithmétique sur le nombre de semaines effectivement disponibles
+    // (le déclenchement de l'alerte est conditionné à >= 12 semaines dans legal-engine.js)
+    const totalHours = last.reduce((s, w) => s + w.totalHours, 0);
+    const avgTotal   = totalHours / last.length;
+    const avgExtra   = last.reduce((s, w) => s + w.extra, 0) / last.length;
+    const maxTotal   = Math.max(...last.map(w => w.totalHours));
     const violations = {
       over48    : last.filter(w => w.totalHours >= 48).length,
-      over44avg : avgTotal >= 44,
+      // L'alerte over44avg n'est juridiquement valide qu'avec >= 12 semaines
+      over44avg : last.length >= 12 && avgTotal >= 44,
       over35    : last.filter(w => w.totalHours > 35).length,
     };
 

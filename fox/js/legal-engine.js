@@ -207,9 +207,12 @@ function _analyzeCurrentWeek(ctx, v, sc) {
   }
 }
 
-// ─── Moyenne 12 semaines ──────────────────────────────────────────
+// ─── Moyenne 12 semaines (Art. L3121-22) ─────────────────────────
+// L'alerte ne se déclenche qu'à partir de 12 semaines de données
+// (impossible de calculer une moyenne sur 12 semaines avec moins de 12 semaines)
 function _analyzeRollingAverage(ctx, v, sc) {
-  if (ctx.rolling.weeksAnalyzed < 2) return;
+  // Minimum 12 semaines requis pour évaluer la moyenne 12 sem (L3121-22)
+  if (ctx.rolling.weeksAnalyzed < 12) return;
   const avg = ctx.rolling.avgTotal;
 
   if (avg >= FOX_LEGAL_LIMITS.HEBDO_MAX_MOYENNE_12) {
