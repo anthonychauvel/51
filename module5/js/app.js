@@ -2000,6 +2000,12 @@ function wizFinish() {
   calendarMonday=M5_getCurrentMonday();
   Mizuki.clearCache();
   toast('Bienvenue '+(name?name+'! ':'')+'Mizuki est prête 🦊','success');
+  // FIX : supprimer le style anti-flash qui bloquait le switch wizard → vue principale
+  // (avec !important, il empêchait refreshUI() de modifier display)
+  try {
+    const _af = document.getElementById('m5-antiflash-style');
+    if (_af && _af.parentNode) _af.parentNode.removeChild(_af);
+  } catch(_) {}
   refreshUI();
 }
 
