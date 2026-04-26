@@ -2612,10 +2612,16 @@ function _analyzeLegalSituation() {
     };
 
     // 5. NIVEAU GLOBAL
+    // - 'danger' : violation absolue (>10h/jour, >48h/sem, contingent dépassé)
+    // - 'warning' : risque réel (>12h/jour ponctuel, moyenne 12 sem >44h, contingent proche)
+    // - 'alert'  : alerte sous-seuil — RETIRÉ (hasWeekAlert est false par défaut)
+    //   NB : weeksOver44 > 0 NE déclenche PAS d'alerte car 44-48h est LÉGAL en ponctuel
+    //        (la limite ponctuelle absolue est 48h Art. L3121-20 → hasWeekViol)
+    //        (le seuil 44h ne s'applique qu'en MOYENNE sur 12 sem Art. L3121-22 → hasAvgViol)
     let globalLevel = 'ok';
     if (daily.hasDailyCrit || weekly.hasWeekViol || annual.hasContingentDanger) globalLevel = 'danger';
     else if (daily.hasDailyRisk || weekly.hasAvgViol || annual.hasContingentAlert) globalLevel = 'warning';
-    else if (weekly.hasWeekAlert || weekly.weeksOver44 > 0) globalLevel = 'alert';
+    // 'alert' supprimé — pas d'alerte ponctuelle sous-seuil légal
 
     return { daily, weekly, period, annual, globalLevel, baseHebdo, baseJour, year };
 
