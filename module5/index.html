@@ -75,6 +75,26 @@
 </script>
 </head>
 <body>
+<script>
+// Anti-flash : déterminer immédiatement quelle vue afficher AVANT le rendu
+// Évite de voir le wizard "Pas de contrat" puis switcher vers la vue principale
+(function(){
+  try {
+    var contractRaw = localStorage.getItem('M5_CONTRACT');
+    var hasContract = false;
+    if (contractRaw) {
+      var c = JSON.parse(contractRaw);
+      hasContract = !!(c && c.hoursBase);
+    }
+    // Injecter le CSS d'état initial AVANT le premier paint
+    var style = document.createElement('style');
+    style.textContent = hasContract
+      ? '#view-no-contract{display:none!important}#view-main{display:block!important}'
+      : '#view-no-contract{display:block!important}#view-main{display:none!important}';
+    document.head.appendChild(style);
+  } catch(e) {}
+})();
+</script>
 <div id="landscape-blocker" aria-hidden="true">
   <div class="lb-icon">📱</div>
   <div class="lb-title">Tournez votre téléphone</div>
@@ -108,7 +128,7 @@
 
 <!-- ══ VUE : PAS DE CONTRAT ══════════════════════════════════════ -->
 <!-- ══ WIZARD BIENVENUE ══════════════════════════════════════════ -->
-<div id="view-no-contract" class="wiz-dark-bg">
+<div id="view-no-contract" class="wiz-dark-bg" style="display:none;">
 
   <!-- Barre de progression -->
   <div id="wiz-progress" style="padding:16px 16px 0;">
