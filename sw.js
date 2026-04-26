@@ -1,9 +1,9 @@
 /**
  * Service Worker — Simulateur Heures Sup & RPG Fox
- * Version : 7.8.0 — Cloudflare Pages (M5 Mizuki + portrait lock)
+ * Version : 7.8.1 — Cloudflare Pages (M5 anti-flash + M4 cumul fix + M1 férié fix)
  */
 
-const CACHE_NAME = "heuressup-cache-v7.8.0";
+const CACHE_NAME = "heuressup-cache-v7.8.1";
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
