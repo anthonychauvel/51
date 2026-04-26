@@ -429,14 +429,7 @@ class Checkin {
         <button class="btn btn--cyan" style="margin-top:var(--gap-l);" id="ci-done">Fermer</button>
       </div>`;
 
-    document.getElementById('ci-done').addEventListener('click', ()=>{
-      this.close();
-      // Re-sync après fermeture pour que les scores soient bien rafraîchis
-      setTimeout(()=>{
-        if(window._fullSync) window._fullSync();
-        else if(window._forcSync) window._forcSync();
-      }, 200);
-    });
+    document.getElementById('ci-done').addEventListener('click', ()=>this.close());
     if(window._fullSync) window._fullSync();
     else if(window._forcSync) window._forcSync();
     window.DTE?.notifications?.show('Check-in enregistré','ok','🦊',statusMsg);

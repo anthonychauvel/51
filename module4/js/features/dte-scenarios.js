@@ -12580,7 +12580,7 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-28 C. trav. — Heures complémentaires",
 "Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
@@ -12601,7 +12601,7 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-28 C. trav. — Heures complémentaires",
 "Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
@@ -12622,7 +12622,7 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-28 C. trav. — Heures complémentaires",
 "Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
@@ -12643,7 +12643,7 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-28 C. trav. — Heures complémentaires",
 "Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
@@ -12664,7 +12664,7 @@ const DTE_SCENARIOS = [
 "Récurrence = droit à requalification en CDI temps plein"
 ],
 "refs": [
-"Art. L3123-28 C. trav. — Heures complémentaires (plafond)",
+"Art. L3123-28 C. trav. — Heures complémentaires",
 "Art. L3123-29 — Majoration 10% à 25%"
 ],
 "urgence": 1,
