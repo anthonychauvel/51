@@ -893,9 +893,8 @@ function calculate(){
   const pStart=new Date(period.start);pStart.setHours(0,0,0,0);
   const pEnd=new Date(period.end);pEnd.setHours(0,0,0,0);
   // Fériés automatiques : appliqués selon règles CCN (feriesChomes)
-  if(AUTO_FERIE === true || AUTO_FERIE === 'true'){
+  if(AUTO_FERIE){
     const _fr=typeof window.CCN_API!=='undefined'?window.CCN_API.getCCNFeriesRules(parseInt(localStorage.getItem('CCN_IDCC')||'0')):{feriesChomes:11,seul1erMaiChome:false};
-    let _ferieAppliqueCount = 0;
     Object.entries(specialDays).forEach(([date,type])=>{
       if(type!=='ferie')return;
       // Si la CCN ne chôme que le 1er mai, ignorer les autres fériés
@@ -904,6 +903,7 @@ function calculate(){
       const dow=d.getDay();if(_isCCNRestDay(dow))return;
       // Appliquer -7h virtuel SAUF si l'utilisateur a explicitement saisi une absence
       // (si data[date].absent > 0 = saisi manuellement → on ne double-compte pas)
+      // (si data[date] a seulement extra → le férié continue d'être chômé)
       const _hasManualAbsent = data[date] && (data[date].absent || 0) > 0;
       if(!_hasManualAbsent){
         // Utiliser getWeekKey() = même clé que la boucle data → cohérence garantie
@@ -911,11 +911,8 @@ function calculate(){
         absences[wk]=(absences[wk]||0)+DAILY_WORK_HOURS;
         // S'assurer que la semaine existe dans weeks même sans extra (pour que absent soit pris en compte)
         if(!weeks[wk])weeks[wk]=0;
-        _ferieAppliqueCount++;
       }
     });
-    // Debug : afficher dans la console combien de fériés ont été appliqués
-    if(window._DEBUG_FERIE) console.log('[M1] AUTO_FERIE actif — ' + _ferieAppliqueCount + ' férié(s) appliqué(s) sur la période');
   }
 
   // Accumuler par semaine civile — tout jour dans [pStart,pEnd], premier jour de la semaine sans filtre
@@ -1198,47 +1195,7 @@ function update(){
   const _bhi=document.getElementById("baseHebdoInput");if(_bhi)_bhi.value=BASE_HEBDO;
   const _adi=document.getElementById("annualDateInput");if(_adi)_adi.value=annualDate;
   const aft=document.getElementById("autoFerieToggle");
-  if(aft){
-    aft.checked=AUTO_FERIE;
-    // Bind unique : retirer les anciens handlers avant d'attacher (évite la double-exécution)
-    if(aft._ferieHandler){
-      aft.removeEventListener('change', aft._ferieHandler);
-    }
-    aft._ferieHandler = async ()=>{
-      AUTO_FERIE=aft.checked;
-      localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
-      console.log('[M1] Toggle férié →', AUTO_FERIE, '| specialDays count:', Object.keys(specialDays).filter(k=>specialDays[k]==='ferie').length);
-      // Si AUTO_FERIE est activé : s'assurer que les fériés sont importés
-      if(AUTO_FERIE){
-        const by=Number(currentSuffix)||new Date().getFullYear();
-        const yearsToCheck=[by-1,by,by+1];
-        const yearsMissing=yearsToCheck.filter(y=>{
-          return !Object.keys(specialDays).some(k=>k.startsWith(String(y)+'-')&&specialDays[k]==='ferie');
-        });
-        if(yearsMissing.length>0){
-          try{
-            for(const y of yearsMissing){
-              const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);
-              const f=await res.json();
-              Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});
-            }
-            localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));
-            toast("✅ Jours fériés mis à jour","success");
-          }catch(e){
-            toast("⚠️ Import fériés impossible — vérifiez la connexion","warn",4000);
-          }
-        }
-      }
-      // FIX : recalculer sans appeler update() (évite la récursion qui rebind le handler)
-      // Suffisant car on ne change que l'effet du AUTO_FERIE
-      try {
-        if(typeof generateCalendar==='function')generateCalendar();
-        if(typeof calculate==='function')calculate();
-        if(typeof updateContingent==='function')updateContingent();
-      } catch(_){}
-    };
-    aft.addEventListener('change', aft._ferieHandler);
-  }
+  if(aft){aft.checked=AUTO_FERIE;aft.onchange=()=>{AUTO_FERIE=aft.checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);update();};}
   // Toggle auto-import fériés
   const _aitEl=document.getElementById('autoImportFeriesToggle');
   const _ailEl=document.getElementById('autoImportFeriesLabel');
