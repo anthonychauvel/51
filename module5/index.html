@@ -78,6 +78,8 @@
 <script>
 // Anti-flash : déterminer immédiatement quelle vue afficher AVANT le rendu
 // Évite de voir le wizard "Pas de contrat" puis switcher vers la vue principale
+// IMPORTANT : ce style est SUPPRIMÉ dès que refreshUI() peut prendre la main,
+//             sinon il bloque les transitions wizard → vue principale après "Commencer"
 (function(){
   try {
     var contractRaw = localStorage.getItem('M5_CONTRACT');
@@ -88,10 +90,25 @@
     }
     // Injecter le CSS d'état initial AVANT le premier paint
     var style = document.createElement('style');
+    style.id = 'm5-antiflash-style';
     style.textContent = hasContract
       ? '#view-no-contract{display:none!important}#view-main{display:block!important}'
       : '#view-no-contract{display:block!important}#view-main{display:none!important}';
     document.head.appendChild(style);
+    // Supprimer le style anti-flash dès que JS principal a pu s'exécuter
+    // refreshUI() prend alors le relais avec ses styles inline normaux
+    function _removeAntiFlash(){
+      var s = document.getElementById('m5-antiflash-style');
+      if(s && s.parentNode) s.parentNode.removeChild(s);
+    }
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', function(){
+        // Attendre 1 frame supplémentaire pour laisser refreshUI() s'exécuter
+        requestAnimationFrame(function(){ requestAnimationFrame(_removeAntiFlash); });
+      });
+    } else {
+      requestAnimationFrame(function(){ requestAnimationFrame(_removeAntiFlash); });
+    }
   } catch(e) {}
 })();
 </script>
