@@ -1061,7 +1061,11 @@ class DTEEngine {
         const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
         return vacances[localDK(dt2)];
       });
-      if (hasAnyDay && !isVacWeekP1) {
+      if (hasAnyDay && isVacWeekP1) {
+        // Vacances déclarées M4 — récupération forte mais PARTIELLE (de Bloom 2010 + INRS)
+        // 1 sem OFF = -0.45 | 2 sem = -0.90 | 3 sem = -1.35 (mémoire physiologique réaliste)
+        if (cumulWeeks > 0) cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.45) * 1e9) / 1e9;
+      } else if (hasAnyDay && !isVacWeekP1) {
         if (weekH > _ccnSeuilW) {
           // Semaine en surcharge (>seuil) : contribution proportionnelle aux HS
           const hsReelles = weekH - _ccnSeuilW;
@@ -1089,57 +1093,10 @@ class DTEEngine {
       }
     }
 
-    // Passe 2 : réductions de récupération (même ordre chronologique)
-    for (let w = 51; w >= 0; w--) {
-      let weekH = 0, hasAnyDay = false;
-      // FIX VERSIONING : jours ouvrés à cette semaine historique
-      const _wDate2 = new Date(todayMonday); _wDate2.setDate(todayMonday.getDate() - w * 7);
-      const _wDaysCount2 = _workDaysAt(_wDate2);
-      for (let dd = 0; dd < _wDaysCount2; dd++) { // FIX CCN
-        const dt = new Date(todayMonday);
-        dt.setDate(todayMonday.getDate() - w * 7 + dd);
-        if (dt > today) continue;
-        const k = localDK(dt);
-        const e = days[k];
-        if (e && e.absent) continue;
-        // M1→M4 : recup ≥ 7h = jour de repos → ne compte pas dans les heures de surcharge
-        if (e && (e.recup >= 7)) continue;
-        // FIX VACANCES : jour vacances = 0h HS
-        const isVacDay = !!vacances[k];
-        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
-        hasAnyDay = true;
-      }
-      // FIX : isM1RestWeekP2 requiert majorité des jours absents (même logique que Passe 1)
-      // 1 jour absent seul (ex: lundi férié marqué absent) ne = pas semaine de vacances
-      const isM1RestWeekP2 = (() => {
-        let restDays = 0;
-        for (let dd2 = 0; dd2 < workDaysPerWeek; dd2++) {
-          const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd2);
-          const ek = localDK(dt2); const ev = days[ek];
-          if (ev && ((ev.absent >= 7) || (ev.recup >= 7))) restDays++;
-        }
-        return restDays >= Math.ceil(workDaysPerWeek / 2);
-      })();
-      const isVacWeekP2 = isM1RestWeekP2 || Array.from({length: workDaysPerWeek}, (_,dd) => dd).some(dd => {
-        const dt2 = new Date(todayMonday); dt2.setDate(todayMonday.getDate() - w*7 + dd);
-        return vacances[localDK(dt2)];
-      });
-      if (!hasAnyDay) continue;
-      if (isVacWeekP2 && cumulWeeks > 0) {
-        // Vacances déclarées M4 — PATCH calibration anti-reset (de Bloom 2010 + INRS)
-        // Avant : -0.75/sem (trop fort → quasi reset après 1-2 sem, irréaliste)
-        // Après : -0.45/sem → récupération forte mais PARTIELLE, dette résiduelle conservée
-        // 1 sem OFF = -0.45 | 2 sem = -0.90 | 3 sem = -1.35 (mémoire physiologique réaliste)
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.45) * 1e9) / 1e9;
-      } else if (!isVacWeekP2 && weekH <= _ccnSeuilW && cumulWeeks > 0) {
-        // Semaine normale (0 HS) — PATCH : -0.12/sem (vs -0.10) — différenciation vacances/repos claire
-        // Meijman & Mulder 1998 : récupération partielle active dès retour à charge normale
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.12) * 1e9) / 1e9;
-      } else if (!isVacWeekP2 && weekH > _ccnSeuilW && (weekH - _ccnSeuilW) < 5 && cumulWeeks > 0) {
-        // Semaine légère (<5h extra = <40h) : légère réduction (entre semaine normale et surcharge)
-        cumulWeeks = Math.round(Math.max(0, cumulWeeks - 0.06) * 1e9) / 1e9;
-      }
-    }
+    // Passe 2 SUPPRIMÉE — la Passe 1 fait maintenant TOUT (accumulation ET récupération)
+    // Avant : Passe 2 décrémentait encore -0.12/-0.06 sur les sem sous-seuil/légères
+    // → double-comptabilité qui bloquait artificiellement cumulWeeks à des valeurs basses
+    // Après : un seul passage chronologique avec branches incrémentation/décrémentation
 
     // Fallback robuste : si cumulWeeks = 0 mais qu'il existe des logs,
     // estimer la durée d'exposition via la plage de dates réelle du log.
