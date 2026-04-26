@@ -735,8 +735,8 @@ const ARTICLES_LOI = [
     mots: ["contingent", "220 heures", "accord collectif", "dérogation", "annuel"]
   },
   {
-    art: "Art. L3121-31", titre: "Dépassement du contingent",
-    def: "Les heures supplémentaires accomplies au-delà du contingent annuel ouvrent droit, en plus de la majoration salariale, à une contrepartie obligatoire sous forme de repos. Les modalités de ce repos sont définies par accord collectif ou, à défaut, par décret.",
+    art: "Art. L3121-33", titre: "Dépassement du contingent — contrepartie obligatoire en repos",
+    def: "Les heures supplémentaires accomplies au-delà du contingent annuel ouvrent droit à une contrepartie obligatoire en repos. La durée de ce repos ne peut être inférieure à 50% des HS hors contingent pour les entreprises ≤20 salariés, et 100% pour les entreprises >20 salariés (Art. L3121-33 al.3 + L3121-30 al.2).",
     ex: "Au-delà de 220h de HS dans l'année, chaque heure supplémentaire génère automatiquement un droit à repos compensateur, en plus de la majoration de salaire.",
     mots: ["dépassement contingent", "contrepartie repos", "220h", "repos compensateur obligatoire"]
   },
