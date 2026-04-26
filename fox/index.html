@@ -2567,7 +2567,9 @@ function _analyzeLegalSituation() {
       maxWeekMon, weeksOver48, weeksOver44,
       maxAvg12:     Math.round(maxAvg12 * 100) / 100,
       hasWeekViol:  maxWeekTotal >= 48,
-      hasAvgViol:   maxAvg12 >= 44,
+      // Art. L3121-22 : moyenne sur 12 sem CONSECUTIVES — il faut au moins 12 sem effectives
+      // Sans cette protection, 1 seule semaine à 45h déclenche l'alerte (faux positif)
+      hasAvgViol:   weekArr.length >= 12 && maxAvg12 >= 44,
       // Alerte uniquement à partir de 44h moyenne 12 sem (Art. L3121-22)
       // Pas d'alerte sous-seuil — le seuil légal est 44h, point.
       hasWeekAlert: false,
