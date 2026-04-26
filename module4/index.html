@@ -2,14 +2,12 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <meta name="color-scheme" content="only light">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <title>Ma prédiction santé</title>
   <meta name="theme-color" content="#00060f">
   <link rel="apple-touch-icon" href="/hs/apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Digital Twin">
   <link rel="icon" type="image/svg+xml" href="assets/favicon.svg">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
@@ -31,21 +29,10 @@
     text-align: center; padding: 24px;
     font-family: -apple-system, system-ui, sans-serif;
   }
-  #landscape-blocker .lb-icon {
-    font-size: 64px; margin-bottom: 24px;
-    animation: lb-rotate 2s ease-in-out infinite;
-  }
-  #landscape-blocker .lb-title {
-    font-size: 22px; font-weight: 700; margin-bottom: 12px;
-    color: #4FB3C2;
-  }
-  #landscape-blocker .lb-msg {
-    font-size: 15px; color: #ccd; line-height: 1.5; max-width: 320px;
-  }
-  @keyframes lb-rotate {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-90deg); }
-  }
+  #landscape-blocker .lb-icon { font-size: 64px; margin-bottom: 24px; animation: lb-rotate 2s ease-in-out infinite; }
+  #landscape-blocker .lb-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; color: #4FB3C2; }
+  #landscape-blocker .lb-msg { font-size: 15px; color: #ccd; line-height: 1.5; max-width: 320px; }
+  @keyframes lb-rotate { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } }
 }
 @media screen and (orientation: portrait) {
   #landscape-blocker { display: none !important; }
@@ -53,7 +40,6 @@
 </style>
 <script>
 (function(){
-  // Tentative de verrouillage orientation portrait quand supporté (Android, PWA)
   function tryLockPortrait(){
     try {
       if (screen.orientation && typeof screen.orientation.lock === 'function') {
@@ -61,16 +47,12 @@
       }
     } catch(_) {}
   }
-  // Au chargement et à chaque changement de visibilité
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', tryLockPortrait);
   } else {
     tryLockPortrait();
   }
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) tryLockPortrait();
-  });
-  // Au premier tap utilisateur (certains navigateurs exigent un geste utilisateur)
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) tryLockPortrait(); });
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
