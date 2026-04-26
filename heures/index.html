@@ -4,14 +4,11 @@
 <link rel="manifest" href="../manifest.json">
 <link rel="apple-touch-icon" href="../apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
-<meta name="mobile-web-app-capable" content="yes">
-<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Compteur Heures & Paie">
 <meta name="theme-color" content="#4FB3C2">
-<meta name="color-scheme" content="only light">
 <meta charset="UTF-8">
 <title>Simulateur de compteur annuel</title>
-<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1">
 <style>
 .popup-content input[type=number]{box-sizing:border-box;width:100%;}
 .saisie-toggle{display:flex;gap:0;margin-bottom:12px;border-radius:8px;overflow:hidden;border:1px solid #ddd}
@@ -30,11 +27,7 @@
 .month-nav select{flex:1;min-height:40px;display:block;width:100%;box-sizing:border-box;background-color:#fff;-webkit-appearance:menulist;border:1px solid #ccc;border-radius:4px}
 .calc-details summary{cursor:pointer;font-weight:bold;background:#e3f2fd;padding:8px;border-radius:6px;margin-bottom:8px}
 .calc-details[open] summary{background:#bbdefb}
-body{font-family:Arial,sans-serif;background:#f2f2f2;padding:calc(env(safe-area-inset-top) + 15px) calc(env(safe-area-inset-right) + 15px) calc(env(safe-area-inset-bottom) + 15px) calc(env(safe-area-inset-left) + 15px)}
-@media (min-width: 900px) {
-  body { padding-left: calc(env(safe-area-inset-left) + 40px); padding-right: calc(env(safe-area-inset-right) + 40px); }
-  .main, .calendar-wrapper, .container { max-width: 900px; margin: 0 auto; }
-}
+body{font-family:Arial,sans-serif;background:#f2f2f2;padding:15px}
 h1,h2{text-align:center}
 .config,.totaux{background:#fff;padding:15px;border-radius:8px;max-width:900px;margin:15px auto}
 .calendar-wrapper{max-width:900px;margin:20px auto}
@@ -43,11 +36,7 @@ h1,h2{text-align:center}
 .day{background:#fff;padding:6px;border-radius:6px;cursor:pointer;text-align:center;height:80px;box-sizing:border-box;overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
 .day small{font-size:11px;line-height:1.1;white-space:nowrap}
 .day.in-period{border:2px solid #2196a6;background:#e0f4f7}
-button,input,textarea,select{width:100%;padding:8px;margin:5px 0}
-input,textarea,select{background:#ffffff !important;color:#111 !important;-webkit-appearance:none;appearance:none;border:1px solid #ddd;border-radius:6px}
-input[type="checkbox"],input[type="radio"]{width:auto;-webkit-appearance:auto;appearance:auto}
-input::placeholder,textarea::placeholder{color:#999 !important;opacity:1}
-.popup-content,.notice-modal{background:#fff !important;color:#111 !important}
+button,input,textarea{width:100%;padding:8px;margin:5px 0}
 .popup{position:fixed;inset:0;background:rgba(0,0,0,.5);display:none;align-items:flex-end;justify-content:center;z-index:1000;pointer-events:auto;will-change:transform;transform:translateZ(0);backface-visibility:hidden}
 .popup-content{background:#fff;width:100%;max-width:500px;max-height:70svh;overflow-y:auto;border-radius:16px 16px 0 0;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom));-webkit-overflow-scrolling:touch;overscroll-behavior:contain}
 .breakdown{background:#f9f9f9;padding:10px;border-radius:6px;margin-top:10px;font-size:14px}
@@ -57,7 +46,7 @@ input::placeholder,textarea::placeholder{color:#999 !important;opacity:1}
 .block.plus legend{color:#1976d2}
 .block.minus legend{color:#ef6c00}
 .block.absence legend{color:#c62828}
-.popup-actions{background:#fff;padding-top:10px;padding-bottom:env(safe-area-inset-bottom);margin-top:auto}
+.popup-actions{position:sticky;bottom:env(safe-area-inset-bottom);background:#fff;padding-top:10px}
 #openSettingsBtn{display:block;width:calc(100% - 30px);max-width:900px;margin:0 auto 20px;padding:13px 20px;background:linear-gradient(135deg,#37474f,#546e7a);color:#fff;border:none;border-radius:12px;font-size:15px;font-weight:600;cursor:pointer;box-shadow:0 2px 10px rgba(55,71,79,.3);transition:transform .15s,box-shadow .15s;text-align:left}
 #openSettingsBtn:hover{transform:translateY(-1px);box-shadow:0 4px 16px rgba(55,71,79,.45)}
 #openSettingsBtn:active{transform:scale(.98)}
@@ -88,7 +77,7 @@ input::placeholder,textarea::placeholder{color:#999 !important;opacity:1}
 .wiz-closures-grid input{margin:0;font-size:13px;padding:6px}
 .wiz-check-row{display:flex;align-items:center;gap:10px;padding:12px;border-radius:10px;background:#f9f9f9;border:1px solid #eee;margin-bottom:10px;cursor:pointer}
 .wiz-check-row input[type=checkbox]{width:18px;height:18px;margin:0;flex-shrink:0;cursor:pointer}
-.wiz-step input[type="date"],.wiz-step input[type="number" inputmode="decimal"],.wiz-step input[type="text"]{
+.wiz-step input[type="date"],.wiz-step input[type="number"],.wiz-step input[type="text"]{
   width:100%;box-sizing:border-box;padding:16px;font-size:17px;
   border:2px solid #e0e0e0;border-radius:12px;background:#fff;color:#222;
   -webkit-appearance:none;appearance:none;margin-bottom:4px;display:block;
@@ -99,7 +88,7 @@ input::placeholder,textarea::placeholder{color:#999 !important;opacity:1}
   text-align:left;
   min-height:24px;
 }
-.wiz-step input[type="date"]:focus,.wiz-step input[type="number" inputmode="decimal"]:focus{
+.wiz-step input[type="date"]:focus,.wiz-step input[type="number"]:focus{
   border-color:#4FB3C2;outline:none;
 }
 .wiz-check-row span{font-size:14px;font-weight:500}
@@ -195,7 +184,6 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
 </style>
 <script>
 (function(){
-  // Tentative de verrouillage orientation portrait quand supporté (Android, PWA)
   function tryLockPortrait(){
     try {
       if (screen.orientation && typeof screen.orientation.lock === 'function') {
@@ -203,7 +191,6 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       }
     } catch(_) {}
   }
-  // Au chargement et à chaque changement de visibilité
   if (document.readyState === 'loading') {
     document.addEventListener('DOMContentLoaded', tryLockPortrait);
   } else {
@@ -212,7 +199,6 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   document.addEventListener('visibilitychange', function(){
     if (!document.hidden) tryLockPortrait();
   });
-  // Au premier tap utilisateur (certains navigateurs exigent un geste utilisateur)
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
@@ -270,7 +256,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <label style="font-size:13px;margin-top:8px;margin-bottom:4px;display:block;">Date de cl&ocirc;ture annuelle</label>
       <input type="date" id="annualDateInput">
     </div>
-    <input type="number" inputmode="decimal" step="0.5" id="baseHebdoInput" style="display:none;">
+    <input type="number" step="0.5" id="baseHebdoInput" style="display:none;">
     <hr class="settings-divider">
     <div class="settings-group">
       <span class="settings-group-label">&#128198; Cl&ocirc;tures comptables</span>
@@ -452,7 +438,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     <div id="saisieWorked" style="display:none">
       <div class="saisie-worked">
         <label>&#x1F551; Total heures travaill&eacute;es ce jour</label>
-        <input id="workedHours" type="number" inputmode="decimal" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()" style="font-size:16px;">
+        <input id="workedHours" type="number" step="0.25" min="0" max="24" placeholder="ex: 9.5" oninput="calcFromWorked()" style="font-size:16px;">
         <div class="calc-result" id="workedResult"></div>
       </div>
     </div>
@@ -465,7 +451,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
         <button onclick="addExtra(0.5)">+30 min</button>
         <button onclick="addExtra(1)">+1 h</button>
         <button onclick="addExtra(2)">+2 h</button>
-        <input id="manualExtra" type="number" inputmode="decimal" step="0.25">
+        <input id="manualExtra" type="number" step="0.25">
       </fieldset>
     </div>
 
@@ -474,12 +460,12 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <button onclick="addRecup(0.25)">-15 min</button>
       <button onclick="addRecup(0.5)">-30 min</button>
       <button onclick="addRecup(1)">-1 h</button>
-      <input id="manualRecup" type="number" inputmode="decimal" step="0.25">
+      <input id="manualRecup" type="number" step="0.25">
     </fieldset>
     <fieldset class="block absence">
       <legend>&#10060; Absence</legend>
       <label><input type="checkbox" id="isAbsent"> Heures d&apos;absence</label>
-      <input id="absentHours" type="number" inputmode="decimal" step="0.25">
+      <input id="absentHours" type="number" step="0.25">
     </fieldset>
     <div class="popup-actions">
       <button onclick="saveManual()">Valider</button>
@@ -537,7 +523,7 @@ function toast(msg,type,duration){type=type||"info";duration=duration||2800;var 
 
 function confirmModal(msg,onOk,okLabel,danger){okLabel=okLabel||"Confirmer";danger=danger||false;var m=document.getElementById("confirmModal");document.getElementById("cmMsg").textContent=msg;var okBtn=document.getElementById("cmOk");okBtn.textContent=okLabel;okBtn.style.background=danger?"#c0392b":"var(--accent,#21959a)";var ops=document.querySelectorAll(".popup");ops.forEach(function(p){p.dataset.peb=p.style.pointerEvents;p.style.pointerEvents="none";});m.classList.add("open");var close=function(){m.classList.remove("open");ops.forEach(function(p){p.style.pointerEvents=p.dataset.peb||"";});okBtn.onclick=null;document.getElementById("cmCancel").onclick=null;};okBtn.onclick=function(){close();onOk();};document.getElementById("cmCancel").onclick=close;}
 
-let APP_CRASHED=false,RECOVERY_MODE=false,DEBUG_MODE=false;
+let APP_CRASHED=false,RECOVERY_MODE=false,DEBUG_MODE=true;
 document.querySelectorAll('.popup').forEach(p=>{p.addEventListener('click',e=>{if(e.target===p&&p.id==="popup")closePopup();});});
 let midnightTimer=null;
 function enterRecoveryMode(source,error){
@@ -550,8 +536,8 @@ function enterRecoveryMode(source,error){
   const isCritical=source!=="window.onerror"&&source!=="promise";
   if(isCritical)toast("⚠️ Mode récupération activé — données intactes","warn",5000);
 }
-function simulateCrash(){if(!DEBUG_MODE)return;console.warn("💥 Crash simulé");undefinedVariable.forceCrash();}
-function protectedCrash(){if(!DEBUG_MODE){toast("Fonction désactivée","info");return;}const code=prompt("🔒 Zone protégée\n\nEntrez le code :");if(code===null)return;if(code==="1234")simulateCrash();else toast("❌ Code incorrect","error");}
+function simulateCrash(){console.warn("💥 Crash simulé");undefinedVariable.forceCrash();}
+function protectedCrash(){const code=prompt("🔒 Zone protégée\n\nEntrez le code :");if(code===null)return;if(code==="1234")simulateCrash();else toast("❌ Code incorrect","error");}
 function safe(fn,label){return function(...args){try{return fn.apply(this,args);}catch(e){console.error("💥 CRASH:",label,e);enterRecoveryMode(label,e);return undefined;}};}
 window.onerror=(msg,src,l,c,err)=>{
   if(src && src!=='' && !src.startsWith(location.origin) && !src.startsWith('file://')) return false;
@@ -951,7 +937,7 @@ function calculate(){
   const interLine=rules.taux_inter?`<br>${rules.taux_inter}% : ${fmtH(hInter)} × ${coefInter.toFixed(2)} = ${fmtH(brutInter)}`:'';
   totaux.innerHTML=`<details class="calc-details"><summary>📊 Détails des calculs</summary><div class="breakdown">${details.join("<br>")}<hr>${rules.taux1}% : ${fmtH(h1)} × ${coef1.toFixed(2)} = ${fmtH(brut1)}${interLine}<br>${rules.taux2}% : ${fmtH(h2)} × ${coef2.toFixed(2)} = ${fmtH(brut2)}<br>Report précédent : ${fmtH(reportPrev)}</div></details><hr><b>Solde brut :</b> ${fmtH(brut)}<br>Récup : ${fmtH(totalRecup)}<br><b>Solde net :</b> ${fmtH(net)}`;
   const rateContainer=document.getElementById("rateContainer");rateContainer.innerHTML="";
-  if(shouldShowAnnualClosure()){rateContainer.innerHTML=`<div style="background:#e0f4f7;padding:10px;border-radius:6px;border:1px solid #4FB3C2;margin-top:10px;box-sizing:border-box;width:100%;"><label style="display:block;font-weight:bold;margin-bottom:4px;">Taux horaire (€)</label><input type="number" inputmode="decimal" id="hourlyRateInput" step="0.5" value="${annualRate}" style="width:100%;box-sizing:border-box;margin:0;"></div>`;document.getElementById("hourlyRateInput").oninput=()=>{const v=Number(document.getElementById("hourlyRateInput").value);annualRate=isNaN(v)?10:v;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);calculate();};totaux.innerHTML+=`<hr><div style="background:#e0f4f7;padding:15px;border:2px solid #2196a6;border-radius:8px;"><h3 style="margin:0;color:#2196a6;">🎯 Clôture Annuelle</h3><b>Paiement (${annualRate}€/h) :</b> ${(net*annualRate).toFixed(2)} €</div>`;}
+  if(shouldShowAnnualClosure()){rateContainer.innerHTML=`<div style="background:#e0f4f7;padding:10px;border-radius:6px;border:1px solid #4FB3C2;margin-top:10px;box-sizing:border-box;width:100%;"><label style="display:block;font-weight:bold;margin-bottom:4px;">Taux horaire (€)</label><input type="number" id="hourlyRateInput" step="0.5" value="${annualRate}" style="width:100%;box-sizing:border-box;margin:0;"></div>`;document.getElementById("hourlyRateInput").oninput=()=>{const v=Number(document.getElementById("hourlyRateInput").value);annualRate=isNaN(v)?10:v;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);calculate();};totaux.innerHTML+=`<hr><div style="background:#e0f4f7;padding:15px;border:2px solid #2196a6;border-radius:8px;"><h3 style="margin:0;color:#2196a6;">🎯 Clôture Annuelle</h3><b>Paiement (${annualRate}€/h) :</b> ${(net*annualRate).toFixed(2)} €</div>`;}
 }
 
 function openNotice(){document.getElementById("popupNotice").style.display="flex";}
@@ -995,37 +981,7 @@ function exportJSON(){createSnapshot("before_export");const blob=new Blob([JSON.
     if(e.name!=="AbortError"){const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);}
   });return;
 }const url=URL.createObjectURL(blob),a=document.createElement("a");a.href=url;a.download=fn;document.body.appendChild(a);a.click();document.body.removeChild(a);URL.revokeObjectURL(url);localStorage.setItem("FILE_SAVE_DATE_"+currentSuffix,new Date().toISOString());updateSaveBadges();}
-function importJSON(){
-  // iOS supporte parfaitement <input type="file"> depuis iOS 13+
-  // Le file picker est plus pratique que coller du texte
-  const inp=document.createElement("input");
-  inp.type="file";
-  inp.accept=".json,application/json";
-  inp.style.display="none";
-  inp.onchange=e=>{
-    const file=e.target.files[0];
-    if(!file)return;
-    const r=new FileReader();
-    r.onload=()=>{
-      try{ loadJSON(r.result); }
-      catch(err){ toast("❌ Fichier JSON invalide","error"); }
-    };
-    r.onerror=()=>toast("❌ Lecture du fichier impossible","error");
-    r.readAsText(file);
-  };
-  // Fallback : si le picker ne s'ouvre pas (rare), proposer le coller texte
-  document.body.appendChild(inp);
-  inp.click();
-  setTimeout(()=>{ try{ document.body.removeChild(inp); }catch(_){} }, 5000);
-}
-function importJSONFallback(){
-  // Fallback texte — accessible via menu si besoin
-  if(typeof jsonTitle!=='undefined' && jsonTitle){
-    jsonTitle.textContent="Collez le texte JSON (Import)";
-    jsonArea.value="";
-    popupJSON.style.display="flex";
-  }
-}
+function importJSON(){if(isIOS()){jsonTitle.textContent="Collez le texte JSON (Import)";jsonArea.value="";popupJSON.style.display="flex";}else{const inp=document.createElement("input");inp.type="file";inp.accept=".json";inp.onchange=e=>{const r=new FileReader();r.onload=()=>loadJSON(r.result);r.readAsText(e.target.files[0]);};inp.click();}}
 function updateSaveBadges(){const ae=document.getElementById("autoSaveBadge"),fe=document.getElementById("fileSaveBadge");if(!ae||!fe)return;const a=localStorage.getItem("AUTO_SAVE_DATE_"+currentSuffix);const f=localStorage.getItem("FILE_SAVE_DATE_"+currentSuffix);ae.textContent=a?"🟢 Dans l'application : "+new Date(a).toLocaleString():"🟢 Dans l'application : —";fe.textContent=f?"💾 Sauvegarde fichier : "+new Date(f).toLocaleString():"💾 Sauvegarde fichier : —";}
 function confirmImportJSON(){loadJSON(jsonArea.value);closeJSONPopup();}
 function loadJSON(text){let obj;try{obj=JSON.parse(text);}catch(e){toast("❌ JSON invalide","error");return;}if(obj.version!==1){toast("❌ Version incompatible","error");return;}if(obj.exercise&&String(obj.exercise)!==String(currentSuffix)){confirmModal(`Ce fichier appartient à l'exercice ${obj.exercise}.\nBasculer dessus ?`,()=>{loadExercise(obj.exercise);},"Basculer");return;}if(!obj.data||!obj.closures){toast("❌ Sauvegarde invalide","error");return;}createSnapshot("before_import");data=obj.data;closures=obj.closures;reports=obj.reports||{};periodMeta=obj.periodMeta||{};exerciseStart=obj.exerciseStart||"";annualDate=obj.annualDate||"";specialDays=obj.specialDays||{};BASE_HEBDO=Number(obj.BASE_HEBDO)||35;annualRate=Number(obj.annualRate)||10;localStorage.setItem(STORAGE.data,JSON.stringify(data));localStorage.setItem(STORAGE.closures,JSON.stringify(closures));localStorage.setItem(STORAGE.reports,JSON.stringify(reports));localStorage.setItem(STORAGE.periodMeta,JSON.stringify(periodMeta));localStorage.setItem(STORAGE.exerciseStart,exerciseStart);localStorage.setItem(STORAGE.annualDate,annualDate);localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));localStorage.setItem("BASE_HEBDO_"+currentSuffix,BASE_HEBDO);localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);if(typeof update==="function")update();toast("✅ Import réussi","success");}
@@ -1472,7 +1428,7 @@ function calcPeriodWeeks(pStart,pEnd){
     if(getWeekStart(dd)<pS||getWeekStart(dd)>pE)return;
     wks[wk]=(wks[wk]||0)+(v.extra||0);
     rec[wk]=(rec[wk]||0)+(v.recup||0);
-    if(!_isCCNRestDay(dow))abs[wk]=(abs[wk]||0)+(v.absent||0);
+    if(dow!==0&&dow!==6)abs[wk]=(abs[wk]||0)+(v.absent||0);
   });
   let t1=0,tInter=0,t2=0,tR=0,tExtra=0,tAbs=0;
   const rules=getCCNRules();
@@ -1630,21 +1586,16 @@ function exportMonthlyFullPDF(){
     `Généré le ${new Date().toLocaleDateString("fr-FR")}`
   );
 
-  // Récap principal — utiliser les vrais taux de la CCN (HCR = 10/20/50, pas 25/50)
-  const _recap = [
+  y=pdfRecapBox(pdf,y,[
     ["Semaines analysées",weekRows.length],
     ["Heures supplémentaires",fmtH(tExtra)],
-    ["Total à "+mRules.taux1+"%",fmtH(t25)],
-  ];
-  if(mRules.taux_inter){
-    _recap.push(["Total à "+mRules.taux_inter+"%",fmtH(tInter2||0)]);
-  }
-  _recap.push(["Total à "+mRules.taux2+"%",fmtH(t50)]);
-  if(inclAbs)_recap.push(["Absences du mois",fmtH(tAbs)]);
-  if(inclRec)_recap.push(["Récupérations",fmtH(tR)]);
-  _recap.push(["Solde brut pondéré",fmtH(brut25+brutI2+brut50)]);
-  _recap.push(["Solde net",fmtH(net)]);
-  y=pdfRecapBox(pdf,y,_recap);
+    ["Total à 25%",fmtH(t25)],
+    ["Total à 50%",fmtH(t50)],
+    ["Absences du mois",fmtH(tAbs)],
+    ["Récupérations",fmtH(tR)],
+    ["Solde brut pondéré",fmtH(brut25+brut50)],
+    ["Solde net",fmtH(net)],
+  ]);
 
   const C={WK:PDF_M+1,EXTRA:PDF_M+44,ABS:PDF_M+64,REC:PDF_M+84,H25:PDF_M+104,H50:PDF_M+124};
   function chk(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
@@ -1717,7 +1668,7 @@ function exportAnnualPDF(){
   );
 
   // Précalcul toutes périodes
-  let annualNet=0,annualH25=0,annualH50=0,annualInter=0,annualR=0,annualExtra=0;
+  let annualNet=0,annualH25=0,annualH50=0,annualR=0,annualExtra=0;
   const aRules=getCCNRules();
   const aCoef1=1+aRules.taux1/100,aCoef2=1+aRules.taux2/100,aCoefI=aRules.taux_inter?(1+aRules.taux_inter/100):0;
   const periodResults=[];
@@ -1730,7 +1681,7 @@ function exportAnnualPDF(){
     const rp=getLastValidReport(idx);
     const net=t25*aCoef1+(tInterA||0)*aCoefI+t50*aCoef2+rp-tR;
     const contrib=t25*aCoef1+(tInterA||0)*aCoefI+t50*aCoef2-tR;
-    annualNet+=contrib;annualH25+=t25;annualH50+=t50;annualInter+=(tInterA||0);annualR+=tR;annualExtra+=tExtra;
+    annualNet+=contrib;annualH25+=t25;annualH50+=t50;annualR+=tR;annualExtra+=tExtra;
     periodResults.push({idx,start,end,weekRows,t25,t50,tInter:tInterA||0,tR,tExtra,tAbs,rp,net});
   });
 
@@ -1741,9 +1692,10 @@ function exportAnnualPDF(){
   ];
   
   if (aRules.taux_inter) {
-    // HCR : 3 paliers — annualInter correctement cumulé
+    // HCR : 3 paliers
     recapLines.push([`Total à ${aRules.taux1}%`, fmtH(annualH25)]);
-    recapLines.push([`Total à ${aRules.taux_inter}%`, fmtH(annualInter)]);
+    // TODO: stocker tInter séparément dans le calcul annuel
+    recapLines.push([`Total à ${aRules.taux_inter}%`, "0h"]);
     recapLines.push([`Total à ${aRules.taux2}%`, fmtH(annualH50)]);
   } else {
     // Droit commun : 2 paliers
@@ -1763,11 +1715,11 @@ function exportAnnualPDF(){
   // Tableau synthèse des périodes
   const CP={IDX:PDF_M+1,DATES:PDF_M+14,EXTRA:PDF_M+82,H25:PDF_M+100,H50:PDF_M+118,REC:PDF_M+136,NET:PDF_M+154};
   function chk(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
-    y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],[(aRules.taux1||25)+"%",CP.H25],[(aRules.taux2||50)+"%",CP.H50],["Récup",CP.REC],["Solde net",CP.NET]]);
+    y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],["25%",CP.H25],["50%",CP.H50],["Récup",CP.REC],["Solde net",CP.NET]]);
   }}
 
   y=pdfSectionTitle(pdf,y,"Synthèse par période");
-  y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],[(aRules.taux1||25)+"%",CP.H25],[(aRules.taux2||50)+"%",CP.H50],["Récup.",CP.REC],["Solde net",CP.NET]]);
+  y=pdfTableHeader(pdf,y,[["N°",CP.IDX],["Période",CP.DATES],["H.Sup",CP.EXTRA],["25%",CP.H25],["50%",CP.H50],["Récup.",CP.REC],["Solde net",CP.NET]]);
 
   periodResults.forEach(({idx,start,end,tExtra,t25,t50,tR,net},i)=>{
     chk();
@@ -1801,7 +1753,7 @@ function exportAnnualPDF(){
 
   // Détail par période si option activée
   if(inclDetail){
-    periodResults.forEach(({idx,start,end,weekRows,t25,t50,tInter:tInterA,tR,tExtra,rp,net})=>{
+    periodResults.forEach(({idx,start,end,weekRows,t25,t50,tR,tExtra,rp,net})=>{
       if(!weekRows.length)return;
       pdfFooter(pdf);pdf.addPage();y=15;
       const endStr=end.getFullYear()===2099?"en cours":end.toLocaleDateString("fr-FR");
@@ -1810,17 +1762,14 @@ function exportAnnualPDF(){
         `${start.toLocaleDateString("fr-FR")} → ${endStr}`,
         `Exercice ${currentSuffix}  |  Base ${BASE_HEBDO} h`
       );
-      const _aRules=getCCNRules();
-      const _recapPeriod=[
+      y=pdfRecapBox(pdf,y,[
         ["Report précédent",fmtH(rp)],
         ["H. supplémentaires",fmtH(tExtra)],
-        [_aRules.taux1+"%",fmtH(t25)],
-      ];
-      if(_aRules.taux_inter)_recapPeriod.push([_aRules.taux_inter+"%",fmtH(tInterA||0)]);
-      _recapPeriod.push([_aRules.taux2+"%",fmtH(t50)]);
-      _recapPeriod.push(["Récupérations",fmtH(tR)]);
-      _recapPeriod.push(["Solde net",fmtH(net)]);
-      y=pdfRecapBox(pdf,y,_recapPeriod);
+        ["25%",fmtH(t25)],
+        ["50%",fmtH(t50)],
+        ["Récupérations",fmtH(tR)],
+        ["Solde net",fmtH(net)],
+      ]);
       const DW={WK:PDF_M+1,EXTRA:PDF_M+44,ABS:PDF_M+64,REC:PDF_M+84,H25:PDF_M+104,H50:PDF_M+124};
       function chkD(n=PDF_LINE){if(y+n>PDF_H-12){pdfFooter(pdf);pdf.addPage();y=15;
         y=pdfTableHeader(pdf,y,[["Semaine du",DW.WK],["H.Sup.",DW.EXTRA],["Absence",DW.ABS],["Récup.",DW.REC],["25%",DW.H25],["50%",DW.H50]]);
@@ -1925,7 +1874,7 @@ function protectFunctions(){
     <div id="yearsList"></div>
     <hr>
     <label>Créer / ouvrir un nouvel exercice</label>
-    <input type="number" inputmode="decimal" id="newYearInput" placeholder="Ex : 2039">
+    <input type="number" id="newYearInput" placeholder="Ex : 2039">
     <button onclick="confirmSwitchYear()">Ouvrir</button>
     <button onclick="closeYearsPopup()">Fermer</button>
   </div>
@@ -1976,7 +1925,7 @@ function protectFunctions(){
           <input type="checkbox" id="wizAutoFerie" checked>
           <span>
             <b>Calcul basé sur les heures réellement travaillées (hors jours fériés)</b>
-            <span style="display:block;font-size:12px;color:#888;margin-top:3px;">👉 Selon le Code du travail — Art. L3121-28 (+ Cass. Soc. 2012) : les heures supplémentaires se calculent sur les heures réellement travaillées, les fériés chômés étant assimilés au temps de travail effectif.</span>
+            <span style="display:block;font-size:12px;color:#888;margin-top:3px;">👉 Selon le Code du travail — Art. L3121-29 : les heures supplémentaires se calculent sur les heures réellement travaillées.</span>
           </span>
         </label>
         <div style="padding:10px 14px;font-size:12px;color:#aaa;background:#f0f0f0;">
@@ -1991,7 +1940,7 @@ function protectFunctions(){
     <div class="wiz-step" id="wizStep5">
       <div class="wiz-question">💶 Quel est ton taux horaire brut (€) ?</div>
       <p class="wiz-hint">Utilisé pour estimer le montant des heures supplémentaires lors de la clôture annuelle.</p>
-      <input type="number" inputmode="decimal" id="wizHourlyRate" step="0.5" min="0" value="10" placeholder="Ex : 12.50">
+      <input type="number" id="wizHourlyRate" step="0.5" min="0" value="10" placeholder="Ex : 12.50">
       <div class="wiz-summary" id="wizSummary" style="display:none;margin-top:16px;"><b>Récapitulatif</b><br><span id="wizSummaryContent"></span></div>
       <div class="wiz-nav">
         <button onclick="wizGoTo(4)" style="flex:0 0 auto;width:auto;padding:8px 16px;">← Retour</button>
@@ -2094,9 +2043,7 @@ const _skipFirst=_startDay>1;let _i=_skipFirst?1:0,_count=0;while(_count<12&&_i<
   localStorage.setItem(STORAGE.closures,JSON.stringify(closures));
   annualRate=Number(document.getElementById("wizHourlyRate").value)||10;localStorage.setItem("ANNUAL_RATE_"+currentSuffix,annualRate);
   AUTO_FERIE=document.getElementById("wizAutoFerie").checked;localStorage.setItem("AUTO_FERIE_"+currentSuffix,AUTO_FERIE);
-  // Forcer import fériés si AUTO_FERIE actif (sinon le -7h en semaine ne s'applique sur rien)
-  const _shouldImportFeries = document.getElementById("wizImportFeries").checked || AUTO_FERIE;
-  if(_shouldImportFeries){try{const years=[by-1,by,by+1];for(const y of years){const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);const f=await res.json();Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});}localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));}catch(e){console.warn("Import jours fériés échoué:",e);if(AUTO_FERIE)toast("⚠️ Import fériés impossible — le mode férié auto nécessite une connexion internet","warn",4000);}}
+  if(document.getElementById("wizImportFeries").checked){try{const years=[by-1,by,by+1];for(const y of years){const res=await fetch(`https://calendrier.api.gouv.fr/jours-feries/metropole/${y}.json`);const f=await res.json();Object.keys(f).forEach(d=>{if(!specialDays[d])specialDays[d]="ferie";});}localStorage.setItem(STORAGE.specialDays,JSON.stringify(specialDays));}catch(e){console.warn("Import jours fériés échoué:",e);}}
   closeWizardModal();if(typeof buildPeriods==="function")buildPeriods();if(typeof update==="function")update();showToast();
 }
 function openWizardModal(){wizReset();document.getElementById("wizardModal").style.display="flex";lockBodyScroll();}
@@ -2106,7 +2053,7 @@ function wizReset(){wizClosureMode=null;wizCurrentStep=1;document.querySelectorA
 </script>
 <script>sessionStorage.setItem("appAlive","true");</script>
 
-<div id="toastContainer" aria-live="polite" aria-atomic="true" role="status"></div>
+<div id="toastContainer"></div>
 <div id="confirmModal"><div class="cm-box"><p class="cm-msg" id="cmMsg"></p><div class="cm-btns"><button class="secondary" id="cmCancel">Annuler</button><button id="cmOk">Confirmer</button></div></div></div>
 
 <!-- TOOLTIP BOTTOM-SHEET -->
@@ -2146,7 +2093,7 @@ const TIPS={
   seuil:{
     title:'⏱️ Seuil de déclenchement des HS',
     body:'La durée légale du travail est fixée à 35 heures par semaine. Toute heure travaillée au-delà de ce seuil est une heure supplémentaire.\n\nLa semaine de référence commence selon le jour fixé par votre accord d\'entreprise ou votre CCN.\n\nCertaines CCN prévoient un seuil différent (ex. : 37h, 39h) avec des compensations intégrées dans le salaire de base.',
-    ref:'Art. L3121-27 · Art. L3121-28 Code du travail'
+    ref:'Art. L3121-27 · Art. L3121-32 Code du travail'
   }
 };
 function showTip(key){
