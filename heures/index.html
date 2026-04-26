@@ -162,21 +162,10 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
     text-align: center; padding: 24px;
     font-family: -apple-system, system-ui, sans-serif;
   }
-  #landscape-blocker .lb-icon {
-    font-size: 64px; margin-bottom: 24px;
-    animation: lb-rotate 2s ease-in-out infinite;
-  }
-  #landscape-blocker .lb-title {
-    font-size: 22px; font-weight: 700; margin-bottom: 12px;
-    color: #4FB3C2;
-  }
-  #landscape-blocker .lb-msg {
-    font-size: 15px; color: #ccd; line-height: 1.5; max-width: 320px;
-  }
-  @keyframes lb-rotate {
-    0%, 100% { transform: rotate(0deg); }
-    50% { transform: rotate(-90deg); }
-  }
+  #landscape-blocker .lb-icon { font-size: 64px; margin-bottom: 24px; animation: lb-rotate 2s ease-in-out infinite; }
+  #landscape-blocker .lb-title { font-size: 22px; font-weight: 700; margin-bottom: 12px; color: #4FB3C2; }
+  #landscape-blocker .lb-msg { font-size: 15px; color: #ccd; line-height: 1.5; max-width: 320px; }
+  @keyframes lb-rotate { 0%, 100% { transform: rotate(0deg); } 50% { transform: rotate(-90deg); } }
 }
 @media screen and (orientation: portrait) {
   #landscape-blocker { display: none !important; }
@@ -196,9 +185,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   } else {
     tryLockPortrait();
   }
-  document.addEventListener('visibilitychange', function(){
-    if (!document.hidden) tryLockPortrait();
-  });
+  document.addEventListener('visibilitychange', function(){ if (!document.hidden) tryLockPortrait(); });
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
