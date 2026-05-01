@@ -47,7 +47,7 @@ const GLOSSAIRE = [
   },
   {
     terme: 'Jamais 35h',
-    art: 'Art. L3123-9',
+    art: 'Art. L3123-28',
     def: "Les heures complémentaires ne peuvent jamais porter la durée de travail au niveau de la durée légale (35h) ou à la durée conventionnelle si elle est inférieure. Une seule semaine à 35h+ peut justifier une requalification en contrat temps plein devant les prud'hommes.",
     exemple: "Contrat 30h, on te demande 6h comp → total 36h → illégal. Tu peux refuser sans faute.",
     tags: ['35h','temps plein','requalification']
@@ -127,7 +127,7 @@ const GLOSSAIRE = [
   },
   {
     terme: 'Requalification en temps plein',
-    art: 'Art. L3123-9 + jurisprudence',
+    art: 'Art. L3123-28 + jurisprudence',
     def: "Si tes heures complémentaires t'amènent à atteindre ou dépasser 35h/sem (ou la durée conventionnelle), si ton contrat n'est pas écrit, ou si tes horaires varient sans prévenance permettant de connaître ton rythme, ton contrat peut être requalifié en CDI temps plein par le juge — avec rappel de salaire sur 3 ans.",
     exemple: "Tu travailles 34h sur un contrat 25h de manière systématique pendant plusieurs mois → le Conseil de prud'hommes peut requalifier ton contrat.",
     tags: ['requalification','35h','temps plein','prud\'hommes']
