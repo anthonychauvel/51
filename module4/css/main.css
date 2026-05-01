@@ -294,8 +294,9 @@ body {
   flex-direction: column;
   gap: 0;
   padding: 0 var(--gap-l);
-  padding-top: max(0px, env(safe-area-inset-top));
-  min-height: calc(88px + env(safe-area-inset-top, 0px));
+  /* +12px supplémentaire pour respirer sous l'encoche iPhone Dynamic Island */
+  padding-top: calc(env(safe-area-inset-top, 0px) + 12px);
+  min-height: calc(100px + env(safe-area-inset-top, 0px));
   background: linear-gradient(90deg, var(--void) 0%, var(--deep) 50%, var(--void) 100%);
   border-bottom: 1px solid rgba(0,200,255,0.2);
   flex-shrink: 0;
