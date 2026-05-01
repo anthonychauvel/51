@@ -190,7 +190,7 @@ const CalcEngine = {
     const semainesRequalif = weeks.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
     const alerts = semainesRequalif.length > 0 ? [{
       level:'critique', code:'REQUALIFICATION',
-      msg:`${semainesRequalif.length} semaine(s) à 35h ou plus détectée(s) (${semainesRequalif.map(w=>w.monday).join(', ')}). La durée légale ne peut jamais être atteinte sur un contrat temps partiel — risque de requalification (Art. L3123-9). Conserve cet historique.`
+      msg:`${semainesRequalif.length} semaine(s) à 35h ou plus détectée(s) (${semainesRequalif.map(w=>w.monday).join(', ')}). La durée légale ne peut jamais être atteinte sur un contrat temps partiel — risque de requalification (Art. L3123-28). Conserve cet historique.`
     }] : [];
 
     let compH1 = 0, compH2 = 0;
@@ -272,7 +272,7 @@ const CalcEngine = {
     const solde = Math.round((reelCumule - theoriqueCumule) * 100) / 100;
     const pctAvancement = joursEcoules > 0 ? Math.round(joursEcoules / nbJoursEx * 100) : 0;
 
-    // ⚠️ Détecter les semaines > 35h même en mode annuel (Art. L3123-9)
+    // ⚠️ Détecter les semaines > 35h même en mode annuel (Art. L3123-28)
     const semainesRequalif = weeksInEx.filter(w => (w.worked||0) >= LEGAL_FULL_TIME);
 
     return {
