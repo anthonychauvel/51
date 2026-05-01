@@ -1,9 +1,9 @@
 /**
  * Service Worker — Simulateur Heures Sup & RPG Fox
- * Version : 7.9.3 — Cloudflare Pages (M4 jours non travaillés + label projection 28j)
+ * Version : 7.9.4 — Cloudflare Pages (audit articles juridiques 5 modules)
  */
 
-const CACHE_NAME = "heuressup-cache-v7.9.3";
+const CACHE_NAME = "heuressup-cache-v7.9.4";
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
