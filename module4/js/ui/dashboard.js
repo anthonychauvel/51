@@ -125,14 +125,18 @@ class Dashboard {
       desc: 'Votre niveau d\'épuisement cumulé, calculé selon INRS et J.Occup.Health 2021.',
       source: 'INRS · J.Occup.Health 2021 (Taiwan, 6 mois) · Thompson 2022',
       facteurs_heures: [
-        { label:'Heures supp. cette semaine', key:'_currentWeekExtra', fmt: v => {
+        { label:'Heures supp. cette semaine', key:'_currentWeekExtra', fmt: (v, get) => {
+            const hasData = get && get('_hasCurrentWeekData');
+            if (!hasData) return 'Aucune saisie cette semaine';
             if (!v || v <= 0) return '0h sup. cette semaine';
             return '+'+v.toFixed(1)+'h sup. cette semaine';
         }},
-        { label:'Moyenne quotidienne (28j)', key:'_avgExtra7', fmt: v => {
+        { label:'Moyenne quotidienne (28j)', key:'_avgExtra7', fmt: (v, get) => {
             if (v <= 0) return '0h/j — rythme légal';
+            const isProj = get && get('_isProjection');
             const impact = v < 1 ? 'impact léger' : v < 2 ? 'impact modéré' : 'impact élevé';
-            return '+'+v.toFixed(1)+'h/jour ('+impact+')';
+            const suffix = isProj ? ' — projection historique' : '';
+            return '+'+v.toFixed(1)+'h/jour ('+impact+')'+suffix;
         }},
         { label:'Jours consécutifs avec HS', key:'_consecOT',  fmt: v => v > 10 ? v+'j (WE non comptés) ⚠️ surcharge prolongée' : v > 5 ? v+'j (WE non comptés) — vigilance' : v+'j ouvrés avec HS' },
         { label:'Semaines de surcharge cumulées', key:'_cumulWeeks', fmt: v => {
@@ -413,7 +417,7 @@ class Dashboard {
               ${meta.facteurs_heures.map(f=>`
                 <div style="margin-bottom:7px;">
                   <div style="font-size:10px;color:rgba(255,255,255,0.5);">${f.label}</div>
-                  <div style="font-size:12px;color:#fff;font-weight:600;margin-top:1px;">${f.fmt(normVal(f.key))}</div>
+                  <div style="font-size:12px;color:#fff;font-weight:600;margin-top:1px;">${f.fmt(normVal(f.key), normVal)}</div>
                 </div>`).join('')}
             </div>
             <!-- Colonne droite : Facteur RYTHME DE VIE -->
