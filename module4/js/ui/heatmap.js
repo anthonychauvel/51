@@ -77,16 +77,23 @@ class Heatmap {
       try { const fd=JSON.parse(localStorage.getItem('DTE_FERIES_'+y)||'{}'); Object.keys(fd).forEach(d=>{ _feries[d]=true; }); } catch(_){}
       try { const vac=JSON.parse(localStorage.getItem('DTE_VACANCES_'+y)||'{}'); Object.keys(vac).forEach(d=>{ _vacances[d]=true; }); } catch(_){}
     }
-    const _startYear = new Date(year, 0, 1);
+    // Date de début exercice — depuis EXERCISE_START_<year> (M1) ou défaut au 1er janvier
+    const _exStartRaw = localStorage.getItem('EXERCISE_START_'+year) || '';
+    let _startYear;
+    if (/^\d{4}-\d{2}-\d{2}$/.test(_exStartRaw)) {
+      _startYear = new Date(_exStartRaw + 'T00:00:00');
+    } else {
+      _startYear = new Date(year, 0, 1);
+    }
     const _today = new Date(); _today.setHours(0,0,0,0);
     let daysWorked = 0;
     for (let d = new Date(_startYear); d <= _today; d.setDate(d.getDate()+1)) {
       const dow = d.getDay();
-      if (_restSet.has(dow)) continue;
+      if (_restSet.has(dow)) continue; // jour de repos hebdo CCN exclu
       const dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-      if (_feries[dk] || _vacances[dk]) continue; // férié ou vacances
+      if (_feries[dk] || _vacances[dk]) continue; // férié ou vacances exclus
       const e = days[dk];
-      if (e && e.absent) continue;
+      if (e && e.absent) continue; // absence saisie exclue
       daysWorked++;
     }
     // Calculer depuis totalHS local (inclut M1+M2 mergés) — plus fiable que norm
