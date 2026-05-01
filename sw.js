@@ -1,9 +1,9 @@
 /**
  * Service Worker — Simulateur Heures Sup & RPG Fox
- * Version : 7.8.4 — Cloudflare Pages (M1 PDF taux + M4 label WE + articles)
+ * Version : 7.9.1 — Cloudflare Pages (M4 fatigue HS réelles vs moyenne 28j)
  */
 
-const CACHE_NAME = "heuressup-cache-v7.8.4";
+const CACHE_NAME = "heuressup-cache-v7.9.1";
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
