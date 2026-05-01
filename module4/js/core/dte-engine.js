@@ -1381,6 +1381,7 @@ class DTEEngine {
       sleepDebt:      sleepDebtVal,
       // Valeurs brutes pour les calculs
       _avgExtra7:     avgExtra7,
+      _currentWeekExtra: sumExtra7, // HS RÉELLES saisies cette semaine (pas projection historique)
       _avgH7:         avgH7,
       _weeklyH7:      weeklyH7Effective,
       _recentWeeklyH: recentWeeklyH,
