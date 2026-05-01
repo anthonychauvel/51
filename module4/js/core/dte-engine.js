@@ -1316,7 +1316,7 @@ class DTEEngine {
 
     // Contingent
     const contingentPct = (m1.netOvertime / D.CONTINGENT_MAX) * 100;
-    // RCO — Art. L3121-38
+    // RCO — Art. L3121-33
     const rcoDepassement = Math.max(0, m1.netOvertime - D.CONTINGENT_MAX);
     const rcoH50  = rcoDepassement * 0.5;
     const rcoH100 = rcoDepassement;
