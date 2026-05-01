@@ -1257,8 +1257,8 @@ function renderStats() {
       const wh=w.worked||0;
       const ratio=maxHours>0?Math.min(wh/maxHours,1):0;
       let bg='rgba(108,63,197,0.08)', border='rgba(108,63,197,0.15)', txt='rgba(255,255,255,0.40)';
-      if(wh>=35){ bg='rgba(239,68,68,0.80)'; border='rgba(239,68,68,1)'; txt='#fff'; }
-      else if(wh>contract.hoursBase){ const i=Math.min(Math.round(ratio*255),255); bg=`rgba(245,${Math.round(158*(1-ratio*0.5))},11,${0.4+ratio*0.5})`; border=`rgba(245,158,11,0.7)`; txt='#fff'; }
+      if(wh>=35){ bg='rgba(220,38,38,0.92)'; border='rgba(185,28,28,1)'; txt='#fff'; }
+      else if(wh>contract.hoursBase){ /* HC : jaune-orange clair, distinct du rouge */ const i=Math.min(Math.round(ratio*255),255); bg=`rgba(251,191,36,${0.55+ratio*0.30})`; border=`rgba(217,119,6,0.85)`; txt='#1f1f1f'; }
       else if(wh>0){ bg=`rgba(16,185,129,${0.25+ratio*0.5})`; border='rgba(16,185,129,0.5)'; txt='#fff'; }
       const d=new Date(w.monday+'T12:00:00');
       const lbl=`${d.getDate()}/${d.getMonth()+1}`;
@@ -1270,8 +1270,8 @@ function renderStats() {
     html+=`</div></div>
         <div style="display:flex;gap:12px;margin-top:8px;font-size:11px;color:var(--miz-text3);">
           <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(16,185,129,0.5);border-radius:3px;display:inline-block;"></span>Conforme</span>
-          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(245,158,11,0.6);border-radius:3px;display:inline-block;"></span>HC</span>
-          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(239,68,68,0.7);border-radius:3px;display:inline-block;"></span>≥35h</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(251,191,36,0.85);border:1px solid rgba(217,119,6,0.85);border-radius:3px;display:inline-block;"></span>HC (jaune)</span>
+          <span style="display:flex;align-items:center;gap:4px;"><span style="width:12px;height:12px;background:rgba(220,38,38,0.92);border-radius:3px;display:inline-block;"></span>≥35h (rouge)</span>
         </div>
       </div>
     </div>`;
