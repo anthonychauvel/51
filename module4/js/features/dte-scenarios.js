@@ -9003,7 +9003,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9024,7 +9024,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9045,7 +9045,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9066,7 +9066,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9087,7 +9087,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9108,7 +9108,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9129,7 +9129,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9150,7 +9150,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9171,7 +9171,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9192,7 +9192,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9213,7 +9213,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9234,7 +9234,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9255,7 +9255,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9276,7 +9276,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9297,7 +9297,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9318,7 +9318,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9339,7 +9339,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9360,7 +9360,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -9381,7 +9381,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — RCO",
-"Art. L3121-38 — Taux du RCO (100% des heures)"
+"Art. L3121-33 — Taux du RCO (100% des heures)"
 ],
 "urgence": 3,
 "question": "Que faire en zone de risque élevé ?"
@@ -13071,7 +13071,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — Contingent annuel",
-"Art. L3121-38 — Taux RCO 100%"
+"Art. L3121-33 — Taux RCO 100%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -13092,7 +13092,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — Contingent annuel",
-"Art. L3121-38 — Taux RCO 100%"
+"Art. L3121-33 — Taux RCO 100%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -13113,7 +13113,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — Contingent annuel",
-"Art. L3121-38 — Taux RCO 100%"
+"Art. L3121-33 — Taux RCO 100%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -13134,7 +13134,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — Contingent annuel",
-"Art. L3121-38 — Taux RCO 100%"
+"Art. L3121-33 — Taux RCO 100%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
@@ -13155,7 +13155,7 @@ const DTE_SCENARIOS = [
 ],
 "refs": [
 "Art. L3121-33 C. trav. — Contingent annuel",
-"Art. L3121-38 — Taux RCO 100%"
+"Art. L3121-33 — Taux RCO 100%"
 ],
 "urgence": 1,
 "question": "Question spécifique"
