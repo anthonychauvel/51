@@ -26,6 +26,37 @@ const M6_Router = {
   },
   _load(regime) {
     this._root.innerHTML = '';
+
+    // ── Intro Zenji au premier lancement ──────────────────────
+    if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit()
+        && (regime === 'forfait_jours' || regime === 'forfait_heures')) {
+      this._root.innerHTML = `
+        <div style="background:var(--ivoire);min-height:100dvh;padding:0 0 80px">
+          <div style="background:var(--charbon);padding:14px 16px;padding-top:calc(14px + env(safe-area-inset-top,0))">
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--ivoire)">M6 — Cadres</div>
+            <div style="font-size:0.65rem;color:var(--champagne);letter-spacing:0.06em;text-transform:uppercase">Votre conseiller vous accueille</div>
+          </div>
+          <div style="padding:0 0 16px">
+            ${M6_Zenji.renderIntro ? M6_Zenji.renderIntro() : ''}
+          </div>
+          <div style="padding:0 16px">
+            <button id="zenji-start" class="m6-btn m6-btn-gold" style="width:100%;font-size:0.95rem">
+              Commencer avec Zenji →
+            </button>
+          </div>
+        </div>`;
+      this._root.querySelector('#zenji-start')?.addEventListener('click', () => {
+        M6_ZenjiOnboarding.markSeen();
+        this._loadView(regime);
+      });
+      return;
+    }
+
+    this._loadView(regime);
+  },
+
+  _loadView(regime) {
+    this._root.innerHTML = '';
     if (regime==='forfait_jours'   && window.VFJ) VFJ.init(this._root);
     else if (regime==='forfait_heures'  && window.VFH) VFH.init(this._root);
     else if (regime==='cadre_dirigeant' && window.VCD) VCD.init(this._root);
