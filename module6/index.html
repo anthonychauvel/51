@@ -1,19 +1,30 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+  <meta charset="UTF-8">
+  <title>M6 Cadres — Forfait Jours & Heures</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="color-scheme" content="only light">
+  <meta name="theme-color" content="#1A1714">
   <link rel="manifest" href="../manifest.json">
   <link rel="apple-touch-icon" href="../apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
-  <meta name="apple-mobile-web-app-title" content="Cadres — M6">
-  <meta name="theme-color" content="#1A1714">
-  <meta charset="UTF-8">
-  <title>Cadres & Forfait — M6</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="M6 Cadres">
+  <meta name="mobile-web-app-capable" content="yes">
+
+  <!-- CCN globale du projet -->
+  <script src="../ccn/conventions-collectives.js"></script>
+
+  <!-- CSS M6 -->
   <link rel="stylesheet" href="css/main.css">
+
+  <!-- jsPDF CDN -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
 <body>
 
-<!-- ── HEADER ──────────────────────────────────────────────────── -->
+<!-- ── HEADER ─────────────────────────────────────────────────── -->
 <header class="m6-header">
   <div class="m6-header-brand">
     <div class="m6-header-title">M6 — Cadres</div>
@@ -22,20 +33,32 @@
   <button id="m6-regime-switch" class="m6-header-btn" style="display:none" title="Changer de régime">
     ⇄ Régime
   </button>
-  <a href="../menu.html" class="m6-header-btn">← Menu</a>
 </header>
 
-<!-- ── APP ROOT ─────────────────────────────────────────────────── -->
+<!-- ── APP ROOT ──────────────────────────────────────────────── -->
 <div id="m6-app-root"></div>
 
-<!-- ── SCRIPTS ──────────────────────────────────────────────────── -->
-<!-- Moteur de calcul -->
+<!-- ── SCRIPTS — ordre strict de dépendance ──────────────────── -->
+<!-- 1. Noyau calcul -->
 <script src="js/core/calc-engine.js"></script>
-<!-- Vues -->
+<script src="js/core/bio-engine.js"></script>
+<script src="js/core/storage.js"></script>
+
+<!-- 2. Données -->
+<script src="js/data/glossaire-cadres.js"></script>
+
+<!-- 3. Features -->
+<script src="js/features/calendar.js"></script>
+<script src="js/features/import-export.js"></script>
+<script src="js/features/pdf-report.js"></script>
+<script src="js/features/entretien-glossaire.js"></script>
+
+<!-- 4. Vues -->
 <script src="js/views/view-forfait-jours.js"></script>
 <script src="js/views/view-forfait-heures.js"></script>
 <script src="js/views/view-cadre-dirigeant.js"></script>
-<!-- Orchestrateur -->
+
+<!-- 5. Router (boot) -->
 <script src="js/app.js"></script>
 
 </body>
