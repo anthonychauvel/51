@@ -39,12 +39,22 @@ const VFH = {
     const bio      = M6_BioEngine.analyzeForfaitHeures(this._contract, this._data, this._year);
     this._c.innerHTML = `${this._tplHeader(analysis)}${this._tplNav()}<div class="m6-main m6-fade-in" id="vfh-ct" style="padding-top:8px"></div>`;
     const ct = this._c.querySelector('#vfh-ct');
+
+    const zenjiMsg = window.M6_Zenji
+      ? M6_Zenji.getContextMessage(this._section,
+          this._section==='bilan'||this._section==='bio' ? {joursEffectifs:analysis.semaines,plafond:this._contract.contingent,rttPris:0,rttSolde:0,rachetes:0,alertes:analysis.alertes} : {},
+          bio, this._contract)
+      : '';
+    const zenjiHtml = (zenjiMsg && this._section !== 'semaines')
+      ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', true)
+      : '';
+
     switch(this._section) {
-      case 'bilan':     ct.innerHTML = this._tplBilan(analysis,bio); this._bindBilan(analysis); break;
+      case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio); this._bindBilan(analysis); break;
       case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
-      case 'bio':       ct.innerHTML = this._tplBio(bio); break;
-      case 'export':    ct.innerHTML = this._tplExport(analysis); this._bindExport(analysis); break;
-      case 'glossaire': M6_GlossaireUI.render(ct); break;
+      case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
+      case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
+      case 'glossaire': ct.innerHTML = zenjiHtml; M6_GlossaireUI.render(ct); break;
     }
     this._bindNav();
   },

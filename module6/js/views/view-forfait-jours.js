@@ -59,13 +59,38 @@ const VFJ = {
     const bio      = M6_BioEngine.analyzeForfaitJours(this._contract, this._data, this._year);
     this._c.innerHTML = `${this._tplHeader(analysis)}${this._tplNav()}<div class="m6-main m6-fade-in" id="vfj-content" style="padding-top:8px"></div>`;
     const ct = this._c.querySelector('#vfj-content');
+
+    // ── Carte Zenji contextuelle (toutes sections sauf calendrier) ──
+    const zenjiMsg = window.M6_Zenji
+      ? M6_Zenji.getContextMessage(this._section, analysis, bio, this._contract)
+      : '';
+    const zenjiHtml = (zenjiMsg && this._section !== 'calendrier')
+      ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', this._section !== 'sante')
+      : '';
+
     switch(this._section) {
-      case 'bilan':      ct.innerHTML = this._tplBilan(analysis,bio); this._bindBilan(analysis,bio); break;
-      case 'calendrier': this._renderCal(ct); break;
-      case 'bio':        ct.innerHTML = this._tplBio(bio); break;
-      case 'entretien':  M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();}); break;
-      case 'export':     ct.innerHTML = this._tplExport(analysis); this._bindExport(analysis); break;
-      case 'glossaire':  M6_GlossaireUI.render(ct); break;
+      case 'bilan':
+        ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
+        this._bindBilan(analysis,bio);
+        break;
+      case 'calendrier':
+        this._renderCal(ct);
+        break;
+      case 'bio':
+        ct.innerHTML = zenjiHtml + this._tplBio(bio);
+        break;
+      case 'entretien':
+        ct.innerHTML = zenjiHtml;
+        M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();});
+        break;
+      case 'export':
+        ct.innerHTML = zenjiHtml + this._tplExport(analysis);
+        this._bindExport(analysis);
+        break;
+      case 'glossaire':
+        ct.innerHTML = zenjiHtml;
+        M6_GlossaireUI.render(ct);
+        break;
     }
     this._bindNav();
   },
@@ -127,7 +152,7 @@ const VFJ = {
         <div class="m6-stat-val" style="color:${a.rttSolde<0?'var(--alerte)':'var(--champagne-2)'}">${a.rttSolde>=0?'+':''}${a.rttSolde}</div>
         <div class="m6-stat-label">Solde RTT</div>
       </div>
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT théoriques</div></div>
+      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT théoriques <span style='font-size:0.6rem;color:var(--pierre)' title='Calculé sur une année complète. En cas de congé sans solde ou maladie prolongée, ce chiffre peut différer.'>ⓘ</span></div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.rttPris}</div><div class="m6-stat-label">RTT pris</div></div>
     </div>
 
@@ -161,6 +186,7 @@ const VFJ = {
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
+      <button class="m6-btn m6-btn-ghost" id="vfj-reset" style="flex:1;font-size:0.78rem">🔄 Relancer wizard</button>
       <button class="m6-btn m6-btn-ghost" onclick="VFJ_editContract()" style="flex:1;font-size:0.78rem">⚙️ Contrat</button>
     </div>`;
   },
@@ -174,6 +200,14 @@ const VFJ = {
     });
     this._c.querySelector('#bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
     this._c.querySelector('#vfj-newyr')?.addEventListener('click', () => this._openNewYear());
+    this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
+      if(!confirm('Relancer le wizard de bienvenue ? Votre configuration et données sont conservées.')) return;
+      if(window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
+      M6_Storage.setContract(this._regime, null);
+      this._contract = null;
+      this._c.innerHTML = this._tplSetup();
+      this._bindSetup();
+    });
   },
 
   _renderCal(ct) {
