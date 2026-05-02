@@ -1,0 +1,42 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <link rel="manifest" href="../manifest.json">
+  <link rel="apple-touch-icon" href="../apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-title" content="Cadres — M6">
+  <meta name="theme-color" content="#1A1714">
+  <meta charset="UTF-8">
+  <title>Cadres & Forfait — M6</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <link rel="stylesheet" href="css/main.css">
+</head>
+<body>
+
+<!-- ── HEADER ──────────────────────────────────────────────────── -->
+<header class="m6-header">
+  <div class="m6-header-brand">
+    <div class="m6-header-title">M6 — Cadres</div>
+    <div class="m6-header-sub">Forfait Jours · Forfait Heures</div>
+  </div>
+  <button id="m6-regime-switch" class="m6-header-btn" style="display:none" title="Changer de régime">
+    ⇄ Régime
+  </button>
+  <a href="../menu.html" class="m6-header-btn">← Menu</a>
+</header>
+
+<!-- ── APP ROOT ─────────────────────────────────────────────────── -->
+<div id="m6-app-root"></div>
+
+<!-- ── SCRIPTS ──────────────────────────────────────────────────── -->
+<!-- Moteur de calcul -->
+<script src="js/core/calc-engine.js"></script>
+<!-- Vues -->
+<script src="js/views/view-forfait-jours.js"></script>
+<script src="js/views/view-forfait-heures.js"></script>
+<script src="js/views/view-cadre-dirigeant.js"></script>
+<!-- Orchestrateur -->
+<script src="js/app.js"></script>
+
+</body>
+</html>
