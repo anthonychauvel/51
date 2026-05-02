@@ -73,16 +73,24 @@ const M6_ForfaitJours = {
     const cpContrat=contract.joursCPContrat||25;
     const recap=this.calcRTT(year,plafond,cpContrat,contract.dateArrivee||null,contract.dateDepart||null);
     const feries=M6_Feries.getSet(year);
-    let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0;
+    let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0;
     const alertes=[],entrees=[];
     const entries=Object.entries(data).filter(([k])=>k.startsWith(String(year))).sort(([a],[b])=>a.localeCompare(b));
     for(const [dk,v] of entries){
       const t=v.type||'travail';
-      if(t==='travail') travailles++;
-      if(t==='rachat'){travailles++;rachetes++;}
-      if(t==='rtt')    rttPris++;
-      if(t==='cp')     cpPris++;
-      if(t==='repos')  reposPris++;
+      const dow=new Date(dk+'T12:00:00').getDay();
+      const isWE=dow===0||dow===6;
+      // CP uniquement sur jours ouvrables
+      if(t==='cp'&&(isWE||feries.has(dk))) continue;
+      // Demi-journees = 0.5
+      if(t==='demi'){travailles+=0.5;demis++;}
+      else if(t==='travail') travailles++;
+      else if(t==='rachat'){travailles++;rachetes++;}
+      else if(t==='rtt')   rttPris++;
+      else if(t==='cp')    cpPris++;
+      else if(t==='repos') reposPris++;
+      // Deplacement = toggle sur travail
+      if(v.deplacement===true) deplacements++;
       entrees.push({dk,...v});
     }
     // Amplitude + repos quotidien
@@ -125,7 +133,7 @@ const M6_ForfaitJours = {
     const simulRachat=this._simuleRachat(contract,travailles,recap.joursTravailMax);
     const prediction=this._predictFinAnnee(travailles,recap.joursTravailMax,year);
     return {
-      joursEffectifs:travailles,rachetes,rttPris,cpPris,reposPris,
+      joursEffectifs:travailles,rachetes,rttPris,cpPris,reposPris,demis,deplacements,
       rttTheoriques:recap.rttTheoriques,rttSolde:recap.rttTheoriques-rttPris,
       plafond:recap.joursTravailMax,feriesOuvres:recap.feriesOuvres,
       isProrata:recap.isProrata,ratio:recap.ratio,

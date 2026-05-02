@@ -73,13 +73,18 @@ const M6_Storage = {
   },
 
   // ── Entretien annuel ──────────────────────────────────────────
-  getEntretiens(regime)    { return this._json(`${NS}_${regime}_ENTRETIENS`); },
-  saveEntretien(regime, e) {
-    const list = this.getEntretiens(regime);
-    list.push({ ...e, savedAt: new Date().toISOString() });
-    localStorage.setItem(`${NS}_${regime}_ENTRETIENS`, JSON.stringify(list));
-    this._log(regime, null, 'ENTRETIEN', `Entretien du ${e.date} enregistré`);
+  getEntretiens(regime, year) {
+    const key = year ? `${NS}_${regime}_${year}_ENTRETIENS` : `${NS}_${regime}_ENTRETIENS`;
+    return this._json(key, []);
   },
+  addEntretien(regime, year, e) {
+    const key = year ? `${NS}_${regime}_${year}_ENTRETIENS` : `${NS}_${regime}_ENTRETIENS`;
+    const list = this._json(key, []);
+    list.push({ ...e, savedAt: new Date().toISOString() });
+    localStorage.setItem(key, JSON.stringify(list));
+    this._log(regime, year, 'ENTRETIEN', 'Entretien enregistre');
+  },
+  saveEntretien(regime, e) { this.addEntretien(regime, null, e); },
 
   // ── Validations mensuelles (signature cadre) ─────────────────
   getValidations(regime, year) { return this._json(`${NS}_${regime}_${year}_VALID`); },
