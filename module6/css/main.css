@@ -1,0 +1,713 @@
+/* ═══════════════════════════════════════════════════════════════
+   M6 — CADRES · Palette Cabinet Exécutif
+   Cormorant Garamond (display) + Outfit (corps)
+   Ivoire · Charbon · Champagne
+   ═══════════════════════════════════════════════════════════════ */
+
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;0,700;1,400;1,600&family=Outfit:wght@300;400;500;600&display=swap');
+
+:root {
+  --ivoire:       #F7F3ED;
+  --ivoire-2:     #EDE8E0;
+  --ivoire-3:     #E2DAD0;
+  --charbon:      #1A1714;
+  --charbon-2:    #2E2A26;
+  --charbon-3:    #4A4540;
+  --pierre:       #8A847C;
+  --pierre-2:     #BDB5A8;
+  --champagne:    #C4A35A;
+  --champagne-2:  #8B6914;
+  --champagne-3:  #F0E3C0;
+  --succes:       #2D6A4F;
+  --succes-bg:    #E8F5EF;
+  --alerte:       #9B2C2C;
+  --alerte-bg:    #FBEAEA;
+  --warning:      #7A5C00;
+  --warning-bg:   #FFF8E6;
+  --info-bg:      #EEF2FF;
+  --info:         #3730A3;
+
+  --font-display: 'Cormorant Garamond', Georgia, serif;
+  --font-body:    'Outfit', system-ui, sans-serif;
+
+  --radius-sm:  4px;
+  --radius:     8px;
+  --radius-lg:  14px;
+  --shadow-sm:  0 1px 3px rgba(26,23,20,0.08);
+  --shadow:     0 4px 16px rgba(26,23,20,0.10);
+  --shadow-lg:  0 8px 32px rgba(26,23,20,0.14);
+
+  --gold-line: 1px solid rgba(196,163,90,0.35);
+  --grey-line: 1px solid rgba(26,23,20,0.10);
+}
+
+/* ── Reset ───────────────────────────────────────────────────── */
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+html { -webkit-text-size-adjust: 100%; }
+body {
+  font-family: var(--font-body);
+  background: var(--ivoire);
+  color: var(--charbon);
+  min-height: 100dvh;
+  font-size: 15px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ── Header ─────────────────────────────────────────────────── */
+.m6-header {
+  background: var(--charbon);
+  color: var(--ivoire);
+  padding: 0 16px;
+  padding-top: env(safe-area-inset-top, 0);
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  height: calc(58px + env(safe-area-inset-top, 0));
+  position: sticky;
+  top: 0;
+  z-index: 100;
+  border-bottom: var(--gold-line);
+}
+.m6-header-brand {
+  flex: 1;
+}
+.m6-header-title {
+  font-family: var(--font-display);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--ivoire);
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+}
+.m6-header-sub {
+  font-size: 0.7rem;
+  color: var(--champagne);
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  font-weight: 400;
+}
+.m6-header-btn {
+  background: rgba(196,163,90,0.15);
+  border: var(--gold-line);
+  color: var(--champagne);
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  padding: 6px 12px;
+  border-radius: var(--radius-sm);
+  cursor: pointer;
+  text-decoration: none;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+.m6-header-btn:active { background: rgba(196,163,90,0.25); }
+
+/* ── Bottom Nav ─────────────────────────────────────────────── */
+.m6-bottom-nav {
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  padding-bottom: env(safe-area-inset-bottom, 0);
+  background: var(--charbon);
+  border-top: var(--gold-line);
+  display: flex;
+  z-index: 100;
+}
+.m6-nav-item {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px 4px;
+  cursor: pointer;
+  border: none;
+  background: none;
+  color: var(--pierre);
+  font-family: var(--font-body);
+  font-size: 0.6rem;
+  letter-spacing: 0.05em;
+  gap: 3px;
+  transition: color 0.2s;
+}
+.m6-nav-item.active { color: var(--champagne); }
+.m6-nav-item .nav-icon { font-size: 1.1rem; }
+
+/* ── Main scroll area ────────────────────────────────────────── */
+.m6-main {
+  padding: 20px 16px calc(72px + env(safe-area-inset-bottom, 0));
+  max-width: 480px;
+  margin: 0 auto;
+}
+
+/* ── Section title ──────────────────────────────────────────── */
+.m6-section-title {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 600;
+  color: var(--charbon);
+  margin-bottom: 4px;
+  letter-spacing: -0.01em;
+}
+.m6-section-sub {
+  font-size: 0.78rem;
+  color: var(--pierre);
+  margin-bottom: 20px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+/* ── Cards ─────────────────────────────────────────────────── */
+.m6-card {
+  background: #fff;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-sm);
+  border: var(--grey-line);
+  overflow: hidden;
+  margin-bottom: 14px;
+}
+.m6-card-header {
+  padding: 14px 16px 10px;
+  border-bottom: var(--grey-line);
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+.m6-card-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  background: var(--champagne-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+.m6-card-label {
+  font-size: 0.7rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--pierre);
+  font-weight: 500;
+  line-height: 1.2;
+}
+.m6-card-title {
+  font-family: var(--font-display);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--charbon);
+  line-height: 1.2;
+}
+.m6-card-body { padding: 16px; }
+
+/* ── Metric large ────────────────────────────────────────────── */
+.m6-metric {
+  display: flex;
+  align-items: baseline;
+  gap: 6px;
+  margin-bottom: 4px;
+}
+.m6-metric-val {
+  font-family: var(--font-display);
+  font-size: 2.8rem;
+  font-weight: 700;
+  color: var(--charbon);
+  line-height: 1;
+}
+.m6-metric-unit {
+  font-size: 0.85rem;
+  color: var(--pierre);
+  font-weight: 400;
+}
+.m6-metric-label {
+  font-size: 0.75rem;
+  color: var(--pierre);
+  margin-bottom: 12px;
+}
+
+/* ── Progress bar champagne ─────────────────────────────────── */
+.m6-progress-wrap {
+  height: 6px;
+  background: var(--ivoire-2);
+  border-radius: 99px;
+  overflow: hidden;
+  margin: 8px 0;
+}
+.m6-progress-bar {
+  height: 100%;
+  border-radius: 99px;
+  background: linear-gradient(90deg, var(--champagne-2), var(--champagne));
+  transition: width 0.6s cubic-bezier(.4,0,.2,1);
+}
+.m6-progress-bar.danger { background: linear-gradient(90deg, #9B2C2C, #E53E3E); }
+.m6-progress-bar.ok { background: linear-gradient(90deg, var(--succes), #48BB78); }
+
+/* ── Stats grid ──────────────────────────────────────────────── */
+.m6-stats-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.m6-stat-box {
+  background: var(--ivoire);
+  border-radius: var(--radius);
+  padding: 12px;
+  border: var(--gold-line);
+}
+.m6-stat-val {
+  font-family: var(--font-display);
+  font-size: 1.6rem;
+  font-weight: 700;
+  color: var(--charbon);
+  line-height: 1;
+}
+.m6-stat-label {
+  font-size: 0.68rem;
+  color: var(--pierre);
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin-top: 3px;
+}
+
+/* ── Alertes ─────────────────────────────────────────────────── */
+.m6-alert {
+  border-radius: var(--radius);
+  padding: 12px 14px;
+  font-size: 0.82rem;
+  line-height: 1.5;
+  margin-bottom: 10px;
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+.m6-alert.danger { background: var(--alerte-bg); color: var(--alerte); border-left: 3px solid var(--alerte); }
+.m6-alert.warning { background: var(--warning-bg); color: var(--warning); border-left: 3px solid #D4A017; }
+.m6-alert.success { background: var(--succes-bg); color: var(--succes); border-left: 3px solid var(--succes); }
+.m6-alert.info { background: var(--info-bg); color: var(--info); border-left: 3px solid var(--info); }
+.m6-alert-icon { font-size: 1rem; flex-shrink: 0; margin-top: 1px; }
+.m6-alert strong { font-weight: 600; }
+
+/* ── Boutons ─────────────────────────────────────────────────── */
+.m6-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 11px 20px;
+  border-radius: var(--radius);
+  font-family: var(--font-body);
+  font-size: 0.85rem;
+  font-weight: 500;
+  cursor: pointer;
+  border: none;
+  transition: all 0.2s;
+}
+.m6-btn-primary {
+  background: var(--charbon);
+  color: var(--ivoire);
+  width: 100%;
+}
+.m6-btn-primary:active { background: var(--charbon-2); }
+.m6-btn-ghost {
+  background: transparent;
+  color: var(--charbon-3);
+  border: var(--grey-line);
+}
+.m6-btn-gold {
+  background: var(--champagne);
+  color: var(--charbon);
+  width: 100%;
+  font-weight: 600;
+}
+.m6-btn-gold:active { background: var(--champagne-2); color: #fff; }
+
+/* ── Separateur champagne ───────────────────────────────────── */
+.m6-divider {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--champagne), transparent);
+  margin: 18px 0;
+  opacity: 0.5;
+}
+
+/* ── Ligne de donnée ────────────────────────────────────────── */
+.m6-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: var(--grey-line);
+  font-size: 0.83rem;
+}
+.m6-row:last-child { border-bottom: none; }
+.m6-row-label { color: var(--pierre); }
+.m6-row-val { font-weight: 500; color: var(--charbon); }
+.m6-row-val.gold { color: var(--champagne-2); }
+.m6-row-val.alert { color: var(--alerte); }
+.m6-row-val.ok { color: var(--succes); }
+
+/* ── Saisie / Modal ─────────────────────────────────────────── */
+.m6-overlay {
+  position: fixed; inset: 0;
+  background: rgba(26,23,20,0.6);
+  backdrop-filter: blur(2px);
+  z-index: 200;
+  display: flex;
+  align-items: flex-end;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.25s;
+}
+.m6-overlay.open { opacity: 1; pointer-events: all; }
+.m6-sheet {
+  background: #fff;
+  width: 100%;
+  max-width: 480px;
+  margin: 0 auto;
+  border-radius: 20px 20px 0 0;
+  padding: 24px 20px;
+  padding-bottom: calc(24px + env(safe-area-inset-bottom, 0));
+  transform: translateY(40px);
+  transition: transform 0.3s cubic-bezier(.4,0,.2,1);
+}
+.m6-overlay.open .m6-sheet { transform: translateY(0); }
+.m6-sheet-title {
+  font-family: var(--font-display);
+  font-size: 1.4rem;
+  font-weight: 600;
+  margin-bottom: 20px;
+  text-align: center;
+  color: var(--charbon);
+}
+
+/* ── Form fields ─────────────────────────────────────────────── */
+.m6-field { margin-bottom: 14px; }
+.m6-field label {
+  display: block;
+  font-size: 0.72rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: var(--pierre);
+  font-weight: 500;
+  margin-bottom: 5px;
+}
+.m6-field input,
+.m6-field select {
+  width: 100%;
+  border: var(--grey-line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+  font-family: var(--font-body);
+  font-size: 0.9rem;
+  color: var(--charbon);
+  background: var(--ivoire);
+  -webkit-appearance: none;
+}
+.m6-field input:focus,
+.m6-field select:focus {
+  outline: 2px solid var(--champagne);
+  border-color: var(--champagne);
+}
+
+/* ── Type jour pills ────────────────────────────────────────── */
+.m6-type-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+  margin-bottom: 16px;
+}
+.m6-type-pill {
+  border: 1px solid var(--ivoire-3);
+  border-radius: var(--radius);
+  padding: 10px 4px;
+  text-align: center;
+  cursor: pointer;
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--charbon-3);
+  background: var(--ivoire);
+  transition: all 0.15s;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.m6-type-pill .pill-icon { font-size: 1.2rem; }
+.m6-type-pill.selected {
+  border-color: var(--champagne);
+  background: var(--champagne-3);
+  color: var(--charbon);
+}
+.m6-type-pill.selected-travail { border-color: var(--charbon); background: var(--charbon); color: var(--ivoire); }
+.m6-type-pill.selected-rtt { border-color: var(--champagne-2); background: var(--champagne-3); color: var(--champagne-2); }
+.m6-type-pill.selected-cp { border-color: var(--succes); background: var(--succes-bg); color: var(--succes); }
+.m6-type-pill.selected-ferie { border-color: var(--info); background: var(--info-bg); color: var(--info); }
+.m6-type-pill.selected-repos { border-color: var(--pierre); background: var(--ivoire-2); color: var(--pierre); }
+.m6-type-pill.selected-rachat { border-color: var(--alerte); background: var(--alerte-bg); color: var(--alerte); }
+
+/* ── Calendrier heatmap ─────────────────────────────────────── */
+.m6-cal-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  margin-top: 10px;
+}
+.m6-cal-head {
+  text-align: center;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--pierre);
+  padding: 3px 0;
+}
+.m6-cal-cell {
+  aspect-ratio: 1;
+  border-radius: 4px;
+  background: var(--ivoire-2);
+  cursor: pointer;
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 0.6rem;
+  color: transparent;
+  transition: opacity 0.15s;
+}
+.m6-cal-cell:active { opacity: 0.7; }
+.m6-cal-cell.empty { background: transparent; pointer-events: none; }
+.m6-cal-cell.today { box-shadow: inset 0 0 0 2px var(--champagne); }
+.m6-cal-cell[data-type="travail"] { background: var(--charbon-2); }
+.m6-cal-cell[data-type="rtt"] { background: var(--champagne); }
+.m6-cal-cell[data-type="cp"] { background: var(--succes); }
+.m6-cal-cell[data-type="ferie"] { background: #3730A3; }
+.m6-cal-cell[data-type="repos"] { background: var(--pierre-2); }
+.m6-cal-cell[data-type="rachat"] { background: var(--alerte); }
+.m6-cal-cell[data-type="restant"] { background: var(--ivoire-3); }
+
+/* ── Legende ─────────────────────────────────────────────────── */
+.m6-legend {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 10px;
+}
+.m6-legend-item {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.68rem;
+  color: var(--pierre);
+}
+.m6-legend-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 2px;
+  flex-shrink: 0;
+}
+
+/* ── Régime selector ─────────────────────────────────────────── */
+.m6-regime-screen {
+  min-height: 100dvh;
+  background: var(--charbon);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 32px 20px;
+  padding-top: calc(32px + env(safe-area-inset-top, 0));
+}
+.m6-regime-logo {
+  font-family: var(--font-display);
+  font-size: 2.4rem;
+  font-weight: 600;
+  color: var(--ivoire);
+  text-align: center;
+  margin-bottom: 6px;
+  letter-spacing: 0.01em;
+}
+.m6-regime-subtitle {
+  font-size: 0.75rem;
+  color: var(--champagne);
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  text-align: center;
+  margin-bottom: 48px;
+}
+.m6-regime-card {
+  width: 100%;
+  max-width: 360px;
+  background: rgba(247,243,237,0.06);
+  border: var(--gold-line);
+  border-radius: var(--radius-lg);
+  padding: 20px;
+  cursor: pointer;
+  margin-bottom: 12px;
+  transition: all 0.2s;
+}
+.m6-regime-card:active { background: rgba(196,163,90,0.15); }
+.m6-regime-card-title {
+  font-family: var(--font-display);
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: var(--ivoire);
+  margin-bottom: 4px;
+}
+.m6-regime-card-sub {
+  font-size: 0.75rem;
+  color: var(--pierre);
+  line-height: 1.4;
+}
+.m6-regime-card-badge {
+  display: inline-block;
+  font-size: 0.6rem;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  color: var(--champagne);
+  border: var(--gold-line);
+  border-radius: 99px;
+  padding: 2px 8px;
+  margin-bottom: 8px;
+}
+
+/* ── Ornement de section ─────────────────────────────────────── */
+.m6-ornement {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 16px;
+  margin-top: 8px;
+}
+.m6-ornement-line { flex: 1; height: 1px; background: var(--champagne); opacity: 0.4; }
+.m6-ornement-text {
+  font-family: var(--font-display);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--charbon);
+  white-space: nowrap;
+}
+
+/* ── Toast ────────────────────────────────────────────────────── */
+.m6-toast {
+  position: fixed;
+  bottom: calc(76px + env(safe-area-inset-bottom, 0));
+  left: 50%;
+  transform: translateX(-50%) translateY(20px);
+  background: var(--charbon);
+  color: var(--ivoire);
+  font-size: 0.82rem;
+  padding: 10px 20px;
+  border-radius: 99px;
+  z-index: 300;
+  white-space: nowrap;
+  opacity: 0;
+  transition: all 0.3s;
+  pointer-events: none;
+  border: var(--gold-line);
+}
+.m6-toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+
+/* ── Badge ───────────────────────────────────────────────────── */
+.m6-badge {
+  display: inline-block;
+  font-size: 0.65rem;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  font-weight: 600;
+  padding: 2px 8px;
+  border-radius: 99px;
+}
+.m6-badge-champagne { background: var(--champagne-3); color: var(--champagne-2); }
+.m6-badge-danger { background: var(--alerte-bg); color: var(--alerte); }
+.m6-badge-ok { background: var(--succes-bg); color: var(--succes); }
+.m6-badge-neutral { background: var(--ivoire-2); color: var(--pierre); }
+
+/* ── Animation fade-in ───────────────────────────────────────── */
+.m6-fade-in {
+  animation: m6FadeIn 0.3s ease-out;
+}
+@keyframes m6FadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+/* ── Tableau simulation ──────────────────────────────────────── */
+.m6-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 0.8rem;
+}
+.m6-table th {
+  text-align: left;
+  padding: 6px 8px;
+  color: var(--pierre);
+  font-weight: 500;
+  font-size: 0.68rem;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  border-bottom: var(--grey-line);
+}
+.m6-table td {
+  padding: 8px 8px;
+  border-bottom: var(--grey-line);
+  color: var(--charbon);
+}
+.m6-table td.gold { color: var(--champagne-2); font-weight: 500; }
+.m6-table tr:last-child td { border-bottom: none; }
+
+/* ── Choix de vue heures ─────────────────────────────────────── */
+.m6-tabs {
+  display: flex;
+  background: var(--ivoire-2);
+  border-radius: var(--radius);
+  padding: 3px;
+  margin-bottom: 16px;
+  gap: 2px;
+}
+.m6-tab {
+  flex: 1;
+  padding: 8px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  font-family: var(--font-body);
+  font-size: 0.75rem;
+  color: var(--pierre);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+.m6-tab.active {
+  background: #fff;
+  color: var(--charbon);
+  font-weight: 500;
+  box-shadow: var(--shadow-sm);
+}
+
+/* ── Input range ─────────────────────────────────────────────── */
+input[type=range] {
+  width: 100%;
+  accent-color: var(--champagne);
+}
+
+/* ── Config badge ───────────────────────────────────────────── */
+.m6-config-summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--charbon);
+  border-radius: var(--radius);
+  margin-bottom: 16px;
+  color: var(--ivoire);
+  font-size: 0.8rem;
+}
+.m6-config-summary strong { color: var(--champagne); font-family: var(--font-display); font-size: 1rem; }
+.m6-config-edit {
+  margin-left: auto;
+  font-size: 0.7rem;
+  color: var(--pierre);
+  text-decoration: underline;
+  cursor: pointer;
+}
