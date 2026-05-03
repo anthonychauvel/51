@@ -1,195 +1,199 @@
 /**
- * CCN-ADAPTER M6 — Pont vers conventions-collectives.js
- * Adapte les règles CCN (plafond forfait, contingent HS, taux majorations)
- * au contexte cadres du module 6.
+ * CCN-ADAPTER M6 — Pont intelligent entre les deux sources CCN
+ * =============================================================
+ * Version : 2.0.0 — Mai 2026
  *
- * Utilise window.CCN_API si disponible (chargé depuis ../ccn/conventions-collectives.js)
- * Sinon, fallback sur une table interne des 20 CCN cadres les plus fréquentes.
+ * ARCHITECTURE À DEUX NIVEAUX :
  *
- * Sources : Code du travail L3121-41 à L3121-65, Légifrance, IDCC officiels
+ *   SOURCE A — window.CCN_CADRES_API
+ *     Fichier : module6/ccn/conventions-cadres.js (propre à M6)
+ *     Usage   : Forfait Jours + Cadres Dirigeants
+ *     Données : plafonds, entretien, suivi de charge, taux rachat, alertes CCN
+ *
+ *   SOURCE B — window.CCN_API
+ *     Fichier : ../ccn/conventions-collectives.js (PARTAGÉ modules 1-5)
+ *     Usage   : Forfait Heures UNIQUEMENT
+ *     Données : règles HS, contingents, taux majorations HS
+ *     ⚠️  NE PAS MODIFIER ce fichier — partagé avec les autres modules
  */
 'use strict';
 
 (function(global) {
 
-// ── Table interne fallback — CCN cadres fréquentes ───────────────
-// Format : { idcc, nom, plafond, contingentHS, taux1, taux2, palier1, notes }
-const CCN_CADRES_FALLBACK = [
-  // ── Informatique / Ingénierie ────────────────────────────────
-  { idcc: 787,  nom: 'Syntec',               plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Modalité 2 (forfait jours) ou Modalité 3. Entretien annuel obligatoire. Droit à la déconnexion formalisé.' },
-  { idcc: 1486, nom: 'Bureaux études techniques (Syntec étendu)', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Extension du champ Syntec. Mêmes modalités forfait.' },
-  // ── Banque / Finance ─────────────────────────────────────────
-  { idcc: 675,  nom: 'Banque (AFB)',          plafond: 205, contingentHS: 200, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Plafond 205j plus favorable que le légal. 14 RTT environ. Avantages bancaires spécifiques.' },
-  { idcc: 2120, nom: 'Banque Populaire',      plafond: 208, contingentHS: 200, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Plafond 208j. Accord de branche avec dispositions spécifiques cadres.' },
-  { idcc: 2148, nom: 'Caisse Epargne',        plafond: 207, contingentHS: 200, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Plafond 207j. Accord groupe.' },
-  // ── Assurance / Mutuelles ────────────────────────────────────
-  { idcc: 1867, nom: 'Assurance',             plafond: 215, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Plafond 215j. Nombreux cadres au forfait jours.' },
-  { idcc: 2847, nom: 'Mutuelles',             plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Droit commun. Vérifier accord de branche mutualiste.' },
-  // ── Commerce / Distribution ──────────────────────────────────
-  { idcc: 1606, nom: 'Commerce de gros',      plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Droit commun. Cadres itinérants souvent en forfait.' },
-  { idcc: 1505, nom: 'Grande distribution',   plafond: 216, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Accord branche. Plafond légèrement réduit.' },
-  // ── Industrie ────────────────────────────────────────────────
-  { idcc: 2216, nom: 'Metallurgie (accord national 2024)', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Nouvel accord national 2024. Forfait jours harmonisé.' },
-  { idcc: 44,   nom: 'Chimie',                plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Accord de branche chimie.' },
-  { idcc: 176,  nom: 'Pharmacie',             plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Accord branche pharmacie.' },
-  // ── Conseil / Cabinet ────────────────────────────────────────
-  { idcc: 1880, nom: 'Cabinets conseils economiques', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Cadres de conseil. Forfait jours fréquent.' },
-  { idcc: 567,  nom: 'Avocats salaries',      plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Accord spécifique avocats.' },
-  // ── Sante / Social ───────────────────────────────────────────
-  { idcc: 51,   nom: 'Hospitalisation privee (FEHAP)', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Cadres de santé. Accord de branche spécifique.' },
-  { idcc: 2941, nom: 'Sante (Médecins salariés)', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Médecins salariés non hospitaliers.' },
-  // ── Immobilier / BTP ─────────────────────────────────────────
-  { idcc: 1527, nom: 'Immobilier',            plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Accord branche immobilier.' },
-  { idcc: 1596, nom: 'BTP cadres',            plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Convention spécifique cadres BTP.' },
-  // ── Médias / Communication ───────────────────────────────────
-  { idcc: 2265, nom: 'Presse hebdomadaire',   plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Journalistes et cadres de presse.' },
-  // ── Défaut légal ─────────────────────────────────────────────
-  { idcc: 0,    nom: 'Droit commun (L3121-64)', plafond: 218, contingentHS: 220, taux1: 25, taux2: 50, palier1: 8,
-    notes: 'Valeurs légales minimales. Votre CCN peut prévoir des dispositions plus favorables.' },
+const FALLBACK_FJ = [
+  { idcc: 1486, nom: 'Syntec (IT / Ingénierie / Conseil)', secteur: 'IT',
+    plafond: 218, tauxRachat: 10, entretienFreq: 'semestriel',
+    clauseDeconn: true, alertes: ['⚠️ Entretien semestriel obligatoire (accord Syntec 1999)'],
+    notes: 'CCN Syntec — accord cadres du 22/06/1999.' },
+  { idcc: 675, nom: 'Banque AFB', secteur: 'Banque',
+    plafond: 205, tauxRachat: 25, entretienFreq: 'annuel',
+    clauseDeconn: true, alertes: ['Plafond 205j', 'Taux rachat min 25%'],
+    notes: 'CCN Banque AFB — dispositions plus favorables.' },
+  { idcc: 3248, nom: 'Métallurgie ANU 2023', secteur: 'Industrie',
+    plafond: 218, tauxRachat: 10, entretienFreq: 'annuel',
+    clauseDeconn: true, alertes: ['Accord National Unique Métallurgie 2023'],
+    notes: 'ANU Métallurgie 2023 — transition jusqu\'en 2025.' },
+  { idcc: 0, nom: 'Droit commun (L3121-64)', secteur: 'Tous secteurs',
+    plafond: 218, tauxRachat: 10, entretienFreq: 'annuel',
+    clauseDeconn: false, alertes: ['Valeurs légales minimales'],
+    notes: 'Base légale applicable sans convention spécifique.' },
 ];
 
-// ── API interne ──────────────────────────────────────────────────
+const FALLBACK_HS = [
+  { idcc: 1486, nom: 'Syntec (ETAM — contingent 130h)', contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 675,  nom: 'Banque AFB', contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 0,    nom: 'Droit commun', contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+];
+
+function _norm(s) {
+  return String(s).toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+    .replace(/[^a-z0-9\s]/g,' ').replace(/\s+/g,' ').trim();
+}
+function _hasCadresAPI() { return !!(global.CCN_CADRES_API); }
+function _hasCommonAPI() { return !!(global.CCN_API); }
+
 const M6_CCN_Adapter = {
 
-  /**
-   * Recherche une CCN par texte libre (nom ou IDCC).
-   * Utilise CCN_API du projet parent si disponible, sinon la table fallback.
-   * @param {string} query — texte libre ex: "Syntec", "787", "banque afb"
-   * @returns {Array} liste de CCN matchantes { idcc, nom, plafond, contingentHS, taux1, taux2, notes }
-   */
-  search(query) {
-    if (!query || query.trim().length < 2) return [];
-    const q = query.toLowerCase().trim();
+  search(query, regime) {
+    if (!query || String(query).trim().length < 1) return [];
+    regime = regime || 'forfait_jours';
 
-    // Essayer CCN_API du projet parent
-    if (window.CCN_API) {
-      try {
-        const results = window.CCN_API.search?.(q) || [];
-        if (results.length > 0) {
-          return results.slice(0, 8).map(r => this._normalize(r));
-        }
-      } catch(e) {}
+    if (regime === 'forfait_heures') {
+      if (_hasCommonAPI()) return (global.CCN_API.search(query, 8)||[]).map(r => this._normalizeHS(r));
+      return this._searchFallbackHS(query);
     }
 
-    // Fallback table interne
-    return CCN_CADRES_FALLBACK.filter(ccn =>
-      ccn.nom.toLowerCase().includes(q) ||
-      String(ccn.idcc).includes(q)
-    ).slice(0, 6);
+    if (_hasCadresAPI()) {
+      const fn = regime === 'cadre_dirigeant'
+        ? global.CCN_CADRES_API.searchCadreDirigeant
+        : global.CCN_CADRES_API.searchForfaitJours;
+      return ((fn && fn(query, 8)) || []).map(r => this._normalizeFJ(r, regime));
+    }
+    return this._searchFallbackFJ(query);
   },
 
-  /**
-   * Retourne la CCN correspondant à un label/IDCC exact, ou le droit commun.
-   * @param {string|number} labelOrIdcc
-   */
-  get(labelOrIdcc) {
-    if (!labelOrIdcc) return this._getDroitCommun();
+  get(labelOrIdcc, regime) {
+    if (!labelOrIdcc) return this._getDroitCommun(regime);
+    regime = regime || 'forfait_jours';
+    const q = String(labelOrIdcc).trim();
+    const num = parseInt(q);
+    const hasNum = !isNaN(num) && num > 0;
 
-    const q = String(labelOrIdcc).toLowerCase().trim();
-
-    // Essayer CCN_API
-    if (window.CCN_API) {
-      try {
-        const idcc = parseInt(q);
-        if (!isNaN(idcc) && idcc > 0) {
-          const r = window.CCN_API.getByIdcc?.(idcc);
-          if (r) return this._normalize(r);
-        }
-        const r = window.CCN_API.search?.(q)?.[0];
-        if (r) return this._normalize(r);
-      } catch(e) {}
+    if (regime === 'forfait_heures') {
+      if (_hasCommonAPI()) {
+        const r = hasNum ? global.CCN_API.getGroupeForCCN(num) : (global.CCN_API.search(q,1)||[])[0];
+        if (r) return this._normalizeHS(r);
+      }
+      return FALLBACK_HS.find(c => _norm(c.nom).includes(_norm(q))) || FALLBACK_HS[2];
     }
 
-    // Fallback
-    const found = CCN_CADRES_FALLBACK.find(c =>
-      c.nom.toLowerCase().includes(q) || String(c.idcc) === q
-    );
-    return found || this._getDroitCommun();
+    if (_hasCadresAPI()) {
+      const fn = regime === 'cadre_dirigeant'
+        ? global.CCN_CADRES_API.getCadreDirigeant
+        : global.CCN_CADRES_API.getForfaitJours;
+      const r = fn ? (hasNum ? fn(num) : (this.search(q, regime)[0]?._raw || fn(0))) : null;
+      if (r) return this._normalizeFJ(r, regime);
+    }
+    return this._searchFallbackFJ(q)[0] || FALLBACK_FJ[3];
   },
 
-  /**
-   * Construit les paramètres de contrat M6 depuis une CCN.
-   * Utilisé pour pré-remplir le formulaire de setup.
-   */
-  buildContractDefaults(ccn) {
-    return {
-      plafond:          ccn.plafond      || 218,
-      contingentHS:     ccn.contingentHS || 220,
-      taux1:            ccn.taux1        || 25,
-      taux2:            ccn.taux2        || 50,
-      palier1:          ccn.palier1      || 8,
-      ccnLabel:         ccn.nom          || 'Droit commun',
-      ccnIdcc:          ccn.idcc         || 0,
-      ccnNotes:         ccn.notes        || '',
-    };
+  buildContractDefaults(ccn, regime) {
+    if (!ccn) return {};
+    regime = regime || 'forfait_jours';
+    if (_hasCadresAPI() && global.CCN_CADRES_API.buildContractDefaults) {
+      return global.CCN_CADRES_API.buildContractDefaults(ccn._raw || ccn, regime);
+    }
+    if (regime === 'forfait_heures') {
+      return { ccnLabel: ccn.nom||'Droit commun', ccnIdcc: ccn.idcc||0,
+        seuilHebdo: ccn.seuil||35, taux1: ccn.taux1||25, taux2: ccn.taux2||50,
+        palier1: ccn.palier1||8, contingent: ccn.contingent||220, ccnNotes: ccn.notes||'' };
+    }
+    return { ccnLabel: ccn.nom||'Droit commun', ccnIdcc: ccn.idcc||0,
+      plafond: ccn.plafond||218, tauxMajorationRachat: ccn.tauxRachat||10,
+      ccnNotes: ccn.notes||'', alertes: ccn.alertes||[] };
   },
 
-  /**
-   * Retourne les alertes CCN-spécifiques pour un forfait donné.
-   */
-  getAlertes(ccnLabel, joursEffectifs, plafond) {
-    const ccn = this.get(ccnLabel);
+  getAlertes(ccnLabelOrIdcc, regime, joursEffectifs, plafond) {
+    regime = regime || 'forfait_jours';
+    const ccn = this.get(ccnLabelOrIdcc, regime);
     const alertes = [];
-
-    if (ccn.plafond && ccn.plafond < plafond) {
-      alertes.push({
-        niveau: 'warning',
-        titre:  `CCN ${ccn.nom} — plafond réduit`,
-        texte:  `Votre CCN prévoit un plafond de ${ccn.plafond}j (inférieur au légal de 218j). Votre contrat doit respecter ce plafond plus favorable.`,
-        loi:    'L3121-64 al.1',
-      });
+    if (regime === 'forfait_jours' && ccn.plafond && ccn.plafond < 218) {
+      alertes.push({ niveau:'warning',
+        titre: `CCN ${ccn.nom} — plafond réduit ${ccn.plafond}j`,
+        texte: `Votre CCN prévoit un plafond de ${ccn.plafond}j (plus favorable que les 218j légaux).`,
+        loi: 'Art. L3121-64' });
     }
-    if (ccn.notes) {
-      alertes.push({
-        niveau: 'info',
-        titre:  `Information CCN ${ccn.nom}`,
-        texte:  ccn.notes,
-        loi:    `IDCC ${ccn.idcc}`,
-      });
+    if (ccn.entretienFreq === 'semestriel') {
+      alertes.push({ niveau:'info',
+        titre: `${ccn.nom} — entretien SEMESTRIEL obligatoire`,
+        texte: `Convention impose entretiens semestriels de suivi de charge (${ccn.entretienRef||'accord branche'}).`,
+        loi: ccn.entretienRef||'Accord branche' });
     }
+    if (regime === 'forfait_jours' && ccn.tauxRachat > 10) {
+      alertes.push({ niveau:'info',
+        titre: `${ccn.nom} — taux rachat minimum ${ccn.tauxRachat}%`,
+        texte: `CCN prévoit ${ccn.tauxRachat}% minimum (vs 10% légal).`,
+        loi: 'Art. L3121-59' });
+    }
+    (ccn.alertes||[]).forEach(al => {
+      alertes.push({ niveau:'info', titre:'CCN Info', texte: al, loi:`IDCC ${ccn.idcc||0}` });
+    });
     return alertes;
   },
 
-  /**
-   * Rend un autocomplete CCN dans un container.
-   * @param {HTMLElement} inputEl  — champ texte
-   * @param {HTMLElement} dropEl   — div dropdown
-   * @param {function}    onSelect — callback(ccn)
-   */
-  bindAutocomplete(inputEl, dropEl, onSelect) {
+  renderCCNCard(ccn, regime) {
+    if (!ccn || !ccn.nom) return '';
+    regime = regime || 'forfait_jours';
+    const rows = [];
+    if (ccn.idcc) rows.push(['IDCC', ccn.idcc]);
+    if (regime === 'forfait_heures') {
+      rows.push(['Seuil HS', (ccn.seuil||35)+'h']);
+      rows.push(['Contingent', (ccn.contingent||220)+'h']);
+      rows.push(['Majoration', `+${ccn.taux1||25}%(${ccn.palier1||8}h) / +${ccn.taux2||50}%`]);
+    } else if (regime === 'cadre_dirigeant') {
+      rows.push(['CP maintenus', ccn.droitsCP||'25j ouvrables']);
+      if (ccn.critereCD) rows.push(['Critères CD', ccn.critereCD.slice(0,70)+'…']);
+    } else {
+      rows.push(['Plafond', (ccn.plafond||218)+'j']);
+      rows.push(['Entretien', ccn.entretienFreq==='semestriel'?'⚠️ Semestriel':'Annuel']);
+      rows.push(['Rachat min', (ccn.tauxRachat||10)+'%']);
+      rows.push(['Déconnexion', ccn.clauseDeconn?'✅ Formalisée':'—']);
+    }
+    const alertesHtml = (ccn.alertes||[]).slice(0,3).map(a =>
+      `<div style="font-size:0.7rem;color:${a.startsWith('⚠️')?'var(--warning)':'var(--pierre)'};margin-top:3px">${a}</div>`
+    ).join('');
+    return `<div style="background:var(--ivoire-2);border:1px solid rgba(196,163,90,0.3);border-radius:var(--radius-lg);padding:12px 14px;margin-top:8px">
+      <div style="display:flex;align-items:center;gap:8px;margin-bottom:8px">
+        <div style="font-size:0.6rem;text-transform:uppercase;letter-spacing:0.08em;color:var(--champagne);background:rgba(196,163,90,0.15);border-radius:99px;padding:2px 8px">IDCC ${ccn.idcc||0}</div>
+        <div style="font-size:0.75rem;font-weight:600;color:var(--charbon);flex:1">${ccn.nom}</div>
+      </div>
+      ${rows.map(([l,v])=>`<div style="display:flex;justify-content:space-between;font-size:0.72rem;padding:3px 0;border-bottom:1px solid rgba(26,23,20,0.06)"><span style="color:var(--pierre)">${l}</span><span style="font-weight:500">${v}</span></div>`).join('')}
+      ${alertesHtml?`<div style="margin-top:8px">${alertesHtml}</div>`:''}
+      ${ccn.notes?`<div style="font-size:0.68rem;color:var(--pierre);margin-top:8px;line-height:1.4">${ccn.notes.slice(0,180)}${ccn.notes.length>180?'…':''}</div>`:''}
+    </div>`;
+  },
+
+  bindAutocomplete(inputEl, dropEl, onSelect, regime) {
     if (!inputEl || !dropEl) return;
+    regime = regime || 'forfait_jours';
     let timer;
     inputEl.addEventListener('input', () => {
       clearTimeout(timer);
       timer = setTimeout(() => {
-        const q = inputEl.value;
-        const results = this.search(q);
-        if (!results.length) { dropEl.style.display = 'none'; return; }
-        dropEl.innerHTML = results.map((r, i) =>
-          `<div data-idx="${i}" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--ivoire-2);font-size:0.82rem">
-            <div style="font-weight:500">${r.nom}</div>
-            <div style="font-size:0.7rem;color:var(--pierre)">IDCC ${r.idcc} · Plafond ${r.plafond}j · Contingent ${r.contingentHS}h</div>
-          </div>`
-        ).join('');
+        const q = inputEl.value.trim();
+        if (q.length < 1) { dropEl.style.display='none'; return; }
+        const results = this.search(q, regime);
+        if (!results.length) { dropEl.style.display='none'; return; }
+        dropEl.innerHTML = results.map((r,i) => {
+          const badge = this._getRegimeBadge(r, regime);
+          const sub   = this._getSubtitle(r, regime);
+          return `<div data-idx="${i}" style="padding:10px 12px;cursor:pointer;border-bottom:1px solid var(--ivoire-2);font-size:0.82rem">
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:2px">
+              <span style="font-weight:500;flex:1">${r.nom}</span>${badge}
+            </div>
+            <div style="font-size:0.68rem;color:var(--pierre)">${sub}</div>
+          </div>`;
+        }).join('');
         dropEl.style.display = 'block';
         dropEl.querySelectorAll('[data-idx]').forEach(el => {
           el.addEventListener('click', () => {
@@ -197,38 +201,92 @@ const M6_CCN_Adapter = {
             inputEl.value = ccn.nom;
             dropEl.style.display = 'none';
             onSelect(ccn);
+            // Afficher carte info CCN
+            const parent = inputEl.closest('.m6-field') || inputEl.parentElement;
+            if (parent) {
+              parent.querySelector('.m6-ccn-info-card')?.remove();
+              const card = document.createElement('div');
+              card.className = 'm6-ccn-info-card';
+              card.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, regime);
+              parent.appendChild(card);
+            }
           });
-          el.addEventListener('mouseover', () => el.style.background = 'var(--ivoire)');
-          el.addEventListener('mouseout',  () => el.style.background = '');
+          el.addEventListener('mouseover', () => el.style.background='var(--ivoire)');
+          el.addEventListener('mouseout',  () => el.style.background='');
         });
-      }, 200);
+      }, 180);
     });
     document.addEventListener('click', e => {
-      if (!dropEl.contains(e.target) && e.target !== inputEl) dropEl.style.display = 'none';
+      if (!dropEl.contains(e.target) && e.target !== inputEl) dropEl.style.display='none';
     });
   },
 
-  // ── Helpers privés ───────────────────────────────────────────
-  _normalize(r) {
-    // Convertir un objet CCN_API (projet parent) au format M6
-    return {
-      idcc:         r.idcc || r.IDCC || 0,
-      nom:          r.libelle || r.nom || r.title || 'Convention collective',
-      plafond:      r.forfaitJoursPlafond || r.plafond || 218,
-      contingentHS: r.contingent || r.contingentHS || 220,
-      taux1:        r.taux1 || 25,
-      taux2:        r.taux2 || 50,
-      palier1:      r.palier1 || 8,
-      notes:        r.notes || r.info || '',
-    };
+  _normalizeFJ(r, regime) {
+    if (!r) return null;
+    if (regime === 'cadre_dirigeant') {
+      return { idcc: r.idcc||0, nom: (r.nom||'').replace(' — Cadres Dirigeants',''),
+        secteur: r.secteur||'', plafond: 218, tauxRachat: 10, entretienFreq:'annuel',
+        critereCD: r.critereCD||'', rmgCD: r.rmgCD||'', entretienCD: r.entretienCD||'',
+        droitsCP: r.droitsCP||'25j ouvrables', alertes: r.alertesCD||[],
+        notes: r.notesCD||'', _raw: r };
+    }
+    return { idcc: r.idcc||0, nom: r.nom||'Droit commun', secteur: r.secteur||'',
+      plafond: r.plafond||218, tauxRachat: r.tauxRachat||10,
+      entretienFreq: r.entretienFreq||'annuel', entretienRef: r.entretienRef||'Art. L3121-65',
+      clauseDeconn: r.clauseDeconn||false, suiviCharge: r.suiviCharge||'',
+      alertes: r.alertes||[], notes: r.notes||'', _raw: r };
   },
 
-  _getDroitCommun() {
-    return CCN_CADRES_FALLBACK.find(c => c.idcc === 0);
+  _normalizeHS(r) {
+    if (!r) return null;
+    if (r.i !== undefined) {
+      const rules = _hasCommonAPI() ? global.CCN_API.getGroupeForCCN(r.i) : {seuil:35,taux1:25,palier1:8,taux2:50,contingent:220};
+      return { idcc: r.i, nom: r.n||'Convention collective', secteur: r.s||'',
+        seuil: rules.seuil||35, taux1: rules.taux1||25, palier1: rules.palier1||8,
+        taux2: rules.taux2||50, contingent: rules.contingent||220,
+        groupe: rules.id||'DC', groupeNom: rules.nom||'Droit commun',
+        forfaitJour: r.fj||false, alertes:[], notes: rules.notes||'', _raw: r };
+    }
+    return { idcc:0, nom: r.nom||'Droit commun', secteur:'',
+      seuil: r.seuil||35, taux1: r.taux1||25, palier1: r.palier1||8,
+      taux2: r.taux2||50, contingent: r.contingent||220,
+      groupe: r.id||'DC', groupeNom: r.nom||'Droit commun',
+      alertes:[], notes: r.notes||'', _raw: r };
+  },
+
+  _searchFallbackFJ(query) {
+    const q = _norm(query);
+    return FALLBACK_FJ.filter(c => _norm(c.nom).includes(q)||String(c.idcc).includes(q)).slice(0,6);
+  },
+  _searchFallbackHS(query) {
+    const q = _norm(query);
+    return FALLBACK_HS.filter(c => _norm(c.nom).includes(q)||String(c.idcc).includes(q));
+  },
+  _getDroitCommun(regime) {
+    if (regime === 'forfait_heures') return FALLBACK_HS[2];
+    return this._normalizeFJ(FALLBACK_FJ[3], regime);
+  },
+  _getRegimeBadge(r, regime) {
+    if (regime === 'forfait_heures') {
+      const c = (r.contingent||220)<=100?'var(--alerte)':(r.contingent||220)<=150?'var(--warning)':'var(--succes)';
+      return `<span style="font-size:0.6rem;color:${c};background:${c}18;border-radius:99px;padding:1px 6px">${r.contingent||220}h</span>`;
+    }
+    if (regime === 'forfait_jours') {
+      const pl = r.plafond||218;
+      const c  = pl<218?'var(--champagne-2)':'var(--pierre)';
+      return `<span style="font-size:0.6rem;color:${c};background:${c}18;border-radius:99px;padding:1px 6px">${pl}j</span>`;
+    }
+    return '';
+  },
+  _getSubtitle(r, regime) {
+    if (regime === 'forfait_heures') return `IDCC ${r.idcc||'—'} · ${r.secteur||''} · ${r.contingent||220}h · +${r.taux1||25}%/${r.taux2||50}%`;
+    if (regime === 'cadre_dirigeant') return `IDCC ${r.idcc||'—'} · ${r.secteur||''} · L3111-2`;
+    const e = r.entretienFreq==='semestriel'?'⚠️ Semestriel':'Annuel';
+    return `IDCC ${r.idcc||'—'} · ${r.secteur||''} · ${r.plafond||218}j · ${e} · Rachat ${r.tauxRachat||10}%`;
   },
 };
 
-global.M6_CCN_Adapter       = M6_CCN_Adapter;
-global.M6_CCN_CADRES_TABLE  = CCN_CADRES_FALLBACK;
+global.M6_CCN_Adapter      = M6_CCN_Adapter;
+global.M6_CCN_CADRES_TABLE = FALLBACK_FJ;
 
 })(window);
