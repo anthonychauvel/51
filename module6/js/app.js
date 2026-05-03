@@ -97,12 +97,29 @@ const M6_Router = {
     // Bouton ⇄ Régime
     const sw = document.getElementById('m6-regime-switch');
     if (sw) sw.addEventListener('click', () => {
-      if (confirm('Changer de régime ? Votre configuration est conservée.')) {
+      // Overlay inline — pas de confirm() qui peut boucler sur Android/iOS
+      if (document.getElementById('m6-regime-confirm')) return; // anti-double
+      const ov = document.createElement('div');
+      ov.id = 'm6-regime-confirm';
+      ov.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.75);z-index:9999;display:flex;align-items:center;justify-content:center;padding:24px';
+      ov.innerHTML = `<div style="background:var(--ivoire);border-radius:16px;padding:24px 20px;max-width:320px;width:100%;box-shadow:0 8px 40px rgba(0,0,0,0.3)">
+        <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;margin-bottom:8px">Changer de régime ?</div>
+        <div style="font-size:0.8rem;color:var(--pierre);margin-bottom:20px;line-height:1.5">Votre configuration et vos données sont conservées. Vous pourrez revenir à tout moment.</div>
+        <div style="display:flex;gap:10px">
+          <button id="m6rc-cancel" class="m6-btn m6-btn-ghost" style="flex:1">Annuler</button>
+          <button id="m6rc-ok" class="m6-btn m6-btn-gold" style="flex:1">Changer</button>
+        </div>
+      </div>`;
+      document.body.appendChild(ov);
+      const cleanup = () => ov.remove();
+      ov.querySelector('#m6rc-cancel').addEventListener('click', cleanup);
+      ov.querySelector('#m6rc-ok').addEventListener('click', () => {
+        cleanup();
         this._regime = null;
         localStorage.removeItem('M6_REGIME');
         M6_Header.reset();
         this._showSelector();
-      }
+      });
     });
 
     if (!this._regime) { this._showSelector(); }
@@ -120,13 +137,37 @@ const M6_Router = {
   _load(regime) {
     this._root.innerHTML = '';
 
-    // Premier lancement → wizard de bienvenue (remplace l'intro Zenji)
-    if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit()
-        && regime !== 'cadre_dirigeant') {
-      this._showWizard(regime);
+    // Premier lancement → page de bienvenue Zenji, PUIS wizard de configuration
+    if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit()) {
+      this._showWelcome(regime);
       return;
     }
     this._loadView(regime);
+  },
+
+  _showWelcome(regime) {
+    M6_Header.set({ title: 'M6 — Cadres', sub: 'Bienvenue', showReset: false, showSwitch: false });
+    this._root.innerHTML = `
+    <div style="background:var(--ivoire);min-height:calc(100dvh - 52px);padding:0 0 calc(32px + env(safe-area-inset-bottom,0))">
+      <div style="padding:16px 0">
+        ${window.M6_Zenji?.renderIntro ? M6_Zenji.renderIntro() : ''}
+      </div>
+      <div style="padding:0 16px">
+        <button id="zenji-start" class="m6-btn m6-btn-gold" style="width:100%;font-size:0.95rem;margin-bottom:10px">
+          Configurer mon contrat →
+        </button>
+        <button id="zenji-skip" class="m6-btn m6-btn-ghost" style="width:100%;font-size:0.78rem">
+          Passer — utiliser les valeurs par défaut
+        </button>
+      </div>
+    </div>`;
+    this._root.querySelector('#zenji-start')?.addEventListener('click', () => {
+      this._showWizard(regime);
+    });
+    this._root.querySelector('#zenji-skip')?.addEventListener('click', () => {
+      M6_ZenjiOnboarding.markSeen();
+      this._loadView(regime);
+    });
   },
 
   _loadView(regime) {
@@ -246,7 +287,62 @@ const M6_Router = {
   }
 };
 
-document.addEventListener('DOMContentLoaded', () => M6_Router.init());
+document.addEventListener('DOMContentLoaded', () => {
+  M6_Router.init();
+
+  // ── Dark mode ─────────────────────────────────────────────────
+  const _DM_KEY = 'M6_DARK_MODE';
+  const _applyDark = (on) => {
+    document.documentElement.classList.toggle('dark-mode', on);
+    const btn = document.getElementById('m6-darkmode-btn');
+    if (btn) btn.textContent = on ? '☀️' : '🌙';
+    try { localStorage.setItem(_DM_KEY, on ? '1' : '0'); } catch(_) {}
+  };
+  // Appliquer la préférence sauvegardée (ou system)
+  const _savedDark = localStorage.getItem(_DM_KEY);
+  const _sysDark   = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
+  _applyDark(_savedDark !== null ? _savedDark === '1' : _sysDark);
+  // Écouter les changements système
+  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', e => {
+    if (localStorage.getItem(_DM_KEY) === null) _applyDark(e.matches);
+  });
+  document.getElementById('m6-darkmode-btn')?.addEventListener('click', () => {
+    const isDark = document.documentElement.classList.contains('dark-mode');
+    _applyDark(!isDark);
+  });
+
+  // ── Notifications vendredi — demande in-app (pas RGPD) ────────
+  const _notifKey = 'M6_NOTIF_ASKED';
+  if (!localStorage.getItem(_notifKey) && 'Notification' in window) {
+    // Attendre 30s après l'ouverture pour ne pas déranger
+    setTimeout(() => {
+      if (Notification.permission === 'default') {
+        // Bannière in-app d'invitation (pas de popup navigateur direct)
+        const banner = document.createElement('div');
+        banner.id = 'm6-notif-banner';
+        banner.style.cssText = 'position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;animation:m6FadeIn 0.4s ease-out';
+        banner.innerHTML = `
+          <span style="font-size:1.4rem;flex-shrink:0">🔔</span>
+          <div style="flex:1;line-height:1.4">Activer les rappels vendredi ?<br><span style="font-size:0.7rem;color:var(--pierre-2)">100% local — aucune donnée envoyée</span></div>
+          <button id="m6-notif-yes" style="background:var(--champagne);color:var(--charbon);border:none;border-radius:8px;padding:8px 14px;font-size:0.8rem;cursor:pointer;font-weight:600;white-space:nowrap">Oui</button>
+          <button id="m6-notif-no" style="background:none;border:1px solid rgba(196,163,90,0.3);color:var(--pierre-2);border-radius:8px;padding:8px 10px;font-size:0.75rem;cursor:pointer">Non</button>`;
+        document.body.appendChild(banner);
+        document.getElementById('m6-notif-yes')?.addEventListener('click', () => {
+          Notification.requestPermission().then(p => {
+            localStorage.setItem(_notifKey, '1');
+            banner.remove();
+            if (p === 'granted') M6_toast?.('🔔 Rappels vendredi activés !');
+          });
+        });
+        document.getElementById('m6-notif-no')?.addEventListener('click', () => {
+          localStorage.setItem(_notifKey, '0'); banner.remove();
+        });
+      } else {
+        localStorage.setItem(_notifKey, '1');
+      }
+    }, 30000);
+  }
+});
 window.M6_Router = M6_Router;
 
 })();
