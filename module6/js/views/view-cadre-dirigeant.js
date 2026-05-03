@@ -26,10 +26,26 @@ const VCD = {
     this._contract = M6_Storage.getContract(REGIME);
     this._data     = M6_Storage.getData(REGIME, this._year);
     this._moods    = M6_Storage.getMoods(REGIME, this._year);
-    try { this._projets = JSON.parse(localStorage.getItem(`M6_CD_PROJETS_${this._year}`) || '[]'); } catch { this._projets = []; }
+    try {
+      const raw = JSON.parse(localStorage.getItem('M6_CD_PROJETS') || '[]');
+      // Migration : anciens projets sans id/heuresPrevu → on enrichit
+      this._projets = raw.map(p => ({
+        id:         p.id         || 'proj_' + Math.random().toString(36).slice(2,9),
+        nom:        p.nom        || 'Projet sans nom',
+        categorie:  p.categorie  || 'Strategie',
+        heuresPrevu:p.heuresPrevu|| p.heures || 0,
+        statut:     p.statut     || 'en_cours',
+        priorite:   p.priorite   || 'moyenne',
+        dateDebut:  p.dateDebut  || null,
+        dateFin:    p.dateFin    || null,
+        couleur:    p.couleur    || '#C4853A',
+        note:       p.note       || '',
+        jalons:     p.jalons     || [],
+      }));
+    } catch { this._projets = []; }
   },
   _saveData()     { M6_Storage.setData(REGIME, this._year, this._data); },
-  _saveProjets()  { localStorage.setItem(`M6_CD_PROJETS_${this._year}`, JSON.stringify(this._projets)); },
+  _saveProjets()  { localStorage.setItem('M6_CD_PROJETS', JSON.stringify(this._projets)); },
   _saveContract() { M6_Storage.setContract(REGIME, this._contract); },
 
   // ── Stats de base ──────────────────────────────────────────────
@@ -72,6 +88,26 @@ const VCD = {
         entretienDate:this._contract.entretienDate },
       this._data, this._year
     );
+    if (bio?.hasData && window.M6_PhaseAlert) M6_PhaseAlert.showIfNeeded(REGIME, this._year, bio.phase?.code, bio.fatigue);
+
+    const yrsCD = M6_Storage.getAllYears(REGIME);
+    const yrPickerCD = yrsCD.length > 1
+      ? `<select id="cd-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrsCD.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`
+      : '';
+    M6_Header.set({
+      title: `${this._contract.fonction||'Cadre Dirigeant'} ${this._year}`,
+      sub: `${this._contract.entreprise||'L3111-2'} · CP: ${stats.cpSolde}j restants`,
+      showReset: true,
+      showSwitch: true,
+      onReset: () => {
+        if (!confirm('Reconfigurer le contrat ?')) return;
+        M6_Storage.setContract(REGIME, null);
+        this._contract = null;
+        this._c.innerHTML = this._tplSetup();
+        this._bindSetup();
+      },
+      yearPicker: yrPickerCD,
+    });
 
     // Zenji
     const zenjiMsg = window.M6_Zenji
@@ -80,7 +116,7 @@ const VCD = {
           bio, this._contract)
       : '';
 
-    this._c.innerHTML = `${this._tplHeader(stats)}${this._tplNav()}<div class="m6-main m6-fade-in" id="cd-ct" style="padding-top:8px"></div>`;
+    this._c.innerHTML = `${this._tplNav()}<div class="m6-main m6-fade-in" id="cd-ct" style="padding-top:8px"></div>`;
     const ct = this._c.querySelector('#cd-ct');
     const zenjiHtml = zenjiMsg ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code||'P1', true) : '';
 
@@ -96,6 +132,24 @@ const VCD = {
       case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(stats,bio); this._bindExport(stats,bio); break;
     }
     this._bindNav();
+    if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
+    // Popup Zenji flottant
+    if (window.M6_ZenjiPopup) {
+      M6_ZenjiPopup.init(
+        { joursEffectifs:stats.jTravailles, plafond:218,
+          rttPris:stats.rttPris||0, rttSolde:0, rachetes:0,
+          cpPris:stats.cpPris, tauxRemplissage:0, alertes:[],
+          rttTheoriques:0, joursRestants:0 },
+        bio, this._contract,
+        (action) => {
+          if(action.includes('Santé')||action.includes('santé')) { this._section='sante'; this.render(); }
+          else if(action.includes('Entretien')||action.includes('entretien')) { this._section='entretien'; this.render(); }
+          else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
+          else if(action.includes('Agenda')||action.includes('calendrier')) { this._section='calendrier'; this.render(); }
+        }
+      );
+    }
+    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
   },
 
   // ── HEADER ─────────────────────────────────────────────────────
@@ -233,69 +287,247 @@ const VCD = {
   },
 
   // ── PROJETS / MISSIONS ─────────────────────────────────────────
+  // Calcule les heures réelles par projet depuis les données calendrier (multi-années)
+  _computeProjetStats() {
+    const stats = {}; // { projetId: { heuresReelles, jours: [{dk, h}] } }
+    const allYears = M6_Storage.getAllYears('cadre_dirigeant');
+    for (const yr of allYears) {
+      const data = M6_Storage.getData('cadre_dirigeant', yr);
+      for (const [dk, v] of Object.entries(data)) {
+        if (!v.projetId) continue;
+        if (!stats[v.projetId]) stats[v.projetId] = { heuresReelles: 0, jours: [] };
+        const h = parseFloat(v.hProjet) || (v.type === 'demi' ? 3.5 : 7);
+        stats[v.projetId].heuresReelles += h;
+        stats[v.projetId].jours.push({ dk, h });
+      }
+    }
+    return stats;
+  },
+
+// PATCH _tplProjets + _bindProjets — injecté directement
+// Remplace le bloc entier dans view-cadre-dirigeant.js
+
+  _computeProjetStats() {
+    const stats = {};
+    const allYears = M6_Storage.getAllYears('cadre_dirigeant');
+    for (const yr of allYears) {
+      const data = M6_Storage.getData('cadre_dirigeant', yr);
+      for (const [dk, v] of Object.entries(data)) {
+        if (!v.projetId) continue;
+        if (!stats[v.projetId]) stats[v.projetId] = { heuresReelles:0, jours:[] };
+        const h = parseFloat(v.hProjet) || (v.type==='demi' ? 3.5 : 7);
+        stats[v.projetId].heuresReelles += h;
+        stats[v.projetId].jours.push({ dk, h });
+      }
+    }
+    return stats;
+  },
+
   _tplProjets() {
-    const totalH = this._projets.reduce((s,p)=>s+(p.heures||0),0);
-    const cats = ['Stratégie','Innovation','Opérationnel','RH & Management','Finance','Externe'];
-    const bycat = {};
-    cats.forEach(c=>{bycat[c]=this._projets.filter(p=>p.categorie===c).reduce((s,p)=>s+(p.heures||0),0);});
+    const stats  = this._computeProjetStats();
+    const CATS   = ['Strategie','Innovation','Operationnel','RH Management','Finance','Externe','Transformation'];
+    const STATUTS= { a_faire:'A faire', en_cours:'En cours', en_pause:'En pause', termine:'Termine' };
+    const SC     = { a_faire:'#6B7280', en_cours:'#1E3A5F', en_pause:'#C4853A', termine:'#2D6A4F' };
+    const PC     = { haute:'#B85C50', moyenne:'#C4853A', basse:'#4A7C6F' };
+
+    const actifs  = this._projets.filter(p=>p.statut!=='termine')
+                      .sort((a,b)=>(['haute','moyenne','basse'].indexOf(a.priorite)||0)-(['haute','moyenne','basse'].indexOf(b.priorite)||0));
+    const termines = this._projets.filter(p=>p.statut==='termine');
+    const totalPrev= this._projets.reduce((s,p)=>s+(p.heuresPrevu||0),0);
+    const totalReel= Object.values(stats).reduce((s,v)=>s+(v.heuresReelles||0),0);
+    const pctGlob  = totalPrev>0 ? Math.min(100,Math.round(totalReel/totalPrev*100)) : 0;
+    const MOIS     = ['Jan','Fev','Mar','Avr','Mai','Juin','Juil','Aou','Sep','Oct','Nov','Dec'];
+
+    const fmtDate = (ds) => {
+      if (!ds) return '';
+      const d = new Date(ds+'T12:00:00');
+      return d.getDate()+'/'+(d.getMonth()+1);
+    };
+
+    const cardProjet = (p, idx) => {
+      const s   = stats[p.id] || { heuresReelles:0, jours:[] };
+      const hr  = Math.round(s.heuresReelles*10)/10;
+      const hp  = p.heuresPrevu || 0;
+      const pct = hp>0 ? Math.min(100,Math.round(hr/hp*100)) : 0;
+      const dep = hp>0 && hr>hp;
+      const jRest= (p.jalons||[]).filter(j=>!j.fait).length;
+      const jTot = (p.jalons||[]).length;
+      const sc   = SC[p.statut]||'#6B7280';
+      const pc   = PC[p.priorite]||'#C4853A';
+      const barColor = dep
+        ? 'linear-gradient(90deg,#9B2C2C,#E53E3E)'
+        : pct>=80
+          ? 'linear-gradient(90deg,var(--champagne-2),var(--champagne))'
+          : 'linear-gradient(90deg,'+p.couleur+','+p.couleur+'cc)';
+
+      return `<div class="m6-card" style="margin-bottom:12px;border-left:4px solid ${p.couleur||'var(--champagne)'}">
+        <div class="m6-card-body" style="padding:12px 14px">
+          <div style="display:flex;align-items:flex-start;gap:8px;margin-bottom:8px">
+            <div style="flex:1">
+              <div style="font-family:var(--font-display);font-size:0.97rem;font-weight:600;color:var(--charbon)">${p.nom}</div>
+              <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:3px">
+                <span style="font-size:0.6rem;background:${sc}20;color:${sc};border-radius:99px;padding:1px 7px;font-weight:600">${STATUTS[p.statut]||p.statut}</span>
+                <span style="font-size:0.6rem;background:${pc}20;color:${pc};border-radius:99px;padding:1px 7px">Prio ${p.priorite}</span>
+                <span style="font-size:0.6rem;color:var(--pierre)">${p.categorie||''}</span>
+              </div>
+            </div>
+            <button data-edit-proj="${idx}" style="background:none;border:1px solid var(--ivoire-3);color:var(--pierre);border-radius:6px;padding:3px 7px;cursor:pointer;font-size:0.68rem">✎</button>
+            <button data-del-proj="${idx}"  style="background:none;border:none;color:var(--pierre);cursor:pointer;font-size:0.85rem;padding:2px 4px">✕</button>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="display:flex;justify-content:space-between;font-size:0.72rem;margin-bottom:3px">
+              <span style="color:${dep?'var(--alerte)':'var(--pierre)'}">
+                ${hr}h${hp>0?' / '+hp+'h budget':''}
+              </span>
+              <span style="font-weight:600;color:${pct>=100?'var(--succes)':'var(--charbon)'}">${pct}%</span>
+            </div>
+            <div style="height:8px;background:var(--ivoire-2);border-radius:99px;overflow:hidden">
+              <div style="height:100%;width:${pct}%;border-radius:99px;background:${barColor};transition:width 0.5s"></div>
+            </div>
+            ${dep?`<div style="font-size:0.65rem;color:var(--alerte);margin-top:2px">Depassement : +${Math.round((hr-hp)*10)/10}h</div>`:''}
+          </div>
+          <div style="display:flex;gap:10px;font-size:0.68rem;color:var(--pierre);flex-wrap:wrap;margin-bottom:6px">
+            ${p.dateDebut?`<span>📅 ${fmtDate(p.dateDebut)}</span>`:''}
+            ${p.dateFin?`<span>🏁 ${fmtDate(p.dateFin)}</span>`:''}
+            ${jTot>0?`<span>◉ ${jRest}/${jTot} jalons</span>`:''}
+            ${s.jours.length>0?`<span>⏱ Dernier : ${fmtDate(s.jours[s.jours.length-1].dk)}</span>`:'<span style="color:var(--alerte)">Aucune imputation</span>'}
+          </div>
+          ${(p.jalons||[]).length>0?`<div style="padding-top:6px;border-top:var(--grey-line)">${p.jalons.map((j,ji)=>`<div style="display:flex;align-items:center;gap:7px;font-size:0.71rem;padding:2px 0"><span style="color:${j.fait?'var(--succes)':'var(--pierre)'}">${j.fait?'✓':'○'}</span><span style="color:${j.fait?'var(--succes)':'var(--charbon)'};text-decoration:${j.fait?'line-through':'none'}">${j.titre}</span><span style="color:var(--pierre);margin-left:auto">${fmtDate(j.date)}</span><button data-toggle-jalon="${idx}-${ji}" style="background:none;border:none;cursor:pointer;color:var(--pierre);font-size:0.68rem">${j.fait?'↩':'✓'}</button></div>`).join('')}</div>`:''}
+          ${p.note?`<div style="font-size:0.68rem;color:var(--pierre);margin-top:6px;font-style:italic;padding-top:4px;border-top:var(--grey-line)">${p.note}</div>`:''}
+          <div style="display:flex;gap:5px;flex-wrap:wrap;margin-top:8px;padding-top:6px;border-top:var(--grey-line)">
+            ${Object.entries(STATUTS).map(([k,v])=>`<button data-statut-proj="${idx}" data-statut="${k}"
+              style="font-size:0.62rem;padding:2px 7px;border-radius:99px;border:1px solid ${p.statut===k?SC[k]:'var(--ivoire-3)'};
+                     background:${p.statut===k?SC[k]+'20':'transparent'};color:${p.statut===k?SC[k]:'var(--pierre)'};cursor:pointer">${v}</button>`).join('')}
+          </div>
+        </div>
+      </div>`;
+    };
 
     return `
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Répartition du temps dirigeant</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Feuille de route</div><div class="m6-ornement-line"></div></div>
 
-    <div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
-      <span>💡</span><div>La ventilation du temps par mission permet de piloter votre délégation et d'objectiver la valeur ajoutée de votre rôle. Utile pour l'entretien de charge et le conseil d'administration.</div>
-    </div>
-
-    <!-- Donut simplifié par catégorie -->
-    ${totalH>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
-      <div style="display:flex;justify-content:space-between;margin-bottom:10px"><span class="m6-card-label">Répartition par domaine</span><span class="m6-badge m6-badge-champagne">${totalH}h déclarées</span></div>
-      ${cats.filter(c=>bycat[c]>0).map(c=>{const pct=Math.round(bycat[c]/totalH*100);return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px"><span>${c}</span><span style="font-weight:500">${bycat[c]}h (${pct}%)</span></div><div style="height:6px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:linear-gradient(90deg,var(--champagne-2),var(--champagne));border-radius:99px"></div></div></div>`;}).join('')}
+    ${this._projets.length>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body" style="padding:12px 14px">
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:6px">
+        <div style="font-size:0.78rem;color:var(--charbon);font-weight:500">Avancement global — ${this._projets.length} projet(s)</div>
+        <span class="m6-badge m6-badge-champagne">${pctGlob}%</span>
+      </div>
+      <div class="m6-progress-wrap"><div class="m6-progress-bar ${pctGlob>=100?'ok':''}" style="width:${pctGlob}%"></div></div>
+      <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--pierre);margin-top:4px">
+        <span><strong style="color:var(--charbon)">${totalReel}h</strong> imputees</span>
+        <span>Budget total : ${totalPrev}h</span>
+      </div>
     </div></div>`:''}
 
-    <!-- Liste projets -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-header"><div class="m6-card-icon">◆</div><div><div class="m6-card-label">Missions</div><div class="m6-card-title">${this._projets.length} enregistrée(s)</div></div></div>
-      <div class="m6-card-body">
-        ${!this._projets.length?'<div style="font-size:0.78rem;color:var(--pierre);text-align:center;padding:16px 0">Aucune mission déclarée — ajoutez votre première mission ci-dessous.</div>':
-          this._projets.map((p,i)=>`<div class="m6-row" style="align-items:flex-start;padding:8px 0">
-            <div style="flex:1">
-              <div style="font-size:0.83rem;font-weight:500">${p.nom}</div>
-              <div style="font-size:0.7rem;color:var(--pierre)">${p.categorie||'—'} · ${p.heures||0}h déclarées</div>
-              ${p.note?`<div style="font-size:0.68rem;color:var(--pierre);font-style:italic;margin-top:2px">${p.note}</div>`:''}
-            </div>
-            <button data-del-proj="${i}" style="background:none;border:none;color:var(--pierre);cursor:pointer;font-size:0.9rem;padding:2px 6px">✕</button>
-          </div>`).join('')}
-      </div>
-    </div>
+    ${actifs.map((p,i) => cardProjet(p, this._projets.indexOf(p))).join('')}
 
-    <!-- Ajouter mission -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-header"><div class="m6-card-icon">+</div><div><div class="m6-card-label">Nouvelle mission</div></div></div>
-      <div class="m6-card-body">
-        <div class="m6-field"><label>Nom de la mission</label><input type="text" id="p-nom" placeholder="ex : Stratégie de croissance 2026" style="font-size:16px"></div>
-        <div class="m6-field"><label>Domaine</label>
-          <select id="p-cat" style="font-size:14px">${cats.map(c=>`<option>${c}</option>`).join('')}</select>
-        </div>
-        <div class="m6-field"><label>Heures déclarées</label><input type="number" id="p-h" min="0" step="0.5" placeholder="ex : 40" style="font-size:16px"></div>
-        <div class="m6-field"><label>Note</label><input type="text" id="p-note" placeholder="Contexte, résultats clés…" style="font-size:16px"></div>
-        <button class="m6-btn m6-btn-gold" id="p-add">Ajouter la mission</button>
+    ${termines.length>0?`<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Termines (${termines.length})</div><div class="m6-ornement-line"></div></div>
+    ${termines.map(p=>{const idx=this._projets.indexOf(p);const s=stats[p.id]||{heuresReelles:0};return `<div class="m6-card" style="margin-bottom:8px;opacity:0.7"><div class="m6-card-body" style="padding:10px 14px"><div style="display:flex;align-items:center;gap:8px"><span>✅</span><div style="flex:1"><div style="font-size:0.82rem;font-weight:500;text-decoration:line-through">${p.nom}</div><div style="font-size:0.68rem;color:var(--pierre)">${Math.round(s.heuresReelles*10)/10}h / ${p.heuresPrevu||0}h</div></div><button data-statut-proj="${idx}" data-statut="en_cours" style="font-size:0.65rem;padding:2px 8px;border:1px solid var(--grey-line);border-radius:6px;background:none;cursor:pointer">Rouvrir</button></div></div></div>`;}).join('')}`:''}
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Nouveau projet</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
+      <div class="m6-field"><label>Nom du projet</label><input type="text" id="p-nom" placeholder="ex : Transformation digitale 2026" style="font-size:16px"></div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="m6-field"><label>Domaine</label><select id="p-cat" style="font-size:14px">${CATS.map(c=>`<option>${c}</option>`).join('')}</select></div>
+        <div class="m6-field"><label>Priorite</label><select id="p-prio" style="font-size:14px"><option value="haute">Haute</option><option value="moyenne" selected>Moyenne</option><option value="basse">Basse</option></select></div>
       </div>
-    </div>`;
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="m6-field"><label>Budget (heures)</label><input type="number" id="p-prev" min="0" step="0.5" placeholder="ex : 80" style="font-size:16px"></div>
+        <div class="m6-field"><label>Couleur</label><input type="color" id="p-col" value="#C4853A" style="height:42px;width:100%;padding:4px;border:1px solid var(--ivoire-3);border-radius:8px"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div class="m6-field"><label>Date debut</label><input type="date" id="p-d1" style="font-size:14px"></div>
+        <div class="m6-field"><label>Date fin</label><input type="date" id="p-d2" style="font-size:14px"></div>
+      </div>
+      <div class="m6-field"><label>Note / Objectif</label><input type="text" id="p-note" placeholder="KPIs, contexte…" style="font-size:14px"></div>
+      <div class="m6-field">
+        <label>Ajouter un jalon (optionnel)</label>
+        <div style="display:flex;gap:6px">
+          <input type="text" id="p-jal-nom" placeholder="ex : Kick-off" style="font-size:14px;flex:1">
+          <input type="date" id="p-jal-date" style="font-size:14px;width:130px">
+          <button id="p-jal-add" style="background:var(--champagne);border:none;border-radius:8px;padding:0 12px;cursor:pointer;color:var(--charbon);font-weight:600;font-size:0.9rem">+</button>
+        </div>
+        <div id="p-jalons-list" style="margin-top:6px"></div>
+      </div>
+      <button class="m6-btn m6-btn-gold" id="p-add">Ajouter ce projet</button>
+    </div></div>`;
   },
 
   _bindProjets() {
+    let tmpJalons = [];
+    const jalList = this._c.querySelector('#p-jalons-list');
+
+    const renderJalList = () => {
+      if (!jalList) return;
+      jalList.innerHTML = tmpJalons.map((j,i)=>`<div style="display:flex;align-items:center;gap:6px;font-size:0.72rem;padding:2px 0">
+        <span style="color:var(--pierre)">○</span><span>${j.titre}</span>
+        <span style="color:var(--pierre)">${new Date(j.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'2-digit',month:'short'})}</span>
+        <button data-del-jal="${i}" style="background:none;border:none;cursor:pointer;color:var(--alerte);font-size:0.8rem">✕</button>
+      </div>`).join('');
+      jalList.querySelectorAll('[data-del-jal]').forEach(b=>b.addEventListener('click',()=>{
+        tmpJalons.splice(parseInt(b.dataset.delJal),1); renderJalList();
+      }));
+    };
+
+    this._c.querySelector('#p-jal-add')?.addEventListener('click',()=>{
+      const nom  = this._c.querySelector('#p-jal-nom')?.value.trim();
+      const date = this._c.querySelector('#p-jal-date')?.value;
+      if(!nom||!date){M6_toast('Nom et date requis');return;}
+      tmpJalons.push({titre:nom,date,fait:false});
+      this._c.querySelector('#p-jal-nom').value='';
+      renderJalList();
+    });
+
     this._c.querySelector('#p-add')?.addEventListener('click',()=>{
       const nom = this._c.querySelector('#p-nom')?.value.trim();
       if(!nom){M6_toast('Nom requis');return;}
-      this._projets.push({nom,categorie:this._c.querySelector('#p-cat')?.value,heures:parseFloat(this._c.querySelector('#p-h')?.value)||0,note:this._c.querySelector('#p-note')?.value.trim()});
-      this._saveProjets();this._load();this.render();M6_toast('Mission ajoutée');
+      this._projets.push({
+        id:         'proj_'+Date.now().toString(36),
+        nom,
+        categorie:  this._c.querySelector('#p-cat')?.value,
+        heuresPrevu:parseFloat(this._c.querySelector('#p-prev')?.value)||0,
+        statut:     'en_cours',
+        priorite:   this._c.querySelector('#p-prio')?.value||'moyenne',
+        dateDebut:  this._c.querySelector('#p-d1')?.value||null,
+        dateFin:    this._c.querySelector('#p-d2')?.value||null,
+        couleur:    this._c.querySelector('#p-col')?.value||'#C4853A',
+        note:       this._c.querySelector('#p-note')?.value.trim(),
+        jalons:     [...tmpJalons],
+      });
+      tmpJalons=[];
+      this._saveProjets();this._load();this.render();
+      M6_toast('Projet ajoute — visible dans le popup du calendrier');
     });
+
     this._c.querySelectorAll('[data-del-proj]').forEach(b=>b.addEventListener('click',()=>{
-      const i=parseInt(b.dataset.delProj);this._projets.splice(i,1);this._saveProjets();this._load();this.render();
+      const i=parseInt(b.dataset.delProj);
+      if(!confirm('Supprimer ? Les imputations calendrier restent.'))return;
+      this._projets.splice(i,1);this._saveProjets();this._load();this.render();
+    }));
+
+    this._c.querySelectorAll('[data-statut-proj]').forEach(b=>b.addEventListener('click',()=>{
+      const i=parseInt(b.dataset.statutProj);
+      if(this._projets[i]) this._projets[i].statut=b.dataset.statut;
+      this._saveProjets();this._load();this.render();M6_toast('Statut mis a jour');
+    }));
+
+    this._c.querySelectorAll('[data-toggle-jalon]').forEach(b=>b.addEventListener('click',()=>{
+      const [pi,ji]=b.dataset.toggleJalon.split('-').map(Number);
+      if(this._projets[pi]?.jalons?.[ji]) this._projets[pi].jalons[ji].fait=!this._projets[pi].jalons[ji].fait;
+      this._saveProjets();this._load();this.render();
+    }));
+
+    this._c.querySelectorAll('[data-edit-proj]').forEach(b=>b.addEventListener('click',()=>{
+      const i=parseInt(b.dataset.editProj);const p=this._projets[i];if(!p)return;
+      const nom  = prompt('Nom du projet :',p.nom);if(!nom)return;
+      const prev = parseFloat(prompt('Budget heures :',p.heuresPrevu))||p.heuresPrevu;
+      const note = prompt('Note :',p.note||'');
+      const fin  = prompt('Date fin (YYYY-MM-DD) :',p.dateFin||'');
+      p.nom=nom.trim();p.heuresPrevu=prev;p.note=(note||'').trim();if(fin)p.dateFin=fin;
+      this._saveProjets();this._load();this.render();
     }));
   },
 
-  // ── SANTÉ ──────────────────────────────────────────────────────
+    // ── SANTÉ ──────────────────────────────────────────────────────
   _tplSante(bio, s) {
     const bar=(l,v,inv)=>{const c=inv?(v>60?'#B85C50':v>35?'#C4853A':'#4A7C6F'):(v<40?'#B85C50':v<65?'#C4853A':'#4A7C6F');return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px"><span>${l}</span><span style="font-family:var(--font-display);font-size:1rem;font-weight:700;color:${c}">${v}</span></div><div style="height:8px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${v}%;border-radius:99px;background:${c}"></div></div></div>`;};
 
@@ -361,7 +593,10 @@ const VCD = {
           <span>Je certifie l'exactitude de ces informations et le respect recommandé des temps de repos quotidien et hebdomadaire.</span>
         </label>
       </div>
+      <div class="m6-field"><label>PDF Periode — date debut</label><input type="date" id="cd-per-d1" value="${this._year}-01-01" style="font-size:16px"></div>
+      <div class="m6-field"><label>PDF Periode — date fin</label><input type="date" id="cd-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px"></div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <button class="m6-btn m6-btn-ghost" id="cd-pdf-per" style="flex:1;font-size:0.78rem">📄 Periode</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;font-size:0.78rem">📋 PDF Annuel</button>
       </div>
@@ -377,10 +612,13 @@ const VCD = {
     </div></div>
 
     <!-- JSON -->
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
+    <div id="rupture-container-cd"></div>
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
       <div style="display:flex;gap:8px">
         <button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">Exporter JSON</button>
+        <button class="m6-btn m6-btn-primary" id="exp-csv-cd" style="flex:1;font-size:0.78rem">📊 CSV SIRH</button>
         <button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">Importer JSON</button>
       </div>
     </div></div>
@@ -409,6 +647,12 @@ const VCD = {
       alertes:[], tauxRemplissage:0
     });
 
+    this._c.querySelector('#cd-pdf-per')?.addEventListener('click', () => {
+      const d1 = this._c.querySelector('#cd-per-d1')?.value;
+      const d2 = this._c.querySelector('#cd-per-d2')?.value;
+      if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
+      M6_PDF.exportPeriode({regime:REGIME,year:this._year,contract:this._contract,data:this._data,dateDebut:d1,dateFin:d2});
+    });
     this._c.querySelector('#pdf-m')?.addEventListener('click',()=>{
       if(!checkAttest()) return; saveMeta();
       M6_PDF.exportMensuel({regime:REGIME,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis:makeAnalysis(),validations:M6_Storage.getValidations(REGIME,this._year)});
@@ -422,7 +666,10 @@ const VCD = {
       if(!nom){M6_toast('Saisissez votre nom');return;}
       M6_Storage.addValidation(REGIME,this._year,m,nom);M6_toast('Validé');this.render();
     });
+    const rccd = this._c.querySelector('#rupture-container-cd');
+    if (rccd && window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(rccd, this._contract);
     this._c.querySelector('#exp-j')?.addEventListener('click',()=>M6_ImportExport.export(REGIME));
+    this._c.querySelector('#exp-csv-cd')?.addEventListener('click', () => M6_ImportExport.exportCSV(REGIME, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click',()=>M6_ImportExport.import(REGIME,()=>{this._load();this.render();}));
   },
 
@@ -439,7 +686,12 @@ const VCD = {
         <div class="m6-field"><label>Votre nom complet</label><input type="text" id="s-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
         <div class="m6-field"><label>Fonction</label><input type="text" id="s-fnc" placeholder="Directeur Général, DAF, DRH…" style="font-size:16px"></div>
         <div class="m6-field"><label>Entreprise</label><input type="text" id="s-ent" placeholder="Nom de l'entreprise" style="font-size:16px"></div>
-        <div class="m6-field"><label>CCN applicable</label><input type="text" id="s-ccn" placeholder="ex : Syntec, Banque AFB, Hôtellerie…" style="font-size:16px"></div>
+        <div class="m6-field" style="position:relative">
+          <label>CCN applicable — tapez pour chercher</label>
+          <input type="text" id="s-ccn" placeholder="ex : Syntec, 675, Banque AFB…" style="font-size:16px" autocomplete="off">
+          <div id="s-ccn-drop-cd" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:180px;overflow-y:auto"></div>
+        </div>
+        <div class="m6-field" style="display:none"><label>_old_ccn</label><input type="text" id="_s-ccn-hidden" placeholder="ex : Syntec, Banque AFB, Hôtellerie…" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="s-cp" value="25" min="25" max="50" style="font-size:16px"></div>
         <div class="m6-field"><label>Date début exercice (si en cours d'année)</label><input type="date" id="s-debut" style="font-size:16px"></div>
         <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="s-mgr" placeholder="Pour les PDF" style="font-size:16px"></div>
@@ -454,6 +706,18 @@ const VCD = {
 
   _bindSetup() {
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
+      if (window.M6_CCN_Adapter) {
+        M6_CCN_Adapter.bindAutocomplete(
+          this._c.querySelector('#s-ccn'),
+          this._c.querySelector('#s-ccn-drop-cd'),
+          (ccn) => {
+            const d = M6_CCN_Adapter.buildContractDefaults(ccn);
+            const cpEl = this._c.querySelector('#s-cp');
+            if (cpEl) cpEl.value = d.joursCPContrat || 25;
+            M6_toast('CCN ' + ccn.nom + ' selectionnee');
+          }
+        );
+      }
       const c = {
         nom:           this._c.querySelector('#s-nom')?.value.trim(),
         fonction:      this._c.querySelector('#s-fnc')?.value.trim(),

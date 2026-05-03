@@ -57,7 +57,33 @@ const VFJ = {
     if (!this._contract) { this._c.innerHTML = this._tplSetup(); this._bindSetup(); return; }
     const analysis = M6_ForfaitJours.analyze(this._contract, this._data, this._year);
     const bio      = M6_BioEngine.analyzeForfaitJours(this._contract, this._data, this._year);
-    this._c.innerHTML = `${this._tplHeader(analysis)}${this._tplNav()}<div class="m6-main m6-fade-in" id="vfj-content" style="padding-top:8px"></div>`;
+    if (bio?.hasData && window.M6_PhaseAlert) M6_PhaseAlert.showIfNeeded(this._regime, this._year, bio.phase?.code, bio.fatigue);
+
+    // ── Header global : titre + year picker + boutons ──────────
+    const yrs = M6_Storage.getAllYears(this._regime);
+    const yrPickerHtml = yrs.length > 1
+      ? `<select id="vfj-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none;cursor:pointer">
+           ${yrs.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}
+         </select>`
+      : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
+    const plafond = this._contract.plafond || 218;
+    const restants = Math.max(0, plafond - analysis.joursEffectifs);
+    M6_Header.set({
+      title: `Forfait Jours ${this._year}`,
+      sub: `${this._contract.ccnLabel || 'Droit commun'} · ${plafond}j · ${restants}j restants`,
+      showReset: true,
+      showSwitch: true,
+      onReset: () => {
+        if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
+        if (window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
+        M6_Storage.setContract(this._regime, null);
+        this._contract = null;
+        this._c.innerHTML = this._tplSetup();
+        this._bindSetup();
+      },
+      yearPicker: yrPickerHtml,
+    });
+    this._c.innerHTML = `${this._tplNav()}<div class="m6-main m6-fade-in" id="vfj-content" style="padding-top:8px"></div>`;
     const ct = this._c.querySelector('#vfj-content');
 
     // ── Carte Zenji contextuelle (toutes sections sauf calendrier) ──
@@ -78,6 +104,7 @@ const VFJ = {
         break;
       case 'bio':
         ct.innerHTML = zenjiHtml + this._tplBio(bio);
+        if (window.M6_Charts) M6_Charts.bindCharts(analysis, bio, this._data, this._contract, this._year);
         break;
       case 'entretien':
         ct.innerHTML = zenjiHtml;
@@ -87,12 +114,37 @@ const VFJ = {
         ct.innerHTML = zenjiHtml + this._tplExport(analysis);
         this._bindExport(analysis);
         break;
+      case 'tendances':
+        ct.innerHTML = '<div style="padding:4px 0"></div>';
+        if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+        break;
+      case 'nullite':
+        ct.innerHTML = zenjiHtml;
+        if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
+        break;
       case 'glossaire':
         ct.innerHTML = zenjiHtml;
         M6_GlossaireUI.render(ct);
         break;
     }
     this._bindNav();
+    // Alerte automatique si changement de phase
+    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime);
+    // Init popup Zenji (bulle flottante)
+    if (window.M6_ZenjiPopup) {
+      M6_ZenjiPopup.init(analysis, bio, this._contract, (action) => this._handleZenjiAction(action));
+    }
+  },
+
+  _handleZenjiAction(action) {
+    if (action.includes('RTT') || action.includes('Poser un RTT')) { this._section='calendrier'; this.render(); }
+    else if (action.includes('santé') || action.includes('biolog') || action.includes('Santé')) { this._section='bio'; this.render(); }
+    else if (action.includes('entretien') || action.includes('Entretien')) { this._section='entretien'; this.render(); }
+    else if (action.includes('export') || action.includes('PDF') || action.includes('Export')) { this._section='export'; this.render(); }
+    else if (action.includes('glossaire') || action.includes('Glossaire')) { this._section='glossaire'; this.render(); }
+    else if (action.includes('bilan') || action.includes('Bilan')) { this._section='bilan'; this.render(); }
   },
 
   _tplHeader(a) {
@@ -129,14 +181,17 @@ const VFJ = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { this._section=b.dataset.sec; this.render(); }));
-    const yp = this._c.querySelector('#vfj-yr');
+    const yp = this._c.querySelector('#vfj-yr') || document.querySelector('#vfj-yr-hdr');
     if (yp) yp.addEventListener('change', () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
+    // Year picker dans le header global
+    const ypHdr = document.querySelector('#vfj-yr-hdr');
+    if (ypHdr && ypHdr !== yp) ypHdr.addEventListener('change', () => { this._year=parseInt(ypHdr.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
   },
 
   // ── BILAN ────────────────────────────────────────────────────
@@ -186,8 +241,7 @@ const VFJ = {
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
-      <button class="m6-btn m6-btn-ghost" id="vfj-reset" style="flex:1;font-size:0.78rem">🔄 Relancer wizard</button>
-      <button class="m6-btn m6-btn-ghost" onclick="VFJ_editContract()" style="flex:1;font-size:0.78rem">⚙️ Contrat</button>
+      <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="width:100%;font-size:0.78rem">📅 Nouvel exercice</button>
     </div>`;
   },
 
@@ -235,7 +289,7 @@ const VFJ = {
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body"><div class="m6-card-label" style="margin-bottom:8px">Répartition de la charge déclarée</div><div style="display:flex;gap:8px;flex-wrap:wrap">
       ${['faible','ok','elevé','critique'].map(niv=>{const c=M6_MOOD_COLORS[niv];const n=Object.values(this._moods).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('')}
     </div></div></div>
-    ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">⚕️</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
+    ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">!</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
   },
 
   // ── EXPORT ───────────────────────────────────────────────────
@@ -258,10 +312,31 @@ const VFJ = {
         <select id="pdf-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}" ${i===new Date().getMonth()?'selected':''}>${m}</option>`).join('')}</select></div>
       <div class="m6-field"><label>Votre nom</label><input type="text" id="pdf-nom" value="${this._contract.nomCadre||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Nom manager</label><input type="text" id="pdf-mgr" value="${this._contract.nomManager||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
-      <div style="display:flex;gap:8px">
+      <div class="m6-field">
+        <label>Période libre (du … au …)</label>
+        <div style="display:flex;gap:8px;margin-bottom:8px">
+          <input type="date" id="pdf-debut" style="flex:1;font-size:14px" placeholder="Début">
+          <input type="date" id="pdf-fin" style="flex:1;font-size:14px" placeholder="Fin">
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;font-size:0.78rem">📋 PDF Annuel</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;font-size:0.78rem">📅 PDF Période</button>
       </div>
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF Periode personnalisee</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
+      <div class="m6-field">
+        <label>Date de debut</label>
+        <input type="date" id="pdf-per-d1" value="${this._year}-01-01" style="font-size:16px">
+      </div>
+      <div class="m6-field">
+        <label>Date de fin</label>
+        <input type="date" id="pdf-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px">
+      </div>
+      <button class="m6-btn m6-btn-ghost" id="pdf-per" style="width:100%;font-size:0.78rem">📄 PDF Periode</button>
     </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Validation mensuelle</div><div class="m6-ornement-line"></div></div>
@@ -273,13 +348,22 @@ const VFJ = {
       ${Object.entries(valid).length?`<div style="margin-top:10px">${Object.entries(valid).sort(([a],[b])=>a-b).map(([m,v])=>`<div class="m6-row"><span class="m6-row-label">${['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][m]}</span><span style="font-size:0.65rem;color:var(--pierre)">${new Date(v.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})} · #${v.hash}</span></div>`).join('')}</div>`:''}
     </div></div>
 
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Mode Preuve opposable</div><div class="m6-ornement-line"></div></div>
+    <div id="preuve-container"></div>
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
       <div style="display:flex;gap:8px;margin-bottom:8px">
         <button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">💾 Exporter JSON</button>
+        <button class="m6-btn m6-btn-primary" id="exp-csv" style="flex:1;font-size:0.78rem">📊 CSV SIRH</button>
         <button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">📂 Importer</button>
       </div>
       <button class="m6-btn m6-btn-ghost" id="rgpd" style="width:100%;font-size:0.75rem">📋 Export RGPD complet</button>
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Simulateur — Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
+    <div id="rupture-container"></div>
+
+    <div style="display:none"><!-- placeholder pour eviter la double fermeture --></div
     </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique des modifications</div><div class="m6-ornement-line"></div></div>
@@ -295,12 +379,46 @@ const VFJ = {
       const mgr = this._c.querySelector('#pdf-mgr')?.value.trim();
       if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; M6_Storage.setContract(this._regime,this._contract); }
     };
+    this._c.querySelector('#pdf-per')?.addEventListener('click', () => {
+      const d1 = this._c.querySelector('#pdf-per-d1')?.value;
+      const d2 = this._c.querySelector('#pdf-per-d2')?.value;
+      if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
+      saveMeta();
+      M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
+    });
     this._c.querySelector('#pdf-m')?.addEventListener('click', () => { saveMeta(); M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)}); });
     this._c.querySelector('#pdf-a')?.addEventListener('click', () => { saveMeta(); M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis}); });
     this._c.querySelector('#v-btn')?.addEventListener('click', () => { const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render(); });
+    // Mode Preuve
+    const preuveContainer = this._c.querySelector('#preuve-container');
+    if (preuveContainer && window.M6_ModePreuve) {
+      M6_ModePreuve.renderUI(preuveContainer, this._regime, this._year, this._contract, this._data, analysis);
+    }
     this._c.querySelector('#exp-j')?.addEventListener('click', () => M6_ImportExport.export(this._regime));
+    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_jours, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
+
+    // PDF Période
+    this._c.querySelector('#pdf-p')?.addEventListener('click', () => {
+      saveMeta();
+      const debut = this._c.querySelector('#pdf-debut')?.value;
+      const fin   = this._c.querySelector('#pdf-fin')?.value;
+      if(!debut||!fin||debut>fin) { M6_toast('Renseignez une période valide'); return; }
+      M6_PDF.exportPeriode({ regime:this._regime, year:this._year, dateDebut:debut, dateFin:fin,
+        contract:this._contract, data:this._data, moods:this._moods });
+    });
+
+    // Calculateur rupture
+    const ruptureContainer = this._c.querySelector('#rupture-container');
+    if (ruptureContainer && window.M6_RuptureCalculateur) {
+      M6_RuptureCalculateur.renderUI(ruptureContainer, this._contract);
+    }
     this._c.querySelector('#rgpd')?.addEventListener('click', () => M6_ImportExport.exportRGPD());
+  },
+
+  // Destroy popup à chaque navigation de section (recréé dans render())
+  _destroyPopup() {
+    if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
   },
 
   _openNewYear() {
@@ -318,7 +436,12 @@ const VFJ = {
       <div class="m6-card"><div class="m6-card-body">
         <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="218" min="100" max="235" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels</label><input type="number" id="s-cp" value="25" min="25" max="35" style="font-size:16px"></div>
-        <div class="m6-field"><label>CCN applicable (optionnel)</label><input type="text" id="s-ccn" placeholder="ex : Syntec, Banque AFB…" style="font-size:16px"></div>
+        <div class="m6-field" style="position:relative">
+          <label>CCN applicable — tapez pour chercher</label>
+          <input type="text" id="s-ccn" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
+          <div id="s-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:200px;overflow-y:auto"></div>
+          <div id="s-ccn-info" style="display:none;margin-top:6px;font-size:0.72rem;color:var(--pierre);background:var(--ivoire);border-radius:6px;padding:6px 10px;line-height:1.5"></div>
+        </div>
         <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" placeholder="ex : 350" style="font-size:16px"></div>
         <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
         <div class="m6-field"><label>Date d'arrivée si en cours d'année</label><input type="date" id="s-arr" style="font-size:16px"></div>
@@ -332,6 +455,23 @@ const VFJ = {
 
   _bindSetup() {
     this._c.querySelector('#s-save')?.addEventListener('click', () => {
+      // Bind autocomplete CCN si disponible
+      if (window.M6_CCN_Adapter) {
+        const inp = this._c.querySelector('#s-ccn');
+        const drop = this._c.querySelector('#s-ccn-drop');
+        const info = this._c.querySelector('#s-ccn-info');
+        M6_CCN_Adapter.bindAutocomplete(inp, drop, (ccn) => {
+          const defaults = M6_CCN_Adapter.buildContractDefaults(ccn);
+          // Pré-remplir le plafond si la CCN en prévoit un
+          const pEl = this._c.querySelector('#s-p');
+          if (pEl && defaults.plafond !== 218) pEl.value = defaults.plafond;
+          // Afficher les infos CCN
+          if (info) {
+            info.style.display = 'block';
+            info.innerHTML = '<strong>IDCC ' + ccn.idcc + '</strong> · Plafond ' + ccn.plafond + 'j · Contingent ' + ccn.contingentHS + 'h HS<br>' + (ccn.notes || '');
+          }
+        });
+      }
       const c = { plafond:parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseInt(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-maj')?.value)||10 };
       M6_Storage.setContract(this._regime, c);
       M6_Storage.createYear(this._regime, this._year);

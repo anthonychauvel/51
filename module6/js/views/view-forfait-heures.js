@@ -37,7 +37,27 @@ const VFH = {
     if (!this._contract) { this._c.innerHTML = this._tplSetup(); this._bindSetup(); return; }
     const analysis = M6_ForfaitHeures.analyze(this._contract, this._data, this._year);
     const bio      = M6_BioEngine.analyzeForfaitHeures(this._contract, this._data, this._year);
-    this._c.innerHTML = `${this._tplHeader(analysis)}${this._tplNav()}<div class="m6-main m6-fade-in" id="vfh-ct" style="padding-top:8px"></div>`;
+    if (bio?.hasData && window.M6_PhaseAlert) M6_PhaseAlert.showIfNeeded(this._regime, this._year, bio.phase?.code, bio.fatigue);
+
+    const yrs2 = M6_Storage.getAllYears(this._regime);
+    const yrPickerHtml2 = yrs2.length > 1
+      ? `<select id="vfh-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrs2.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`
+      : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
+    M6_Header.set({
+      title: `Forfait Heures ${this._year}`,
+      sub: `Seuil ${this._formatH(this._contract.seuilHebdo)} · Contingent ${this._contract.contingent||220}h · ${analysis.totalHS}h HS`,
+      showReset: true,
+      showSwitch: true,
+      onReset: () => {
+        if (!confirm('Reconfigurer le contrat ?')) return;
+        M6_Storage.setContract(this._regime, null);
+        this._contract = null;
+        this._c.innerHTML = this._tplSetup();
+        this._bindSetup();
+      },
+      yearPicker: yrPickerHtml2,
+    });
+    this._c.innerHTML = `${this._tplNav()}<div class="m6-main m6-fade-in" id="vfh-ct" style="padding-top:8px"></div>`;
     const ct = this._c.querySelector('#vfh-ct');
 
     const zenjiMsg = window.M6_Zenji
@@ -54,9 +74,44 @@ const VFH = {
       case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
       case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
       case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
+      case 'tendances':
+        ct.innerHTML = '<div style="padding:4px 0"></div>';
+        if(window.M6_Charts) {
+          // Pour FH : convertir les données semaines en données "jours" pour le moteur bio mensuel
+          const fhData = {};
+          Object.entries(this._data).forEach(([wk,v]) => {
+            // Estimer 5 jours de travail par semaine à partir du wk
+            const [y,wn] = wk.split('-W');
+            const d = new Date(parseInt(y), 0, 1 + (parseInt(wn)-1)*7);
+            d.setDate(d.getDate() + (1-(d.getDay()||7)));
+            for(let i=0;i<5;i++) { const di=new Date(d); di.setDate(d.getDate()+i); fhData[di.toISOString().slice(0,10)]={type:'travail'}; }
+          });
+          M6_Charts.renderPage(ct, {plafond:220, joursCPContrat:25, seuilHebdo:this._contract.seuilHebdo||39}, fhData, this._year);
+        } else {
+          ct.innerHTML += '<div class="m6-alert info"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+        }
+        break;
       case 'glossaire': ct.innerHTML = zenjiHtml; M6_GlossaireUI.render(ct); break;
     }
     this._bindNav();
+    // Détruire l'ancienne bulle avant réinitialisation
+    if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
+    // Popup Zenji flottant
+    if (window.M6_ZenjiPopup) {
+      M6_ZenjiPopup.init(
+        { joursEffectifs:analysis.semaines, plafond:analysis.contingent,
+          rttPris:0, rttSolde:0, rachetes:0, cpPris:0,
+          tauxRemplissage:analysis.tauxRemplissage, alertes:analysis.alertes,
+          rttTheoriques:0, joursRestants:analysis.contingent - analysis.totalHS },
+        bio, this._contract,
+        (action) => {
+          if(action.includes('Santé')||action.includes('santé')) { this._section='bio'; this.render(); }
+          else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
+          else if(action.includes('Glossaire')||action.includes('glossaire')) { this._section='glossaire'; this.render(); }
+        }
+      );
+    }
+    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
   },
 
   _tplHeader(a) {
@@ -90,7 +145,7 @@ const VFH = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
@@ -98,6 +153,8 @@ const VFH = {
     this._c.querySelectorAll('[data-sec]').forEach(b=>b.addEventListener('click',()=>{this._section=b.dataset.sec;this.render();}));
     const yp = this._c.querySelector('#vfh-yr');
     if (yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
+    const ypHdr2 = document.querySelector('#vfh-yr-hdr');
+    if (ypHdr2) ypHdr2.addEventListener('change',()=>{this._year=parseInt(ypHdr2.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
   },
 
   // ── BILAN ──────────────────────────────────────────────────
@@ -182,20 +239,134 @@ const VFH = {
       if (!ov||!sh) return;
       const wk = prefill || M6_ForfaitHeures.isoWeek(new Date());
       const entry = this._data[wk]||{};
-      sh.innerHTML = `
-        <div class="m6-sheet-title">Saisir une semaine</div>
-        <div class="m6-field"><label>Semaine (format: 2026-W21)</label><input type="week" id="fh-wk" value="${wk}" style="font-size:14px"></div>
-        <div class="m6-field"><label>Heures travaillées (ex: 39.5)</label><input type="number" id="fh-h" min="0" max="80" step="0.25" value="${entry.heures||''}" placeholder="${this._contract.seuilHebdo||39}" style="font-size:16px"></div>
-        <div class="m6-field"><label>Note (déplacement, astreinte…)</label><input type="text" id="fh-note" value="${entry.note||''}" placeholder="" style="font-size:16px"></div>
-        <button class="m6-btn m6-btn-primary" id="fh-sv">Enregistrer</button>
-        <div style="height:8px"></div>
-        <button class="m6-btn m6-btn-ghost" id="fh-cl" style="width:100%">Annuler</button>`;
-      sh.querySelector('#fh-sv').addEventListener('click',()=>{
-        const w=sh.querySelector('#fh-wk')?.value, h=parseFloat(sh.querySelector('#fh-h')?.value), n=sh.querySelector('#fh-note')?.value.trim();
-        if(!w||isNaN(h)){M6_toast('Remplissez semaine et heures');return;}
-        this._save(w,{heures:h,note:n||null});
-        ov.classList.remove('open');
-      });
+      // Mode saisie : 'global' (heures totales) ou 'jours' (par jour)
+      let saisieMode = 'global';
+      const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+      const seuil = this._contract.seuilHebdo || 39;
+      const hParJour = (seuil / 5).toFixed(2);
+
+      const renderSheet = () => {
+        const isDuplicate = !!this._data[wk] && !prefill;
+        sh.innerHTML = `
+          <div class="m6-sheet-title">Saisir une semaine</div>
+
+          ${isDuplicate ? '<div class="m6-alert warning" style="margin-bottom:10px;font-size:0.78rem"><span>⚠️</span><div>Cette semaine est déjà saisie. Les données seront remplacées.</div></div>' : ''}
+
+          <!-- Sélecteur de semaine par date -->
+          <div class="m6-field">
+            <label>Choisir une date dans la semaine</label>
+            <input type="date" id="fh-date-nav" style="font-size:16px"
+              value="${wk.replace(/W(\d+)/, (_, w) => { const d = new Date(wk.split('-')[0], 0, 1 + (parseInt(w)-1)*7); d.setDate(d.getDate() + (1 - (d.getDay()||7))); return d.toISOString().slice(0,10).slice(5); }).replace('W', '')}">
+            <div style="font-size:0.7rem;color:var(--pierre);margin-top:3px">
+              Semaine sélectionnée : <strong id="fh-wk-display">${wk}</strong>
+            </div>
+          </div>
+
+          <!-- Mode de saisie -->
+          <div class="m6-tabs" style="margin-bottom:12px">
+            <button class="m6-tab ${saisieMode==='global'?'active':''}" id="fh-mode-global">Total semaine</button>
+            <button class="m6-tab ${saisieMode==='jours'?'active':''}" id="fh-mode-jours">Par jour</button>
+          </div>
+
+          <!-- Mode global -->
+          <div id="fh-zone-global" style="${saisieMode==='jours'?'display:none':''}">
+            <div class="m6-field">
+              <label>Heures travaillées cette semaine (ex: 41.5)</label>
+              <input type="number" id="fh-h" min="0" max="80" step="0.25"
+                value="${entry.heures||''}" placeholder="${seuil}" style="font-size:16px">
+              <div style="font-size:0.7rem;color:var(--pierre);margin-top:3px">
+                Seuil contractuel : ${seuil}h · Au-delà = heures supplémentaires
+              </div>
+            </div>
+          </div>
+
+          <!-- Mode jours -->
+          <div id="fh-zone-jours" style="${saisieMode==='global'?'display:none':''}">
+            <div style="font-size:0.72rem;color:var(--pierre);margin-bottom:8px">
+              Saisissez les heures par jour — le total est calculé automatiquement.
+            </div>
+            ${jours.map((j,i) => {
+              const stored = entry.jours ? (entry.jours[i] ?? hParJour) : hParJour;
+              return `<div class="m6-field" style="margin-bottom:8px">
+                <label style="display:flex;justify-content:space-between">
+                  <span>${j}</span>
+                  <span id="fh-j${i}-val" style="color:var(--champagne-2)">${stored}h</span>
+                </label>
+                <input type="range" id="fh-j${i}" min="0" max="14" step="0.5" value="${stored}"
+                  oninput="document.getElementById('fh-j${i}-val').textContent=this.value+'h';
+                           const t=[0,1,2,3,4].reduce((s,x)=>s+(parseFloat(document.getElementById('fh-j'+x)?.value)||0),0);
+                           document.getElementById('fh-total-jours').textContent=t.toFixed(1)+'h';">
+              </div>`;
+            }).join('')}
+            <div style="display:flex;justify-content:space-between;font-size:0.82rem;font-weight:600;margin-top:4px;padding:8px;background:var(--ivoire-2);border-radius:var(--radius)">
+              <span>Total semaine</span>
+              <span id="fh-total-jours" style="color:var(--champagne-2)">
+                ${entry.jours ? entry.jours.reduce((s,v)=>s+(v||0),0).toFixed(1) : (seuil).toFixed(1)}h
+              </span>
+            </div>
+          </div>
+
+          <div class="m6-field" style="margin-top:12px">
+            <label>Note (déplacement, astreinte, télétravail…)</label>
+            <input type="text" id="fh-note" value="${(entry.note||'').substring(0,200)}"
+              placeholder="ex : 2j déplacement Lyon" style="font-size:16px" maxlength="200">
+          </div>
+
+          <!-- Attestation repos -->
+          <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:10px 0;cursor:pointer">
+            <input type="checkbox" id="fh-repos" style="margin-top:2px;flex-shrink:0">
+            <span>J'atteste avoir respecté les temps de repos légaux cette semaine (11h quotidien, 35h hebdomadaire).</span>
+          </label>
+
+          <button class="m6-btn m6-btn-primary" id="fh-sv">Enregistrer</button>
+          <div style="height:8px"></div>
+          <button class="m6-btn m6-btn-ghost" id="fh-cl" style="width:100%">Annuler</button>`;
+
+        // Bind navigation par date → week
+        sh.querySelector('#fh-date-nav')?.addEventListener('change', e => {
+          const d = new Date(e.target.value + 'T12:00:00');
+          const newWk = M6_ForfaitHeures.isoWeek(d);
+          wk = newWk;
+          sh.querySelector('#fh-wk-display').textContent = newWk;
+        });
+
+        // Bind mode toggle
+        sh.querySelector('#fh-mode-global')?.addEventListener('click', () => {
+          saisieMode = 'global';
+          sh.querySelector('#fh-zone-global').style.display = '';
+          sh.querySelector('#fh-zone-jours').style.display = 'none';
+          sh.querySelector('#fh-mode-global').classList.add('active');
+          sh.querySelector('#fh-mode-jours').classList.remove('active');
+        });
+        sh.querySelector('#fh-mode-jours')?.addEventListener('click', () => {
+          saisieMode = 'jours';
+          sh.querySelector('#fh-zone-global').style.display = 'none';
+          sh.querySelector('#fh-zone-jours').style.display = '';
+          sh.querySelector('#fh-mode-global').classList.remove('active');
+          sh.querySelector('#fh-mode-jours').classList.add('active');
+        });
+
+        sh.querySelector('#fh-sv')?.addEventListener('click', () => {
+          if (!sh.querySelector('#fh-repos')?.checked) {
+            M6_toast('Attestez le respect des temps de repos'); return;
+          }
+          let heures, joursArr = null;
+          if (saisieMode === 'jours') {
+            joursArr = [0,1,2,3,4].map(i => parseFloat(sh.querySelector('#fh-j'+i)?.value) || 0);
+            heures = Math.round(joursArr.reduce((s,v)=>s+v,0) * 100) / 100;
+          } else {
+            heures = parseFloat(sh.querySelector('#fh-h')?.value);
+            if (isNaN(heures)) { M6_toast('Saisissez les heures'); return; }
+          }
+          const note = sh.querySelector('#fh-note')?.value.trim().replace(/['"]/g, '') || null;
+          const payload = { heures, note };
+          if (joursArr) payload.jours = joursArr;
+          this._save(wk, payload);
+          ov.classList.remove('open');
+        });
+      };
+
+      renderSheet();
       sh.querySelector('#fh-cl').addEventListener('click',()=>ov.classList.remove('open'));
       ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
       requestAnimationFrame(()=>ov.classList.add('open'));
@@ -230,14 +401,20 @@ const VFH = {
       <div class="m6-field"><label>Taux +1 (%)</label><input type="number" id="fh-t1" value="${this._contract.taux1||25}" min="10" style="font-size:16px"></div>
       <div class="m6-field"><label>Taux +2 (%)</label><input type="number" id="fh-t2" value="${this._contract.taux2||50}" min="25" style="font-size:16px"></div>
       <button class="m6-btn m6-btn-gold" id="fh-sv-taux" style="margin-bottom:10px;font-size:0.8rem">Mettre à jour les taux</button>
-      <div style="display:flex;gap:8px">
+      <div class="m6-field"><label>PDF Periode — date debut</label><input type="date" id="fh-per-d1" value="${this._year}-01-01" style="font-size:16px"></div>
+      <div class="m6-field"><label>PDF Periode — date fin</label><input type="date" id="fh-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px"></div>
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="m6-btn m6-btn-ghost" id="fh-pdf-per" style="flex:1;font-size:0.78rem">📄 PDF Periode</button>
         <button class="m6-btn m6-btn-ghost" id="fh-pdf-a" style="flex:1;font-size:0.78rem">📋 PDF Annuel</button>
       </div>
     </div></div>
 
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
+    <div id="rupture-container-fh"></div>
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
-      <div style="display:flex;gap:8px"><button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">💾 Exporter</button><button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">📂 Importer</button></div>
+      <div style="display:flex;gap:8px"><button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">💾 Exporter</button><button class="m6-btn m6-btn-primary" id="exp-csv-fh" style="flex:1;font-size:0.78rem">📊 CSV SIRH</button>
+        <button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">📂 Importer</button></div>
     </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique</div><div class="m6-ornement-line"></div></div>
@@ -255,7 +432,11 @@ const VFH = {
       const a2=M6_ForfaitHeures.analyze(this._contract,this._data,this._year);
       M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:{},analysis:a2});
     });
+    // Rupture conventionnelle
+    const rc = this._c.querySelector('#rupture-container-fh');
+    if (rc && window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(rc, this._contract);
     this._c.querySelector('#exp-j')?.addEventListener('click',()=>M6_ImportExport.export(this._regime));
+    this._c.querySelector('#exp-csv-fh')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_heures, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click',()=>M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
   },
 
@@ -263,6 +444,11 @@ const VFH = {
     return `<div style="padding:32px 16px;padding-top:calc(40px + env(safe-area-inset-top,0));min-height:100dvh;background:var(--ivoire)">
       <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Heures</div><div class="m6-ornement-line"></div></div>
       <div class="m6-card"><div class="m6-card-body">
+        <div class="m6-field" style="position:relative">
+          <label>CCN applicable (optionnel)</label>
+          <input type="text" id="fh-ccn" placeholder="ex : Syntec, 787, Banque…" style="font-size:16px" autocomplete="off">
+          <div id="fh-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:180px;overflow-y:auto"></div>
+        </div>
         <div class="m6-field"><label>Durée hebdomadaire contractuelle (heures)</label><input type="number" id="s-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
         <div class="m6-field"><label>Palier majoration 1 (heures HS)</label><input type="number" id="s-pal" value="8" min="1" max="20" style="font-size:16px"></div>
         <div class="m6-field"><label>Taux majoration 1 (%)</label><input type="number" id="s-t1" value="25" min="10" max="100" style="font-size:16px"></div>
@@ -278,6 +464,20 @@ const VFH = {
 
   _bindSetup() {
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
+      if (window.M6_CCN_Adapter) {
+        M6_CCN_Adapter.bindAutocomplete(
+          this._c.querySelector('#fh-ccn'),
+          this._c.querySelector('#fh-ccn-drop'),
+          (ccn) => {
+            const d = M6_CCN_Adapter.buildContractDefaults(ccn);
+            const contEl = this._c.querySelector('#s-cont');
+            if (contEl && d.contingentHS) contEl.value = d.contingentHS;
+            const t1El = this._c.querySelector('#s-t1');
+            if (t1El && d.taux1) t1El.value = d.taux1;
+            M6_toast('CCN ' + ccn.nom + ' appliquee');
+          }
+        );
+      }
       const c={seuilHebdo:parseFloat(this._c.querySelector('#s-seuil')?.value)||39,palier1:parseInt(this._c.querySelector('#s-pal')?.value)||8,taux1:parseInt(this._c.querySelector('#s-t1')?.value)||25,taux2:parseInt(this._c.querySelector('#s-t2')?.value)||50,contingent:parseInt(this._c.querySelector('#s-cont')?.value)||220,tauxHoraire:parseFloat(this._c.querySelector('#s-tauxH')?.value)||0};
       M6_Storage.setContract(this._regime,c); M6_Storage.createYear(this._regime,this._year); this._load(); this.render();
     });
