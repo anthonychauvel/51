@@ -39,7 +39,49 @@
 
   --gold-line: 1px solid rgba(196,163,90,0.35);
   --grey-line: 1px solid rgba(26,23,20,0.10);
+
+  /* ── Dark mode variables ─────────────────────────────────────── */
+  --dm-bg:         #121110;
+  --dm-surface:    #1E1C19;
+  --dm-surface-2:  #2A2724;
+  --dm-surface-3:  #363330;
+  --dm-text:       #F0ECE6;
+  --dm-text-2:     #C8C0B4;
+  --dm-border:     rgba(196,163,90,0.20);
 }
+
+/* ── Dark mode — activé par classe sur <html> ─────────────────── */
+html.dark-mode {
+  --ivoire:    #1E1C19;
+  --ivoire-2:  #2A2724;
+  --ivoire-3:  #363330;
+  --charbon:   #F0ECE6;
+  --charbon-2: #D8D0C6;
+  --charbon-3: #BEB5A8;
+  --pierre:    #9A9188;
+  --pierre-2:  #6A635C;
+  --champagne-3: #2E2A1A;
+  --succes-bg: #0D2318;
+  --alerte-bg: #2A0D0D;
+  --warning-bg:#2A2000;
+  --info-bg:   #12153A;
+  --shadow:    0 4px 16px rgba(0,0,0,0.4);
+  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
+  --grey-line: 1px solid rgba(196,163,90,0.15);
+  color-scheme: dark;
+}
+
+html.dark-mode body { background: var(--ivoire); }
+html.dark-mode .m6-header { background: #0D0C0B; border-bottom: 1px solid rgba(196,163,90,0.25); }
+html.dark-mode .m6-daily-msg { background: #171512; }
+html.dark-mode .m6-bottom-nav { background: #0D0C0B; border-top: 1px solid rgba(196,163,90,0.20); }
+html.dark-mode .m6-overlay { background: rgba(0,0,0,0.85); }
+html.dark-mode .m6-sheet { background: #1A1816; border-top: 1px solid rgba(196,163,90,0.25); }
+html.dark-mode input, html.dark-mode select, html.dark-mode textarea {
+  background: #2A2724; color: #F0ECE6; border-color: #3D3936;
+}
+html.dark-mode .m6-btn-ghost { border-color: rgba(196,163,90,0.35); color: var(--champagne); }
+html.dark-mode #zenji-sheet { background: #1A1816; }
 
 /* ── Reset ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -52,6 +94,8 @@ body {
   font-size: 15px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  /* Android: empêche le pull-to-refresh natif qui vide l'état de l'app */
+  overscroll-behavior-y: contain;
 }
 
 /* ── Header ─────────────────────────────────────────────────── */
