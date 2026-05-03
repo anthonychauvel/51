@@ -159,7 +159,7 @@ const M6_Entretien = {
           alertes: analysis?.alertes?.length
         }
       };
-      M6_Storage.saveEntretien(regime, e);
+      M6_Storage.addEntretien(regime, year || new Date().getFullYear(), e);
       // Mettre à jour date dans le contrat
       const ctr = M6_Storage.getContract(regime);
       ctr.entretienDate = date;

@@ -361,9 +361,11 @@ const M6_ZenjiPopup = {
     this._prenom   = contract?.nomCadre || contract?.nom || '';
     this._onAction = onActionCallback || null;
 
-    this._injectDOM();
-    this._updateBubble();
+    // N'injecter que l'overlay (pas la bulle flottante intrusive)
+    this._injectOverlay();
     this._checkPhaseChange(bio);
+    // Injecter le message journalier discret en haut de page
+    this._injectDailyMessage();
   },
 
   /** Affiche le popup principal */
@@ -383,39 +385,46 @@ const M6_ZenjiPopup = {
     if (ov) requestAnimationFrame(() => ov.classList.add('open'));
   },
 
-  /** Met à jour la bulle sans recréer le DOM */
+  /** Met à jour le message journalier */
   updateBubble(analysis, bio) {
     this._analysis = analysis; this._bio = bio;
-    this._updateBubble();
     this._checkPhaseChange(bio);
   },
 
-  /** Détruit la bulle (au changement de vue) */
+  /** Détruit les éléments Zenji (au changement de vue) */
   destroy() {
-    document.getElementById('zenji-bubble')?.remove();
+    document.getElementById('zenji-daily-bar')?.remove();
     document.getElementById('zenji-overlay')?.remove();
   },
 
   // ── DOM helpers ─────────────────────────────────────────────
-  _injectDOM() {
-    // Bulle
-    if (!document.getElementById('zenji-bubble')) {
-      const b = document.createElement('div');
-      b.id = 'zenji-bubble';
-      b.innerHTML = `
-        <div style="position:relative">
-          <div id="zenji-bubble-close">✕</div>
-          <div id="zenji-bubble-text">...</div>
-        </div>
-        <img id="zenji-bubble-portrait" src="${IMG}" alt="Zenji">`;
-      document.body.appendChild(b);
-      b.addEventListener('click', (e) => {
-        if (e.target.id === 'zenji-bubble-close') { b.style.display = 'none'; return; }
-        this.showPopup();
-      });
-    }
 
-    // Overlay
+  /** Message journalier discret — bannière cliquable en haut du contenu */
+  _injectDailyMessage() {
+    document.getElementById('zenji-daily-bar')?.remove();
+    const popup = _selectPopup(this._analysis, this._bio, this._prenom);
+    if (!popup) return;
+    const phase = this._bio?.phase?.code || 'P1';
+    const phaseIcons = { P1:'✅', P2:'⚠️', P3:'🟠', P4:'🔴' };
+    const bar = document.createElement('div');
+    bar.id = 'zenji-daily-bar';
+    bar.className = 'm6-daily-msg';
+    bar.innerHTML = `
+      <div class="m6-daily-msg-avatar">${phaseIcons[phase]||'🤖'}</div>
+      <div class="m6-daily-msg-text">${popup.msg?.slice(0,120) || ''}…</div>
+      <div class="m6-daily-msg-cta">Zenji ›</div>`;
+    bar.addEventListener('click', () => this.showPopup());
+    // Insérer après le header, avant le contenu principal
+    const appRoot = document.getElementById('m6-app-root');
+    const firstChild = appRoot?.firstElementChild;
+    if (firstChild) {
+      appRoot.insertBefore(bar, firstChild.nextSibling);
+    } else if (appRoot) {
+      appRoot.prepend(bar);
+    }
+  },
+
+  _injectOverlay() {
     if (!document.getElementById('zenji-overlay')) {
       const ov = document.createElement('div');
       ov.id = 'zenji-overlay';
@@ -427,17 +436,11 @@ const M6_ZenjiPopup = {
     }
   },
 
-  _updateBubble() {
-    const popup = _selectPopup(this._analysis, this._bio, this._prenom);
-    const el = document.getElementById('zenji-bubble-text');
-    if (el && popup) el.textContent = popup.msg?.slice(0, 100) + (popup.msg?.length > 100 ? '…' : '');
-
-    // Couleur de la bordure portrait selon phase
-    const phase = this._bio?.phase?.code || 'P1';
-    const phaseColors = { P1:'#4A7C6F', P2:'#C4853A', P3:'#B85C50', P4:'#9B2C2C' };
-    const portrait = document.getElementById('zenji-bubble-portrait');
-    if (portrait) portrait.style.borderColor = phaseColors[phase] || '#C4A35A';
+  // Méthode conservée pour compatibilité (ne fait plus rien)
+  _injectDOM() {
+    this._injectOverlay();
   },
+  _updateBubble() {},
 
   _renderPopup(popup) {
     const sheet = document.getElementById('zenji-sheet');

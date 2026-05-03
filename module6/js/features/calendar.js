@@ -178,7 +178,7 @@ const M6_Calendar = {
       const isFerie = this._feries.has(dk);
       const entry   = this._data[dk];
       let type = entry?.type;
-      if (!type) { if(isFerie) type='ferie'; else if(isWE) type='repos'; }
+      if (!type) { if(isFerie) type='ferie'; /* Week-end: ne pas cocher repos automatiquement — laisser vide */ }
       const isDep    = entry?.deplacement === true;
       const isToday  = dk === today;
       const mood     = this._moods[dk];
@@ -259,8 +259,9 @@ const M6_Calendar = {
     <!-- Type (sans déplacement — géré séparément) -->
     <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre);margin-bottom:8px">Type de journée</div>
     <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px">
-      ${['travail','rtt','cp','ferie','repos','rachat','demi'].map(t=>{
+      ${['travail','rtt','cp','ferie','repos','rachat','demi','maladie','maternite','astreinte'].map(t=>{
         const c = TYPE_CONFIG[t];
+        if (!c) return '';
         const sel = entry.type===t;
         return `<div class="cal-type-pill" data-type="${t}"
           style="border:2px solid ${sel?c.bg:'var(--ivoire-3)'};
@@ -271,6 +272,15 @@ const M6_Calendar = {
           <div style="font-size:0.9rem;margin-bottom:3px">${c.icon}</div>${c.label}
         </div>`;
       }).join('')}
+    </div>
+
+    <!-- Matin / Après-midi pour demi-journée -->
+    <div id="demi-ampm-zone" style="${entry.type==='demi'?'':'display:none'}margin-bottom:12px">
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre);margin-bottom:6px">Demi-journée — période</div>
+      <div class="m6-am-pm">
+        <label><input type="radio" name="demi-period" value="matin" ${(entry.demiPeriode||'matin')==='matin'?'checked':''}><span>🌅 Matin</span></label>
+        <label><input type="radio" name="demi-period" value="apresmidi" ${entry.demiPeriode==='apresmidi'?'checked':''}><span>🌇 Après-midi</span></label>
+      </div>
     </div>
 
     <!-- Déplacement : toggle sur Travail -->
@@ -367,7 +377,10 @@ const M6_Calendar = {
         });
         selType = p.dataset.type;
         const c = TYPE_CONFIG[selType];
-        p.style.background = c.bg; p.style.borderColor = c.bg; p.style.color = c.text;
+        if (c) { p.style.background = c.bg; p.style.borderColor = c.bg; p.style.color = c.text; }
+        // Afficher zone Matin/Après-midi si demi-journée
+        const demiZone = sheet.querySelector('#demi-ampm-zone');
+        if (demiZone) demiZone.style.display = selType === 'demi' ? '' : 'none';
       });
     });
 
@@ -431,7 +444,8 @@ const M6_Calendar = {
       const reposOk = sheet.querySelector('#pop-repos-ok')?.checked||false;
       const projetId = sheet.querySelector('#pop-projet')?.value || null;
       const hProjet  = projetId ? (parseFloat(sheet.querySelector('#pop-hproj')?.value)||7) : null;
-      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, reposOk, projetId, hProjet } : null;
+      const demiPeriode = selType === 'demi' ? (sheet.querySelector('input[name="demi-period"]:checked')?.value || 'matin') : null;
+      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, reposOk, projetId, hProjet, demiPeriode } : null;
       this._closePopup();
       if (this._onSave) this._onSave(dk, value, selMood?{niveau:selMood}:null);
     });
