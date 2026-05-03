@@ -110,6 +110,8 @@ const M6_Router = {
   },
 
   _set(regime) {
+    // Anti-boucle : ignorer si même régime déjà chargé avec vue active
+    if (this._regime === regime && document.querySelector('.m6-bottom-nav')) return;
     this._regime = regime;
     localStorage.setItem('M6_REGIME', regime);
     this._load(regime);
@@ -118,25 +120,10 @@ const M6_Router = {
   _load(regime) {
     this._root.innerHTML = '';
 
-    // Onboarding Zenji au premier lancement
+    // Premier lancement → wizard de bienvenue (remplace l'intro Zenji)
     if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit()
         && regime !== 'cadre_dirigeant') {
-      M6_Header.set({ title:'M6 — Cadres', sub:'Bienvenue', showReset:false, showSwitch:false });
-      this._root.innerHTML = `
-        <div style="background:var(--ivoire);min-height:calc(100dvh - 58px);padding:0 0 80px">
-          <div style="padding:16px 0">
-            ${window.M6_Zenji?.renderIntro ? M6_Zenji.renderIntro() : ''}
-          </div>
-          <div style="padding:0 16px">
-            <button id="zenji-start" class="m6-btn m6-btn-gold" style="width:100%;font-size:0.95rem">
-              Commencer avec Zenji →
-            </button>
-          </div>
-        </div>`;
-      this._root.querySelector('#zenji-start')?.addEventListener('click', () => {
-        M6_ZenjiOnboarding.markSeen();
-        this._loadView(regime);
-      });
+      this._showWizard(regime);
       return;
     }
     this._loadView(regime);
@@ -156,12 +143,12 @@ const M6_Router = {
   _showSelector() {
     M6_Header.reset();
     this._root.innerHTML = `
-    <div style="min-height:calc(100dvh - 58px);background:var(--charbon);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0))">
+    <div style="min-height:calc(100dvh - 52px);background:var(--charbon);display:flex;flex-direction:column;align-items:center;justify-content:center;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0))">
       <div style="font-family:var(--font-display);font-size:2rem;font-weight:600;color:var(--ivoire);text-align:center;margin-bottom:4px">M6 — Cadres</div>
-      <div style="font-size:0.7rem;color:var(--champagne);letter-spacing:0.12em;text-transform:uppercase;text-align:center;margin-bottom:40px">Quel est votre régime de temps de travail ?</div>
+      <div style="font-size:0.7rem;color:var(--champagne);letter-spacing:0.12em;text-transform:uppercase;text-align:center;margin-bottom:32px">Quel est votre régime de temps de travail ?</div>
       ${[
         {r:'forfait_jours',  badge:'Le plus répandu', title:'Forfait Jours',   sub:'Décompte en journées (218/an) · RTT · Rachat · Entretien L3121-65'},
-        {r:'forfait_heures', badge:'39h · 38h30…',   title:'Forfait Heures',  sub:'Durée hebdo fixe + HS · Contingent · Exonération TEPA'},
+        {r:'forfait_heures', badge:'39h · 38h30…',   title:'Forfait Heures',  sub:'Durée hebdo fixe + HS · Contingent · Réduction cotisations & exonération fiscale (TEPA)'},
         {r:'cadre_dirigeant',badge:'L3111-2',         title:'Cadre Dirigeant', sub:'Pas de compteur d\'heures · CP + protections légales · Projets & missions'},
       ].map(c=>`
         <div onclick="M6_Router._set('${c.r}')"
@@ -172,6 +159,90 @@ const M6_Router = {
         </div>`).join('')}
       <div style="margin-top:16px;font-size:0.7rem;color:var(--pierre);text-align:center">Changez de régime via le bouton ⇄ en haut à droite.</div>
     </div>`;
+  },
+
+  _showWizard(regime) {
+    // Wizard de bienvenue : paramétrage du contrat avant affichage de la vue
+    M6_Header.set({ title: 'Bienvenue', sub: 'Configuration initiale', showReset: false, showSwitch: false });
+    const steps = ['Régime', 'Exercice', 'Contrat'];
+    let step = 0;
+    const render = () => {
+      this._root.innerHTML = `
+      <div class="m6-wizard-step" style="padding:24px 16px;max-width:480px;margin:0 auto;padding-bottom:calc(40px + env(safe-area-inset-bottom,0))">
+        <div class="m6-wizard-progress">${steps.map((_,i)=>`<div class="m6-wizard-dot ${i<=step?'active':''}"></div>`).join('')}</div>
+        <div style="font-size:0.65rem;text-transform:uppercase;letter-spacing:0.1em;color:var(--champagne);margin-bottom:8px">Étape ${step+1}/${steps.length} — ${steps[step]}</div>
+        ${step===0 ? `
+          <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--charbon);margin-bottom:8px">Votre régime</div>
+          <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Confirmez votre régime pour personnaliser l'application.</p>
+          <div style="background:var(--ivoire-2);border-radius:var(--radius-lg);padding:14px 16px;margin-bottom:20px">
+            <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600">${regime==='forfait_jours'?'Forfait Jours':regime==='forfait_heures'?'Forfait Heures':'Cadre Dirigeant'}</div>
+            <div style="font-size:0.75rem;color:var(--pierre);margin-top:4px">${regime==='forfait_jours'?'Art. L3121-58 — Plafond 218 jours par an':regime==='forfait_heures'?'Durée hebdomadaire fixe + heures supplémentaires':'Art. L3111-2 — Hors durée légale du travail'}</div>
+          </div>
+          <button class="m6-btn m6-btn-gold" id="wiz-next" style="width:100%">Confirmer et continuer →</button>
+          <button class="m6-btn m6-btn-ghost" id="wiz-back" style="width:100%;margin-top:8px;font-size:0.78rem">← Changer de régime</button>
+        ` : step===1 ? `
+          <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--charbon);margin-bottom:8px">Votre exercice</div>
+          <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Définissez la période de suivi (peut chevaucher deux années civiles).</p>
+          <div class="m6-card"><div class="m6-card-body">
+            <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="wiz-debut" value="${new Date().getFullYear()}-01-01" style="font-size:16px"></div>
+            <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="wiz-fin" value="${new Date().getFullYear()}-12-31" style="font-size:16px"></div>
+            <div class="m6-field"><label>Votre nom (pour les exports PDF)</label><input type="text" id="wiz-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
+          </div></div>
+          <button class="m6-btn m6-btn-gold" id="wiz-next" style="width:100%">Continuer →</button>
+          <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
+        ` : `
+          <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--charbon);margin-bottom:8px">Votre contrat</div>
+          <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Ces données permettent les calculs réglementaires. Modifiables à tout moment.</p>
+          <div class="m6-card"><div class="m6-card-body">
+            ${regime==='forfait_jours'?`
+              <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="218" min="100" max="235" style="font-size:16px"></div>
+              <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
+              <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" placeholder="ex : 350" style="font-size:16px"></div>
+              <div class="m6-field"><label>CCN applicable (optionnel)</label><input type="text" id="wiz-ccn" placeholder="ex : Syntec, Banque AFB…" style="font-size:16px"></div>
+            `:regime==='forfait_heures'?`
+              <div class="m6-field"><label>Durée hebdo contractuelle (h)</label><input type="number" id="wiz-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
+              <div class="m6-field"><label>Contingent annuel HS (h)</label><input type="number" id="wiz-cont" value="220" min="100" max="500" style="font-size:16px"></div>
+              <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" placeholder="25.50" style="font-size:16px"></div>
+            `:`
+              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond" value="218" min="100" max="300" style="font-size:16px"></div>
+            `}
+            <div class="m6-field"><label>Email manager (copie exports)</label><input type="email" id="wiz-email-mgr" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
+          </div></div>
+          <button class="m6-btn m6-btn-gold" id="wiz-finish" style="width:100%">Commencer →</button>
+          <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
+        `}
+      </div>`;
+
+      this._root.querySelector('#wiz-next')?.addEventListener('click', () => {
+        if (step === 1) {
+          const debut = this._root.querySelector('#wiz-debut')?.value;
+          const fin   = this._root.querySelector('#wiz-fin')?.value;
+          if (debut && fin && debut > fin) { M6_toast('La date de fin doit être après le début'); return; }
+          this._wizData = { ...this._wizData, debut, fin, nom: this._root.querySelector('#wiz-nom')?.value.trim() };
+        }
+        step++; render();
+      });
+      this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
+      this._root.querySelector('#wiz-back')?.addEventListener('click', () => { this._regime = null; localStorage.removeItem('M6_REGIME'); M6_Header.reset(); this._showSelector(); });
+      this._root.querySelector('#wiz-finish')?.addEventListener('click', () => {
+        let contract = { nomCadre: this._wizData?.nom||'', emailManager: this._root.querySelector('#wiz-email-mgr')?.value.trim()||'', dateDebutExercice: this._wizData?.debut||null, dateFinExercice: this._wizData?.fin||null };
+        if (regime === 'forfait_jours') {
+          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218, joursCPContrat: parseFloat(this._root.querySelector('#wiz-cp')?.value)||25, tauxJournalier: parseFloat(this._root.querySelector('#wiz-tj')?.value)||0, ccnLabel: this._root.querySelector('#wiz-ccn')?.value.trim()||'', tauxMajorationRachat: 10 };
+        } else if (regime === 'forfait_heures') {
+          contract = { ...contract, seuilHebdo: parseFloat(this._root.querySelector('#wiz-seuil')?.value)||39, contingent: parseInt(this._root.querySelector('#wiz-cont')?.value)||220, tauxHoraire: parseFloat(this._root.querySelector('#wiz-tauxH')?.value)||0, taux1: 25, taux2: 50, palier1: 8 };
+        } else {
+          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218 };
+        }
+        if (window.M6_Storage) {
+          M6_Storage.setContract(regime, contract);
+          M6_Storage.createYear(regime, new Date().getFullYear());
+        }
+        M6_ZenjiOnboarding?.markSeen();
+        this._loadView(regime);
+      });
+    };
+    this._wizData = {};
+    render();
   }
 };
 
