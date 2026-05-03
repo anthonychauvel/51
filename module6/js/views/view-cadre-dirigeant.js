@@ -147,7 +147,7 @@ const VCD = {
           else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
           else if(action.includes('Agenda')||action.includes('calendrier')) { this._section='calendrier'; this.render(); }
         }
-      );
+      ), 'cadre_dirigeant');
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
   },
@@ -696,6 +696,8 @@ const VCD = {
           <label>CCN applicable — tapez pour chercher</label>
           <input type="text" id="s-ccn" placeholder="ex : Syntec, 675, Banque AFB…" style="font-size:16px" autocomplete="off">
           <div id="s-ccn-drop-cd" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:180px;overflow-y:auto"></div>
+          <div id="s-ccn-cd-info" style="display:none;margin-top:4px"></div>
+          <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Affiche les critères L3111-2 et droits maintenus selon votre CCN.</div>
         </div>
         <div class="m6-field" style="display:none"><label>_old_ccn</label><input type="text" id="_s-ccn-hidden" placeholder="ex : Syntec, Banque AFB, Hôtellerie…" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="s-cp" value="25" min="25" max="50" style="font-size:16px"></div>
@@ -711,19 +713,30 @@ const VCD = {
   },
 
   _bindSetup() {
-    this._c.querySelector('#s-save')?.addEventListener('click',()=>{
-      if (window.M6_CCN_Adapter) {
-        M6_CCN_Adapter.bindAutocomplete(
-          this._c.querySelector('#s-ccn'),
-          this._c.querySelector('#s-ccn-drop-cd'),
-          (ccn) => {
-            const d = M6_CCN_Adapter.buildContractDefaults(ccn);
-            const cpEl = this._c.querySelector('#s-cp');
-            if (cpEl) cpEl.value = d.joursCPContrat || 25;
-            M6_toast('CCN ' + ccn.nom + ' selectionnee');
+    // Cadres Dirigeants → CCN depuis conventions-cadres.js avec critères L3111-2
+    if (window.M6_CCN_Adapter) {
+      M6_CCN_Adapter.bindAutocomplete(
+        this._c.querySelector('#s-ccn'),
+        this._c.querySelector('#s-ccn-drop-cd'),
+        (ccn) => {
+          const d = M6_CCN_Adapter.buildContractDefaults(ccn, 'cadre_dirigeant');
+          const cpEl = this._c.querySelector('#s-cp');
+          if (cpEl) cpEl.value = 25; // CD : toujours 25j min
+          // Afficher critères CD
+          const infoZone = this._c.querySelector('#s-ccn-cd-info');
+          if (infoZone) {
+            infoZone.style.display = 'block';
+            infoZone.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'cadre_dirigeant') +
+              (d.alertesCD && d.alertesCD.length ? `<div style="margin-top:8px">${d.alertesCD.slice(0,3).map(a=>
+                `<div class="m6-alert info" style="margin-bottom:4px;font-size:0.7rem"><span>ℹ️</span><div>${a}</div></div>`
+              ).join('')}</div>` : '');
           }
-        );
-      }
+          M6_toast('CCN ' + ccn.nom + ' sélectionnée');
+        },
+        'cadre_dirigeant' // ← source : conventions-cadres.js CCN_CD_DATA
+      );
+    }
+    this._c.querySelector('#s-save')?.addEventListener('click',()=>{
       const c = {
         nom:           this._c.querySelector('#s-nom')?.value.trim(),
         fonction:      this._c.querySelector('#s-fnc')?.value.trim(),

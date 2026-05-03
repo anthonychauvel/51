@@ -113,7 +113,28 @@ const VFJ = {
         break;
       case 'entretien':
         ct.innerHTML = zenjiHtml;
-        M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();});
+        if (window.M6_Entretien) {
+          M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();});
+          // Historique de TOUS les entretiens — jamais écrasés
+          const _allEnt = [...(M6_Storage.getEntretiens(this._regime,null)||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
+          if (_allEnt.length > 0) {
+            const _hDiv = document.createElement('div');
+            _hDiv.style.cssText = 'padding:0 16px 32px';
+            _hDiv.innerHTML = '<div class="m6-ornement" style="margin-top:16px"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique (' + _allEnt.length + ')</div><div class="m6-ornement-line"></div></div>'
+              + _allEnt.map((e,i) => `<div style="background:var(--ivoire-2);border:1px solid var(--ivoire-3);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:10px">
+                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+                  <div style="font-family:var(--font-display);font-size:0.9rem;font-weight:600">${e.date ? new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div>
+                  <div style="font-size:0.65rem;color:var(--pierre)">${e.manager||''}</div>
+                </div>
+                ${e.charge ? '<div class="m6-row" style="font-size:0.78rem"><span class="m6-row-label">Charge</span><span class="m6-row-val">'+e.charge+'</span></div>' : ''}
+                ${e.ajustement ? '<div class="m6-row" style="font-size:0.78rem"><span class="m6-row-label">Ajustement</span><span class="m6-row-val '+(e.ajustement==='oui'?'gold':'')+'">'+( e.ajustement==='oui'?'⚠️ Demandé':'✅ Non demandé')+'</span></div>' : ''}
+                ${e.actions ? '<div style="font-size:0.72rem;color:var(--pierre);margin-top:4px;font-style:italic">'+(e.actions||'').slice(0,120)+(e.actions.length>120?'…':'')+'</div>' : ''}
+              </div>`).join('');
+            ct.appendChild(_hDiv);
+          }
+        } else {
+          ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
+        }
         break;
       case 'export':
         ct.innerHTML = zenjiHtml + this._tplExport(analysis);
@@ -146,7 +167,7 @@ const VFJ = {
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime);
     // Init popup Zenji (bulle flottante)
     if (window.M6_ZenjiPopup) {
-      M6_ZenjiPopup.init(analysis, bio, this._contract, (action) => this._handleZenjiAction(action));
+      M6_ZenjiPopup.init(analysis, bio, this._contract, (action) => this._handleZenjiAction(action), 'forfait_jours');
     }
   },
 
@@ -193,7 +214,7 @@ const VFJ = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'rupture',icon:'📋',label:'Rupture'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
@@ -226,7 +247,8 @@ const VFJ = {
     <div class="m6-card" style="margin-bottom:14px">
       <div class="m6-card-header"><div class="m6-card-icon">📊</div><div><div class="m6-card-label">Répartition</div><div class="m6-card-title">Détail ${this._year}</div></div></div>
       <div class="m6-card-body">
-        ${[['Jours travaillés',a.joursEffectifs,a.rachetes>0?`(dont ${a.rachetes} rachetés)`:''],[`RTT pris`,a.rttPris,`/${a.rttTheoriques} théoriques`],['CP pris',a.cpPris,`/${this._contract.joursCPContrat||25}j contractuels`],['Demi-journées',a.demis||0,''],['Fériés ouvrés',a.feriesOuvres,''],['Repos',a.reposPris,'']].map(([l,v,h])=>`<div class="m6-row"><span class="m6-row-label">${l}</span><span class="m6-row-val">${v} <small style="color:var(--pierre);font-weight:400">${h||''}</small></span></div>`).join('')}
+        ${[['Jours travaillés',a.joursEffectifs,a.rachetes>0?`(dont <span style="color:var(--champagne-2);font-weight:600">${a.rachetes} rachetés</span>)`:''],[`RTT pris`,a.rttPris,`/${a.rttTheoriques} théoriques`],['CP pris',a.cpPris,`/${this._contract.joursCPContrat||25}j contractuels`],['Fériés ouvrés',a.feriesOuvres,''],['Repos',a.reposPris,'']].map(([l,v,h])=>`<div class="m6-row"><span class="m6-row-label">${l}</span><span class="m6-row-val">${v} <small style="color:var(--pierre);font-weight:400">${h||''}</small></span></div>`).join('')}
+        ${(a.demis_matin||0)+(a.demis_am||0)>0?`<div class="m6-row"><span class="m6-row-label">Demi-journées</span><span class="m6-row-val" style="display:flex;gap:6px;align-items:center">${a.demis_matin>0?`<span style="background:#E8F0FB;border:1px solid #3B82F6;border-radius:6px;padding:2px 8px;font-size:0.72rem;color:#1D4ED8">🌅 ${a.demis_matin}×Matin</span>`:''} ${a.demis_am>0?`<span style="background:#FEF3C7;border:1px solid #D97706;border-radius:6px;padding:2px 8px;font-size:0.72rem;color:#92400E">🌇 ${a.demis_am}×AM</span>`:''}</span></div>`:''}
       </div>
     </div>
 
@@ -248,7 +270,8 @@ const VFJ = {
 
     ${a.alertes.length ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">⚠️</div><div><div class="m6-card-label">Vigilance</div><div class="m6-card-title">${a.alertes.length} point(s)</div></div></div><div class="m6-card-body" style="padding-bottom:8px">${a.alertes.map(al=>`<div class="m6-alert ${al.niveau}" style="margin-bottom:8px"><span class="m6-alert-icon">${al.icon}</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span><br><span style="font-size:0.65rem;color:var(--pierre)">Art. ${al.loi}</span></div></div>`).join('')}</div></div>` : `<div class="m6-alert success" style="margin-bottom:14px"><span class="m6-alert-icon">✅</span><div><strong>Situation conforme</strong> — Aucune alerte pour ${this._year}.</div></div>`}
 
-    ${a.simulRachat ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💰</div><div><div class="m6-card-label">Simulation</div><div class="m6-card-title">Rachat de jours — auto +${a.simulRachat.majoration}%</div></div></div><div class="m6-card-body"><div class="m6-alert info" style="margin-bottom:8px;font-size:0.72rem"><span>ℹ️</span><div>La majoration de <strong>${a.simulRachat.majoration}%</strong> est calculée automatiquement sur le taux journalier brut (Art. L3121-59). Un avenant écrit est obligatoire avant tout rachat.</div></div><div class="m6-row"><span class="m6-row-label">Jours rachetés</span><span class="m6-row-val">${a.simulRachat.joursRachetes}j</span></div><div class="m6-row"><span class="m6-row-label">Base brute</span><span class="m6-row-val">${a.simulRachat.montantBase}€</span></div><div class="m6-row"><span class="m6-row-label">Majoration ${a.simulRachat.majoration}%</span><span class="m6-row-val gold">+${a.simulRachat.gainBrut}€</span></div><div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.simulRachat.montantMajoré}€</span></div></div></div>` : ''}
+    ${a.rachetes > 0 ? `<div class="m6-alert info" style="margin-bottom:14px;font-size:0.72rem"><span>💡</span><div><strong>Rachat : comment ça marche ?</strong><br>Saisir "Rachat" convertit un jour de RTT/repos en jour travaillé (+1 au compteur). Votre employeur vous verse le salaire journalier majoré de <strong>${this._contract.tauxMajorationRachat||10}%</strong>. Avenant écrit obligatoire AVANT le rachat (Art. L3121-59).</div></div>` : ""}
+    ${a.simulRachat ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💰</div><div><div class="m6-card-label">Rachat calculé automatiquement</div><div class="m6-card-title">+${a.simulRachat.majoration}% majoré</div></div></div><div class="m6-card-body"><div class="m6-row"><span class="m6-row-label">Jours rachetés</span><span class="m6-row-val">${a.simulRachat.joursRachetes}j</span></div><div class="m6-row"><span class="m6-row-label">Base brute</span><span class="m6-row-val">${a.simulRachat.montantBase}€</span></div><div class="m6-row"><span class="m6-row-label">Majoration ${a.simulRachat.majoration}%</span><span class="m6-row-val gold">+${a.simulRachat.gainBrut}€</span></div><div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.simulRachat.montantMajoré}€</span></div></div></div>` : ""}
 
     ${(this._contract.ccnLabel||'').toLowerCase().includes('syntec') ? `<div class="m6-alert warning" style="margin-bottom:14px"><span class="m6-alert-icon">⚠️</span><div><strong>Vigilance CCN Syntec</strong><br><span style="font-size:0.77rem">La CCN Syntec impose un suivi de charge renforcé (art. 3 de l'accord du 22/06/1999). Entretiens semestriels obligatoires. Un mode manuel est disponible pour les accords de branche dérogatoires.</span></div></div>` : ''}
 
@@ -311,7 +334,7 @@ const VFJ = {
       <div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive (Jang 2025)',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega F. et al. WHO/ILO 2021 · Kivimäki 2015 (Lancet) · Jang W. et al. 2025</div></div>
     </div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body"><div class="m6-card-label" style="margin-bottom:8px">Répartition de la charge déclarée</div><div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${['faible','ok','elevé','critique'].map(niv=>{const c=M6_MOOD_COLORS[niv];const n=Object.values(this._moods).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('')}
+      ${(()=>{const MC=window.M6_MOOD_COLORS||window.MOOD_COLORS||{faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'😤',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','elevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#eee',border:'#aaa',text:'#333',icon:'?',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
     </div></div></div>
     ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">!</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
   },
@@ -349,9 +372,10 @@ const VFJ = {
         </div>
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
-        <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;font-size:0.78rem">📄 PDF Mensuel</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;font-size:0.78rem">📋 PDF Annuel</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;font-size:0.78rem">📅 PDF Période</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;min-width:110px;font-size:0.78rem">📄 PDF Mensuel</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;min-width:110px;font-size:0.78rem">📅 PDF Période</button>
       </div>
     </div></div>
 
@@ -423,9 +447,20 @@ const VFJ = {
       saveMeta();
       M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
     });
-    this._c.querySelector('#pdf-m')?.addEventListener('click', () => { if(!checkCertif()) return; saveMeta(); M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)}); });
-    this._c.querySelector('#pdf-a')?.addEventListener('click', () => { if(!checkCertif()) return; saveMeta(); M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis}); });
-    this._c.querySelector('#v-btn')?.addEventListener('click', () => { const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render(); });
+    this._c.querySelector('#pdf-m')?.addEventListener('click', () => {
+      if(!checkCertif()) return; saveMeta();
+      M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)});
+      this._tryEmailManager('mensuel');
+    });
+    this._c.querySelector('#pdf-a')?.addEventListener('click', () => {
+      if(!checkCertif()) return; saveMeta();
+      M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis});
+      this._tryEmailManager('annuel');
+    });
+    this._c.querySelector('#pdf-preuve')?.addEventListener('click', () => {
+      saveMeta();
+      M6_PDF.exportPreuve({regime:this._regime,year:this._year,contract:this._contract,data:this._data,analysis});
+    }); const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render(); });
     // Mode Preuve
     const preuveContainer = this._c.querySelector('#preuve-container');
     if (preuveContainer && window.M6_ModePreuve) {
@@ -454,6 +489,24 @@ const VFJ = {
   },
 
   // Destroy popup à chaque navigation de section (recréé dans render())
+  _tryEmailManager(type) {
+    const email = this._contract.emailManager;
+    if (!email) return;
+    const nom = this._contract.nomCadre || 'Cadre';
+    const mgr = this._contract.nomManager || 'Manager';
+    const subject = encodeURIComponent(`[M6 Cadres] Rapport forfait jours ${type} — ${nom} — ${this._year}`);
+    const body = encodeURIComponent(
+      `Bonjour ${mgr},\n\nVeuillez trouver ci-joint le rapport de suivi de forfait jours ${type} de ${nom} pour l'année ${this._year}.\n\nCe document a été généré et certifié via l'application M6 Cadres (Art. L3121-65 du Code du travail).\n\nCordialement,\n${nom}`
+    );
+    // Ouvrir le client mail après un délai (pour laisser le PDF se télécharger)
+    setTimeout(() => {
+      const a = document.createElement('a');
+      a.href = `mailto:${email}?subject=${subject}&body=${body}`;
+      a.click();
+    }, 1500);
+    M6_toast(`📧 Email de copie préparé pour ${email}`);
+  },
+
   _destroyPopup() {
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
   },
@@ -479,8 +532,18 @@ const VFJ = {
           <label>CCN applicable — tapez pour chercher</label>
           <input type="text" id="s-ccn" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
           <div id="s-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:200px;overflow-y:auto"></div>
-          <div id="s-ccn-info" style="display:none;margin-top:6px;font-size:0.72rem;color:var(--pierre);background:var(--ivoire);border-radius:6px;padding:6px 10px;line-height:1.5"></div>
+          <div id="s-ccn-info" style="display:none;margin-top:6px"></div>
         </div>
+        <!-- Mode manuel — accord de branche dérogatoire -->
+        <details style="margin-bottom:12px">
+          <summary style="font-size:0.78rem;color:var(--pierre);cursor:pointer;padding:8px 0">⚙️ Mode manuel — accord de branche dérogatoire</summary>
+          <div style="background:var(--ivoire-2);border-radius:var(--radius);padding:12px;margin-top:6px">
+            <div style="font-size:0.72rem;color:var(--pierre);margin-bottom:10px">Si votre accord de branche ou d'entreprise déroge au droit commun, renseignez directement les valeurs applicables. Ces données écrasent celles de la CCN sélectionnée.</div>
+            <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" min="100" max="235" placeholder="ex: 205" style="font-size:16px"></div>
+            <div class="m6-field"><label>Taux de rachat personnalisé (%)</label><input type="number" id="s-taux-rachat-manuel" min="10" max="100" placeholder="ex: 25" style="font-size:16px"></div>
+            <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
+          </div>
+        </details>
         <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" placeholder="ex : 350" style="font-size:16px"></div>
         <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
         <div class="m6-field"><label>Date d'arrivée si en cours d'année</label><input type="date" id="s-arr" style="font-size:16px"></div>
@@ -493,25 +556,44 @@ const VFJ = {
   },
 
   _bindSetup() {
-    this._c.querySelector('#s-save')?.addEventListener('click', () => {
-      // Bind autocomplete CCN si disponible
-      if (window.M6_CCN_Adapter) {
-        const inp = this._c.querySelector('#s-ccn');
-        const drop = this._c.querySelector('#s-ccn-drop');
-        const info = this._c.querySelector('#s-ccn-info');
-        M6_CCN_Adapter.bindAutocomplete(inp, drop, (ccn) => {
-          const defaults = M6_CCN_Adapter.buildContractDefaults(ccn);
-          // Pré-remplir le plafond si la CCN en prévoit un
-          const pEl = this._c.querySelector('#s-p');
-          if (pEl && defaults.plafond !== 218) pEl.value = defaults.plafond;
-          // Afficher les infos CCN
-          if (info) {
-            info.style.display = 'block';
-            info.innerHTML = '<strong>IDCC ' + ccn.idcc + '</strong> · Plafond ' + ccn.plafond + 'j · Contingent ' + ccn.contingentHS + 'h HS<br>' + (ccn.notes || '');
+    // Bind autocomplete CCN immédiatement (source : conventions-cadres.js — forfait_jours)
+    if (window.M6_CCN_Adapter) {
+      const inp  = this._c.querySelector('#s-ccn');
+      const drop = this._c.querySelector('#s-ccn-drop');
+      const info = this._c.querySelector('#s-ccn-info');
+      M6_CCN_Adapter.bindAutocomplete(inp, drop, (ccn) => {
+        const defaults = M6_CCN_Adapter.buildContractDefaults(ccn, 'forfait_jours');
+        // Pré-remplir les champs selon les données CCN cadres
+        const pEl  = this._c.querySelector('#s-p');
+        const majEl = this._c.querySelector('#s-maj');
+        if (pEl  && defaults.plafond !== 218) pEl.value  = defaults.plafond;
+        if (majEl && defaults.tauxMajorationRachat > 10) majEl.value = defaults.tauxMajorationRachat;
+        // Carte info CCN
+        if (info) {
+          info.style.display = 'block';
+          info.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
+        }
+        // Alertes CCN
+        const alertesCC = M6_CCN_Adapter.getAlertes(ccn.idcc, 'forfait_jours');
+        if (alertesCC.length && info) {
+          const existing = info.querySelector('.ccn-alertes');
+          if (!existing) {
+            const div = document.createElement('div');
+            div.className = 'ccn-alertes';
+            div.style.cssText = 'margin-top:8px';
+            div.innerHTML = alertesCC.map(a =>
+              `<div class="m6-alert ${a.niveau}" style="margin-bottom:6px;font-size:0.72rem">
+                <span>${a.niveau==='warning'?'⚠️':'ℹ️'}</span>
+                <div><strong>${a.titre}</strong><br>${a.texte}</div>
+              </div>`
+            ).join('');
+            info.appendChild(div);
           }
-        });
-      }
-      const c = { plafond:parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null };
+        }
+      }, 'forfait_jours');
+    }
+    this._c.querySelector('#s-save')?.addEventListener('click', () => {
+      const c = { plafond:parseInt(this._c.querySelector('#s-plafond-manuel')?.value)||parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-taux-rachat-manuel')?.value)||parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null, refAccordDerogatoire:this._c.querySelector('#s-ref-accord')?.value.trim()||null };
       M6_Storage.setContract(this._regime, c);
       M6_Storage.createYear(this._regime, this._year);
       this._load(); this.render();

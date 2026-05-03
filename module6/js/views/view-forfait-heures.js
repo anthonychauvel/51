@@ -114,7 +114,7 @@ const VFH = {
           else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
           else if(action.includes('Glossaire')||action.includes('glossaire')) { this._section='glossaire'; this.render(); }
         }
-      );
+      ), 'forfait_heures');
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
     // Notification automatique si phase Épuisement (P4)
@@ -207,11 +207,12 @@ const VFH = {
       </div>
     </div>
 
-    ${a.tauxHoraire>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💶</div><div><div class="m6-card-label">Loi TEPA 2007</div><div class="m6-card-title">Réduction de cotisations salariales et exonération fiscale</div></div></div><div class="m6-card-body">
-      <div class="m6-row"><span class="m6-row-label">HS à +${a.taux1}%</span><span class="m6-row-val">${a.montantHS1.toFixed(2)} €</span></div>
-      <div class="m6-row"><span class="m6-row-label">HS à +${a.taux2}%</span><span class="m6-row-val">${a.montantHS2.toFixed(2)} €</span></div>
-      <div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.montantTotal.toFixed(2)} €</span></div>
-      <div class="m6-row"><span class="m6-row-label">Exo IR (plaf. 7 500€/an)</span><span class="m6-row-val ok">${a.exoFiscale.toFixed(2)} €</span></div>
+    ${a.tauxHoraire>0||this._contract.tauxHoraire>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💶</div><div><div class="m6-card-label">Loi TEPA 2007 ${a.ccnNom?'· '+a.ccnNom:''}</div><div class="m6-card-title">Réduction de cotisations salariales et exonération fiscale</div></div></div><div class="m6-card-body">
+      <div class="m6-row"><span class="m6-row-label">HS à +${a.taux1||25}% (${a.palier||8}h/sem)</span><span class="m6-row-val">${(a.montantHS1||0).toFixed(2)} €</span></div>
+      ${a.a3Paliers&&a.taux_inter?`<div class="m6-row"><span class="m6-row-label">HS à +${a.taux_inter}% (${a.palier_inter}h/sem)</span><span class="m6-row-val">${(a.montantHS_inter||0).toFixed(2)} €</span></div>`:''}
+      <div class="m6-row"><span class="m6-row-label">HS à +${a.taux2||50}%</span><span class="m6-row-val">${(a.montantHS2||0).toFixed(2)} €</span></div>
+      <div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${(a.montantTotal||0).toFixed(2)} €</span></div>
+      <div class="m6-row"><span class="m6-row-label">Exo IR (plaf. 7 500€/an)</span><span class="m6-row-val ok">${(a.exoFiscale||0).toFixed(2)} €</span></div>
       <div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Art. L241-17 CSS · Loi TEPA 2007 · Loi 2022-1158</div>
     </div></div>`:''}
 
@@ -289,13 +290,14 @@ const VFH = {
 
           ${isDuplicate ? '<div class="m6-alert warning" style="margin-bottom:10px;font-size:0.78rem"><span>⚠️</span><div>Cette semaine est déjà saisie. Les données seront remplacées.</div></div>' : ''}
 
-          <!-- Sélecteur de semaine par date -->
+          <!-- Sélecteur de semaine RÉTROACTIF — any week allowed -->
           <div class="m6-field">
-            <label>Choisir une date dans la semaine</label>
+            <label>Choisir n'importe quelle semaine (passée ou future)</label>
             <input type="date" id="fh-date-nav" style="font-size:16px"
-              value="${wk.replace(/W(\d+)/, (_, w) => { const d = new Date(wk.split('-')[0], 0, 1 + (parseInt(w)-1)*7); d.setDate(d.getDate() + (1 - (d.getDay()||7))); return d.toISOString().slice(0,10).slice(5); }).replace('W', '')}">
+              value="${(()=>{try{const yr=parseInt(wk);const wn=parseInt(wk.split('W')[1]);const d=new Date(yr,0,1+(wn-1)*7-(new Date(yr,0,1).getDay()||7)+1);return d.toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}})()}">
             <div style="font-size:0.7rem;color:var(--pierre);margin-top:3px">
               Semaine sélectionnée : <strong id="fh-wk-display">${wk}</strong>
+              <span style="font-size:0.65rem;color:var(--champagne-2);margin-left:4px">✅ saisie rétroactive autorisée</span>
             </div>
           </div>
 
@@ -462,12 +464,22 @@ const VFH = {
       <div class="m6-field"><label>Taux +1 (%)</label><input type="number" id="fh-t1" value="${this._contract.taux1||25}" min="10" style="font-size:16px"></div>
       <div class="m6-field"><label>Taux +2 (%)</label><input type="number" id="fh-t2" value="${this._contract.taux2||50}" min="25" style="font-size:16px"></div>
       <button class="m6-btn m6-btn-gold" id="fh-sv-taux" style="margin-bottom:10px;font-size:0.8rem">Mettre à jour les taux</button>
+      <div class="m6-field"><label>Mois à exporter</label>
+        <select id="fh-pdf-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}" ${i===new Date().getMonth()?'selected':''}>${m}</option>`).join('')}</select>
+      </div>
+      <div class="m6-field"><label>Email manager (copie PDF)</label><input type="email" id="fh-mgr-email" value="${this._contract.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:8px 0 10px;cursor:pointer;padding:10px;background:var(--ivoire-2);border-radius:var(--radius);border:1px solid var(--ivoire-3)">
+        <input type="checkbox" id="fh-certif" style="margin-top:2px;flex-shrink:0">
+        <span>✍️ Je certifie l'exactitude de ces données de suivi d'heures supplémentaires</span>
+      </label>
+      <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+        <button class="m6-btn m6-btn-ghost" id="fh-pdf-m" style="flex:1;min-width:120px;font-size:0.78rem">📄 PDF Mensuel</button>
+        <button class="m6-btn m6-btn-ghost" id="fh-pdf-a" style="flex:1;min-width:120px;font-size:0.78rem">📋 PDF Annuel</button>
+        <button class="m6-btn m6-btn-ghost" id="fh-pdf-preuve" style="flex:1;min-width:120px;font-size:0.78rem">🔏 Preuve</button>
+      </div>
       <div class="m6-field"><label>PDF Periode — date debut</label><input type="date" id="fh-per-d1" value="${this._year}-01-01" style="font-size:16px"></div>
       <div class="m6-field"><label>PDF Periode — date fin</label><input type="date" id="fh-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px"></div>
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button class="m6-btn m6-btn-ghost" id="fh-pdf-per" style="flex:1;font-size:0.78rem">📄 PDF Periode</button>
-        <button class="m6-btn m6-btn-ghost" id="fh-pdf-a" style="flex:1;font-size:0.78rem">📋 PDF Annuel</button>
-      </div>
+      <button class="m6-btn m6-btn-ghost" id="fh-pdf-per" style="width:100%;font-size:0.78rem">📅 PDF Période</button>
     </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
@@ -483,15 +495,48 @@ const VFH = {
   },
 
   _bindExport(analysis) {
+    const checkCertifFH = () => {
+      if (!this._c.querySelector('#fh-certif')?.checked) {
+        M6_toast('⚠️ Cochez la case de certification'); return false;
+      }
+      return true;
+    };
+    const saveEmailFH = () => {
+      const em = this._c.querySelector('#fh-mgr-email')?.value.trim();
+      if (em) { this._contract.emailManager = em; M6_Storage.setContract(this._regime, this._contract); }
+    };
+    const emailCopyFH = (type) => {
+      const email = this._contract.emailManager;
+      if (!email) return;
+      const nom = this._contract.nomCadre||'Cadre';
+      const sub = encodeURIComponent(`[M6] Rapport Forfait Heures ${type} — ${nom} — ${this._year}`);
+      const bod = encodeURIComponent(`Bonjour,\n\nVeuillez trouver ci-joint le rapport de suivi d'heures supplémentaires ${type} de ${nom}.\n\nCordialement,\n${nom}`);
+      setTimeout(() => { const a=document.createElement('a'); a.href=`mailto:${email}?subject=${sub}&body=${bod}`; a.click(); }, 1500);
+      M6_toast(`📧 Email préparé pour ${email}`);
+    };
+
     this._c.querySelector('#fh-sv-taux')?.addEventListener('click',()=>{
       this._contract.tauxHoraire=parseFloat(this._c.querySelector('#fh-taux')?.value)||0;
       this._contract.taux1=parseInt(this._c.querySelector('#fh-t1')?.value)||25;
       this._contract.taux2=parseInt(this._c.querySelector('#fh-t2')?.value)||50;
       M6_Storage.setContract(this._regime,this._contract); M6_toast('✓ Taux mis à jour'); this.render();
     });
+    this._c.querySelector('#fh-pdf-m')?.addEventListener('click',()=>{
+      if (!checkCertifFH()) return; saveEmailFH();
+      const mois = parseInt(this._c.querySelector('#fh-pdf-mois')?.value)||0;
+      const a2 = M6_ForfaitHeures.analyze(this._contract, this._data, this._year);
+      M6_PDF.exportMensuelFH({regime:this._regime,year:this._year,mois,contract:this._contract,data:this._data,analysis:a2});
+      emailCopyFH('mensuel');
+    });
     this._c.querySelector('#fh-pdf-a')?.addEventListener('click',()=>{
+      if (!checkCertifFH()) return; saveEmailFH();
       const a2=M6_ForfaitHeures.analyze(this._contract,this._data,this._year);
       M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:{},analysis:a2});
+      emailCopyFH('annuel');
+    });
+    this._c.querySelector('#fh-pdf-preuve')?.addEventListener('click',()=>{
+      const a2=M6_ForfaitHeures.analyze(this._contract,this._data,this._year);
+      M6_PDF.exportPreuve({regime:this._regime,year:this._year,contract:this._contract,data:this._data,analysis:a2});
     });
     // Rupture conventionnelle
     const rc = this._c.querySelector('#rupture-container-fh');
@@ -506,9 +551,12 @@ const VFH = {
       <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Heures</div><div class="m6-ornement-line"></div></div>
       <div class="m6-card"><div class="m6-card-body">
         <div class="m6-field" style="position:relative">
-          <label>CCN applicable (optionnel)</label>
-          <input type="text" id="fh-ccn" placeholder="ex : Syntec, 787, Banque…" style="font-size:16px" autocomplete="off">
+          <label>CCN applicable (optionnel) — Forfait Heures</label>
+          <input type="text" id="fh-ccn" placeholder="ex : Syntec, HCR, Transport, Banque…" style="font-size:16px" autocomplete="off">
+          <input type="hidden" id="fh-ccn-idcc" value="${this._contract.ccnIdcc||0}">
           <div id="fh-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:180px;overflow-y:auto"></div>
+          <div id="fh-ccn-info" style="display:none;margin-top:4px"></div>
+          <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Pré-remplit automatiquement le contingent et les taux selon votre CCN (fichier CCN commun v5.5).</div>
         </div>
         <div class="m6-field"><label>Durée hebdomadaire contractuelle (heures)</label><input type="number" id="s-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
         <div class="m6-field"><label>Palier majoration 1 (heures HS)</label><input type="number" id="s-pal" value="8" min="1" max="20" style="font-size:16px"></div>
@@ -526,26 +574,49 @@ const VFH = {
   },
 
   _bindSetup() {
-    // Bind CCN autocomplete immédiatement (pas seulement au clic save)
+    // Forfait Heures → CCN depuis le fichier COMMUN (racine ../ccn/conventions-collectives.js)
+    // L'adaptateur détecte automatiquement le régime 'forfait_heures' et bascule sur window.CCN_API
     if (window.M6_CCN_Adapter) {
       M6_CCN_Adapter.bindAutocomplete(
         this._c.querySelector('#fh-ccn'),
         this._c.querySelector('#fh-ccn-drop'),
         (ccn) => {
-          const d = M6_CCN_Adapter.buildContractDefaults(ccn);
-          const contEl = this._c.querySelector('#s-cont');
-          if (contEl && d.contingentHS) contEl.value = d.contingentHS;
-          const t1El = this._c.querySelector('#s-t1');
-          if (t1El && d.taux1) t1El.value = d.taux1;
+          // buildContractDefaults avec régime 'forfait_heures' → lit les règles HS du fichier commun
+          const d = M6_CCN_Adapter.buildContractDefaults(ccn, 'forfait_heures');
+          const contEl   = this._c.querySelector('#s-cont');
+          const seuilEl  = this._c.querySelector('#s-seuil');
+          const t1El     = this._c.querySelector('#s-t1');
+          const t2El     = this._c.querySelector('#s-t2');
+          const idccEl   = this._c.querySelector('#fh-ccn-idcc');
+          if (contEl  && d.contingent) contEl.value   = d.contingent;
+          if (seuilEl && d.seuilHebdo) seuilEl.value  = d.seuilHebdo;
+          if (t1El    && d.taux1)      t1El.value     = d.taux1;
+          if (t2El    && d.taux2)      t2El.value     = d.taux2;
+          if (idccEl)                  idccEl.value   = ccn.idcc || 0;
+          // Alertes HCR 3 paliers
+          const rules = window.CCN_API ? CCN_API.getGroupeForCCN(ccn.idcc||0) : null;
+          const infoZone = this._c.querySelector('#fh-ccn-info');
+          if (infoZone) {
+            infoZone.style.display = 'block';
+            let html = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_heures');
+            if (rules?.taux_inter !== null && rules?.taux_inter !== undefined) {
+              html += `<div class="m6-alert warning" style="margin-top:6px;font-size:0.72rem"><span>⚠️</span><div><strong>CCN ${ccn.nom} — 3 paliers de majoration</strong><br>
+                +${rules.taux1}% sur les ${rules.palier1}h premières HS<br>
+                +${rules.taux_inter}% sur les ${rules.palier_inter}h suivantes<br>
+                +${rules.taux2}% au-delà — calculé automatiquement dans le bilan</div></div>`;
+            }
+            infoZone.innerHTML = html;
+          }
           M6_toast('CCN ' + ccn.nom + ' appliquée');
-        }
+        },
+        'forfait_heures'
       );
     }
     // Tooltip contingent
     const tipWrap = this._c.querySelector('#fh-setup-cont-tip');
     if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
-      const c={seuilHebdo:parseFloat(this._c.querySelector('#s-seuil')?.value)||39,palier1:parseInt(this._c.querySelector('#s-pal')?.value)||8,taux1:parseInt(this._c.querySelector('#s-t1')?.value)||25,taux2:parseInt(this._c.querySelector('#s-t2')?.value)||50,contingent:parseInt(this._c.querySelector('#s-cont')?.value)||220,tauxHoraire:parseFloat(this._c.querySelector('#s-tauxH')?.value)||0,ccnLabel:this._c.querySelector('#fh-ccn')?.value.trim()||'',dateDebutExercice:this._c.querySelector('#s-debut')?.value||null,dateFinExercice:this._c.querySelector('#s-fin')?.value||null};
+      const c={seuilHebdo:parseFloat(this._c.querySelector('#s-seuil')?.value)||39,palier1:parseInt(this._c.querySelector('#s-pal')?.value)||8,taux1:parseInt(this._c.querySelector('#s-t1')?.value)||25,taux2:parseInt(this._c.querySelector('#s-t2')?.value)||50,contingent:parseInt(this._c.querySelector('#s-cont')?.value)||220,tauxHoraire:parseFloat(this._c.querySelector('#s-tauxH')?.value)||0,ccnLabel:this._c.querySelector('#fh-ccn')?.value.trim()||'',ccnIdcc:parseInt(this._c.querySelector('#fh-ccn-idcc')?.value||'0')||0,dateDebutExercice:this._c.querySelector('#s-debut')?.value||null,dateFinExercice:this._c.querySelector('#s-fin')?.value||null};
       M6_Storage.setContract(this._regime,c); M6_Storage.createYear(this._regime,this._year); this._load(); this.render();
     });
   },
