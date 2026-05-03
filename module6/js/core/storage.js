@@ -242,4 +242,52 @@ const M6_PhaseAlert = {
 global.M6_Storage    = M6_Storage;
 global.M6_PhaseAlert = M6_PhaseAlert;
 
+// ── Android swipe-to-refresh : protection des données ────────────
+// Sur Android, le "pull-to-refresh" peut réinitialiser la page sans
+// vider localStorage, mais si le service worker recharge les assets
+// sans les données, l'état peut sembler perdu. On force la persistance
+// via plusieurs mécanismes :
+(function() {
+  // 1. Backup régime + année courante dans sessionStorage (survit au swipe)
+  function _syncSession() {
+    try {
+      const regime = localStorage.getItem('M6_REGIME');
+      const year   = localStorage.getItem('M6_CURRENT_YEAR');
+      if (regime) sessionStorage.setItem('M6_REGIME_BACKUP', regime);
+      if (year)   sessionStorage.setItem('M6_YEAR_BACKUP', year);
+    } catch(_) {}
+  }
+  // 2. Restauration depuis sessionStorage si localStorage semble vide
+  function _restoreFromSession() {
+    try {
+      if (!localStorage.getItem('M6_REGIME')) {
+        const r = sessionStorage.getItem('M6_REGIME_BACKUP');
+        if (r) localStorage.setItem('M6_REGIME', r);
+      }
+      if (!localStorage.getItem('M6_CURRENT_YEAR')) {
+        const y = sessionStorage.getItem('M6_YEAR_BACKUP');
+        if (y) localStorage.setItem('M6_CURRENT_YEAR', y);
+      }
+    } catch(_) {}
+  }
+  _restoreFromSession();
+  // Sync toutes les 10s et à chaque événement de stockage
+  setInterval(_syncSession, 10000);
+  window.addEventListener('focus', _syncSession);
+  // 3. Empêcher le pull-to-refresh natif sur Android (overscroll-behavior)
+  if (typeof document !== 'undefined') {
+    document.addEventListener('DOMContentLoaded', () => {
+      document.body.style.overscrollBehaviorY = 'contain';
+    });
+  }
+  // 4. Exposer une fonction de vérification de santé des données
+  global.M6_CheckDataIntegrity = function() {
+    try {
+      const regime = localStorage.getItem('M6_REGIME');
+      const seen   = localStorage.getItem('M6_ZENJI_SEEN');
+      return { ok: true, regime, seen };
+    } catch(e) { return { ok: false, error: e.message }; }
+  };
+})();
+
 })(window);

@@ -73,7 +73,7 @@ const M6_ForfaitJours = {
     const cpContrat=contract.joursCPContrat||25;
     const recap=this.calcRTT(year,plafond,cpContrat,contract.dateArrivee||null,contract.dateDepart||null);
     const feries=M6_Feries.getSet(year);
-    let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0;
+    let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0,demis_matin=0,demis_am=0;
     const alertes=[],entrees=[];
     const entries=Object.entries(data).filter(([k])=>k.startsWith(String(year))).sort(([a],[b])=>a.localeCompare(b));
     for(const [dk,v] of entries){
@@ -82,8 +82,13 @@ const M6_ForfaitJours = {
       const isWE=dow===0||dow===6;
       // CP uniquement sur jours ouvrables
       if(t==='cp'&&(isWE||feries.has(dk))) continue;
-      // Demi-journees = 0.5
-      if(t==='demi'){travailles+=0.5;demis++;}
+      // Demi-journees = 0.5 (avec suivi matin/apresmidi)
+      if(t==='demi'){
+        travailles+=0.5;
+        if(v.demiPeriode==='matin') demis_matin++;
+        else demis_am++;
+        demis++;
+      }
       else if(t==='travail') travailles++;
       else if(t==='rachat'){travailles++;rachetes++;}
       else if(t==='rtt')   rttPris++;
@@ -133,7 +138,7 @@ const M6_ForfaitJours = {
     const simulRachat=this._simuleRachat(contract,travailles,recap.joursTravailMax);
     const prediction=this._predictFinAnnee(travailles,recap.joursTravailMax,year);
     return {
-      joursEffectifs:travailles,rachetes,rttPris,cpPris,reposPris,demis,deplacements,
+      joursEffectifs:travailles,rachetes,rttPris,cpPris,reposPris,demis,deplacements,demis_matin,demis_am,
       rttTheoriques:recap.rttTheoriques,rttSolde:recap.rttTheoriques-rttPris,
       plafond:recap.joursTravailMax,feriesOuvres:recap.feriesOuvres,
       isProrata:recap.isProrata,ratio:recap.ratio,
@@ -189,38 +194,88 @@ const M6_ForfaitJours = {
 // ══════════════════════════════════════════════════════════════════
 const M6_ForfaitHeures = {
   analyze(contract,data,year) {
-    const seuil=contract.seuilHebdo||39,taux1=contract.taux1||25;
-    const palier=contract.palier1||8,taux2=contract.taux2||50;
-    const tauxH=contract.tauxHoraire||0,contingent=contract.contingent||220;
-    let totalHSTaux1=0,totalHSTaux2=0,totalHeures=0,semaines=0;
+    // ── Récupérer les règles CCN depuis le fichier commun (CCN_API) ──
+    // Si l'utilisateur a renseigné un IDCC, on prend les règles de sa CCN
+    // Sinon on utilise les valeurs saisies dans le contrat (ou les défauts légaux)
+    let ccnRules = null;
+    if (window.CCN_API && contract.ccnIdcc && contract.ccnIdcc > 0) {
+      try { ccnRules = CCN_API.getGroupeForCCN(contract.ccnIdcc); } catch(_) {}
+    }
+    const seuil     = (ccnRules?.seuil)    || contract.seuilHebdo || 35;
+    const taux1     = (ccnRules?.taux1)    || contract.taux1      || 25;
+    const palier1   = (ccnRules?.palier1)  || contract.palier1    || 8;
+    // Taux intermédiaire (HCR a 3 paliers : 10%/4h, 20%/4h, 50%+)
+    const taux_inter  = ccnRules?.taux_inter  || null;
+    const palier_inter= ccnRules?.palier_inter|| null;
+    const taux2     = (ccnRules?.taux2)    || contract.taux2      || 50;
+    const contingent= (ccnRules?.contingent)|| contract.contingent|| 220;
+    const maxHebdo  = (ccnRules?.maxHebdo) || 48;
+    const ccnNom    = ccnRules?.nom || contract.ccnLabel || 'Droit commun';
+
+    const tauxH=contract.tauxHoraire||0;
+    let totalHSTaux1=0,totalHSTaux_inter=0,totalHSTaux2=0,totalHeures=0,semaines=0;
     const detailSemaines=[],alertes=[];
     const entries=Object.entries(data).filter(([k])=>k.startsWith(String(year))).sort(([a],[b])=>a.localeCompare(b));
+
     for(const [wk,v] of entries){
       const h=parseFloat(v.heures)||0; totalHeures+=h; semaines++;
-      const extra=Math.max(0,h-seuil),hs1=Math.min(extra,palier),hs2=Math.max(0,extra-palier);
-      totalHSTaux1+=hs1; totalHSTaux2+=hs2;
-      if(h>48) alertes.push({niveau:'danger',icon:'⚠️',titre:`${wk} — ${h}h > 48h légal`,
-        texte:'Maximum absolu dépassé (L3121-20).',loi:'L3121-20'});
-      detailSemaines.push({semaine:wk,heures:h,hs1,hs2});
+      const extra=Math.max(0,h-seuil);
+
+      let hs1=0, hs_inter=0, hs2=0;
+      if (taux_inter !== null) {
+        // 3 paliers (ex: HCR — 36-39h=+10%, 40-43h=+20%, >=44h=+50%)
+        hs1      = Math.min(extra, palier1);
+        hs_inter = Math.min(Math.max(0, extra - palier1), palier_inter || 0);
+        hs2      = Math.max(0, extra - palier1 - (palier_inter || 0));
+      } else {
+        hs1 = Math.min(extra, palier1);
+        hs2 = Math.max(0, extra - palier1);
+      }
+      totalHSTaux1     += hs1;
+      totalHSTaux_inter+= hs_inter;
+      totalHSTaux2     += hs2;
+
+      if(h>60) alertes.push({niveau:'danger',icon:'⛔',titre:`${wk} — ${h}h > 60h absolu`,
+        texte:'Dépassement absolu interdit (L3121-20).',loi:'L3121-20'});
+      else if(h>maxHebdo) alertes.push({niveau:'danger',icon:'⚠️',titre:`${wk} — ${h}h > ${maxHebdo}h CCN`,
+        texte:`Maximum CCN "${ccnNom}" dépassé.`,loi:'L3121-20'});
+      detailSemaines.push({semaine:wk,heures:h,hs1,hs_inter,hs2,
+        paliers:taux_inter!==null?`+${taux1}%(${hs1}h)+${taux_inter}%(${hs_inter}h)+${taux2}%(${hs2}h)`:`+${taux1}%(${hs1}h)+${taux2}%(${hs2}h)`});
     }
-    const totalHS=totalHSTaux1+totalHSTaux2;
+
+    const totalHS = Math.round((totalHSTaux1 + totalHSTaux_inter + totalHSTaux2)*10)/10;
     const pct=Math.min(100,Math.round(totalHS/contingent*100));
-    if(totalHS>contingent) alertes.push({niveau:'danger',icon:'⚠️',titre:`Contingent dépassé`,
-      texte:`${Math.round(totalHS-contingent)}h au-delà. CSE + COR requis (L3121-33).`,loi:'L3121-38'});
-    else if(pct>=90) alertes.push({niveau:'warning',icon:'📊',titre:`Contingent à ${pct}%`,
-      texte:`${Math.round(contingent-totalHS)}h restantes.`,loi:'L3121-33'});
-    let montantHS1=0,montantHS2=0;
-    if(tauxH>0){montantHS1=totalHSTaux1*tauxH*(1+taux1/100);montantHS2=totalHSTaux2*tauxH*(1+taux2/100);}
-    const montantTotal=montantHS1+montantHS2,exoFiscale=Math.min(montantTotal,7500);
+    if(totalHS>contingent) alertes.push({niveau:'danger',icon:'⚠️',titre:`Contingent dépassé (${ccnNom})`,
+      texte:`${Math.round(totalHS-contingent)}h au-delà du plafond ${contingent}h. CSE + accord requis (L3121-33).`,loi:'L3121-38'});
+    else if(pct>=90) alertes.push({niveau:'warning',icon:'📊',titre:`Contingent à ${pct}% (${ccnNom})`,
+      texte:`${Math.round(contingent-totalHS)}h restantes sur ${contingent}h.`,loi:'L3121-33'});
+
+    let montantHS1=0,montantHS_inter=0,montantHS2=0;
+    if(tauxH>0){
+      montantHS1     = totalHSTaux1      * tauxH * (1+taux1/100);
+      montantHS_inter= totalHSTaux_inter * tauxH * (1+(taux_inter||0)/100);
+      montantHS2     = totalHSTaux2      * tauxH * (1+taux2/100);
+    }
+    const montantTotal=montantHS1+montantHS_inter+montantHS2;
+    const exoFiscale=Math.min(montantTotal,7500);
     const semRestantes=Math.max(0,52-semaines),rythmeSem=semaines>0?totalHS/semaines:0;
     const prediction={hsPredit:Math.round(totalHS+rythmeSem*semRestantes),ecart:0,semRestantes,statut:'ok'};
     prediction.ecart=prediction.hsPredit-contingent;
     prediction.statut=prediction.ecart>20?'risque':prediction.ecart<-30?'sous':'ok';
-    return {totalHeures,semaines,totalHS:Math.round(totalHS*10)/10,
-            totalHSTaux1:Math.round(totalHSTaux1*10)/10,totalHSTaux2:Math.round(totalHSTaux2*10)/10,
-            montantHS1:Math.round(montantHS1*100)/100,montantHS2:Math.round(montantHS2*100)/100,
-            montantTotal:Math.round(montantTotal*100)/100,exoFiscale:Math.round(exoFiscale*100)/100,
-            tauxRemplissage:pct,detailSemaines,alertes,seuil,taux1,taux2,palier,contingent,prediction};
+
+    return {totalHeures,semaines,totalHS,
+            totalHSTaux1:Math.round(totalHSTaux1*10)/10,
+            totalHSTaux_inter:Math.round(totalHSTaux_inter*10)/10,
+            totalHSTaux2:Math.round(totalHSTaux2*10)/10,
+            montantHS1:Math.round(montantHS1*100)/100,
+            montantHS_inter:Math.round(montantHS_inter*100)/100,
+            montantHS2:Math.round(montantHS2*100)/100,
+            montantTotal:Math.round(montantTotal*100)/100,
+            exoFiscale:Math.round(exoFiscale*100)/100,
+            tauxRemplissage:pct,detailSemaines,alertes,
+            seuil,taux1,taux_inter,palier_inter,taux2,palier:palier1,contingent,
+            ccnNom,prediction,
+            a3Paliers: taux_inter !== null};
   },
   isoWeek(date) {
     const d=new Date(date); d.setHours(12,0,0,0);

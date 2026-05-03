@@ -290,9 +290,13 @@ const M6_BioEngine = {
       const t = v.type || 'travail';
       if (t === 'travail')    joursTotal++;
       if (t === 'rachat')     { joursTotal++; rachetes++; }
-      if (t === 'rtt')        rttPris++;
-      if (t === 'cp')         cpPris++;
+      if (t === 'rtt')        { rttPris++; cumulSurcharge = Math.max(0, cumulSurcharge - 0.25); }
+      if (t === 'cp')         { cpPris++;  cumulSurcharge = Math.max(0, cumulSurcharge - 0.35); }
       if (t === 'demi')       joursTotal += 0.5;
+      // Jours non-travaillés → décroissance biologique positive
+      if (['repos','ferie','maladie','maternite','astreinte'].includes(t)) {
+        cumulSurcharge = Math.max(0, cumulSurcharge - 0.15);
+      }
 
       // Amplitude saisie
       if (v.debut && v.fin) {
