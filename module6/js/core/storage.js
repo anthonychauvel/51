@@ -169,6 +169,77 @@ const M6_Storage = {
   }
 };
 
-global.M6_Storage = M6_Storage;
+// ── Alerte changement de phase INRS ─────────────────────────────
+// Appeler depuis render() de chaque vue après calcul bio
+// Si la phase empire par rapport au mois précédent → toast + badge
+const M6_PhaseAlert = {
+  _KEY(regime, year) { return 'M6_LAST_PHASE_' + regime + '_' + year; },
+
+  check(regime, year, currentPhaseCode, currentFatigue) {
+    const key   = this._KEY(regime, year);
+    const last  = (() => { try { return JSON.parse(localStorage.getItem(key)||'null'); } catch { return null; } })();
+    const now   = { code: currentPhaseCode, fatigue: currentFatigue, ts: new Date().toISOString() };
+
+    if (!last) { localStorage.setItem(key, JSON.stringify(now)); return null; }
+
+    // Comparer les phases : P1 < P2 < P3 < P4
+    const ordre = { P1:1, P2:2, P3:3, P4:4 };
+    const prev  = ordre[last.code] || 1;
+    const curr  = ordre[currentPhaseCode] || 1;
+
+    // Sauvegarder la phase actuelle
+    localStorage.setItem(key, JSON.stringify(now));
+
+    if (curr > prev) {
+      // Phase empirée → alerte
+      const messages = {
+        2: 'Passage en Phase P2 (Fatigue chronique). La recuperation devient necessaire — programmez des RTT. (INRS)',
+        3: 'ALERTE Phase P3 (Surmenage). Signalez la situation a votre manager et envisagez un entretien avec le medecin du travail. Art. L4121-1.',
+        4: 'CRITIQUE Phase P4 (Burn-out imminent). Consultez immediatement votre medecin du travail. Art. L4121-1.',
+      };
+      return { niveau: curr >= 3 ? 'danger' : 'warning', message: messages[curr] || 'Phase aggravee.', phase: currentPhaseCode };
+    }
+    if (curr < prev && curr === 1) {
+      return { niveau: 'success', message: 'Retour en Phase P1 — bonne recuperation constatee. Sonnentag 2022 : maintenez ce rythme.', phase: currentPhaseCode };
+    }
+    return null;
+  },
+
+  // Affiche le badge d'alerte dans le DOM si besoin
+  showIfNeeded(regime, year, phaseCode, fatigue) {
+    const alert = this.check(regime, year, phaseCode, fatigue);
+    if (!alert) return;
+    const niv = alert.niveau;
+    const colors = {
+      danger:  { bg:'#9B2C2C', text:'#fff' },
+      warning: { bg:'#C4853A', text:'#fff' },
+      success: { bg:'#2D6A4F', text:'#fff' },
+    };
+    const co = colors[niv] || colors.warning;
+
+    let el = document.getElementById('m6-phase-alert');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'm6-phase-alert';
+      el.style.cssText = `position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:12px;right:12px;
+        border-radius:10px;padding:12px 16px;z-index:500;
+        font-size:0.78rem;line-height:1.5;font-family:system-ui,sans-serif;
+        display:flex;align-items:flex-start;gap:10px;box-shadow:0 4px 20px rgba(0,0,0,0.2);
+        transform:translateY(100px);transition:transform 0.4s cubic-bezier(.4,0,.2,1);opacity:0`;
+      document.body.appendChild(el);
+    }
+    el.style.background = co.bg;
+    el.style.color = co.text;
+    el.innerHTML = `<span style="font-size:1.1rem;flex-shrink:0">${niv==='danger'?'🔴':niv==='success'?'✅':'🟠'}</span>
+      <div><strong>Zenji — Phase ${alert.phase}</strong><br>${alert.message}</div>
+      <button onclick="document.getElementById('m6-phase-alert').style.transform='translateY(100px)'"
+        style="background:none;border:none;color:${co.text};font-size:1rem;cursor:pointer;padding:0;flex-shrink:0;margin-left:auto">✕</button>`;
+    setTimeout(() => { el.style.transform='translateY(0)'; el.style.opacity='1'; }, 100);
+    setTimeout(() => { el.style.transform='translateY(100px)'; el.style.opacity='0'; }, 9000);
+  }
+};
+
+global.M6_Storage    = M6_Storage;
+global.M6_PhaseAlert = M6_PhaseAlert;
 
 })(window);
