@@ -115,13 +115,17 @@ const M6_Entretien = {
 
         <div class="m6-field">
           <label>5. Demande d'ajustement de charge ou de forfait</label>
-          <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:400;cursor:pointer">
-              <input type="radio" name="ent-ajust" value="non" checked style="width:auto"> Non, situation satisfaisante
-            </label>
-            <label style="display:flex;align-items:center;gap:6px;font-size:0.85rem;font-weight:400;cursor:pointer">
-              <input type="radio" name="ent-ajust" value="oui" style="width:auto"> Oui, ajustement demandé
-            </label>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:4px">
+            <button type="button" id="ent-ajust-non"
+              style="flex:1;padding:12px 10px;border-radius:10px;border:2px solid var(--ivoire-3);background:var(--champagne-3);color:var(--champagne-2);font-size:0.85rem;cursor:pointer;font-weight:600;transition:all 0.2s;-webkit-tap-highlight-color:transparent"
+              onclick="document.getElementById('ent-ajust-non').style.background='var(--champagne)';document.getElementById('ent-ajust-non').style.borderColor='var(--champagne)';document.getElementById('ent-ajust-non').style.color='#fff';document.getElementById('ent-ajust-oui').style.background='var(--ivoire-2)';document.getElementById('ent-ajust-oui').style.borderColor='var(--ivoire-3)';document.getElementById('ent-ajust-oui').style.color='var(--pierre)';this.dataset.selected='non'">
+              ✅ Non, satisfaisant
+            </button>
+            <button type="button" id="ent-ajust-oui"
+              style="flex:1;padding:12px 10px;border-radius:10px;border:2px solid var(--ivoire-3);background:var(--ivoire-2);color:var(--pierre);font-size:0.85rem;cursor:pointer;font-weight:400;transition:all 0.2s;-webkit-tap-highlight-color:transparent"
+              onclick="document.getElementById('ent-ajust-oui').style.background='var(--alerte)';document.getElementById('ent-ajust-oui').style.borderColor='var(--alerte)';document.getElementById('ent-ajust-oui').style.color='#fff';document.getElementById('ent-ajust-non').style.background='var(--ivoire-2)';document.getElementById('ent-ajust-non').style.borderColor='var(--ivoire-3)';document.getElementById('ent-ajust-non').style.color='var(--pierre)';this.dataset.selected='oui'">
+              ⚠️ Oui, ajustement
+            </button>
           </div>
         </div>
 
@@ -152,7 +156,7 @@ const M6_Entretien = {
         equilibre:    container.querySelector('#ent-equilibre')?.value,
         organisation: container.querySelector('#ent-organisation')?.value.trim(),
         actions:      container.querySelector('#ent-actions')?.value.trim(),
-        ajustement:   container.querySelector('input[name="ent-ajust"]:checked')?.value,
+        ajustement:   (container.querySelector('#ent-ajust-oui')?.style.background?.includes('alerte') || container.querySelector('#ent-ajust-oui')?.dataset?.selected === 'oui') ? 'oui' : 'non',
         year, snapshotAnalysis: {
           joursEffectifs: analysis?.joursEffectifs,
           rttSolde: analysis?.rttSolde,

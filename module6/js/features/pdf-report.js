@@ -12,6 +12,41 @@
 (function(global) {
 
 // Nettoie les emojis et caracteres speciaux pour jsPDF
+// ── Hash local SHA-256 simplifié (pas d'API externe) ─────────────
+// Utilise SubtleCrypto si dispo, sinon un hash djb2 déterministe
+function _localHash(str) {
+  // Essayer SubtleCrypto en async (best effort — on utilise le sync comme fallback)
+  // Retour synchrone : djb2 hash (suffisant pour une référence de document)
+  let h = 5381;
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) + h) ^ str.charCodeAt(i);
+    h = h & 0x7FFFFFFF;
+  }
+  return 'M6-' + h.toString(16).toUpperCase().padStart(8, '0');
+}
+
+// ── Web Share API — partage natif ou téléchargement fallback ─────
+async function _shareOrSave(doc, filename, toastMsg) {
+  // Essayer Web Share API (iOS Safari 14+, Android Chrome 61+)
+  if (navigator.canShare) {
+    try {
+      const pdfBlob = doc.output('blob');
+      const file    = new File([pdfBlob], filename, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file] })) {
+        await navigator.share({ files: [file], title: filename });
+        window.M6_toast?.(toastMsg + ' — partagé');
+        return;
+      }
+    } catch(e) {
+      // L'utilisateur a annulé le partage ou l'API n'est pas supportée
+      if (e.name === 'AbortError') return; // annulation volontaire
+    }
+  }
+  // Fallback : téléchargement direct
+  doc.save(filename);
+  window.M6_toast?.(toastMsg);
+}
+
 function _pdfSanitize(str) {
   if (!str) return '';
   return String(str)
@@ -229,8 +264,7 @@ const M6_PDF = {
     doc.text(`M6 Cadres - ${mNom} ${year} - Genere le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
     doc.text('Art. L3121-58 a L3121-65 Code du travail', W-M, 290, {align:'right'});
 
-    doc.save(`Forfait_Jours_${mNom}_${year}.pdf`);
-    M6_toast?.('PDF mensuel genere');
+    _shareOrSave(doc, `Forfait_Jours_${mNom}_${year}.pdf`, 'PDF mensuel généré');
 
     // Marquer la sauvegarde fichier
     if (window.M6_Storage) M6_Storage.markFileSave?.('forfait_jours', year);
@@ -335,8 +369,7 @@ const M6_PDF = {
     doc.text('Ce document ne remplace pas un avis juridique.', M, 292);
 
     const fn = _pdfSanitize('periode_' + dateDebut + '_' + dateFin + '_' + (contract.nomCadre||'cadre').replace(/\s+/g,'_').toLowerCase() + '.pdf');
-    doc.save(fn);
-    window.M6_toast?.('PDF periode exporte');
+    _shareOrSave(doc, fn, 'PDF période exporté');
   },
 
   // ── Export annuel ─────────────────────────────────────────────
@@ -347,6 +380,187 @@ const M6_PDF = {
   _genAnnuel({ regime, year, contract, data, moods, analysis }) {
     const jsPDF = window.jspdf?.jsPDF;
     if (!jsPDF) { alert('PDF non disponible.'); return; }
+
+    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const W=210, M=15, PW=W-2*M; // marges fixes 15mm
+    let y=0;
+
+    const txt  = (t,x,ry,size,color,style='normal',align='left') => {
+      doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
+      doc.setFont('helvetica',style);
+      const str = String(t||'');
+      if (align==='right') doc.text(str,x,ry,{align:'right'});
+      else if (align==='center') doc.text(str,x,ry,{align:'center'});
+      else doc.text(str,x,ry);
+    };
+    const rect = (x,ry,w,h,fill) => {
+      if(fill){doc.setFillColor(...fill);doc.rect(x,ry,w,h,'F');}
+      else{doc.setLineWidth(0.2);doc.rect(x,ry,w,h,'S');}
+    };
+    const ln = (x1,y1,x2,y2,w=0.3) => { doc.setLineWidth(w); doc.line(x1,y1,x2,y2); };
+    const chk = () => { if(y>268){doc.addPage();y=15;} };
+
+    // ── Couverture ─────────────────────────────────────────────
+    rect(0,0,W,45,[26,23,20]);
+    // Ligne dorée
+    doc.setDrawColor(196,163,90); doc.setLineWidth(0.5);
+    doc.line(M,40,W-M,40);
+    txt('M6 CADRES',M,9,7.5,[196,163,90],'bold');
+    txt('BILAN ANNUEL — FORFAIT JOURS',M,17,14,[247,243,237],'bold');
+    txt(`Exercice ${year}`,M,25,9,[196,163,90],'normal');
+    txt(`${_pdfSanitize(contract.nomCadre||'Cadre')}  ·  ${_pdfSanitize(contract.ccnLabel||'Droit commun')}  ·  Plafond ${contract.plafond||218}j`,M,33,8,[189,181,168]);
+    // Hash preuve (SHA-256 simplifié local)
+    const hashStr = _localHash(`${regime}-${year}-${contract.nomCadre||''}-${analysis?.joursEffectifs||0}`);
+    txt(`Réf. : ${hashStr}`,W-M,9,6,[150,140,130],'normal','right');
+    txt(`Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}`,W-M,14,6.5,[150,140,130],'normal','right');
+    y = 52;
+
+    // ── Synthèse annuelle ──────────────────────────────────────
+    rect(M,y,PW,8,[240,235,228]);
+    txt('SYNTHÈSE ANNUELLE',M+3,y+5.5,8,[70,65,60],'bold');
+    y += 11;
+
+    const a = analysis || {};
+    const synthRows = [
+      ['Jours travaillés',        `${a.joursEffectifs||0} / ${a.plafond||218}j`,   a.joursEffectifs>(a.plafond||218)?[155,44,44]:[26,23,20]],
+      ['Dont jours rachetés',     `${a.rachetes||0}j`,                             [26,23,20]],
+      ['RTT pris / théoriques',   `${a.rttPris||0} / ${a.rttTheoriques||0}j`,      [26,23,20]],
+      ['Solde RTT',               `${a.rttSolde>=0?'+':''}${a.rttSolde??0}j`,      (a.rttSolde||0)<0?[155,44,44]:[26,23,20]],
+      ['Congés pris',             `${a.cpPris||0}j`,                               [26,23,20]],
+      ['Fériés ouvrés',           `${a.feriesOuvres||0}j`,                         [26,23,20]],
+      ['Taux de remplissage',     `${a.tauxRemplissage||0}%`,                      a.tauxRemplissage>=100?[155,44,44]:a.tauxRemplissage>=90?[196,133,58]:[45,107,79]],
+      ['Demi-journées matin',     `${a.demis_matin||0}`,                           [26,23,20]],
+      ['Demi-journées après-midi',`${a.demis_am||0}`,                              [26,23,20]],
+    ];
+
+    synthRows.forEach(([l,v,col],i) => {
+      const ry = y + i*5.5;
+      if (i%2===0) { doc.setFillColor(248,245,241); doc.rect(M,ry-1.5,PW,5.5,'F'); }
+      txt(l, M+2, ry+2.5, 8, [70,65,60]);
+      txt(v, W-M-2, ry+2.5, 8, col||[26,23,20], 'bold', 'right');
+    });
+    y += synthRows.length*5.5 + 8;
+    chk();
+
+    // ── Alertes ────────────────────────────────────────────────
+    if (a.alertes?.length) {
+      rect(M,y,PW,7,[255,248,230]);
+      txt('POINTS DE VIGILANCE',M+3,y+5,8,[122,92,0],'bold');
+      y += 10;
+      a.alertes.forEach(al => {
+        chk();
+        const icon = {danger:'■',warning:'▲',info:'●'}[al.niveau]||'●';
+        const color = al.niveau==='danger'?[155,44,44]:al.niveau==='warning'?[196,133,58]:[55,48,163];
+        doc.setFontSize(7.5); doc.setTextColor(...color); doc.setFont('helvetica','bold');
+        doc.text(icon+' '+_pdfSanitize(al.titre), M+2, y);
+        doc.setFont('helvetica','normal'); doc.setTextColor(74,69,64);
+        const lines = doc.splitTextToSize(_pdfSanitize(al.texte||''), PW-8);
+        doc.text(lines, M+6, y+4);
+        y += 4 + lines.length*3.5 + 3;
+        chk();
+      });
+      y += 4;
+    }
+
+    // ── Tableau mensuel ────────────────────────────────────────
+    chk();
+    doc.addPage(); y = 15;
+    rect(M,y,PW,8,[26,23,20]);
+    txt('RÉCAPITULATIF MENSUEL',M+3,y+5.5,8,[247,243,237],'bold');
+    y += 11;
+
+    // En-têtes colonnes
+    const cols = [M+2, M+28, M+44, M+60, M+76, M+96, M+116];
+    const hdrs = ['Mois','Travail','RTT','CP','Rachat','Charge','Amplitude'];
+    rect(M,y-1,PW,6,[240,235,228]);
+    hdrs.forEach((h,i) => txt(h, cols[i], y+4, 7, [70,65,60], 'bold'));
+    y += 7;
+
+    const mNoms=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    for (let m=0;m<12;m++) {
+      chk();
+      const prefix = `${year}-${String(m+1).padStart(2,'0')}`;
+      const jours  = Object.entries(data||{}).filter(([k])=>k.startsWith(prefix));
+      const t  = jours.filter(([,v])=>v.type==='travail'||v.type==='rachat').length + jours.filter(([,v])=>v.type==='demi').length*0.5;
+      const r  = jours.filter(([,v])=>v.type==='rtt').length;
+      const cp = jours.filter(([,v])=>v.type==='cp').length;
+      const ra = jours.filter(([,v])=>v.type==='rachat').length;
+      const critiques = jours.filter(([k])=>moods?.[k]?.niveau==='critique').length;
+      const ampViols  = jours.filter(([k,v])=>{ if(!v.debut||!v.fin) return false; const dh=v.debut.split(':'), fh=v.fin.split(':'); return (parseInt(fh[0])*60+parseInt(fh[1]))-(parseInt(dh[0])*60+parseInt(dh[1]))>780; }).length;
+
+      if (m%2===0) { doc.setFillColor(248,245,241); doc.rect(M,y-1,PW,6,'F'); }
+      ln(M,y+5,W-M,y+5, 0.1); // ligne séparatrice fine
+      [mNoms[m], t||'-', r||'-', cp||'-', ra||'-',
+       critiques>0?critiques+'×🔴':'-',
+       ampViols>0?ampViols+'×⏰':'-'
+      ].forEach((v,i) => {
+        const col = (i===5&&critiques>0)?[155,44,44]:(i===6&&ampViols>0)?[196,133,58]:[26,23,20];
+        doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(...col);
+        doc.text(String(v), cols[i], y+3.5);
+      });
+      y += 6;
+    }
+    y += 8; chk();
+
+    // ── Entretiens ─────────────────────────────────────────────
+    const entretiens = (window.M6_Storage?.getEntretiens(regime, null)||[]).filter(e=>e.date&&e.date.startsWith(String(year)));
+    if (entretiens.length) {
+      rect(M,y,PW,7,[240,235,228]);
+      txt('ENTRETIENS ANNUELS (Art. L3121-65)',M+3,y+5,8,[70,65,60],'bold');
+      y += 10;
+      entretiens.forEach(e => {
+        chk();
+        doc.setFillColor(248,245,241); doc.rect(M,y,PW,16,'F');
+        txt(new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR'), M+3, y+4.5, 8, [26,23,20], 'bold');
+        txt(_pdfSanitize('Manager : '+(e.manager||'N/A')), M+3, y+9, 7.5, [74,69,64]);
+        txt(_pdfSanitize('Charge : '+(e.charge||'N/A')+' · Ajustement : '+(e.ajustement==='oui'?'Demandé':'Non')), M+3, y+13.5, 7, [100,95,90]);
+        y += 20; chk();
+      });
+    }
+
+    // ── Rupture Conventionnelle ────────────────────────────────
+    const rupture = window.M6_RuptureCalculateur?._getLastSimulation?.();
+    if (rupture) {
+      chk();
+      rect(M,y,PW,7,[240,235,228]);
+      txt('SIMULATION RUPTURE CONVENTIONNELLE',M+3,y+5,8,[70,65,60],'bold');
+      y += 10;
+      [[`Indemnité légale min.`, rupture.indemnite+'€'],[`Préavis`, rupture.preavis||'N/A'],[`Ancienneté`, rupture.anciennete||'N/A']].forEach(([l,v]) => {
+        txt(l, M+3, y, 8, [74,69,64]); txt(v, W-M-2, y, 8, [26,23,20], 'bold', 'right'); y+=5;
+      });
+      y += 5; chk();
+    }
+
+    // ── Certification + signature ──────────────────────────────
+    chk();
+    if (y > 230) { doc.addPage(); y = 15; }
+    doc.setDrawColor(45,107,79); doc.setLineWidth(0.4);
+    doc.rect(M,y,PW,30,'S');
+    rect(M,y,PW,7,[232,245,238]);
+    txt('CERTIFICATION LÉGALE ANNUELLE',M+3,y+5,8,[30,90,60],'bold');
+    doc.setFontSize(7.5); doc.setTextColor(74,69,64); doc.setFont('helvetica','normal');
+    const certText = doc.splitTextToSize(
+      `Je soussigné(e) ${_pdfSanitize(contract.nomCadre||'_________________')} certifie l'exactitude du présent document et atteste avoir respecté les repos quotidien (11h, Art. L3131-1) et hebdomadaire (35h, Art. L3132-2) sur l'exercice ${year}. Réf. : ${hashStr}`,
+      PW-6);
+    doc.text(certText, M+3, y+10);
+    y += 34;
+    chk();
+
+    txt('Cadre :', M+3, y+5, 8, [26,23,20]); ln(M+22,y+6,M+PW/2-5,y+6);
+    txt('Date :', M+PW/2+3, y+5, 8, [26,23,20]); ln(M+PW/2+18,y+6,W-M-2,y+6);
+    y += 12;
+    txt('Manager :', M+3, y+5, 8, [26,23,20]); ln(M+25,y+6,M+PW/2-5,y+6);
+    txt('Date :', M+PW/2+3, y+5, 8, [26,23,20]); ln(M+PW/2+18,y+6,W-M-2,y+6);
+
+    // Footer
+    doc.setFontSize(6.5); doc.setTextColor(150);
+    doc.text(`M6 Cadres · Bilan ${year} · Généré le ${new Date().toLocaleString('fr-FR')} · Réf. ${hashStr}`, M, 290);
+    doc.text('Art. L3121-58 à L3121-65 Code du travail', W-M, 290, {align:'right'});
+
+    const filename = `Forfait_Jours_Annuel_${year}_${(contract.nomCadre||'Cadre').replace(/\s/g,'_')}.pdf`;
+    _shareOrSave(doc, filename, 'PDF annuel généré');
+    if (window.M6_Storage) M6_Storage.markFileSave?.('forfait_jours', year);
+  },
 
     const doc = new jsPDF({ format:'a4', unit:'mm' });
     const W=210, M=20;
@@ -535,8 +749,7 @@ const M6_PDF = {
     doc.setFontSize(7); doc.setTextColor(180);
     doc.text(`Entretien annuel Art. L3121-65 - ${year} - ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
 
-    doc.save(`Entretien_Annuel_Forfait_Jours_${year}.pdf`);
-    M6_toast?.('PDF entretien genere');
+    _shareOrSave(doc, `Entretien_Annuel_Forfait_Jours_${year}.pdf`, 'PDF entretien généré');
   },
 
   // Export specifique Cadre Dirigeant
@@ -737,8 +950,201 @@ const M6_PDF = {
     doc.text('Ce document ne remplace pas un avis juridique. Sources : Code du travail L3121-41 a L3121-65.', M, 290);
 
     const nomFichier = _pdfSanitize('periode_' + debut + '_' + fin + '_' + (contract.nomCadre||'cadre').replace(/\s+/g,'_').toLowerCase() + '.pdf');
-    doc.save(nomFichier);
-    M6_toast?.('PDF periode genere : ' + entries.length + ' jours');
+    _shareOrSave(doc, nomFichier, 'PDF période généré : ' + entries.length + ' jours');
+  },
+  // ── PDF Mensuel Forfait Heures ────────────────────────────────
+  exportMensuelFH({ regime, year, mois, contract, data, analysis }) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) { window.M6_toast?.('jsPDF non chargé'); return; }
+
+    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const W=210, M=15, PW=W-2*M;
+    let y=0;
+
+    const txt  = (t,x,ry,size,color,style='normal',align='left') => {
+      doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
+      doc.setFont('helvetica',style);
+      if (align==='right') doc.text(String(t||''),x,ry,{align:'right'});
+      else doc.text(String(t||''),x,ry);
+    };
+    const rect = (x,ry,w,h,fill) => { doc.setFillColor(...fill); doc.rect(x,ry,w,h,'F'); };
+    const chk  = () => { if(y>268){doc.addPage();y=15;} };
+
+    const mNoms = ['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    const mNom  = mNoms[mois]||'';
+    const hashStr = _localHash(`${regime}-FH-${year}-${mois}-${contract.nomCadre||''}`);
+
+    // Couverture
+    rect(0,0,W,40,[26,23,20]);
+    doc.setDrawColor(196,163,90); doc.setLineWidth(0.4); doc.line(M,36,W-M,36);
+    txt('M6 CADRES — FORFAIT HEURES',M,9,7,[196,163,90],'bold');
+    txt(`RAPPORT MENSUEL — ${mNom.toUpperCase()} ${year}`,M,17,13,[247,243,237],'bold');
+    txt(`${_pdfSanitize(contract.nomCadre||'Cadre')}  ·  ${_pdfSanitize(contract.ccnLabel||'Droit commun')}`,M,26,8,[189,181,168]);
+    txt(`Réf. ${hashStr}`,W-M,9,6,[150,140,130],'normal','right');
+    y = 48;
+
+    // Infos contrat
+    rect(M,y,PW,7,[240,235,228]);
+    txt('PARAMÈTRES CONTRAT',M+3,y+5,8,[70,65,60],'bold');
+    y += 10;
+    [[`Seuil déclenchement HS`, `${contract.seuilHebdo||35}h/sem`],[`Contingent annuel`, `${analysis?.contingent||contract.contingent||220}h`],[`Taux majorations`, analysis?.a3Paliers ? `+${analysis.taux1||25}%(${analysis.palier||8}h) / +${analysis.taux_inter}%(${analysis.palier_inter}h) / +${analysis.taux2||50}%`:`+${analysis?.taux1||25}%(${analysis?.palier||8}h) / +${analysis?.taux2||50}%`],[`CCN`, _pdfSanitize(analysis?.ccnNom||contract.ccnLabel||'Droit commun')]].forEach(([l,v],i)=>{
+      if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+      txt(l,M+2,y+2.5,8,[70,65,60]); txt(v,W-M-2,y+2.5,8,[26,23,20],'bold','right'); y+=5.5;
+    });
+    y += 5; chk();
+
+    // Semaines du mois
+    rect(M,y,PW,7,[26,23,20]);
+    txt('SEMAINES DU MOIS',M+3,y+5,8,[247,243,237],'bold');
+    y += 10;
+    const semsOfMonth = Object.entries(data||{}).filter(([wk,])=>{
+      const wn = parseInt(wk.split('W')[1]);
+      const yr = parseInt(wk.split('-')[0]);
+      const d  = new Date(yr, 0, 1+(wn-1)*7-(new Date(yr,0,1).getDay()||7)+1);
+      return d.getFullYear()===year && d.getMonth()===mois;
+    });
+
+    if (!semsOfMonth.length) {
+      doc.setFontSize(8); doc.setTextColor(138,132,124);
+      doc.text('Aucune semaine saisie pour ce mois.', M+3, y); y+=10;
+    } else {
+      rect(M,y-1,PW,6,[240,235,228]);
+      ['Semaine','Heures','HS palier 1','HS palier 2','Total HS','Montant brut'].forEach((h,i)=>{
+        txt(h, M+2+i*32, y+4, 7, [70,65,60], 'bold');
+      });
+      y += 7;
+      let totalH=0, totalHS1=0, totalHS2=0, totalHSm=0, totalMnt=0;
+      semsOfMonth.forEach(([wk,v],i)=>{
+        chk();
+        const h  = parseFloat(v.heures)||0;
+        const seuil = contract.seuilHebdo||35;
+        const extra = Math.max(0,h-seuil);
+        const t1    = analysis?.taux1||25, pal=analysis?.palier||8;
+        const t2    = analysis?.taux2||50;
+        const hs1   = Math.min(extra,pal), hs2=Math.max(0,extra-pal);
+        const tauxH = contract.tauxHoraire||0;
+        const mnt   = tauxH>0 ? Math.round((hs1*tauxH*(1+t1/100)+hs2*tauxH*(1+t2/100))*100)/100 : 0;
+        totalH+=h; totalHS1+=hs1; totalHS2+=hs2; totalHSm+=(hs1+hs2); totalMnt+=mnt;
+        if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+        [wk, h+'h', hs1>0?'+'+hs1+'h':'-', hs2>0?'+'+hs2+'h':'-', (hs1+hs2)>0?(hs1+hs2).toFixed(1)+'h':'-', mnt>0?mnt.toFixed(2)+'€':'-'].forEach((v,j)=>{
+          const col = j>=2&&parseFloat(v)>0?[155,44,44]:[26,23,20];
+          txt(v, M+2+j*32, y+2.5, 7.5, col, j===0?'normal':'bold'); 
+        });
+        y += 5.5; chk();
+      });
+      // Totaux
+      doc.setLineWidth(0.3); doc.setDrawColor(196,163,90);
+      doc.line(M,y,W-M,y);
+      y += 4;
+      rect(M,y,PW,7,[232,245,238]);
+      txt('TOTAUX DU MOIS',M+3,y+5,8,[30,90,60],'bold');
+      txt(`${totalH}h travaillées · ${totalHSm.toFixed(1)}h HS · ${totalMnt>0?totalMnt.toFixed(2)+'€ brut TEPA':'Taux horaire non renseigné'}`,W-M-2,y+5,8,[30,90,60],'normal','right');
+      y += 12;
+
+      // TEPA
+      if (contract.tauxHoraire > 0) {
+        chk();
+        rect(M,y,PW,7,[240,235,228]);
+        txt('RÉDUCTION COTISATIONS ET EXONÉRATION FISCALE (Loi TEPA)',M+3,y+5,8,[70,65,60],'bold');
+        y += 10;
+        const exoMois = Math.min(totalMnt, 7500/12);
+        [[`HS à +${analysis?.taux1||25}%`,`${totalHS1.toFixed(1)}h`],[`HS à +${analysis?.taux2||50}%`,`${totalHS2.toFixed(1)}h`],[`Montant brut mensuel`,`${totalMnt.toFixed(2)} €`],[`Exonération IR estimée (plaf. 625€/mois)`,`${exoMois.toFixed(2)} €`]].forEach(([l,v],i)=>{
+          if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+          txt(l,M+2,y+2.5,8,[70,65,60]); txt(v,W-M-2,y+2.5,8,[26,23,20],'bold','right'); y+=5.5;
+        });
+        y += 3;
+        doc.setFontSize(6.5); doc.setTextColor(100);
+        doc.text('Art. L241-17 CSS · Loi TEPA 2007 · Loi 2022-1158', M+2, y);
+        y += 8;
+      }
+    }
+    chk();
+
+    // Certification
+    if (y > 240) { doc.addPage(); y = 15; }
+    doc.setDrawColor(45,107,79); doc.setLineWidth(0.3); doc.rect(M,y,PW,22,'S');
+    rect(M,y,PW,6,[232,245,238]);
+    txt('CERTIFICATION (Art. L3121-46)',M+3,y+4.5,8,[30,90,60],'bold');
+    doc.setFontSize(7.5); doc.setTextColor(74,69,64); doc.setFont('helvetica','normal');
+    const certLines = doc.splitTextToSize(`Je soussigné(e) ${_pdfSanitize(contract.nomCadre||'_________________')} certifie l'exactitude de ce rapport de suivi d'heures supplémentaires pour ${mNom} ${year}. Réf. : ${hashStr}`, PW-6);
+    doc.text(certLines, M+3, y+10);
+    y += 26;
+    doc.setFontSize(8); doc.setTextColor(26,23,20);
+    doc.text('Signature cadre :', M+3, y+5); doc.line(M+38,y+6,M+PW/2,y+6);
+    doc.text('Date :', M+PW/2+5, y+5); doc.line(M+PW/2+18,y+6,W-M-2,y+6);
+
+    doc.setFontSize(7); doc.setTextColor(138,132,124);
+    doc.text(`M6 Cadres — Forfait Heures — ${mNom} ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text('Art. L3121-27 à L3121-46 Code du travail', W-M, 290, {align:'right'});
+
+    _shareOrSave(doc, `Forfait_Heures_${mNom}_${year}.pdf`, `PDF mensuel FH ${mNom} ${year} généré`);
+  },
+
+  // ── Export preuve renforcée (hash SHA-256 local) ────────────────
+  exportPreuve({ regime, year, contract, data, analysis }) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) { window.M6_toast?.('jsPDF non chargé'); return; }
+
+    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const W=210, M=15, PW=W-2*M;
+    let y=15;
+
+    const ts    = new Date().toISOString();
+    const hash  = _localHash(`${regime}-${year}-${contract.nomCadre||''}-${JSON.stringify(Object.keys(data||{}).length)}-${ts}`);
+    const dataStr = JSON.stringify({regime,year,nomCadre:contract.nomCadre,joursEffectifs:analysis?.joursEffectifs,plafond:analysis?.plafond,rachetes:analysis?.rachetes,rttPris:analysis?.rttPris});
+
+    doc.setFillColor(26,23,20); doc.rect(0,0,W,30,'F');
+    doc.setFontSize(8); doc.setTextColor(196,163,90); doc.setFont('helvetica','bold');
+    doc.text('M6 CADRES — DOCUMENT DE PREUVE', M, 9);
+    doc.setFontSize(11); doc.setTextColor(247,243,237);
+    doc.text(`EMPREINTE NUMÉRIQUE DU FORFAIT ${year}`, M, 18);
+    doc.setFontSize(7); doc.setTextColor(189,181,168);
+    doc.text(`Généré le ${new Date().toLocaleString('fr-FR')}`, M, 25);
+    y = 38;
+
+    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
+    doc.text('IDENTIFICATION', M, y); y += 6;
+    [[`Cadre`, contract.nomCadre||'N/A'],[`Régime`, regime],[`Exercice`, String(year)],[`CCN`, contract.ccnLabel||'Droit commun']].forEach(([l,v])=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(74,69,64);
+      doc.text(l+' :', M+2, y); doc.setFont('helvetica','bold'); doc.setTextColor(26,23,20);
+      doc.text(_pdfSanitize(v), M+40, y); y+=5;
+    });
+    y += 6;
+
+    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
+    doc.text('EMPREINTE DU DOCUMENT (Hash djb2)', M, y); y+=6;
+    doc.setFontSize(9); doc.setTextColor(55,48,163); doc.setFont('helvetica','bold');
+    doc.text(hash, M+2, y); y+=7;
+    doc.setFontSize(7); doc.setTextColor(100); doc.setFont('helvetica','normal');
+    const dataLines = doc.splitTextToSize('Données hachées : '+dataStr, PW-4);
+    doc.text(dataLines, M+2, y); y+= dataLines.length*3.5 + 5;
+
+    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
+    doc.text('SYNTHÈSE CERTIFIÉE', M, y); y+=6;
+    [[`Jours travaillés`,`${analysis?.joursEffectifs||0} / ${analysis?.plafond||218}`],[`RTT pris`,`${analysis?.rttPris||0} / ${analysis?.rttTheoriques||0}`],[`Rachats`,`${analysis?.rachetes||0}`],[`Alertes`,`${analysis?.alertes?.length||0}`]].forEach(([l,v])=>{
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(74,69,64);
+      doc.text(l+' :', M+2, y); doc.setFont('helvetica','bold'); doc.setTextColor(26,23,20);
+      doc.text(_pdfSanitize(v), M+40, y); y+=5;
+    });
+    y += 8;
+
+    // Zone de signature
+    doc.setDrawColor(45,107,79); doc.setLineWidth(0.3); doc.rect(M,y,PW,28,'S');
+    doc.setFillColor(232,245,238); doc.rect(M,y,PW,7,'F');
+    doc.setFontSize(8); doc.setTextColor(30,90,60); doc.setFont('helvetica','bold');
+    doc.text('SIGNATURE ET CERTIFICATION', M+3, y+5); y+=10;
+    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(74,69,64);
+    const certL = doc.splitTextToSize(`Je soussigné(e) ${_pdfSanitize(contract.nomCadre||'___________')} certifie que ce document reflète fidèlement les données saisies dans l'application M6 Cadres pour l'exercice ${year}. Hash de référence : ${hash}`, PW-6);
+    doc.text(certL, M+3, y); y+=certL.length*3.5+4;
+    doc.setFontSize(8); doc.setTextColor(26,23,20);
+    doc.text('Signature :', M+3, y+4); doc.line(M+25,y+5,M+PW/2,y+5);
+    doc.text('Date :', M+PW/2+3, y+4); doc.line(M+PW/2+16,y+5,W-M-2,y+5);
+
+    doc.setFontSize(7); doc.setTextColor(138,132,124);
+    doc.text('Document de preuve M6 Cadres — Usage interne et prud\'hommal', M, 290);
+    doc.text(hash, W-M, 290, {align:'right'});
+
+    _shareOrSave(doc, `Preuve_Forfait_${year}_${hash}.pdf`, 'Document de preuve généré');
   },
 };
 

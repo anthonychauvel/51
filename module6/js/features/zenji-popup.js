@@ -175,22 +175,56 @@ const MSG_ANNEE_FIN = [
 // ══════════════════════════════════════════════════════════════════
 //  MOTEUR DE SÉLECTION — choisit le bon pool selon le contexte
 // ══════════════════════════════════════════════════════════════════
-function _selectPopup(analysis, bio, prenom) {
+function _selectPopup(analysis, bio, prenom, regime) {
   const n = prenom ? prenom + ' ! ' : '';
 
-  // Priorité décroissante
-  if (bio?.phase?.code === 'P4')
-    return _pick(MSG_P4)(n);
+  // ── Cadre Dirigeant : messages spécifiques ─────────────────────
+  if (regime === 'cadre_dirigeant') {
+    // P4/P3 santé toujours prioritaire
+    if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
+    if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
+    if (bio?.phase?.code === 'P2') return _pick(MSG_P2)(n);
+    // Pour les CD : afficher seulement si des données existent
+    if (!analysis || !analysis.joursEffectifs || analysis.joursEffectifs === 0) {
+      return { titre: 'Bonjour', icon: '🎯', level: 'ok',
+        msg: `${n}En tant que Cadre Dirigeant (Art. L3111-2), vous n'êtes pas soumis aux règles de durée légale du travail. L'appli suit vos projets, missions et votre équilibre vie pro/perso.`,
+        actions: ['Ajouter un projet', 'Voir l\'entretien de charge'] };
+    }
+    const jours = analysis.joursEffectifs || 0;
+    if (jours > 218) return { titre: '⚠️ Alerte charge', icon: '🚨', level: 'alerte',
+      msg: `${n}${jours} jours constatés dépassent le seuil de référence de 218j. Même sans compteur légal, l'obligation de sécurité de l'employeur s'applique (Art. L4121-1). Un entretien de charge est recommandé.`,
+      actions: ['Ouvrir l\'entretien de charge'] };
+    return { titre: 'Bilan dirigeant', icon: '📊', level: 'ok',
+      msg: `${n}${jours} jours constatés cette année. Votre régime CD vous laisse l'autonomie totale — pensez à documenter votre charge pour les entretiens annuels.`,
+      actions: ['Voir mes projets', 'Entretien de charge'] };
+  }
 
-  if (bio?.phase?.code === 'P3')
-    return _pick(MSG_P3)(n);
+  // ── Forfait Heures ─────────────────────────────────────────────
+  if (regime === 'forfait_heures') {
+    if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
+    if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
+    if (!analysis || !analysis.semaines) {
+      return { titre: 'Démarrage', icon: '⏱️', level: 'ok',
+        msg: `${n}Saisissez vos premières semaines pour que je puisse analyser votre rythme. Je calculerai automatiquement vos heures supplémentaires et la consommation de votre contingent.`,
+        actions: ['Saisir une semaine'] };
+    }
+    const tauxRempli = analysis.tauxRemplissage || 0;
+    if (tauxRempli >= 95) return { titre: 'Contingent HS critique', icon: '🔴', level: 'critique',
+      msg: `${n}Vous avez consommé ${tauxRempli}% de votre contingent HS. Au-delà du contingent, des heures supp restent légalement possibles mais nécessitent une autorisation de l'inspection du travail (Art. L3121-30).`,
+      actions: ['Voir le bilan HS'] };
+    if (tauxRempli >= 80) return { titre: 'Contingent HS — vigilance', icon: '🟠', level: 'vigilance',
+      msg: `${n}${tauxRempli}% de votre contingent annuel est consommé. Planifiez la fin de l'année pour éviter le dépassement.`,
+      actions: ['Voir le bilan'] };
+    return _pick(MSG_CONFORME)(n);
+  }
+
+  // ── Forfait Jours (défaut) ─────────────────────────────────────
+  if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
+  if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
 
   const excedent = analysis ? analysis.joursEffectifs - analysis.plafond : 0;
-  if (excedent > 0)
-    return _pick(MSG_DEPASSE)(n, excedent);
-
-  if (bio?.phase?.code === 'P2')
-    return _pick(MSG_P2)(n);
+  if (excedent > 0) return _pick(MSG_DEPASSE)(n, excedent);
+  if (bio?.phase?.code === 'P2') return _pick(MSG_P2)(n);
 
   const restants = analysis?.joursRestants ?? 999;
   if (restants <= 15 && restants >= 0 && analysis?.joursEffectifs > 0)
@@ -200,18 +234,15 @@ function _selectPopup(analysis, bio, prenom) {
     return _pick(MSG_RACHAT)(n, analysis.rachetes,
       analysis.simulRachat?.montantMajoré ? Math.round(analysis.simulRachat.montantMajoré) : null);
 
-  if (!analysis?.entretienDate)
-    return _pick(MSG_ENTRETIEN)(n);
+  if (!analysis?.entretienDate) return _pick(MSG_ENTRETIEN)(n);
 
   if (analysis?.rttPris === 0 && analysis?.rttTheoriques > 0 && analysis?.joursEffectifs > 40)
     return _pick(MSG_RTT_ZERO)(n, analysis.rttTheoriques);
 
-  if (bio?.details?.amplitudeViola > 3)
-    return _pick(MSG_AMPLITUDE)(n, '13+');
+  if (bio?.details?.amplitudeViola > 3) return _pick(MSG_AMPLITUDE)(n, '13+');
 
   const mois = new Date().getMonth();
-  if (mois === 11 && analysis?.joursEffectifs > 0)
-    return _pick(MSG_ANNEE_FIN)(n);
+  if (mois === 11 && analysis?.joursEffectifs > 0) return _pick(MSG_ANNEE_FIN)(n);
 
   return _pick(MSG_CONFORME)(n);
 }
@@ -354,11 +385,12 @@ const M6_ZenjiPopup = {
    * Initialise le système de popup Zenji.
    * À appeler une fois par vue, après le render().
    */
-  init(analysis, bio, contract, onActionCallback) {
+  init(analysis, bio, contract, onActionCallback, regime) {
     _injectStyles();
     this._analysis = analysis;
     this._bio      = bio;
     this._prenom   = contract?.nomCadre || contract?.nom || '';
+    this._regime   = regime || 'forfait_jours';
     this._onAction = onActionCallback || null;
 
     // N'injecter que l'overlay (pas la bulle flottante intrusive)
@@ -370,7 +402,7 @@ const M6_ZenjiPopup = {
 
   /** Affiche le popup principal */
   showPopup() {
-    const popup = _selectPopup(this._analysis, this._bio, this._prenom);
+    const popup = _selectPopup(this._analysis, this._bio, this._prenom, this._regime);
     if (!popup) return;
     this._renderPopup(popup);
     const ov = document.getElementById('zenji-overlay');
@@ -402,7 +434,7 @@ const M6_ZenjiPopup = {
   /** Message journalier discret — bannière cliquable en haut du contenu */
   _injectDailyMessage() {
     document.getElementById('zenji-daily-bar')?.remove();
-    const popup = _selectPopup(this._analysis, this._bio, this._prenom);
+    const popup = _selectPopup(this._analysis, this._bio, this._prenom, this._regime);
     if (!popup) return;
     const phase = this._bio?.phase?.code || 'P1';
     const phaseIcons = { P1:'✅', P2:'⚠️', P3:'🟠', P4:'🔴' };
