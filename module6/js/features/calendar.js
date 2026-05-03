@@ -5,10 +5,10 @@
  * - Déplacement = TOGGLE sur Travail (pas exclusif)
  * - Horaires défaut 09:00-18:30 pré-remplis
  * - Bandeau compteur global annuel fixe
- * - Demi-journée : visuel cellule coupée
+ * - Demi-journee : visuel cellule coupée
  * - Alerte amplitude temps réel automatique
  * - Anti-doublon semaine validation rapide
- * - Demi-journée 0.5 bien comptée
+ * - Demi-journee 0.5 bien comptée
  */
 'use strict';
 
@@ -22,13 +22,29 @@ const MOOD_COLORS = {
 };
 
 const TYPE_CONFIG = {
-  travail: { icon:'●', label:'Travail',      bg:'#1E3A5F', text:'#fff', val:1   },
-  rtt:     { icon:'○', label:'RTT',          bg:'#4A7C6F', text:'#fff', val:0   },
-  cp:      { icon:'◆', label:'Congé',        bg:'#2D6A4F', text:'#fff', val:0   },
-  ferie:   { icon:'★', label:'Férié',        bg:'#3B6098', text:'#fff', val:0   },
-  repos:   { icon:'◯', label:'Repos',        bg:'#6B7280', text:'#fff', val:0   },
-  rachat:  { icon:'◈', label:'Rachat',       bg:'#C4853A', text:'#fff', val:1   },
-  demi:    { icon:'◑', label:'Demi-j.',      bg:'#5C3F9B', text:'#fff', val:0.5 },
+  // ── Types principaux ──────────────────────────────────────────
+  travail:    { icon:'●', label:'Travail',        bg:'#1E3A5F', text:'#fff', val:1,   groupe:'travail' },
+  rtt:        { icon:'○', label:'RTT',            bg:'#4A7C6F', text:'#fff', val:0,   groupe:'repos'   },
+  cp:         { icon:'◆', label:'Conge paye',     bg:'#2D6A4F', text:'#fff', val:0,   groupe:'repos'   },
+  ferie:      { icon:'★', label:'Férié',          bg:'#3B6098', text:'#fff', val:0,   groupe:'repos'   },
+  repos:      { icon:'◯', label:'Repos',          bg:'#6B7280', text:'#fff', val:0,   groupe:'repos'   },
+  rachat:     { icon:'◈', label:'Rachat',         bg:'#C4853A', text:'#fff', val:1,   groupe:'travail' },
+  demi:       { icon:'◑', label:'Demi-journee',   bg:'#5C3F9B', text:'#fff', val:0.5, groupe:'travail' },
+  // ── Types absences (n ouvrent pas droit aux RTT) ──────────────
+  maladie:    { icon:'✚', label:'Maladie',        bg:'#9B2C2C', text:'#fff', val:0,   groupe:'absence',
+                info:'Absence maladie — ne compte pas comme jour travaillé ni RTT. Interrompt le compteur de forfait.' },
+  maternite:  { icon:'◇', label:'Maternite/Pat.', bg:'#BE185D', text:'#fff', val:0,   groupe:'absence',
+                info:'Congé maternité ou paternité — protégé, ne peut pas etre recupere sur le forfait (L1225-1).' },
+  css:        { icon:'◎', label:'Conge ss solde', bg:'#78350F', text:'#fff', val:0,   groupe:'absence',
+                info:'Conge sans solde — le forfait jours est suspendu (ni travail ni RTT généré). Recalcule le prorata annuel.' },
+  formation:  { icon:'▲', label:'Formation',      bg:'#1E40AF', text:'#fff', val:0,   groupe:'absence',
+                info:'Formation professionnelle — ne compte generalement pas comme jour de travail dans le forfait (à vérifier CCN).' },
+  cet:        { icon:'◉', label:'CET',            bg:'#065F46', text:'#fff', val:0,   groupe:'repos',
+                info:'Compte Épargne Temps — journee consommee sur le CET. Distincte des RTT contractuels.' },
+  astreinte:  { icon:'◐', label:'Astreinte',      bg:'#374151', text:'#fff', val:0.5, groupe:'travail',
+                info:'Astreinte — periode de disponibilité sans travail effectif (L3121-9). Comptee 0.5j dans le suivi de charge.' },
+  teletravail:{ icon:'⌂',  label:'Teletravail',   bg:'#1E3A5F', text:'#fff', val:1,   groupe:'travail',
+                info:'Jour travaillé à distance — même valeur qu un jour de travail au bureau (L1222-9). Rémunération inchangée.' },
 };
 
 const M6_Calendar = {
@@ -170,7 +186,7 @@ const M6_Calendar = {
       const moodDot  = mood ? `<div style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:${MOOD_COLORS[mood.niveau]?.border||'#aaa'}"></div>` : '';
       const depBadge = isDep ? `<div style="position:absolute;top:1px;left:1px;font-size:0.45rem;line-height:1">T</div>` : '';
 
-      // Demi-journée → split visuel
+      // Demi-journee → split visuel
       let cellBg = cfg ? cfg.bg : 'var(--ivoire-2)';
       if (type === 'demi') cellBg = 'linear-gradient(135deg,#1E3A5F 50%,#E2DAD0 50%)';
 
@@ -312,6 +328,26 @@ const M6_Calendar = {
       <input type="text" id="pop-note" value="${entry.note||''}" maxlength="200" placeholder="ex: réunion critique, client…" style="font-size:14px">
     </div>
 
+    <!-- Imputation projet (cadre dirigeant uniquement) -->
+    ${this._regime === 'cadre_dirigeant' ? (() => {
+      const projets = (() => { try { return JSON.parse(localStorage.getItem('M6_CD_PROJETS')||'[]'); } catch{return[];} })()
+        .filter(p => p.statut !== 'termine');
+      if (!projets.length) return '';
+      const curProjId = entry.projetId || '';
+      const curHProj  = entry.hProjet  || '';
+      return `<div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre);margin-bottom:6px">Imputer sur un projet</div>
+        <div class="m6-field" style="margin-bottom:8px">
+          <select id="pop-projet" style="font-size:14px;width:100%">
+            <option value="">— Aucun projet —</option>
+            ${projets.map(p => '<option value="'+p.id+'" '+(curProjId===p.id?'selected':'')+' style="border-left:3px solid '+p.couleur+'">'+p.nom+'</option>').join('')}
+          </select>
+        </div>
+        <div class="m6-field" id="pop-hproj-wrap" style="margin-bottom:12px;${!curProjId?'display:none':''}">
+          <label style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre)">Heures passees sur ce projet aujourd hui</label>
+          <input type="number" id="pop-hproj" min="0" max="14" step="0.5" value="${curHProj||7}" style="font-size:16px">
+        </div>`;
+    })() : ''}
+
     <!-- Actions -->
     <button class="m6-btn m6-btn-primary" id="pop-save" style="margin-bottom:8px">Enregistrer</button>
     ${entry.type?`<button class="m6-btn m6-btn-ghost" id="pop-del" style="width:100%;font-size:0.8rem;margin-bottom:8px">Effacer ce jour</button>`:''}
@@ -376,6 +412,12 @@ const M6_Calendar = {
     sheet.querySelector('#pop-deb')?.addEventListener('change', checkAmp);
     sheet.querySelector('#pop-fin')?.addEventListener('change', checkAmp);
 
+    // Afficher le champ heures quand un projet est sélectionné
+    sheet.querySelector('#pop-projet')?.addEventListener('change', (e) => {
+      const wrap = sheet.querySelector('#pop-hproj-wrap');
+      if (wrap) wrap.style.display = e.target.value ? '' : 'none';
+    });
+
     // Save
     sheet.querySelector('#pop-save')?.addEventListener('click', () => {
       // Mood obligatoire si journée travaillée
@@ -387,7 +429,9 @@ const M6_Calendar = {
       const fin     = sheet.querySelector('#pop-fin')?.value||null;
       const note    = sheet.querySelector('#pop-note')?.value.trim()||null;
       const reposOk = sheet.querySelector('#pop-repos-ok')?.checked||false;
-      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, reposOk } : null;
+      const projetId = sheet.querySelector('#pop-projet')?.value || null;
+      const hProjet  = projetId ? (parseFloat(sheet.querySelector('#pop-hproj')?.value)||7) : null;
+      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, reposOk, projetId, hProjet } : null;
       this._closePopup();
       if (this._onSave) this._onSave(dk, value, selMood?{niveau:selMood}:null);
     });

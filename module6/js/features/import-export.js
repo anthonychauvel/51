@@ -109,8 +109,61 @@ const M6_ImportExport = {
     document.body.appendChild(a); a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  },
+
+  // ── Export CSV SIRH (compatible Sage, Cegid, ADP) ─────────────
+  exportCSV(regime, year) {
+    const data     = M6_Storage.getData(regime, year);
+    const contract = M6_Storage.getContract(regime) || {};
+    const feries   = M6_Feries?.getSet(year) || new Set();
+
+    const typeLabel = {
+      travail:'TRAVAIL', rtt:'RTT', cp:'CONGE', ferie:'FERIE',
+      repos:'REPOS', rachat:'RACHAT', demi:'DEMI', maladie:'MALADIE',
+      maternite:'MATERNITE', css:'CSS', formation:'FORMATION',
+      cet:'CET', astreinte:'ASTREINTE', teletravail:'TELETRAVAIL'
+    };
+
+    const header = ['Date','Jour','Type','Amplitude_debut','Amplitude_fin','Deplacement','Note','Valeur_jours'];
+    const rows = Object.entries(data)
+      .filter(([k]) => k.startsWith(String(year)))
+      .sort(([a],[b]) => a.localeCompare(b))
+      .map(([dk, v]) => {
+        const d = new Date(dk + 'T12:00:00');
+        const jours = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'][d.getDay()];
+        const t = v.type || 'travail';
+        const val = t==='demi' ? 0.5 : (t==='travail'||t==='rachat'||t==='teletravail') ? 1 : 0;
+        return [
+          dk, jours,
+          typeLabel[t] || t.toUpperCase(),
+          v.debut || '',
+          v.fin   || '',
+          v.deplacement ? 'OUI' : 'NON',
+          (v.note || '').replace(/[^\w\s\-\.]/g, ' ').substring(0, 100),
+          val
+        ];
+      });
+
+    const csvLines = [
+      `# M6 Cadres - Export SIRH - ${(contract.nomCadre||contract.nom||'N/A')} - ${year}`,
+      `# CCN: ${contract.ccnLabel||'N/A'} - Forfait: ${contract.plafond||218}j`,
+      `# Genere le: ${new Date().toLocaleString('fr-FR')}`,
+      '',
+      header.join(';'),
+      ...rows.map(r => r.join(';'))
+    ];
+
+    const blob = new Blob([csvLines.join('\n')], { type:'text/csv;charset=utf-8' });
+    const url  = URL.createObjectURL(blob);
+    const a    = document.createElement('a');
+    a.href     = url;
+    a.download = `SIRH_${regime}_${year}_${(contract.nomCadre||'cadre').replace(/\s+/g,'_').toLowerCase()}.csv`;
+    a.click();
+    setTimeout(() => URL.revokeObjectURL(url), 2000);
+    M6_toast?.('Export CSV SIRH genere');
   }
 };
+
 
 global.M6_ImportExport = M6_ImportExport;
 
