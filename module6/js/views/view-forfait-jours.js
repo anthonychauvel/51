@@ -103,8 +103,13 @@ const VFJ = {
         this._renderCal(ct);
         break;
       case 'bio':
-        ct.innerHTML = zenjiHtml + this._tplBio(bio);
-        if (window.M6_Charts) M6_Charts.bindCharts(analysis, bio, this._data, this._contract, this._year);
+        try {
+          ct.innerHTML = zenjiHtml + this._tplBio(bio);
+          if (window.M6_Charts) M6_Charts.bindCharts(analysis, bio, this._data, this._contract, this._year);
+        } catch(e) {
+          ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur module Santé</strong><br>${e.message}</div></div>`;
+          console.error('[VFJ Santé]', e);
+        }
         break;
       case 'entretien':
         ct.innerHTML = zenjiHtml;
@@ -116,13 +121,20 @@ const VFJ = {
         break;
       case 'tendances':
         ct.innerHTML = '<div style="padding:4px 0"></div>';
-        if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
-        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+        try {
+          if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+        } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
         break;
       case 'nullite':
         ct.innerHTML = zenjiHtml;
         if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
         else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
+        break;
+      case 'rupture':
+        ct.innerHTML = zenjiHtml + `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture Conventionnelle</div><div class="m6-ornement-line"></div></div><div id="rupture-main-ct"></div>`;
+        if (window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(ct.querySelector('#rupture-main-ct'), this._contract);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Rupture Conventionnelle non chargé.</div></div>';
         break;
       case 'glossaire':
         ct.innerHTML = zenjiHtml;
@@ -181,7 +193,7 @@ const VFJ = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'rupture',icon:'📋',label:'Rupture'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
@@ -207,14 +219,14 @@ const VFJ = {
         <div class="m6-stat-val" style="color:${a.rttSolde<0?'var(--alerte)':'var(--champagne-2)'}">${a.rttSolde>=0?'+':''}${a.rttSolde}</div>
         <div class="m6-stat-label">Solde RTT</div>
       </div>
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT théoriques <span style='font-size:0.6rem;color:var(--pierre)' title='Calculé sur une année complète. En cas de congé sans solde ou maladie prolongée, ce chiffre peut différer.'>ⓘ</span></div></div>
+      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT théoriques <span class="m6-tooltip-wrap" id="rtt-tip-wrap" style="cursor:pointer;font-size:0.6rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">Ce nombre fluctue : absences sans solde, maladie ou arrivée en cours d'année le réduisent proportionnellement. C'est normal.</span></span></div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.rttPris}</div><div class="m6-stat-label">RTT pris</div></div>
     </div>
 
     <div class="m6-card" style="margin-bottom:14px">
       <div class="m6-card-header"><div class="m6-card-icon">📊</div><div><div class="m6-card-label">Répartition</div><div class="m6-card-title">Détail ${this._year}</div></div></div>
       <div class="m6-card-body">
-        ${[['Jours travaillés',a.joursEffectifs,a.rachetes>0?`(dont ${a.rachetes} rachetés)`:''],[`RTT pris`,a.rttPris,`/${a.rttTheoriques} théoriques`],['CP pris',a.cpPris,`/${this._contract.joursCPContrat||25}j contractuels`],['Demi-journées',a.demis||0,''],['Déplacements',a.deplacements||0,''],['Fériés ouvrés',a.feriesOuvres,''],['Repos',a.reposPris,'']].map(([l,v,h])=>`<div class="m6-row"><span class="m6-row-label">${l}</span><span class="m6-row-val">${v} <small style="color:var(--pierre);font-weight:400">${h||''}</small></span></div>`).join('')}
+        ${[['Jours travaillés',a.joursEffectifs,a.rachetes>0?`(dont ${a.rachetes} rachetés)`:''],[`RTT pris`,a.rttPris,`/${a.rttTheoriques} théoriques`],['CP pris',a.cpPris,`/${this._contract.joursCPContrat||25}j contractuels`],['Demi-journées',a.demis||0,''],['Fériés ouvrés',a.feriesOuvres,''],['Repos',a.reposPris,'']].map(([l,v,h])=>`<div class="m6-row"><span class="m6-row-label">${l}</span><span class="m6-row-val">${v} <small style="color:var(--pierre);font-weight:400">${h||''}</small></span></div>`).join('')}
       </div>
     </div>
 
@@ -236,12 +248,14 @@ const VFJ = {
 
     ${a.alertes.length ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">⚠️</div><div><div class="m6-card-label">Vigilance</div><div class="m6-card-title">${a.alertes.length} point(s)</div></div></div><div class="m6-card-body" style="padding-bottom:8px">${a.alertes.map(al=>`<div class="m6-alert ${al.niveau}" style="margin-bottom:8px"><span class="m6-alert-icon">${al.icon}</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span><br><span style="font-size:0.65rem;color:var(--pierre)">Art. ${al.loi}</span></div></div>`).join('')}</div></div>` : `<div class="m6-alert success" style="margin-bottom:14px"><span class="m6-alert-icon">✅</span><div><strong>Situation conforme</strong> — Aucune alerte pour ${this._year}.</div></div>`}
 
-    ${a.simulRachat ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💰</div><div><div class="m6-card-label">Simulation</div><div class="m6-card-title">Rachat de jours</div></div></div><div class="m6-card-body"><div class="m6-row"><span class="m6-row-label">Jours rachetés</span><span class="m6-row-val">${a.simulRachat.joursRachetes}j</span></div><div class="m6-row"><span class="m6-row-label">Base brute</span><span class="m6-row-val">${a.simulRachat.montantBase}€</span></div><div class="m6-row"><span class="m6-row-label">Majoration ${a.simulRachat.majoration}%</span><span class="m6-row-val gold">+${a.simulRachat.gainBrut}€</span></div><div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.simulRachat.montantMajoré}€</span></div></div></div>` : ''}
+    ${a.simulRachat ? `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💰</div><div><div class="m6-card-label">Simulation</div><div class="m6-card-title">Rachat de jours — auto +${a.simulRachat.majoration}%</div></div></div><div class="m6-card-body"><div class="m6-alert info" style="margin-bottom:8px;font-size:0.72rem"><span>ℹ️</span><div>La majoration de <strong>${a.simulRachat.majoration}%</strong> est calculée automatiquement sur le taux journalier brut (Art. L3121-59). Un avenant écrit est obligatoire avant tout rachat.</div></div><div class="m6-row"><span class="m6-row-label">Jours rachetés</span><span class="m6-row-val">${a.simulRachat.joursRachetes}j</span></div><div class="m6-row"><span class="m6-row-label">Base brute</span><span class="m6-row-val">${a.simulRachat.montantBase}€</span></div><div class="m6-row"><span class="m6-row-label">Majoration ${a.simulRachat.majoration}%</span><span class="m6-row-val gold">+${a.simulRachat.gainBrut}€</span></div><div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.simulRachat.montantMajoré}€</span></div></div></div>` : ''}
+
+    ${(this._contract.ccnLabel||'').toLowerCase().includes('syntec') ? `<div class="m6-alert warning" style="margin-bottom:14px"><span class="m6-alert-icon">⚠️</span><div><strong>Vigilance CCN Syntec</strong><br><span style="font-size:0.77rem">La CCN Syntec impose un suivi de charge renforcé (art. 3 de l'accord du 22/06/1999). Entretiens semestriels obligatoires. Un mode manuel est disponible pour les accords de branche dérogatoires.</span></div></div>` : ''}
 
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
-      <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="width:100%;font-size:0.78rem">📅 Nouvel exercice</button>
+      <button class="m6-btn m6-btn-ghost" id="vfj-certif-toggle" style="flex:1;font-size:0.78rem">🔒 Certif. ${this._contract.showCertif===false?'OFF':'ON'}</button>
     </div>`;
   },
 
@@ -254,6 +268,16 @@ const VFJ = {
     });
     this._c.querySelector('#bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
     this._c.querySelector('#vfj-newyr')?.addEventListener('click', () => this._openNewYear());
+    this._c.querySelector('#vfj-certif-toggle')?.addEventListener('click', () => {
+      this._contract.showCertif = (this._contract.showCertif === false) ? true : false;
+      M6_Storage.setContract(this._regime, this._contract);
+      M6_toast('Certification ' + (this._contract.showCertif === false ? 'masquée' : 'visible'));
+      this.render();
+    });
+    // Tooltip RTT clickable
+    const tipWrap = this._c.querySelector('#rtt-tip-wrap');
+    if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
+    document.addEventListener('click', () => tipWrap?.classList.remove('open'), { once: false });
     this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
       if(!confirm('Relancer le wizard de bienvenue ? Votre configuration et données sont conservées.')) return;
       if(window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
@@ -312,6 +336,11 @@ const VFJ = {
         <select id="pdf-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}" ${i===new Date().getMonth()?'selected':''}>${m}</option>`).join('')}</select></div>
       <div class="m6-field"><label>Votre nom</label><input type="text" id="pdf-nom" value="${this._contract.nomCadre||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Nom manager</label><input type="text" id="pdf-mgr" value="${this._contract.nomManager||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
+      <div class="m6-field"><label>Email manager (copie PDF)</label><input type="email" id="pdf-mgr-email" value="${this._contract.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
+      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:10px 0 12px;cursor:pointer;padding:10px;background:var(--ivoire-2);border-radius:var(--radius);border:1px solid var(--ivoire-3)">
+        <input type="checkbox" id="pdf-certif" style="margin-top:2px;flex-shrink:0" required>
+        <span>✍️ Je certifie sur l'honneur l'exactitude des données saisies et l'exhaustivité de ce rapport de suivi de forfait.</span>
+      </label>
       <div class="m6-field">
         <label>Période libre (du … au …)</label>
         <div style="display:flex;gap:8px;margin-bottom:8px">
@@ -377,17 +406,25 @@ const VFJ = {
     const saveMeta = () => {
       const nom = this._c.querySelector('#pdf-nom')?.value.trim();
       const mgr = this._c.querySelector('#pdf-mgr')?.value.trim();
-      if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; M6_Storage.setContract(this._regime,this._contract); }
+      const emailMgr = this._c.querySelector('#pdf-mgr-email')?.value.trim();
+      if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; this._contract.emailManager=emailMgr||''; M6_Storage.setContract(this._regime,this._contract); }
+    };
+    const checkCertif = () => {
+      if (!this._c.querySelector('#pdf-certif')?.checked) {
+        M6_toast('⚠️ Cochez la case de certification avant d\'exporter'); return false;
+      }
+      return true;
     };
     this._c.querySelector('#pdf-per')?.addEventListener('click', () => {
+      if(!checkCertif()) return;
       const d1 = this._c.querySelector('#pdf-per-d1')?.value;
       const d2 = this._c.querySelector('#pdf-per-d2')?.value;
       if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
       saveMeta();
       M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
     });
-    this._c.querySelector('#pdf-m')?.addEventListener('click', () => { saveMeta(); M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)}); });
-    this._c.querySelector('#pdf-a')?.addEventListener('click', () => { saveMeta(); M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis}); });
+    this._c.querySelector('#pdf-m')?.addEventListener('click', () => { if(!checkCertif()) return; saveMeta(); M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)}); });
+    this._c.querySelector('#pdf-a')?.addEventListener('click', () => { if(!checkCertif()) return; saveMeta(); M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis}); });
     this._c.querySelector('#v-btn')?.addEventListener('click', () => { const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render(); });
     // Mode Preuve
     const preuveContainer = this._c.querySelector('#preuve-container');
@@ -435,7 +472,9 @@ const VFJ = {
       <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Jours</div><div class="m6-ornement-line"></div></div>
       <div class="m6-card"><div class="m6-card-body">
         <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="218" min="100" max="235" style="font-size:16px"></div>
-        <div class="m6-field"><label>Congés payés contractuels</label><input type="number" id="s-cp" value="25" min="25" max="35" style="font-size:16px"></div>
+        <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
+        <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${this._year}-01-01" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${this._year}-12-31" style="font-size:16px"></div>
         <div class="m6-field" style="position:relative">
           <label>CCN applicable — tapez pour chercher</label>
           <input type="text" id="s-ccn" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
@@ -472,7 +511,7 @@ const VFJ = {
           }
         });
       }
-      const c = { plafond:parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseInt(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-maj')?.value)||10 };
+      const c = { plafond:parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null };
       M6_Storage.setContract(this._regime, c);
       M6_Storage.createYear(this._regime, this._year);
       this._load(); this.render();

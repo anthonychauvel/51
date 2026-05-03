@@ -70,10 +70,15 @@ const VFH = {
       : '';
 
     switch(this._section) {
-      case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio); this._bindBilan(analysis); break;
+      case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio); this._bindBilan(analysis); this._bindFHTooltips(); break;
       case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
       case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
       case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
+      case 'entretien':
+        ct.innerHTML = zenjiHtml;
+        if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, {}, ()=>{this._load();this.render();});
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
+        break;
       case 'tendances':
         ct.innerHTML = '<div style="padding:4px 0"></div>';
         if(window.M6_Charts) {
@@ -112,6 +117,23 @@ const VFH = {
       );
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
+    // Notification automatique si phase Épuisement (P4)
+    if (bio?.hasData && bio?.phase?.code === 'P4' && window.Notification && Notification.permission === 'granted') {
+      const lastP4 = localStorage.getItem('M6_FH_LAST_P4_NOTIF');
+      const today = new Date().toISOString().slice(0,10);
+      if (lastP4 !== today) {
+        new Notification('⚠️ Zenji — Phase Épuisement', { body: 'Vos indicateurs atteignent le seuil critique INRS P4. Consultez votre médecin du travail (Art. R4624-10).', icon: 'images/Cadre.png' });
+        localStorage.setItem('M6_FH_LAST_P4_NOTIF', today);
+      }
+    }
+  },
+
+  _bindFHTooltips() {
+    const tipWrap = this._c.querySelector('#fh-cont-tip');
+    if (tipWrap) {
+      tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
+      document.addEventListener('click', () => tipWrap.classList.remove('open'), { once: false });
+    }
   },
 
   _tplHeader(a) {
@@ -145,7 +167,7 @@ const VFH = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
@@ -170,7 +192,22 @@ const VFH = {
       </div>
     </div>
 
-    ${a.tauxHoraire>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💶</div><div><div class="m6-card-label">Loi TEPA 2007</div><div class="m6-card-title">Exonération fiscale</div></div></div><div class="m6-card-body">
+    <!-- Barre de progression forfait heures -->
+    <div class="m6-progress-bar-wrap">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
+        <span style="font-size:0.72rem;font-weight:600;color:var(--charbon)">Consommation du contingent <span class="m6-tooltip-wrap" id="fh-cont-tip" style="cursor:pointer;font-size:0.65rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">Contingent annuel de ${a.contingent||220}h fixé par votre CCN ou accord d'entreprise. Au-delà, une autorisation de l'inspection du travail peut être requise (Art. L3121-30).</span></span></span>
+        <span style="font-size:0.72rem;color:${a.tauxRemplissage>=90?'var(--alerte)':'var(--pierre)'}"><strong>${a.totalHS}h</strong> / ${a.contingent||220}h</span>
+      </div>
+      <div class="m6-progress-track">
+        <div class="m6-progress-fill" style="width:${Math.min(100,a.tauxRemplissage)}%;background:${a.tauxRemplissage>=100?'linear-gradient(90deg,#9B2C2C,#E53E3E)':a.tauxRemplissage>=90?'linear-gradient(90deg,var(--champagne-2),var(--champagne))':'linear-gradient(90deg,#2D6A4F,#4A7C6F)'}"></div>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--pierre);margin-top:3px">
+        <span>${a.tauxRemplissage}% utilisé</span>
+        <span style="color:${(a.contingent||220)-a.totalHS <= 20?'var(--alerte)':'inherit'}">Reste : <strong>${Math.max(0,(a.contingent||220)-a.totalHS)}h</strong></span>
+      </div>
+    </div>
+
+    ${a.tauxHoraire>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💶</div><div><div class="m6-card-label">Loi TEPA 2007</div><div class="m6-card-title">Réduction de cotisations salariales et exonération fiscale</div></div></div><div class="m6-card-body">
       <div class="m6-row"><span class="m6-row-label">HS à +${a.taux1}%</span><span class="m6-row-val">${a.montantHS1.toFixed(2)} €</span></div>
       <div class="m6-row"><span class="m6-row-label">HS à +${a.taux2}%</span><span class="m6-row-val">${a.montantHS2.toFixed(2)} €</span></div>
       <div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${a.montantTotal.toFixed(2)} €</span></div>
@@ -277,6 +314,9 @@ const VFH = {
               <div style="font-size:0.7rem;color:var(--pierre);margin-top:3px">
                 Seuil contractuel : ${seuil}h · Au-delà = heures supplémentaires
               </div>
+              <div id="fh-realtime-calcul" style="margin-top:8px;padding:8px 10px;background:var(--ivoire-2);border-radius:var(--radius);font-size:0.78rem;display:none">
+                <span id="fh-rt-hs">0h</span> HS cette semaine · Contingent restant : <span id="fh-rt-reste">—</span>
+              </div>
             </div>
           </div>
 
@@ -367,6 +407,26 @@ const VFH = {
       };
 
       renderSheet();
+      // Calcul temps réel — affiche les HS et le reste du contingent
+      const bindRealtime = () => {
+        const hInput = sh.querySelector('#fh-h');
+        const rtPanel = sh.querySelector('#fh-realtime-calcul');
+        const rtHS = sh.querySelector('#fh-rt-hs');
+        const rtReste = sh.querySelector('#fh-rt-reste');
+        const seuilC = this._contract?.seuilHebdo || 39;
+        const contingent = this._contract?.contingent || 220;
+        const totalHSActuel = Object.values(this._data).reduce((acc, v) => acc + Math.max(0, (v.heures||0) - seuilC), 0);
+        const updateRT = () => {
+          const h = parseFloat(hInput?.value) || 0;
+          const hs = Math.max(0, h - seuilC);
+          if (rtPanel && h > 0) { rtPanel.style.display = ''; }
+          if (rtHS) rtHS.textContent = hs > 0 ? `+${hs.toFixed(1)}h HS` : '0h HS';
+          const reste = Math.max(0, contingent - totalHSActuel - hs);
+          if (rtReste) { rtReste.textContent = `${reste.toFixed(0)}h`; rtReste.style.color = reste < 20 ? 'var(--alerte)' : 'var(--succes)'; }
+        };
+        hInput?.addEventListener('input', updateRT);
+      };
+      bindRealtime();
       sh.querySelector('#fh-cl').addEventListener('click',()=>ov.classList.remove('open'));
       ov.addEventListener('click',e=>{if(e.target===ov)ov.classList.remove('open');});
       requestAnimationFrame(()=>ov.classList.add('open'));
@@ -381,8 +441,9 @@ const VFH = {
     const bar = (l,v,inv)=>{const c=inv?(v>60?'#B85C50':v>35?'#C4853A':'#4A7C6F'):(v<40?'#B85C50':v<65?'#C4853A':'#4A7C6F');return `<div style="margin-bottom:10px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:4px"><span>${l}</span><span style="font-family:var(--font-display);font-size:1rem;font-weight:700;color:${c}">${v}</span></div><div style="height:8px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${v}%;border-radius:99px;background:${c}"></div></div></div>`;};
     return `
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Santé & Bien-être</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-alert info" style="margin-bottom:12px;font-size:0.72rem"><span>⚠️</span><div>Le score de Risque CV est un <strong>indicateur épidémiologique</strong>, pas un diagnostic médical. Il ne remplace pas un avis médical. En cas de doute, consultez votre médecin du travail.</div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">🩺</div><div><div class="m6-card-label">Phase INRS</div><div class="m6-card-title" style="color:${bio.phase?.color}">${bio.phase?.code} — ${bio.phase?.label}</div></div></div><div class="m6-card-body">${bar('Fatigue',bio.fatigue,true)}${bar('Stress',bio.stress,true)}${bar('Récupération',bio.recovery,false)}${bar('Performance (Pencavel)',bio.performance,false)}</div></div>
-    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">❤️</div><div><div class="m6-card-label">Long terme</div><div class="m6-card-title">Risques</div></div></div><div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega et al. WHO/ILO 2021 · Kivimäki 2015 · Jang 2025</div></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">❤️</div><div><div class="m6-card-label">Long terme</div><div class="m6-card-title">Risques</div></div></div><div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega et al. WHO/ILO 2021 · Kivimäki 2015 · Jang 2025<br>⚠️ Ces indicateurs ne remplacent pas un avis médical.</div></div></div>
     <div class="m6-card"><div class="m6-card-body"><div class="m6-row"><span class="m6-row-label">Semaines saisies</span><span class="m6-row-val">${bio.details.n}</span></div><div class="m6-row"><span class="m6-row-label">Moyenne hebdo</span><span class="m6-row-val">${bio.details.mean}h</span></div><div class="m6-row"><span class="m6-row-label">Semaines surcharge (>120% seuil)</span><span class="m6-row-val">${bio.details.surcharge}</span></div></div></div>`;
   },
 
@@ -453,8 +514,10 @@ const VFH = {
         <div class="m6-field"><label>Palier majoration 1 (heures HS)</label><input type="number" id="s-pal" value="8" min="1" max="20" style="font-size:16px"></div>
         <div class="m6-field"><label>Taux majoration 1 (%)</label><input type="number" id="s-t1" value="25" min="10" max="100" style="font-size:16px"></div>
         <div class="m6-field"><label>Taux majoration 2 (%)</label><input type="number" id="s-t2" value="50" min="25" max="200" style="font-size:16px"></div>
-        <div class="m6-field"><label>Contingent annuel HS (heures)</label><input type="number" id="s-cont" value="220" min="100" max="500" style="font-size:16px"></div>
+        <div class="m6-field"><label>Contingent annuel HS (heures) <span class="m6-tooltip-wrap" id="fh-setup-cont-tip" style="cursor:pointer;font-size:0.65rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">220h est le contingent légal par défaut (Art. L3121-30). Votre CCN peut prévoir un plafond différent. Au-delà, une autorisation de l'inspection du travail est requise.</span></span></label><input type="number" id="s-cont" value="220" min="100" max="500" style="font-size:16px"></div>
         <div class="m6-field"><label>Taux horaire brut (€) — optionnel</label><input type="number" id="s-tauxH" step="0.01" placeholder="25.50" style="font-size:16px"></div>
+        <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${this._year}-01-01" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${this._year}-12-31" style="font-size:16px"></div>
         <button class="m6-btn m6-btn-gold" id="s-save">Commencer →</button>
       </div></div>
       <div class="m6-alert info" style="margin-top:12px"><span>ℹ️</span><div>Votre CCN peut prévoir des seuils et taux différents. Consultez votre contrat.</div></div>
@@ -463,22 +526,26 @@ const VFH = {
   },
 
   _bindSetup() {
+    // Bind CCN autocomplete immédiatement (pas seulement au clic save)
+    if (window.M6_CCN_Adapter) {
+      M6_CCN_Adapter.bindAutocomplete(
+        this._c.querySelector('#fh-ccn'),
+        this._c.querySelector('#fh-ccn-drop'),
+        (ccn) => {
+          const d = M6_CCN_Adapter.buildContractDefaults(ccn);
+          const contEl = this._c.querySelector('#s-cont');
+          if (contEl && d.contingentHS) contEl.value = d.contingentHS;
+          const t1El = this._c.querySelector('#s-t1');
+          if (t1El && d.taux1) t1El.value = d.taux1;
+          M6_toast('CCN ' + ccn.nom + ' appliquée');
+        }
+      );
+    }
+    // Tooltip contingent
+    const tipWrap = this._c.querySelector('#fh-setup-cont-tip');
+    if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
-      if (window.M6_CCN_Adapter) {
-        M6_CCN_Adapter.bindAutocomplete(
-          this._c.querySelector('#fh-ccn'),
-          this._c.querySelector('#fh-ccn-drop'),
-          (ccn) => {
-            const d = M6_CCN_Adapter.buildContractDefaults(ccn);
-            const contEl = this._c.querySelector('#s-cont');
-            if (contEl && d.contingentHS) contEl.value = d.contingentHS;
-            const t1El = this._c.querySelector('#s-t1');
-            if (t1El && d.taux1) t1El.value = d.taux1;
-            M6_toast('CCN ' + ccn.nom + ' appliquee');
-          }
-        );
-      }
-      const c={seuilHebdo:parseFloat(this._c.querySelector('#s-seuil')?.value)||39,palier1:parseInt(this._c.querySelector('#s-pal')?.value)||8,taux1:parseInt(this._c.querySelector('#s-t1')?.value)||25,taux2:parseInt(this._c.querySelector('#s-t2')?.value)||50,contingent:parseInt(this._c.querySelector('#s-cont')?.value)||220,tauxHoraire:parseFloat(this._c.querySelector('#s-tauxH')?.value)||0};
+      const c={seuilHebdo:parseFloat(this._c.querySelector('#s-seuil')?.value)||39,palier1:parseInt(this._c.querySelector('#s-pal')?.value)||8,taux1:parseInt(this._c.querySelector('#s-t1')?.value)||25,taux2:parseInt(this._c.querySelector('#s-t2')?.value)||50,contingent:parseInt(this._c.querySelector('#s-cont')?.value)||220,tauxHoraire:parseFloat(this._c.querySelector('#s-tauxH')?.value)||0,ccnLabel:this._c.querySelector('#fh-ccn')?.value.trim()||'',dateDebutExercice:this._c.querySelector('#s-debut')?.value||null,dateFinExercice:this._c.querySelector('#s-fin')?.value||null};
       M6_Storage.setContract(this._regime,c); M6_Storage.createYear(this._regime,this._year); this._load(); this.render();
     });
   },

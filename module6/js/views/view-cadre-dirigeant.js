@@ -197,7 +197,13 @@ const VCD = {
       <span>⚖️</span><div><strong>Régime Cadre Dirigeant (L3111-2)</strong> — Pas de compteur d'heures légal. Autonomie totale sur l'organisation du temps. Obligations : CP, protection santé, entretien de charge si engagement contractuel.</div>
     </div>
 
-    <!-- CP -->
+    ${s.jTravailles > 218 ? `<div class="m6-alert warning" style="margin-bottom:14px"><span class="m6-alert-icon">🚨</span><div><strong>${s.jTravailles} jours dépassent le plafond de référence de 218j</strong><br><span style="font-size:0.77rem">Même en régime Cadre Dirigeant, dépasser 218 jours de présence annuelle peut indiquer un déséquilibre vie pro/perso et signale un risque sur le plan de la santé au travail (Art. L4121-1). L'entretien de charge de travail est recommandé.</span></div></div>` : ''}
+
+    <!-- Analytics projets -->
+    ${this._projets.length ? (() => {
+      const hTotal = this._projets.reduce((s,p)=>s+(p.heures||0),0);
+      return `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">📊</div><div><div class="m6-card-label">Analytics</div><div class="m6-card-title">Ventilation du temps par projet</div></div></div><div class="m6-card-body">${this._projets.map(p=>{const pct=hTotal>0?Math.round((p.heures||0)/hTotal*100):0;return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px"><span>${p.nom}</span><span style="color:var(--champagne-2);font-weight:500">${pct}% · ${p.heures||0}h</span></div><div style="height:6px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.couleur||'var(--champagne)'};border-radius:99px"></div></div></div>`;}).join('')}<div style="font-size:0.68rem;color:var(--pierre);margin-top:6px">Total : ${hTotal}h sur ${this._projets.length} projet(s)</div></div></div>`;
+    })() : ''}
     <div class="m6-card" style="margin-bottom:14px">
       <div class="m6-card-header"><div class="m6-card-icon">✈️</div>
         <div><div class="m6-card-label">Congés Payés ${this._year}</div><div class="m6-card-title">Solde CP</div></div>
