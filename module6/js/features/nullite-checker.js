@@ -403,6 +403,6 @@ const M6_ModePreuve = {
 global.M6_TYPES_ETENDUS   = M6_TYPES_ETENDUS;
 global.M6_NulliteChecker  = M6_NulliteChecker;
 global.M6_RuptureCalc     = M6_RuptureCalc;
-global.M6_ModePreuve      = M6_ModePreuve;
+global.M6_ModePreuve      = Object.assign(global.M6_ModePreuve||{}, M6_ModePreuve);
 
 })(window);
