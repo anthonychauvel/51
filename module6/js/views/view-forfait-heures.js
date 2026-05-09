@@ -234,13 +234,14 @@ const VFH = {
     <button class="m6-btn m6-btn-primary" id="fh-saisir" style="margin-bottom:8px">＋ Saisir une semaine</button>
     <div style="display:flex;gap:8px">
       <button class="m6-btn m6-btn-ghost" id="fh-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
-      <button class="m6-btn m6-btn-ghost" onclick="VFH_editContract()" style="flex:1;font-size:0.78rem">⚙️ Contrat</button>
+      <button class="m6-btn m6-btn-ghost" id="fh-edit-contract" style="flex:1;font-size:0.78rem">⚙️ Contrat</button>
     </div>`;
   },
 
   _bindBilan(analysis) {
     this._c.querySelector('#fh-saisir')?.addEventListener('click', () => { this._section='semaines'; this.render(); setTimeout(()=>this._c.querySelector('#fh-add')?.click(),200); });
     this._c.querySelector('#fh-bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
+    this._c.querySelector('#fh-edit-contract')?.addEventListener('click', () => { if(!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return; this._editContract(); });
     this._c.querySelector('#fh-newyr')?.addEventListener('click', () => { const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1); if(!y||isNaN(y))return; const yr=parseInt(y); M6_Storage.createYear(this._regime,yr); this._year=yr; M6_Storage.setActiveYear(yr); this._load(); this.render(); M6_toast(`✓ Exercice ${yr} créé`); });
   },
 

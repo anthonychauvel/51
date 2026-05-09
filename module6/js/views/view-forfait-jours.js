@@ -75,7 +75,6 @@ const VFJ = {
       showSwitch: true,
       onReset: () => {
         if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
-        if (window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
         M6_Storage.setContract(this._regime, null);
         this._contract = null;
         this._c.innerHTML = this._tplSetup();
@@ -310,7 +309,6 @@ const VFJ = {
     document.addEventListener('click', () => tipWrap?.classList.remove('open'), { once: false });
     this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
       if(!confirm('Relancer le wizard de bienvenue ? Votre configuration et données sont conservées.')) return;
-      if(window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
       M6_Storage.setContract(this._regime, null);
       this._contract = null;
       this._c.innerHTML = this._tplSetup();
