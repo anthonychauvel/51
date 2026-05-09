@@ -440,6 +440,15 @@ const CCN_FJ_DATA = [
   }
 ,
   {
+    idcc: 3044, nom: 'Commerce de gros non alimentaire', secteur: 'Commerce de gros non alim.',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN Commerce de gros non alimentaire L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche prévoit explicitement le forfait jours', 'Cadres commerciaux : amplitude et déplacements à surveiller'],
+    notes: 'Commerce de gros non alimentaire (IDCC 3044). Droit commun applicable. Accord de branche à vérifier pour autorisation forfait jours.',
+  }
+,
+  {
     idcc: 598, nom: 'Ouvriers presse quotidienne régionale', secteur: 'Presse régionale ouvriers',
     plafond: 218, plafondCDRef: 218, tauxRachat: 10,
     entretienFreq: 'annuel', entretienRef: 'Art. L3121-65',
