@@ -159,7 +159,8 @@ const VFJ = {
         break;
       case 'glossaire':
         ct.innerHTML = zenjiHtml;
-        M6_GlossaireUI.render(ct);
+        if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
         break;
     }
     this._bindNav();
@@ -416,8 +417,7 @@ const VFJ = {
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Simulateur — Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
     <div id="rupture-container"></div>
 
-    <div style="display:none"><!-- placeholder pour eviter la double fermeture --></div
-    </div></div>
+
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique des modifications</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card"><div class="m6-card-body">
@@ -470,7 +470,7 @@ const VFJ = {
       M6_ModePreuve.renderUI(preuveContainer, this._regime, this._year, this._contract, this._data, analysis);
     }
     this._c.querySelector('#exp-j')?.addEventListener('click', () => M6_ImportExport.export(this._regime));
-    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_jours, this._year));
+    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
 
     // PDF Période

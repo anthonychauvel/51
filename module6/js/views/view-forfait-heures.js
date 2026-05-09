@@ -69,36 +69,46 @@ const VFH = {
       ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', true)
       : '';
 
-    switch(this._section) {
-      case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio); this._bindBilan(analysis); this._bindFHTooltips(); break;
-      case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
-      case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
-      case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
-      case 'entretien':
-        ct.innerHTML = zenjiHtml;
-        if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, {}, ()=>{this._load();this.render();});
-        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
-        break;
-      case 'tendances':
-        ct.innerHTML = '<div style="padding:4px 0"></div>';
-        if(window.M6_Charts) {
-          // Pour FH : convertir les données semaines en données "jours" pour le moteur bio mensuel
-          const fhData = {};
-          Object.entries(this._data).forEach(([wk,v]) => {
-            // Estimer 5 jours de travail par semaine à partir du wk
-            const [y,wn] = wk.split('-W');
-            const d = new Date(parseInt(y), 0, 1 + (parseInt(wn)-1)*7);
-            d.setDate(d.getDate() + (1-(d.getDay()||7)));
-            for(let i=0;i<5;i++) { const di=new Date(d); di.setDate(d.getDate()+i); fhData[di.toISOString().slice(0,10)]={type:'travail'}; }
-          });
-          M6_Charts.renderPage(ct, {plafond:220, joursCPContrat:25, seuilHebdo:this._contract.seuilHebdo||39}, fhData, this._year);
-        } else {
-          ct.innerHTML += '<div class="m6-alert info"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
-        }
-        break;
-      case 'glossaire': ct.innerHTML = zenjiHtml; M6_GlossaireUI.render(ct); break;
+    try {
+      switch(this._section) {
+        case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio); this._bindBilan(analysis); this._bindFHTooltips(); break;
+        case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
+        case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
+        case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
+        case 'entretien':
+          ct.innerHTML = zenjiHtml;
+          if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, {}, ()=>{this._load();this.render();});
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
+          break;
+        case 'tendances':
+          ct.innerHTML = '<div style="padding:4px 0"></div>';
+          try {
+            if(window.M6_Charts) {
+              const fhData = {};
+              Object.entries(this._data).forEach(([wk,v]) => {
+                const [y,wn] = wk.split('-W');
+                const d = new Date(parseInt(y), 0, 1 + (parseInt(wn)-1)*7);
+                d.setDate(d.getDate() + (1-(d.getDay()||7)));
+                for(let i=0;i<5;i++) { const di=new Date(d); di.setDate(d.getDate()+i); fhData[di.toISOString().slice(0,10)]={type:'travail'}; }
+              });
+              M6_Charts.renderPage(ct, {plafond:220, joursCPContrat:25, seuilHebdo:this._contract.seuilHebdo||39}, fhData, this._year);
+            } else {
+              ct.innerHTML += '<div class="m6-alert info"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+            }
+          } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; console.error('[VFH Tendances]', e); }
+          break;
+        case 'glossaire':
+          ct.innerHTML = zenjiHtml;
+          if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
+          break;
+      }
+    } catch(e) {
+      ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur section ${this._section}</strong><br>${e.message}</div></div>`;
+      console.error('[VFH render]', e);
+    } finally {
+      this._bindNav();
     }
-    this._bindNav();
     // Détruire l'ancienne bulle avant réinitialisation
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
     // Popup Zenji flottant
@@ -539,11 +549,19 @@ const VFH = {
       const a2=M6_ForfaitHeures.analyze(this._contract,this._data,this._year);
       M6_PDF.exportPreuve({regime:this._regime,year:this._year,contract:this._contract,data:this._data,analysis:a2});
     });
+    this._c.querySelector('#fh-pdf-per')?.addEventListener('click',()=>{
+      if (!checkCertifFH()) return; saveEmailFH();
+      const d1 = this._c.querySelector('#fh-per-d1')?.value;
+      const d2 = this._c.querySelector('#fh-per-d2')?.value;
+      if(!d1||!d2||d1>d2){M6_toast('Vérifiez les dates');return;}
+      const a2=M6_ForfaitHeures.analyze(this._contract,this._data,this._year);
+      M6_PDF.exportPeriode({regime:this._regime,year:this._year,dateDebut:d1,dateFin:d2,contract:this._contract,data:this._data,moods:{}});
+    });
     // Rupture conventionnelle
     const rc = this._c.querySelector('#rupture-container-fh');
     if (rc && window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(rc, this._contract);
     this._c.querySelector('#exp-j')?.addEventListener('click',()=>M6_ImportExport.export(this._regime));
-    this._c.querySelector('#exp-csv-fh')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_heures, this._year));
+    this._c.querySelector('#exp-csv-fh')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click',()=>M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
   },
 
