@@ -460,7 +460,10 @@ const VFJ = {
     this._c.querySelector('#pdf-preuve')?.addEventListener('click', () => {
       saveMeta();
       M6_PDF.exportPreuve({regime:this._regime,year:this._year,contract:this._contract,data:this._data,analysis});
-    }); const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render(); });
+    });
+    this._c.querySelector('#v-btn')?.addEventListener('click', () => {
+      const m=parseInt(this._c.querySelector('#v-mois')?.value),nom=this._c.querySelector('#v-nom')?.value.trim(); if(!nom){M6_toast('Saisissez votre nom');return;} M6_Storage.addValidation(this._regime,this._year,m,nom); M6_toast('🔏 Validé'); this.render();
+    });
     // Mode Preuve
     const preuveContainer = this._c.querySelector('#preuve-container');
     if (preuveContainer && window.M6_ModePreuve) {

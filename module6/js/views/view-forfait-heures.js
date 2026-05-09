@@ -113,8 +113,9 @@ const VFH = {
           if(action.includes('Santé')||action.includes('santé')) { this._section='bio'; this.render(); }
           else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
           else if(action.includes('Glossaire')||action.includes('glossaire')) { this._section='glossaire'; this.render(); }
-        }
-      ), 'forfait_heures');
+        },
+        'forfait_heures'
+      );
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
     // Notification automatique si phase Épuisement (P4)

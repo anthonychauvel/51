@@ -146,8 +146,9 @@ const VCD = {
           else if(action.includes('Entretien')||action.includes('entretien')) { this._section='entretien'; this.render(); }
           else if(action.includes('Export')||action.includes('PDF')) { this._section='export'; this.render(); }
           else if(action.includes('Agenda')||action.includes('calendrier')) { this._section='calendrier'; this.render(); }
-        }
-      ), 'cadre_dirigeant');
+        },
+        'cadre_dirigeant'
+      );
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
   },
