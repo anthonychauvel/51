@@ -290,27 +290,6 @@ const M6_Router = {
 document.addEventListener('DOMContentLoaded', () => {
   M6_Router.init();
 
-  // ── Dark mode ─────────────────────────────────────────────────
-  const _DM_KEY = 'M6_DARK_MODE';
-  const _applyDark = (on) => {
-    document.documentElement.classList.toggle('dark-mode', on);
-    const btn = document.getElementById('m6-darkmode-btn');
-    if (btn) btn.textContent = on ? '☀️' : '🌙';
-    try { localStorage.setItem(_DM_KEY, on ? '1' : '0'); } catch(_) {}
-  };
-  // Appliquer la préférence sauvegardée (ou system)
-  const _savedDark = localStorage.getItem(_DM_KEY);
-  const _sysDark   = window.matchMedia?.('(prefers-color-scheme: dark)').matches;
-  _applyDark(_savedDark !== null ? _savedDark === '1' : _sysDark);
-  // Écouter les changements système
-  window.matchMedia?.('(prefers-color-scheme: dark)').addEventListener('change', e => {
-    if (localStorage.getItem(_DM_KEY) === null) _applyDark(e.matches);
-  });
-  document.getElementById('m6-darkmode-btn')?.addEventListener('click', () => {
-    const isDark = document.documentElement.classList.contains('dark-mode');
-    _applyDark(!isDark);
-  });
-
   // ── Notifications vendredi — demande in-app (pas RGPD) ────────
   const _notifKey = 'M6_NOTIF_ASKED';
   if (!localStorage.getItem(_notifKey) && 'Notification' in window) {
