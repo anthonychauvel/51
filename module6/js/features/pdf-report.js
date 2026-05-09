@@ -38,8 +38,12 @@ async function _shareOrSave(doc, filename, toastMsg) {
         return;
       }
     } catch(e) {
-      // L'utilisateur a annulé le partage ou l'API n'est pas supportée
-      if (e.name === 'AbortError') return; // annulation volontaire
+      // AbortError = l'utilisateur a fermé la share sheet → fallback téléchargement
+      // On ne retourne pas silencieusement : on sauvegarde quand même le fichier
+      if (e.name !== 'AbortError') {
+        console.warn('[M6 PDF] share error:', e);
+      }
+      // fallthrough vers doc.save()
     }
   }
   // Fallback : téléchargement direct
