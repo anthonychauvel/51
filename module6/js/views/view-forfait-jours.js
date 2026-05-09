@@ -94,10 +94,11 @@ const VFJ = {
       ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', this._section !== 'sante')
       : '';
 
-    switch(this._section) {
-      case 'bilan':
-        ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
-        this._bindBilan(analysis,bio);
+    try {
+      switch(this._section) {
+        case 'bilan':
+          ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
+          this._bindBilan(analysis,bio);
         break;
       case 'calendrier':
         this._renderCal(ct);
@@ -136,34 +137,39 @@ const VFJ = {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
         }
         break;
-      case 'export':
-        ct.innerHTML = zenjiHtml + this._tplExport(analysis);
-        this._bindExport(analysis);
-        break;
-      case 'tendances':
-        ct.innerHTML = '<div style="padding:4px 0"></div>';
-        try {
-          if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
-          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
-        } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
-        break;
-      case 'nullite':
-        ct.innerHTML = zenjiHtml;
-        if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
-        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
-        break;
-      case 'rupture':
-        ct.innerHTML = zenjiHtml + `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture Conventionnelle</div><div class="m6-ornement-line"></div></div><div id="rupture-main-ct"></div>`;
-        if (window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(ct.querySelector('#rupture-main-ct'), this._contract);
-        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Rupture Conventionnelle non chargé.</div></div>';
-        break;
-      case 'glossaire':
-        ct.innerHTML = zenjiHtml;
-        if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
-        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
-        break;
+        case 'export':
+          ct.innerHTML = zenjiHtml + this._tplExport(analysis);
+          this._bindExport(analysis);
+          break;
+        case 'tendances':
+          ct.innerHTML = '<div style="padding:4px 0"></div>';
+          try {
+            if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
+            else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+          } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
+          break;
+        case 'nullite':
+          ct.innerHTML = zenjiHtml;
+          if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
+          break;
+        case 'rupture':
+          ct.innerHTML = zenjiHtml + `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture Conventionnelle</div><div class="m6-ornement-line"></div></div><div id="rupture-main-ct"></div>`;
+          if (window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(ct.querySelector('#rupture-main-ct'), this._contract);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Rupture Conventionnelle non chargé.</div></div>';
+          break;
+        case 'glossaire':
+          ct.innerHTML = zenjiHtml;
+          if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
+          break;
+      }
+    } catch(e) {
+      ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur section ${this._section}</strong><br>${e.message}</div></div>`;
+      console.error('[VFJ render]', e);
+    } finally {
+      this._bindNav();
     }
-    this._bindNav();
     // Alerte automatique si changement de phase
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime);
     // Init popup Zenji (bulle flottante)
