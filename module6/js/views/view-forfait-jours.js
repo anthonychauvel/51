@@ -433,14 +433,7 @@ const VFJ = {
       const emailMgr = this._c.querySelector('#pdf-mgr-email')?.value.trim();
       if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; this._contract.emailManager=emailMgr||''; M6_Storage.setContract(this._regime,this._contract); }
     };
-    const checkCertif = () => {
-      if (!this._c.querySelector('#pdf-certif')?.checked) {
-        M6_toast('⚠️ Cochez la case de certification avant d\'exporter'); return false;
-      }
-      return true;
-    };
     this._c.querySelector('#pdf-per')?.addEventListener('click', () => {
-      if(!checkCertif()) return;
       const d1 = this._c.querySelector('#pdf-per-d1')?.value;
       const d2 = this._c.querySelector('#pdf-per-d2')?.value;
       if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
@@ -448,14 +441,12 @@ const VFJ = {
       M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
     });
     this._c.querySelector('#pdf-m')?.addEventListener('click', () => {
-      if(!checkCertif()) return; saveMeta();
+      saveMeta();
       M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)});
-      this._tryEmailManager('mensuel');
     });
     this._c.querySelector('#pdf-a')?.addEventListener('click', () => {
-      if(!checkCertif()) return; saveMeta();
+      saveMeta();
       M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis});
-      this._tryEmailManager('annuel');
     });
     this._c.querySelector('#pdf-preuve')?.addEventListener('click', () => {
       saveMeta();
@@ -473,7 +464,6 @@ const VFJ = {
     this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
 
-    // PDF Période
     this._c.querySelector('#pdf-p')?.addEventListener('click', () => {
       saveMeta();
       const debut = this._c.querySelector('#pdf-debut')?.value;
