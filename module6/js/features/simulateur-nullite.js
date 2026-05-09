@@ -639,7 +639,7 @@ const M6_ModePreuve = {
 
 // ── Exposition globale ────────────────────────────────────────────
 global.M6_SimulateurNullite = M6_SimulateurNullite;
-global.M6_Charts            = M6_Charts;
+global.M6_Charts = Object.assign(global.M6_Charts||{}, M6_Charts);
 global.M6_ModePreuve        = M6_ModePreuve;
 
 })(window);

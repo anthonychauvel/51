@@ -562,6 +562,7 @@ const M6_PDF = {
     if (window.M6_Storage) M6_Storage.markFileSave?.('forfait_jours', year);
   },
 
+  _genAnnuelFJ({ regime, year, contract, data, moods, analysis }) {
     const doc = new jsPDF({ format:'a4', unit:'mm' });
     const W=210, M=20;
     let y=0;
