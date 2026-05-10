@@ -1093,9 +1093,17 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
         const isVacDay = !!vacances[k];
-        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
-        hasAnyDay = true;
-        if (e && e.extra > 0 && !isVacDay) daysLogged++;
+        if (e) {
+          // Entrée réelle M1/M2 — contribue à weekH et marque la semaine comme active
+          weekH += baseJourCCN + (isVacDay ? 0 : (e.extra || 0));
+          hasAnyDay = true;
+          if (e.extra > 0 && !isVacDay) daysLogged++;
+        } else if (hasAnyDay) {
+          // Jour sans entrée dans une semaine DÉJÀ marquée active → ajouter base
+          // (ex: M1 stocke par monday, mardi-vendredi ont e=undefined mais la semaine est réelle)
+          weekH += baseJourCCN;
+        }
+        // Si hasAnyDay = false ET e = undefined → semaine inconnue, ne pas marquer active
       }
       // FIX EXTRAPOLATION : semaine courante → weekH réel (HS faites + base jours restants)
       // Cohérent avec weeklyExtra conservative → weekH = seuil + HS réelles
@@ -1156,8 +1164,12 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS
         const isVacDay = !!vacances[k];
-        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
-        hasAnyDay = true;
+        if (e) {
+          weekH += baseJourCCN + (isVacDay ? 0 : (e.extra || 0));
+          hasAnyDay = true;
+        } else if (hasAnyDay) {
+          weekH += baseJourCCN;
+        }
       }
       // FIX : isM1RestWeekP2 requiert majorité des jours absents (même logique que Passe 1)
       // 1 jour absent seul (ex: lundi férié marqué absent) ne = pas semaine de vacances
