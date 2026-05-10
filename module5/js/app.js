@@ -62,6 +62,13 @@ function runAnalysis() {
   }
 
   const allWeeks=M5_DataStore.getWeeksSorted(year);
+  // Pour calcAnnuel : utiliser getWeeksMultiYear pour inclure :
+  //   1) les données rétroactives saisies sur des semaines passées (même si l'utilisateur
+  //      avait ces données sur papier et les rentre plus tard)
+  //   2) les exercices qui chevauchent 2 années civiles (ex: sept 2025 → août 2026)
+  const allWeeksMulti = typeof M5_DataStore.getWeeksMultiYear === 'function'
+    ? M5_DataStore.getWeeksMultiYear(year, 999, true) // true = pas de filtre contrat → tout l'historique rétroactif
+    : allWeeks;
   const last12=M5_DataStore.getLast12Weeks(year);
   const rule12=CalcEngine.check12WeeksRule(last12,contract.hoursBase);
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
@@ -69,7 +76,7 @@ function runAnalysis() {
   // Mode ANNUEL
   let annuelResult=null;
   if(contract.modeCalcul==='ANNUEL') {
-    annuelResult=CalcEngine.calcAnnuel(contract.hoursBase,contract.exerciceStart||'01/01',allWeeks);
+    annuelResult=CalcEngine.calcAnnuel(contract.hoursBase,contract.exerciceStart||'01/01',allWeeksMulti);
   }
   // Mode MENSUEL
   let mensuelResult=null;
@@ -111,13 +118,19 @@ function runAnalysis() {
   }
 
   // Score bien-être (Higgins, Karasek, Sonnentag, Voydanoff)
+  // ── MULTI-ANNÉE : la fatigue biologique traverse les changements d'exercice ──
+  // Sonnentag 2003 / Kivimäki 2015 : la charge se cumule sur plusieurs semaines
+  // successives, sans remise à zéro au 1er janvier.
+  // On utilise getWeeksMultiYear() qui puise dans les 3 dernières années.
   let wellbeing=null;
-  if(typeof M5_Wellbeing!=='undefined' && allWeeks.length>=2) {
-    // Bien-être = fenêtre glissante des 12 dernières semaines réelles
-    // (le corps ne se souvient pas de janvier — Sonnentag, Karasek mesurent sur cycles courts)
-    const todayStr=M5_localDK(new Date());
-    const weeksPassees=allWeeks.filter(w=>w.monday<=todayStr);
-    const weeksWellbeing=weeksPassees.slice(-12); // 12 dernières semaines MAX
+  if(typeof M5_Wellbeing!=='undefined') {
+    const weeksWellbeing=typeof M5_DataStore.getWeeksMultiYear==='function'
+      ? M5_DataStore.getWeeksMultiYear(year, 16)   // 16 sem max = ~4 mois de mémoire bio
+      : (() => {
+          // Fallback si méthode absente : année en cours uniquement
+          const todayStr=M5_localDK(new Date());
+          return allWeeks.filter(w=>w.monday<=todayStr).slice(-12);
+        })();
     if(weeksWellbeing.length>=2) {
       wellbeing=M5_Wellbeing.compute(weeksWellbeing, contract.hoursBase, contract);
     }
@@ -359,7 +372,8 @@ function calPrev() {
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()-7);
   calendarMonday=M5_localDK(d);
-  refreshUI();
+  // Différer refreshUI au prochain frame → INP nettement réduit (le tap répond instantanément)
+  requestAnimationFrame(refreshUI);
 }
 function calNext() {
   const today=M5_getCurrentMonday();
@@ -368,11 +382,11 @@ function calNext() {
   const next=M5_localDK(d);
   if(next>today) return; // pas dans le futur
   calendarMonday=next;
-  refreshUI();
+  requestAnimationFrame(refreshUI);
 }
 function calToday() {
   calendarMonday=M5_getCurrentMonday();
-  refreshUI();
+  requestAnimationFrame(refreshUI);
 }
 
 // ── Popup saisie journalière ───────────────────────────────────────
@@ -494,16 +508,22 @@ function openWeeklySaisie() {
   const inp=document.getElementById('week-saisie-hours');
   inp.value=wk.total!==null?wk.total:contract.hoursBase;
 
-  // Avenant — ne s'affiche que si la CCN le permet (L3123-22 nécessite accord de branche étendu)
+  // Avenant — affichage selon CCN (L3123-22) OU si un avenant existe déjà sauvegardé
+  // (on ne peut pas masquer une coche déjà cochée et sauvegardée par l'utilisateur)
   const avenantBloc=document.getElementById('week-avenant-bloc');
   const avenantAllowed = typeof M5_DataStore.isAvenantAllowed==='function' && M5_DataStore.isAvenantAllowed();
-  if(avenantBloc) avenantBloc.style.display = avenantAllowed ? 'block' : 'none';
+  // Toujours afficher le bloc si : CCN autorise OU si un avenant existe déjà pour cette semaine
+  const showAvenantBloc = avenantAllowed || (av && av.avenatH > 0);
+  if(avenantBloc) avenantBloc.style.display = showAvenantBloc ? 'block' : 'none';
 
   const toggleAv=document.getElementById('week-avenant-toggle');
   const avSection=document.getElementById('week-avenant-section');
   const avInp=document.getElementById('week-avenant-hours');
-  if(av && avenantAllowed) {
-    toggleAv.checked=true; avSection.style.display='block'; avInp.value=av.avenatH;
+  if(av && av.avenatH > 0 && showAvenantBloc) {
+    // Avenant existant → restaurer la coche et la valeur
+    if(toggleAv) { toggleAv.checked=true; }
+    if(avSection) avSection.style.display='block';
+    if(avInp) avInp.value=av.avenatH;
   } else {
     if(toggleAv) toggleAv.checked=false;
     if(avSection) avSection.style.display='none';
@@ -523,8 +543,10 @@ function openWeeklySaisie() {
     quickHtml+=`<button class="m5-quick-btn" onclick="selectWeekQuick(${h})">${h}h</button>`;
   });
   document.getElementById('week-quick-hours').innerHTML=quickHtml;
-  updateWeekPreview();
   openModal('modal-week-saisie');
+  // Différer updateWeekPreview au frame suivant (modal déjà visible)
+  // → évite le freeze Android sans bloquer l'input (readonly trop agressif sur iOS)
+  requestAnimationFrame(updateWeekPreview);
 }
 
 function toggleAvenat() {
@@ -567,7 +589,7 @@ function updateWeekPreview() {
       result.alerts.forEach(a=>{
         html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'ℹ️'}</span> ${a.msg}</div>`;
       });
-      if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Majoration : <strong>${_c.toFixed(2)} €</strong> brut sur les heures comp.</div>`;}
+      if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimation semaine : <strong>${_c.toFixed(2)} € brut</strong> de majoration (sur ${result.totalCompH}h comp. cette semaine).</div>`;}
     }
   } else {
     result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0);
@@ -578,7 +600,7 @@ function updateWeekPreview() {
     result.alerts.forEach(a=>{
       html+=`<div class="m5-alert ${a.level}" style="font-size:12px;padding:6px 10px;margin-bottom:4px;"><span>${a.level==='critique'?'🚨':'⚠️'}</span> ${a.msg}</div>`;
     });
-    if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Majoration : <strong>${_c.toFixed(2)} €</strong> brut sur les heures comp.</div>`;}
+    if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimation semaine : <strong>${_c.toFixed(2)} € brut</strong> de majoration (sur ${result.totalCompH}h comp. cette semaine).</div>`;}
   }
   prev.innerHTML=html;
 }
@@ -676,7 +698,7 @@ function renderWeekSummary(analysis) {
   });
   if(weekResult.totalCompH>0&&contract.hourlyRate>0&&!prevenanceAlert) {
     const _cw=(weekResult.comp1Amount||0)+(weekResult.comp2Amount||0);
-    html+=`<div class="m5-alert info"><span>💰</span><div>Majoration estimée : <strong>${_cw.toFixed(2)} € brut</strong> sur ${weekResult.totalCompH}h comp.</div></div>`;
+    html+=`<div class="m5-alert info"><span>💰</span><div>Majoration estimée cette semaine : <strong>${_cw.toFixed(2)} € brut</strong> (${weekResult.totalCompH}h comp. × taux majoré). Estimation brute basée sur votre taux horaire contractuel.</div></div>`;
   }
   el.innerHTML=html;
 }
@@ -702,6 +724,32 @@ function renderQuickStats(analysis) {
   if(mode==='ANNUEL'&&annuelResult) {
     const solde=annuelResult.solde;
     const cls=solde>1?'ok':solde<-2?'danger':'warn';
+
+    // Vérifier si le point de départ a été auto-détecté (différent de exerciceStart configuré)
+    const configuredStart = contract.exerciceStart || '01/01';
+    const autoDetected = annuelResult.debutEx !== (() => {
+      // Recalculer ce qu'aurait été debutEx sans auto-détection
+      try {
+        if (configuredStart.includes('-')) return configuredStart;
+        if (configuredStart.includes('/')) {
+          const [j,m] = configuredStart.split('/').map(Number);
+          const y = new Date().getFullYear();
+          const d = new Date(y,m-1,j);
+          return (d > new Date() ? new Date(y-1,m-1,j) : d).toISOString().split('T')[0];
+        }
+        return new Date().getFullYear()+'-01-01';
+      } catch(_) { return ''; }
+    })();
+
+    // Bandeau info si auto-détection active
+    if (autoDetected) {
+      html+=`<div style="background:rgba(108,63,197,0.07);border:1px solid rgba(108,63,197,0.25);border-radius:8px;padding:7px 10px;font-size:11px;color:#5b21b6;margin-bottom:8px;display:flex;gap:6px;align-items:center;">
+        <span>📍</span>
+        <div><strong>Départ détecté automatiquement : ${annuelResult.debutEx}</strong><br>
+        Le contingent est calculé depuis ta première semaine saisie — pas depuis le 1er janvier.</div>
+      </div>`;
+    }
+
     html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
       <div class="m5-stat"><div class="m5-stat-val">${annuelResult.pctAvancement}%</div><div class="m5-stat-label">Exercice écoulé</div></div>
       <div class="m5-stat"><div class="m5-stat-val">${annuelResult.reelCumule}h</div><div class="m5-stat-label">Heures réalisées</div></div>
@@ -801,13 +849,36 @@ function renderWellbeing(analysis) {
     return;
   }
 
-  // Note données limitées — bannière proéminente
+  // Bannière données limitées — affichée seulement si pas de badge multi-année
   let html='';
-  if(wb.donneesLimitees && wb.noteMin) {
+  if(wb.donneesLimitees && wb.noteMin && !wb.isMultiYear) {
     html+=`<div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:10px 12px;font-size:12px;color:#e65100;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;">
       <span style="font-size:16px;">📊</span>
       <div><strong>Analyse en cours de construction</strong><br>${wb.noteMin}<br>
-      <span style="font-size:11px;opacity:0.8;">Les scores en 0/100 avec peu de semaines sont normaux — ils reflètent que tu n'as pas encore de semaines de récupération.</span></div>
+      <span style="font-size:11px;opacity:0.8;">Les scores avec peu de semaines sont provisoires — ils s'améliorent au fil des semaines saisies.</span></div>
+    </div>`;
+  }
+
+  // ⚠️ Bannière semaine en cours exclue (si elle a des HC significatifs)
+  // → l'utilisateur comprend pourquoi le score ne reflète pas encore cette semaine
+  if(wb.currentWeekExcluded && wb.currentWeekH > 0) {
+    const contract = analysis && analysis.contract;
+    const contractH = contract ? contract.hoursBase : 0;
+    const hasHC = contractH > 0 && wb.currentWeekH > contractH;
+    const diffH = contractH > 0 ? (wb.currentWeekH - contractH).toFixed(1) : 0;
+    // Calculer combien de jours jusqu'à dimanche
+    const todayDow = new Date().getDay(); // 0=dim, 1=lun ... 6=sam
+    const daysLeft = todayDow === 0 ? 0 : 7 - todayDow;
+    const joursRestants = daysLeft === 1 ? 'demain (samedi)' : daysLeft === 0 ? 'ce soir' : `dans ${daysLeft} jours (dimanche)`;
+    html+=`<div style="background:rgba(245,158,11,0.08);border:1.5px solid rgba(245,158,11,0.40);border-radius:8px;padding:8px 12px;font-size:11px;color:#92400e;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;">
+      <span style="font-size:14px;">⏳</span>
+      <div>
+        <strong>Semaine en cours : ${wb.currentWeekH}h${hasHC ? ` (+${diffH}h HC)` : ''}</strong><br>
+        ${hasHC
+          ? `Ces ${diffH}h d'heures complémentaires seront intégrées au score bio <strong>${joursRestants}</strong> quand la semaine sera complète.`
+          : `La semaine en cours est exclue des calculs jusqu'à dimanche — seules les semaines complètes alimentent l'analyse.`
+        }
+      </div>
     </div>`;
   }
 
@@ -815,6 +886,26 @@ function renderWellbeing(analysis) {
   if(!wb.donneesLimitees) {
     html+=`<div style="font-size:11px;color:var(--miz-text3);padding:4px 2px 8px;text-align:center;">
       Basé sur ${wb.stats.n} semaines de données
+    </div>`;
+  }
+
+  // Badge multi-année — affiché si les données traversent un changement d'exercice
+  if(wb.isMultiYear && wb.yearsSpanned && wb.yearsSpanned.length > 1) {
+    html+=`<div style="background:rgba(108,63,197,0.08);border:1px solid rgba(108,63,197,0.25);border-radius:8px;padding:8px 12px;font-size:11px;color:#6c3fc5;margin-bottom:10px;display:flex;gap:8px;align-items:flex-start;">
+      <span style="font-size:14px;">🧬</span>
+      <div><strong>Mémoire biologique multi-année active</strong><br>
+      Données de ${wb.yearsSpanned.join(' + ')} — le changement d'exercice ne remet pas le corps à zéro.
+      La fatigue et la récupération sont continues (Sonnentag 2003, Kivimäki 2015).
+      </div>
+    </div>`;
+  }
+
+  // Note si données limitées mais issues d'une année précédente (début d'exercice)
+  if(!wb.isMultiYear && wb.noteMin) {
+    html+=`<div style="background:#fff3e0;border:2px solid #ff9800;border-radius:10px;padding:10px 12px;font-size:12px;color:#e65100;margin-bottom:12px;display:flex;gap:8px;align-items:flex-start;">
+      <span style="font-size:16px;">📊</span>
+      <div><strong>Analyse en cours de construction</strong><br>${wb.noteMin}<br>
+      <span style="font-size:11px;opacity:0.8;">Les scores avec peu de semaines sont provisoires — les données des semaines précédentes alimentent déjà l'analyse.</span></div>
     </div>`;
   }
 
@@ -1575,7 +1666,7 @@ function toggleVacSemaine() {
 }
 
 
-// ── Import jours fériés API gouvernement ──────────────────────────
+// ── Import jours fériés (API publique calendrier.api.gouv.fr) ──────
 // Source : https://calendrier.api.gouv.fr — Etalab (données ouvertes)
 
 // ── Gestion des années ────────────────────────────────────────────
