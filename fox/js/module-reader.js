@@ -220,14 +220,69 @@ class ModuleReaderPro extends ModuleReader {
     const years = new Set();
     for (let i = 0; i < localStorage.length; i++) {
       const key = localStorage.key(i);
-      // M1 : DATA_REPORT_YYYY
       const m1Match = key && key.match(/^DATA_REPORT_(\d{4})$/);
       if (m1Match) years.add(m1Match[1]);
-      // M2 : CA_HS_TRACKER_V1_DATA_YYYY
       const m2Match = key && key.match(/^CA_HS_TRACKER_V1_DATA_(\d{4})$/);
       if (m2Match) years.add(m2Match[1]);
     }
     return [...years].sort();
+  }
+
+  // ── Résolution date d'entrée — prorata contingent (Art. D3121-24) ────────
+  // Priorité : M2 entryDate explicite > M1 exerciseStart
+  //          > auto-détect M1 data > auto-détect M2 data > null
+  // La détection rétroactive couvre le cas où l'utilisateur saisit en mai
+  // des données de février : le premier mois trouvé est le mois d'entrée.
+  _resolveEntryDate(year) {
+    const y = parseInt(year);
+    // 1. Date d'entrée explicite M2 (champ UI paye)
+    try {
+      const m2s = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
+      const m2e = m2s['entryDate_' + year];
+      if (m2e && new Date(m2e).getFullYear() === y) return m2e;
+    } catch(e) {}
+    // 2. exerciseStart M1 (posé par le wizard, toujours un lundi)
+    try {
+      const m1e = localStorage.getItem('EXERCISE_START_' + year);
+      if (m1e && new Date(m1e).getFullYear() === y) return m1e;
+    } catch(e) {}
+    // 3. Auto-détection rétroactive M1 — premier jour avec heures saisies
+    try {
+      const m1d = JSON.parse(localStorage.getItem('DATA_REPORT_' + year) || '{}');
+      const m1dates = Object.keys(m1d).filter(k =>
+        /^\d{4}-\d{2}-\d{2}$/.test(k) && k.startsWith(String(year)) &&
+        typeof m1d[k] === 'object' && ((m1d[k].extra || 0) + (m1d[k].recup || 0)) > 0
+      ).sort();
+      if (m1dates.length > 0) return m1dates[0].substring(0, 7) + '-01';
+    } catch(e) {}
+    // 4. Auto-détection rétroactive M2 — premier jour avec HS saisies
+    try {
+      const m2d = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + year) || '{}');
+      const m2dates = [];
+      Object.entries(m2d).forEach(([mk, month]) => {
+        if (!/^\d{4}-\d{2}$/.test(mk) || !mk.startsWith(String(year))) return;
+        Object.entries(month.days || {}).forEach(([d, h]) => {
+          if ((parseFloat(h) || 0) > 0) m2dates.push(mk + '-' + String(d).padStart(2, '0'));
+        });
+      });
+      m2dates.sort();
+      if (m2dates.length > 0) return m2dates[0].substring(0, 7) + '-01';
+    } catch(e) {}
+    return null; // Pas de prorata — contingent plein
+  }
+
+  // ── Prorata contingent — jours restants / jours total ────────────────────
+  _applyProrata(fullLimit, year, entryDateStr) {
+    if (!entryDateStr) return { limit: fullLimit, isProrata: false, entryDate: null };
+    const eDate = new Date(entryDateStr);
+    if (isNaN(eDate.getTime()) || eDate.getFullYear() !== parseInt(year))
+      return { limit: fullLimit, isProrata: false, entryDate: null };
+    const yearEnd  = new Date(parseInt(year), 11, 31);
+    const yearDays = (yearEnd - new Date(parseInt(year), 0, 1)) / 86400000 + 1;
+    const remDays  = (yearEnd - eDate) / 86400000 + 1;
+    const factor   = remDays / yearDays;
+    if (factor >= 0.98) return { limit: fullLimit, isProrata: false, entryDate: entryDateStr };
+    return { limit: Math.max(1, Math.round(fullLimit * factor)), isProrata: true, entryDate: entryDateStr };
   }
 
   // \u2500\u2500 Chargement M1 pour une ann\u00E9e donn\u00E9e \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
@@ -419,7 +474,10 @@ class ModuleReaderPro extends ModuleReader {
       const prefix   = 'CA_HS_TRACKER_V1';
       const yearData = JSON.parse(localStorage.getItem(prefix + '_DATA_' + year) || '{}');
       const settings = JSON.parse(localStorage.getItem(prefix + '_SETTINGS') || '{}');
-      const contingentMax = settings.contingentAnnuel || 220;
+      const fullContingent = settings.contingentAnnuel || 220;
+      // Prorata — lit M2 entryDate, puis M1 exerciseStart, puis auto-détect rétroactif
+      const _resolved = this._applyProrata(fullContingent, year, this._resolveEntryDate(year));
+      const contingentMax = _resolved.limit;
 
       // Detecter le format : format reel M2 avec days:{} ou ancien format pre-calcule
       const hasDays = Object.values(yearData).some(
