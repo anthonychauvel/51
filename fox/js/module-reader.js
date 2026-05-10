@@ -875,6 +875,58 @@ class ModuleReaderPro extends ModuleReader {
   }
 
   // Utilitaire JSON s\u00E9curis\u00E9
+  // ── Contingent fusionné M1+M2 (même dédup que calcAnnual dans vue-pro) ──
+  getFusedContingent(year) {
+    year = year || this.year;
+    const y = String(year);
+
+    // CCN → valeur de base
+    let fullLimit = 220;
+    if (typeof CCN_API !== 'undefined') {
+      const idcc = parseInt((typeof localStorage !== 'undefined' && localStorage.getItem('CCN_IDCC')) || '0');
+      const r = CCN_API.getGroupeForCCN(idcc);
+      if (r && r.contingent) fullLimit = r.contingent;
+    }
+
+    // Prorata via _resolveEntryDate (lit M2 explicite > M1 ENTRY_DATE > auto-détect)
+    const resolved = this._applyProrata(fullLimit, year, this._resolveEntryDate(year));
+    const contingentMax = resolved.limit;
+    const isProrata     = resolved.isProrata;
+
+    // Heures utilisées : source active uniquement (M1 ou M2 selon selectPrimaryModule)
+    const src = this.selectPrimaryModule();
+    let totalMin = 0;
+
+    if (src === 'M1') {
+      try {
+        const m1 = JSON.parse(localStorage.getItem('DATA_REPORT_' + y) || '{}');
+        Object.keys(m1).forEach(k => {
+          if (!/^\d{4}-\d{2}-\d{2}$/.test(k) || !k.startsWith(y)) return;
+          const ot = Math.max(0, parseFloat(m1[k].extra||0) - parseFloat(m1[k].recup||0) - parseFloat(m1[k].absent||0));
+          if (ot > 0) totalMin += Math.round(ot * 60);
+        });
+      } catch(e) {}
+    } else {
+      try {
+        const m2 = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + y) || '{}');
+        Object.keys(m2).forEach(mk => {
+          if (!/^\d{4}-\d{2}$/.test(mk) || !mk.startsWith(y)) return;
+          const days = (m2[mk] && m2[mk].days) || {};
+          Object.keys(days).forEach(d => {
+            const v = parseFloat(days[d]) || 0;
+            if (v > 0) totalMin += Math.round(v * 60);
+          });
+        });
+      } catch(e) {}
+    }
+
+    const used    = totalMin / 60;
+    const pct     = contingentMax > 0 ? Math.min(100, Math.round(used / contingentMax * 100)) : 0;
+    const remaining = Math.max(0, contingentMax - used);
+
+    return { used, contingentMax, fullLimit, pct, remaining, isProrata };
+  }
+
   _safeJSON(key, def) {
     try { return JSON.parse(localStorage.getItem(key) || 'null') || def; }
     catch(e) { return def; }

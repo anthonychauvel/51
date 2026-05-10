@@ -739,9 +739,8 @@ function displayModule1() {
 }
 
 function displayModule2() {
-    console.log('🔍 displayModule2: START');
-    const m2 = moduleReader.getModule2Summary();
-    console.log('🔍 displayModule2 m2:', m2);
+    const m2  = moduleReader.getModule2Summary();
+    const fc  = moduleReader.getFusedContingent(m2.year); // M1 + M2 fusionnés
     const container = document.getElementById('module2-display');
     
     container.innerHTML = `
@@ -749,14 +748,14 @@ function displayModule2() {
             <h4>Année ${m2.year}</h4>
             <div class="stat-row">
                 <span>Heures totales:</span>
-                <strong>${(m2?.totalHours || 0).toFixed(1)}h</strong>
+                <strong>${fc.used.toFixed(1)}h</strong>
             </div>
             <div class="contingent-bar">
-                <div class="contingent-label">Contingent: ${(m2?.contingent?.used || 0).toFixed(1)}h / ${m2?.contingent?.total || 220}h</div>
+                <div class="contingent-label">Contingent: ${fc.used.toFixed(1)}h / ${fc.contingentMax}h${fc.isProrata ? ' (prorata)' : ''}</div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${m2?.contingent?.percentage || 0}%; background: ${(m2?.contingent?.percentage || 0) > 100 ? 'var(--danger)' : 'var(--primary)'}"></div>
+                    <div class="progress-fill" style="width: ${fc.pct}%; background: ${fc.pct > 100 ? 'var(--danger)' : fc.pct > 75 ? 'var(--warning, #FFA726)' : 'var(--primary)'}"></div>
                 </div>
-                <div class="contingent-remaining">${(m2.contingent?.remaining || 0).toFixed(1)}h restantes</div>
+                <div class="contingent-remaining">${fc.remaining.toFixed(1)}h restantes</div>
             </div>
             <div class="stat-row">
                 <span>Moyenne mensuelle:</span>
