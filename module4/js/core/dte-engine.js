@@ -1193,13 +1193,23 @@ class DTEEngine {
 
     // Fallback robuste : si cumulWeeks = 0 mais qu'il existe des logs,
     // estimer la durée d'exposition via la plage de dates réelle du log.
-    // Corrige le cas où des semaines partielles tombent toutes sous H_OPTIMAL.
+    // CONDITION STRICTE : seulement si la moyenne des HS dépasse le seuil INRS (>40h/sem).
+    // Sinon le fallback gonflait cumulWeeks pour des utilisateurs avec peu de HS modérées.
+    // Ex : 14h HS sur 7 jours en avril → pass 1 = 0 → fallback donnait 5 semaines (faux).
     if (cumulWeeks === 0 && Object.keys(days).length > 0) {
       const allDateKeys = Object.keys(days).filter(k => days[k] && days[k].extra > 0).sort();
-      if (allDateKeys.length >= 5) { // au moins 1 semaine de données
-        const firstDate = new Date(allDateKeys[0] + 'T12:00:00');
-        const diffDays  = Math.ceil((today - firstDate) / 864e5);
-        cumulWeeks = Math.max(1, Math.round(diffDays / 7));
+      if (allDateKeys.length >= 5) {
+        // Calculer la moyenne HS par semaine sur la période
+        const firstDate  = new Date(allDateKeys[0] + 'T12:00:00');
+        const diffDays   = Math.ceil((today - firstDate) / 864e5);
+        const diffWeeks  = Math.max(1, diffDays / 7);
+        const totalExtra = allDateKeys.reduce((s, k) => s + (days[k].extra || 0), 0);
+        const avgHSPerWeek = totalExtra / diffWeeks;
+        // Fallback uniquement si moyenne > seuil minimum INRS (5h HS/sem = 40h/sem sur base 35h)
+        // En dessous : l'utilisateur n'est pas en surcharge chronique → cumulWeeks reste 0
+        if (avgHSPerWeek >= 5) {
+          cumulWeeks = Math.max(1, Math.round(diffWeeks));
+        }
       }
     }
 
