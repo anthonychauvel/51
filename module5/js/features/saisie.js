@@ -181,6 +181,64 @@ const DataStore = {
 
   getLast12Weeks(year) { return this.getWeeksSorted(year).slice(-12); },
 
+  // ── MULTI-ANNÉE pour les calculs biologiques ─────────────────────
+  // Le corps ne repart pas de zéro en janvier : la fatigue et le niveau
+  // de récupération se portent d'une année sur l'autre.
+  // Renvoie les N dernières semaines renseignées, en puisant dans les
+  // années précédentes si l'année en cours n'en a pas assez.
+  // Sonnentag 2003, Kivimäki 2015 : fenêtre de 12 semaines recommandée.
+  getWeeksMultiYear(currentYear, maxWeeks=16, noContractFilter=false) {
+    const cy = parseInt(currentYear || this.getYear());
+    let weeks = [];
+    // Parcourir l'année en cours + les 2 années précédentes
+    for (let y = cy; y >= cy-2; y--) {
+      const yw = this.getWeeksSorted(String(y));
+      weeks = [...yw, ...weeks];
+    }
+    // Dédupliquer
+    const seen = new Set();
+    weeks = weeks.filter(w => {
+      if (seen.has(w.monday)) return false;
+      seen.add(w.monday); return true;
+    });
+    // Trier par date croissante
+    weeks.sort((a,b) => a.monday < b.monday ? -1 : 1);
+    // ── PRORATA : ne pas remonter avant le début de contrat ──────────
+    // noContractFilter=true → mode calcAnnuel : on veut TOUT l'historique
+    // pour que l'auto-détection de la première saisie soit correcte
+    // (y compris les données saisies rétroactivement)
+    if (!noContractFilter) {
+      try {
+        const c = Contract.get();
+        let contractStartStr = c.exerciceStart || '';
+        if (contractStartStr) {
+          let contractStartDate = null;
+          if (/^\d{4}-\d{2}-\d{2}$/.test(contractStartStr)) {
+            contractStartDate = new Date(contractStartStr + 'T00:00:00');
+          } else if (/^\d{2}\/\d{2}$/.test(contractStartStr)) {
+            const [j, m] = contractStartStr.split('/').map(Number);
+            contractStartDate = new Date(cy, m - 1, j);
+          }
+          if (contractStartDate && !isNaN(contractStartDate)) {
+            const dow = contractStartDate.getDay();
+            const daysToMon = dow === 0 ? 6 : dow - 1;
+            const firstMonday = new Date(contractStartDate);
+            firstMonday.setDate(contractStartDate.getDate() - daysToMon);
+            const firstMondayStr = firstMonday.getFullYear() + '-'
+              + String(firstMonday.getMonth() + 1).padStart(2, '0') + '-'
+              + String(firstMonday.getDate()).padStart(2, '0');
+            weeks = weeks.filter(w => w.monday >= firstMondayStr);
+          }
+        }
+      } catch (_) {}
+    }
+    // Ne garder que les semaines passées
+    const todayStr = new Date().toISOString().split('T')[0];
+    weeks = weeks.filter(w => w.monday <= todayStr);
+    // Retourner les N dernières (999 = tout)
+    return maxWeeks >= 999 ? weeks : weeks.slice(-maxWeeks);
+  },
+
   getAnnualStats(year, contractH, ccnRules) {
     const weeks=this.getWeeksSorted(year);
     if(!weeks.length) return null;
