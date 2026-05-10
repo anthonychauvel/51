@@ -541,15 +541,21 @@ class DTEEngine {
   /* ── Sources de données (READ ONLY) ─────────────────────────── */
   _readAll() {
     const year = this._year();
-    return { year, m1: this._m1(year), m2: this._m2(year), rpg: this._rpg() };
+    const m1 = this._m1(year);
+    const m2 = this._m2(year);
+    const rpg = this._rpg();
+    return { year, m1, m2, rpg };
   }
 
   _year() {
     try {
+      // ACTIVE_YEAR_SUFFIX = année active M1 (navigation M1)
       const s1 = localStorage.getItem('ACTIVE_YEAR_SUFFIX');
       if (s1) return s1;
-      const s2 = localStorage.getItem('CA_HS_TRACKER_V1_ACTIVE_YEAR');
-      if (s2) return s2;
+      // NE PAS utiliser CA_HS_TRACKER_V1_ACTIVE_YEAR :
+      // c'est l'année de NAVIGATION UI de M2 (consultation historique).
+      // Quand l'utilisateur consulte 2025 dans M2, cette clé vaut '2025'
+      // mais les données biologiques actives sont bien sur l'année courante.
     } catch(_) {}
     return String(new Date().getFullYear());
   }
@@ -636,7 +642,11 @@ class DTEEngine {
     try {
       // M2 stocke CA_HS_TRACKER_V1_DATA_{year}
       // Structure : { "2026-03": { days:{"14":2.5,"15":1}, paid:0, carry:0, closing:28 }, ... }
-      const yearN2 = parseInt(year) || new Date().getFullYear();
+      // FIX : utiliser l'année réelle courante comme ancre, pas `year`
+      // (year peut valoir '2025' si l'utilisateur a navigué vers 2025 dans M2,
+      //  mais les données biologiques actives sont sur l'année calendaire réelle)
+      const realYear = new Date().getFullYear();
+      const yearN2 = realYear;
       // Inclure N-1 pour la continuité biologique inter-années
       const keys = [
         'CA_HS_TRACKER_V1_DATA_' + (yearN2 - 1),
@@ -648,10 +658,30 @@ class DTEEngine {
           if(k && k.startsWith('CA_HS_TRACKER_V1_DATA_') && !keys.includes(k)) keys.push(k);
         }
       } catch(_) {}
-      let raw = null;
-      for(const k of keys){ raw = localStorage.getItem(k); if(raw && raw !== '{}') break; }
-      if (!raw || raw === '{}') return r;
-      const d = JSON.parse(raw);
+
+      // FIX MULTI-ANNÉES : merger TOUS les fichiers M2 sans écraser les données réelles.
+      // Problème Object.assign naïf : DATA_2026 peut contenir des mois vides créés par
+      // navigation (ex: '2026-05': {days:{}} ) qui écrasent les vraies données de DATA_2025.
+      // Règle : pour chaque mois, conserver la version avec le plus de jours réels.
+      const d = {};
+      let hasAny = false;
+      for(const k of keys){
+        const raw = localStorage.getItem(k);
+        if(raw && raw !== '{}' && raw !== 'null'){
+          try {
+            const parsed = JSON.parse(raw);
+            for (const [mk, mv] of Object.entries(parsed)) {
+              if (!mv || typeof mv !== 'object') continue;
+              const newDays  = Object.keys(mv.days || {}).length;
+              const prevDays = Object.keys((d[mk] || {}).days || {}).length;
+              if (newDays > prevDays) d[mk] = mv; // préférer le mois avec plus de données
+              else if (!d[mk]) d[mk] = mv;         // ou prendre si absent
+            }
+            hasAny = true;
+          } catch(_) {}
+        }
+      }
+      if (!hasAny) return r;
       // M2 n'a pas contractHours dans le stockage, utiliser SETTINGS
       try {
         const sets = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
@@ -822,19 +852,25 @@ class DTEEngine {
       if (d > today) break;
       const k = localDK(d);
       const e = days[k];
-      // Ignorer jours fériés et vacances déclarées dans le compteur
+      // FIX : M2/M1 heures réelles priment TOUJOURS sur vacation déclarée dans M4.
+      // Si M2 dit que tu as travaillé (extra > 0), ces heures sont réelles —
+      // la déclaration vacances dans M4 ne doit pas les effacer.
+      // Cas typique : utilisateur marque "semaine off" par erreur alors qu'il a travaillé lun-jeu.
+      // → sumExtra7, count7 et hasAnyEntryThisWeek reflètent les vraies heures M2/M1.
+      if (e && e.extra > 0) {
+        hasAnyEntryThisWeek = true;
+        sumExtra7 += e.extra;
+        count7++;
+        continue;
+      }
+      // Ignorer jours fériés et vacances sans heures réelles
       if (specialDays[k] === 'ferie' || vacances[k]) continue;
       // Ignorer jours absents
       if (e && e.absent > 0) continue;
       // M1→M4 : recup ≥ 7h dans M1 = jour de repos → exclu du compteur heures semaine
       if (e && (e.recup >= 7)) continue;
-      // Ne compter QUE les jours avec une entrée réelle (e existe)
-      if (e) {
-        sumExtra7 += (e.extra || 0);
-        count7++;
-        hasAnyEntryThisWeek = true;
-      }
-      // Un jour sans entrée (e=undefined) = vacances non déclarées ou repos → PAS compté
+      // Jour travaillé sans HS
+      if (e) { count7++; hasAnyEntryThisWeek = true; }
     }
 
     // weeklyExtra : priorité à la semaine courante pour la progression jour par jour
@@ -893,7 +929,37 @@ class DTEEngine {
     const _ccnR        = _dteGetCCNRules();
     const _baseJourCCN = _ccnR.seuil / workDaysPerWeek; // 35/5=7h ou 39/5=7.8h selon accord
     const avgH7        = _baseJourCCN + avgExtra7;
-    const weeklyH7     = _ccnR.seuil + weeklyExtra;
+
+    // FIX FERIES SEMAINE : si un ou plusieurs fériés tombent dans la semaine courante,
+    // la base biologique réelle est réduite (ex : vendredi férié → base = 4×7h = 28h, pas 35h).
+    // weeklyH7 = heures RÉELLEMENT travaillées cette semaine, pas base théorique + HS.
+    // Impact : 35h+6h=41h (faux) → 28h+6h=34h (correct biologiquement).
+    // Pré-charger le check-in history pour détecter les jours travaillés déclarés
+    let _checkinWorkedDays = {};
+    try {
+      const _ch = JSON.parse(localStorage.getItem('DTE_CHECKIN_HISTORY') || '[]');
+      // FIX : le champ est dayStatus (pas activity) — valeur 'work' = Je travaille
+      _ch.forEach(e => { if (e.date && e.dayStatus === 'work') _checkinWorkedDays[e.date] = true; });
+    } catch(_) {}
+
+    let feriesInCurrentWeek = 0;
+    for (let _fd = 0; _fd < workDaysPerWeek; _fd++) {
+      const _fdt = new Date(weekMondayA); _fdt.setDate(weekMondayA.getDate() + _fd);
+      if (_fdt > today) break;
+      const _fk = localDK(_fdt);
+      if (specialDays[_fk] !== 'ferie') continue;
+      // FIX FERIE TRAVAILLÉ : 3 sources prouvent que l'utilisateur a travaillé :
+      // 1) M2/M1 a des heures (extra > 0)
+      // 2) Check-in du jour = 'work'
+      // 3) Journée normale sans HS (e existe mais extra=0 et count7 inclut ce jour)
+      // → dans ces cas, ne pas déduire 7h de la base hebdo.
+      const _fe = days[_fk];
+      if (_fe && _fe.extra > 0) continue;           // M2/M1 : HS confirmées
+      if (_checkinWorkedDays[_fk]) continue;         // check-in : journée normale déclarée
+      feriesInCurrentWeek++;
+    }
+    const _seuilEffective = Math.max(0, _ccnR.seuil - feriesInCurrentWeek * _baseJourCCN);
+    const weeklyH7        = _seuilEffective + weeklyExtra;
 
     // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
     // FIX LUNDI : le 1er jour de semaine CCN sans saisie ≠ vacances (c'est juste le début de semaine)
@@ -943,8 +1009,17 @@ class DTEEngine {
       // FIX : doit être AVANT vacances[k] sinon check-in "congé" le weekend = break erroné
       if (_isRestDow(dow)) { continue; }
 
-      // Vacances déclarées = reset complet (jours ouvrés uniquement)
-      if (vacances[k]) break;
+      // Vacances déclarées :
+      // FIX : 1 jour isolé ≠ reset complet (Sonnentag : récupération partielle, pas totale).
+      // - Avec heures réelles M2 (ex : férié travaillé) → traiter comme jour HS
+      // - Jour isolé (consecRest < 2) → traversé comme un récup simple
+      // - 2+ jours consécutifs → break (vrai repos = reset biologique justifié)
+      if (vacances[k]) {
+        if (e && e.extra > 0) { consecRest = 0; consecOT++; continue; } // M2 dit travaillé
+        consecRest++;
+        if (consecRest >= 2) break;
+        continue; // 1 seul jour off isolé = traversé, pas reset
+      }
 
       // Férié = pause neutre
       if (specialDays[k] === 'ferie') { consecRest = 0; continue; }
@@ -1314,10 +1389,49 @@ class DTEEngine {
     const overCount = allDays.filter(d => (D.BASE_JOUR + d.extra) > D.BASE_JOUR + 2).length;
     const overRatio = allDays.length ? overCount / allDays.length : 0;
 
+    // Contingent légal — reset au 1er janvier (Art. L3121-30)
+    // Calculé sur l'année courante UNIQUEMENT depuis le days fusionné M1+M2
+    // (m1.netOvertime n'était jamais assigné dans _m1() → NaN → remplacé ici)
+    const _currentYear = String(raw.year || new Date().getFullYear());
+    let netOvertimeYear = m1.totalExtra || 0; // base M1 (déjà filtré par année dans _m1)
+    // Ajouter les HS M2 de l'année courante non couvertes par M1
+    if (m2 && m2.months) {
+      for (const [mk, monthData] of Object.entries(m2.months)) {
+        if (!mk.startsWith(_currentYear)) continue; // autre année → continuité bio seulement
+        const rawDays = monthData.rawDays || {};
+        for (const [day, hs] of Object.entries(rawDays)) {
+          const dk = mk + '-' + String(day).padStart(2, '0');
+          if (!m1.days[dk]) { // M1 prioritaire : éviter double comptage
+            netOvertimeYear += parseHours(hs);
+          }
+        }
+      }
+    }
+
     // Contingent
-    const contingentPct = (m1.netOvertime / D.CONTINGENT_MAX) * 100;
+    // PRORATA CONTINGENT — Art. L3121-30 al.2 + jurisprudence CCN
+    // Si l'utilisateur arrive en cours d'année, le contingent est proraté
+    // sur la base de la CCN active (pas forfaitairement 220h).
+    // Règle : contingent_proraté = CCN.contingent × (jours_restants / 365)
+    // Source : première entrée détectée dans le days fusionné M1+M2.
+    const _allDayKeys = Object.keys(days).filter(k => k.startsWith(_currentYear)).sort();
+    const _firstEntryDate = _allDayKeys.length > 0 ? _allDayKeys[0] : (_currentYear + '-01-01');
+    const _yearStart = new Date(_currentYear + '-01-01');
+    const _yearEnd   = new Date(_currentYear + '-12-31');
+    const _entryDate = new Date(_firstEntryDate);
+    // Nombre de jours dans l'année (gestion années bisextiles)
+    const _daysInYear = (_yearEnd - _yearStart) / 86400000 + 1;
+    // Jours restants depuis la première entrée (inclusif)
+    const _daysFromEntry = Math.max(1, (_yearEnd - _entryDate) / 86400000 + 1);
+    // Prorata : si entrée avant le 15 janvier → considéré comme année pleine (tolérance 2 sem)
+    const _isFullYear = _daysFromEntry >= (_daysInYear - 14);
+    const contingentMax = _isFullYear
+      ? D.CONTINGENT_MAX
+      : Math.round(D.CONTINGENT_MAX * _daysFromEntry / _daysInYear);
+
+    const contingentPct = (netOvertimeYear / contingentMax) * 100;
     // RCO — Art. L3121-33
-    const rcoDepassement = Math.max(0, m1.netOvertime - D.CONTINGENT_MAX);
+    const rcoDepassement = Math.max(0, netOvertimeYear - contingentMax);
     const rcoH50  = rcoDepassement * 0.5;
     const rcoH100 = rcoDepassement;
 
@@ -1339,7 +1453,12 @@ class DTEEngine {
     // Meijman & Mulder 1998 : l'absence de surcharge = début de récupération,
     // qu'elle soit déclarée "vacances" ou non.
 
-    const isVacFromDTE = [0,1,2,3,4].some(dd => {
+    // FIX SEMAINE MIXTE : isVacFromDTE ne doit être true que si la semaine
+    // n'a AUCUNE heure M2/M1 réelle. Sinon un seul jour off marqué vacances
+    // (ex: férié) bascule toute la semaine en mode "vacances" et écrase le
+    // travail effectif des autres jours.
+    // count7 = nombre de jours avec entrée réelle M2/M1 (hors vacances/féries) cette semaine
+    const isVacFromDTE = (count7 === 0) && [0,1,2,3,4].some(dd => {
       const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() + dd);
       if (dt > today) return false;
       return !!vacances[localDK(dt)];
@@ -1357,7 +1476,16 @@ class DTEEngine {
     // Signal 1 : DTE_VACANCES déclaré (M4)
     // Signal 2 : noWorkThisWeek (aucune entrée M1/M2 cette semaine)
     // Signal 3 : weeklyH7 ≤ seuil ET aucune donnée récente
-    const isCurrentWeekVacation = isVacFromDTE || noWorkThisWeek || belowBaseThisWeek;
+    // FIX belowBaseThisWeek : ne pas forcer vacances si la semaine a du travail réel (count7>0)
+    // ou si le check-in du jour courant dit 'work'.
+    // belowBaseThisWeek est conçu pour détecter les semaines sans saisie du tout (nouveaux utilisateurs).
+    // Il ne doit pas s'appliquer quand on a des jours travaillés confirmés cette semaine.
+    const _todayCheckin = (() => { try {
+      const _ch = JSON.parse(localStorage.getItem('DTE_CHECKIN_HISTORY')||'[]');
+      return _ch.find(e => e.date === localDK(today)) || null;
+    } catch(_) { return null; }})();
+    const _hasWorkThisWeek = count7 > 0 || (_todayCheckin && _todayCheckin.dayStatus === 'work');
+    const isCurrentWeekVacation = !_hasWorkThisWeek && (isVacFromDTE || noWorkThisWeek || belowBaseThisWeek);
 
     // avgH7 déjà déclaré plus haut — fatHS forcé à 0 en vacances dans _scores()
 
@@ -1396,7 +1524,11 @@ class DTEEngine {
       _consecNonOTDays: consecNonOTDays,
       _recentVacDays28: recentVacDays28,
       _sigma:         sigma,
-      _contingentPct: contingentPct,
+      _contingentPct:  contingentPct,
+      _contingentMax:  contingentMax,     // proraté CCN (= CCN.contingent si année pleine)
+      _contingentFull: D.CONTINGENT_MAX,  // plafond CCN non proraté
+      _firstEntryDate: _firstEntryDate,   // première entrée détectée (YYYY-MM-DD)
+      _isFullYear:     _isFullYear,       // true si entrée ≤ 15 jan
       _rcoDepassement: rcoDepassement,
       _rcoH50:        rcoH50,
       _rcoH100:       rcoH100,
