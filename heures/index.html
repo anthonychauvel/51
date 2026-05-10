@@ -189,13 +189,28 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
+<script>
+/* Anti-CLS : applique mode-expert AVANT le rendu pour éviter layout shift au chargement */
+(function(){
+  try {
+    var _m = localStorage.getItem("APP_MODE") || localStorage.getItem("GLOSSAIRE_MODE");
+    if (_m === "expert") document.documentElement.classList.add("mode-expert");
+  } catch(_e) {}
+})();
+/* Une fois body parsé, transférer la classe sur body si présente sur html */
+document.addEventListener("DOMContentLoaded", function(){
+  if (document.documentElement.classList.contains("mode-expert")) {
+    document.body.classList.add("mode-expert");
+  }
+});
+</script>
 </head>
 <body>
 <div id="landscape-blocker" aria-hidden="true">
   <div class="lb-icon">📱</div>
   <div class="lb-title">Tournez votre téléphone</div>
   <div class="lb-msg">Cette application est optimisée pour le mode portrait. Veuillez remettre votre appareil à la verticale pour continuer.</div>
-</div><script>try{var _m=localStorage.getItem("APP_MODE")||localStorage.getItem("GLOSSAIRE_MODE");if(_m==="expert")document.body.classList.add("mode-expert");}catch(_e){}</script>
+</div>
 <div class="top-nav-bar">
   <button class="menu-btn" onclick="goMenu()">&#8592; Retour au menu</button>
   <button class="kitsune-btn" onclick="window.location.href='../fox/index.html'" title="Mon compagnon d'analyse — suit tes heures et te récompense">&#x1F98A; Mon compagnon</button>
@@ -261,7 +276,7 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
       <!-- Toggle import API -->
       <div style="display:flex;align-items:center;justify-content:space-between;padding:10px 12px;background:#f8f9fa;border-radius:10px;border:1px solid #e0e0e0;margin-bottom:8px;">
         <div>
-          <div style="font-size:14px;font-weight:600;color:#2c3e50;">🇫🇷 Import API Gouvernement</div>
+          <div style="font-size:14px;font-weight:600;color:#2c3e50;">🇫🇷 Import jours fériés (source publique)</div>
           <div style="font-size:11px;color:#888;margin-top:2px;">Importer automatiquement les jours fériés officiels</div>
         </div>
         <label style="display:flex;align-items:center;gap:6px;cursor:pointer;margin:0;">
@@ -914,7 +929,11 @@ function calculate(){
     const total=base+extra;
     const p=calcHsPaliers(total,rules);
     h1+=p.h1;hInter+=p.hInter;h2+=p.h2;
-    const[y,m,d]=week.split("-");
+    // FIX BUG 1 : ignorer les clés invalides (sécurité)
+    if(!/^\d{4}-\d{2}-\d{2}$/.test(week))return;
+    // FIX BUG 2 : afficher la semaine UNIQUEMENT si elle contient des HS effectives
+    if(p.h1<=0 && p.hInter<=0 && p.h2<=0)return;
+    const[y,m,d]=week.split("-").map(Number);
     const t1lbl=rules.taux1+'%',t2lbl=rules.taux2+'%';
     const interPart=rules.taux_inter?` / ${fmtH(p.hInter)} à ${rules.taux_inter}%`:'';
     details.push(`Semaine du ${new Date(y,m-1,d).toLocaleDateString()} : ${fmtH(p.h1)} à ${t1lbl}${interPart} / ${fmtH(p.h2)} à ${t2lbl}`);
@@ -1069,9 +1088,40 @@ async function importFeries(){const by=Number(currentSuffix),years=[by-1,by,by+1
    Droit français Art. L3121-30 : le contingent est constitué par les HS effectivement
    réalisées, indépendamment de leur mode de compensation (paiement ou récupération).
    La récupération ne réduit PAS le contingent. */
+/* Prorata contingent — Art. D3121-24 : si le salarié arrive en cours d'année civile,
+   le contingent est proratisé au nombre de jours restants / jours de l'année. */
+function _getContingentEffectif(fullLimit, entryDateStr, year){
+  if(!entryDateStr) return fullLimit;
+  const eDate=new Date(entryDateStr); if(isNaN(eDate.getTime())) return fullLimit;
+  if(eDate.getFullYear()!==parseInt(year)) return fullLimit;
+  const yearStart=new Date(parseInt(year),0,1);
+  const yearEnd=new Date(parseInt(year),11,31);
+  const yearDays=(yearEnd-yearStart)/86400000+1;
+  const remDays=(yearEnd-eDate)/86400000+1;
+  const factor=remDays/yearDays;
+  if(factor>=0.98) return fullLimit; // ~1er janvier → pas de prorata
+  return Math.max(1,Math.round(fullLimit*factor));
+}
+
+// Auto-détection rétroactive M1 : premier mois avec des heures saisies
+function _autoDetectM1EntryDate(year){
+  const d=data||{}; // variable globale M1
+  const dates=Object.keys(d).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&k.startsWith(String(year))&&
+    typeof d[k]==='object'&&((d[k].extra||0)+(d[k].recup||0))>0).sort();
+  if(dates.length>0) return dates[0].substring(0,7)+'-01';
+  return null;
+}
 function updateContingent(){
   const rules=getCCNRules();
-  const LIMIT=rules.contingent;
+  // Résolution de la date d'entrée : exerciseStart explicite > auto-détect rétroactif
+  const _targetYear=exerciseStart?new Date(exerciseStart).getFullYear():new Date().getFullYear();
+  const _entryForProrata=exerciseStart||_autoDetectM1EntryDate(_targetYear)||null;
+  const _exYear=_entryForProrata?new Date(_entryForProrata).getFullYear():null;
+  const LIMIT=_exYear
+    ? _getContingentEffectif(rules.contingent, _entryForProrata, _exYear)
+    : rules.contingent;
+  const _isProrata=LIMIT!==rules.contingent;
+  const _isAutoDetect=!exerciseStart&&_isProrata;
   // Reconstruire via la même logique semaine que calculate()
   // sur l'ensemble de l'exercice (toutes les périodes)
   const weeks={},absences={};
@@ -1110,9 +1160,9 @@ function updateContingent(){
   if(!fill||!txt)return;
   fill.style.width=pct+"%";
   fill.style.background=pct<70?"#2ecc71":pct<90?"#f39c12":"#c0392b";
-  txt.textContent=fmtH(total)+" / "+LIMIT+"h";
-  if(pct>=100&&!sessionStorage.getItem("cont_full")){sessionStorage.setItem("cont_full","1");toast("⚠️ Contingent annuel de "+LIMIT+"h atteint !","warn",5000);}
-  else if(pct>=90&&!sessionStorage.getItem("cont_warn")){sessionStorage.setItem("cont_warn","1");toast("⚠️ Contingent : "+Math.round(pct)+"% atteint","warn",4000);}
+  txt.textContent=fmtH(total)+" / "+LIMIT+"h"+(_isProrata?(_isAutoDetect?" (prorata auto)":" (prorata)"):"");
+  if(pct>=100&&!sessionStorage.getItem("cont_full")){sessionStorage.setItem("cont_full","1");toast("⚠️ Contingent"+(_isProrata?" proratisé":"")+" de "+LIMIT+"h atteint !","warn",5000);}
+  else if(pct>=90&&!sessionStorage.getItem("cont_warn")){sessionStorage.setItem("cont_warn","1");toast("⚠️ Contingent"+(_isProrata?" (prorata "+LIMIT+"h)":"")+` : ${Math.round(pct)}% atteint`,"warn",4000);}
   // RCO — Art. L3121-33 : 50% au-delà du contingent (≤20 sal.) ou 100% (>20 sal.)
   const rcoWrap=document.getElementById("rcoWrap");
   const rcoText=document.getElementById("rcoText");
@@ -1930,7 +1980,7 @@ function protectFunctions(){
     <div class="wiz-step" id="wizStep4">
       <div class="wiz-question">🇫🇷 Configurer pour la France ?</div>
       <p class="wiz-hint">Ces options sont recommandées pour les contrats relevant du droit français.</p>
-      <label class="wiz-check-row"><input type="checkbox" id="wizImportFeries" checked><span>🎌 Importer les jours fériés officiels (API Gouvernement)</span></label>
+      <label class="wiz-check-row"><input type="checkbox" id="wizImportFeries" checked><span>🎌 Importer les jours fériés français (calendrier.api.gouv.fr)</span></label>
 
       <div style="background:#f8f9fa;border-radius:12px;border:1px solid #e0e0e0;overflow:hidden;margin-top:4px;">
         <label class="wiz-check-row" style="border-bottom:1px solid #e0e0e0;margin:0;padding:12px 14px;cursor:pointer;">
