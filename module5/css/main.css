@@ -293,6 +293,10 @@ body::before {
   transition: transform .12s, box-shadow .15s;
   text-decoration: none;
   letter-spacing: 0.01em;
+  /* Supprime le délai 300ms entre tap et réaction (iOS + Android) */
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+  /* user-select: none retiré — bloque les onclick sur iOS Safari */
 }
 .m5-btn:active { transform: scale(.97); }
 .m5-btn-primary {
@@ -313,8 +317,8 @@ body::before {
 .m5-btn-primary:hover::after { transform: translateX(150%); }
 .m5-btn-primary:hover { box-shadow: 0 6px 22px rgba(108,63,197,0.45); }
 .m5-btn-outline {
-  background: var(--miz-glass);
-  backdrop-filter: blur(8px);
+  background: rgba(108,63,197,0.06); /* glass sans blur → pas de freeze Android */
+  /* backdrop-filter: blur(8px) retiré — cause freeze Android au tap (calcul GPU) */
   color: var(--miz-primary);
   border: 1.5px solid var(--miz-border2);
 }
@@ -346,17 +350,27 @@ body::before {
 /* ── MODALES ─────────────────────────────────────────────────── */
 .m5-modal-backdrop {
   position: fixed; inset: 0;
-  background: rgba(18,10,40,0.60);
-  backdrop-filter: blur(4px);
+  /* Fond plus opaque (sans blur) → compense l'absence de backdrop-filter
+     qui causait un flash Android au moment du calcul GPU du blur */
+  background: rgba(18,10,40,0.78);
   z-index: 200;
   display: flex;
   align-items: flex-end;
   justify-content: center;
   opacity: 0;
   pointer-events: none;
-  transition: opacity .22s;
+  visibility: hidden;
+  transition: opacity .18s ease-out, visibility 0s linear .18s;
+  will-change: opacity;
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
 }
-.m5-modal-backdrop.open { opacity: 1; pointer-events: auto; }
+.m5-modal-backdrop.open {
+  opacity: 1;
+  pointer-events: auto;
+  visibility: visible;
+  transition: opacity .18s ease-out, visibility 0s linear 0s;
+}
 .m5-modal {
   background: var(--miz-bg);
   border-radius: var(--miz-radius-lg) var(--miz-radius-lg) 0 0;
@@ -364,11 +378,16 @@ body::before {
   max-height: 90vh;
   overflow-y: auto;
   padding: 22px 20px 36px;
-  transform: translateY(40px);
-  transition: transform .26s cubic-bezier(.17,.67,.28,1.2);
+  transform: translateY(40px) translateZ(0);
+  -webkit-transform: translateY(40px) translateZ(0);
+  transition: transform .22s cubic-bezier(.17,.67,.28,1.2);
   box-shadow: 0 -8px 40px rgba(60,30,140,0.18);
+  will-change: transform;
 }
-.m5-modal-backdrop.open .m5-modal { transform: translateY(0); }
+.m5-modal-backdrop.open .m5-modal {
+  transform: translateY(0) translateZ(0);
+  -webkit-transform: translateY(0) translateZ(0);
+}
 /* Handle de glisse */
 .m5-modal::before {
   content: '';
@@ -528,8 +547,7 @@ body::before {
   pointer-events: none;
 }
 .m5-toast {
-  background: rgba(24,16,46,0.92);
-  backdrop-filter: blur(10px);
+  background: rgba(24,16,46,0.96);
   color: #fff;
   padding: 11px 20px;
   border-radius: var(--miz-radius-sm);
@@ -701,6 +719,8 @@ body::before {
   padding: 20px; text-align: center; cursor: pointer;
   background: rgba(108,63,197,0.04);
   transition: background .15s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .m5-cal-week-total-cell:active { background: var(--miz-accent); }
 .m5-cal-week-total-val {
@@ -721,6 +741,8 @@ body::before {
   font-size: 14px; font-weight: 600;
   color: var(--miz-text2); cursor: pointer;
   transition: background .12s, border-color .12s, color .12s, transform .1s;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .m5-quick-btn:active { transform: scale(.95); }
 .m5-quick-btn.selected {
@@ -847,6 +869,7 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   background-size: 40px 40px, 25px 25px;
   background-position: 0 0, 12px 12px;
   opacity: 0.4;
+  pointer-events: none; /* ← décoratif uniquement, ne doit pas intercepter les clics */
 }
 /* Halo lumineux */
 .acc-week-hero::after {
@@ -856,6 +879,7 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   transform: translateX(-50%);
   width: 200px; height: 80px;
   background: radial-gradient(ellipse, rgba(139,92,246,0.30) 0%, transparent 70%);
+  pointer-events: none; /* ← décoratif uniquement */
 }
 
 /* Nav semaine */
@@ -876,6 +900,8 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   display: flex; align-items: center; justify-content: center;
   transition: background .15s;
   flex-shrink: 0;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .acc-nav-btn:active { background: rgba(255,255,255,0.22); }
 .acc-week-label {
@@ -895,6 +921,11 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 }
 
 /* Cellules calendrier sur fond sombre */
+#calendar-grid {
+  position: relative;
+  z-index: 1; /* passe au-dessus des ::before et ::after décoratifs */
+}
+
 .acc-week-hero .m5-cal-day {
   background: rgba(255,255,255,0.11);
   border: 1.5px solid rgba(255,255,255,0.14);
