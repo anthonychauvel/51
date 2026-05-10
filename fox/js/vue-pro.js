@@ -257,19 +257,17 @@
     var el = document.getElementById('vue-pro'); if (!el) return;
     var yr     = getYear();
     
-    // Contingent CCN + prorata date d'entrée via moduleReader
-    var contingent = 220; // Fallback
+    // Contingent CCN + prorata date d'entrée (Art. D3121-24)
+    var contingent = 220;
     if (typeof CCN_API !== 'undefined') {
       var idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
       var ccnRules = CCN_API.getGroupeForCCN(idcc);
       if (ccnRules && ccnRules.contingent) contingent = ccnRules.contingent;
     }
-    if (typeof moduleReader !== 'undefined' && moduleReader._resolveEntryDate) {
-      try {
-        var _r = moduleReader._applyProrata(contingent, yr, moduleReader._resolveEntryDate(yr));
-        if (_r.isProrata) contingent = _r.limit;
-      } catch(e) {}
-    }
+    try {
+      if (typeof moduleReader !== 'undefined' && moduleReader._resolveEntryDate)
+        contingent = moduleReader._applyProrata(contingent, yr, moduleReader._resolveEntryDate(yr));
+    } catch(e) {}
     
     var annual = calcAnnual(yr);
     var today  = calcToday(yr);
