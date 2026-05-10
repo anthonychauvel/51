@@ -71,7 +71,24 @@ const M6_ForfaitJours = {
   analyze(contract, data, year) {
     const plafond=contract.plafond||218;
     const cpContrat=contract.joursCPContrat||25;
-    const recap=this.calcRTT(year,plafond,cpContrat,contract.dateArrivee||null,contract.dateDepart||null);
+
+    // ── DÉTECTION AUTOMATIQUE DE L'ARRIVÉE ──
+    // Si aucune dateArrivee n'est configurée, on prend la 1ère saisie du calendrier
+    // comme point de départ du prorata. Aucune configuration requise.
+    const allKeys = Object.keys(data).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const firstEntry = allKeys.length ? allKeys[0] : null;
+    const autoArrivee = contract.dateArrivee || firstEntry;
+
+    // N'appliquer le prorata que si l'arrivée est significativement après le début d'exercice (>14j)
+    const exDebutStr = contract.dateDebutExercice || `${year}-01-01`;
+    const autoArriveeIsLate = autoArrivee && autoArrivee > exDebutStr &&
+      Math.round((new Date(autoArrivee+'T12:00:00') - new Date(exDebutStr+'T12:00:00')) / 86400000) > 14;
+    const effectiveArrivee = autoArriveeIsLate ? autoArrivee : null;
+
+    // ── B1 MULTI-ANNÉE : bornes d'exercice ──
+    const exDeb = effectiveArrivee || contract.dateDebutExercice || null;
+    const exFin = contract.dateFinExercice || contract.dateDepart || null;
+    const recap=this.calcRTT(year,plafond,cpContrat,exDeb,exFin);
     const feries=M6_Feries.getSet(year);
     let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0,demis_matin=0,demis_am=0;
     const alertes=[],entrees=[];
@@ -142,10 +159,12 @@ const M6_ForfaitJours = {
       rttTheoriques:recap.rttTheoriques,rttSolde:recap.rttTheoriques-rttPris,
       plafond:recap.joursTravailMax,feriesOuvres:recap.feriesOuvres,
       isProrata:recap.isProrata,ratio:recap.ratio,
+      plafondProrata:recap.joursTravailMax,
       tauxRemplissage:Math.min(100,Math.round(travailles/recap.joursTravailMax*100)),
       joursRestants:Math.max(0,recap.joursTravailMax-travailles),
       alertes,amplitudeViolations,simulRachat,fractionnement,prediction,
-      entretienDate:contract.entretienDate||null,parSemaine
+      entretienDate:contract.entretienDate||null,parSemaine,
+      firstEntry, effectiveArrivee,
     };
   },
 
@@ -208,9 +227,41 @@ const M6_ForfaitHeures = {
     const taux_inter  = ccnRules?.taux_inter  || null;
     const palier_inter= ccnRules?.palier_inter|| null;
     const taux2     = (ccnRules?.taux2)    || contract.taux2      || 50;
-    const contingent= (ccnRules?.contingent)|| contract.contingent|| 220;
+    const contingentBase = (ccnRules?.contingent)|| contract.contingent|| 220;
     const maxHebdo  = (ccnRules?.maxHebdo) || 48;
     const ccnNom    = ccnRules?.nom || contract.ccnLabel || 'Droit commun';
+
+    // ── PRORATA CONTINGENT : auto-détection depuis 1ère saisie ──
+    // La 1ère semaine saisie = point de départ. Aucune config requise.
+    const _allWkKeys = Object.keys(data).filter(k => /^\d{4}-W\d{2}$/.test(k)).sort();
+    const _firstWk = _allWkKeys.length ? _allWkKeys[0] : null;
+    const _firstWkDate = _firstWk ? (() => {
+      const [fy,fw] = _firstWk.split('-W');
+      const d = new Date(parseInt(fy), 0, 1 + (parseInt(fw)-1)*7);
+      d.setDate(d.getDate() + (1-(d.getDay()||7)));
+      return d.toISOString().slice(0,10);
+    })() : null;
+    const _exDebutFH = contract.dateDebutExercice || `${year}-01-01`;
+    const _lateFH = _firstWkDate && _firstWkDate > _exDebutFH &&
+      Math.round((new Date(_firstWkDate+'T12:00:00') - new Date(_exDebutFH+'T12:00:00')) / 86400000) > 14;
+    const _effectiveArrFH = contract.dateArrivee || (_lateFH ? _firstWkDate : null);
+
+    let contingent = contingentBase;
+    let contingentProrata = false;
+    if (_effectiveArrFH) {
+      const arrDate   = new Date(_effectiveArrFH + 'T12:00:00');
+      const exDebDate = new Date(_exDebutFH + 'T12:00:00');
+      const exFinDate = contract.dateFinExercice
+        ? new Date(contract.dateFinExercice + 'T12:00:00')
+        : new Date(year, 11, 31);
+      const totalJours = Math.round((exFinDate - exDebDate) / 86400000) + 1;
+      const restants   = Math.round((exFinDate - arrDate)  / 86400000) + 1;
+      const ratio = Math.min(1, Math.max(0, restants / totalJours));
+      if (ratio < 0.99) {
+        contingent = Math.round(contingentBase * ratio);
+        contingentProrata = true;
+      }
+    }
 
     const tauxH=contract.tauxHoraire||0;
     let totalHSTaux1=0,totalHSTaux_inter=0,totalHSTaux2=0,totalHeures=0,semaines=0;
@@ -274,6 +325,7 @@ const M6_ForfaitHeures = {
             exoFiscale:Math.round(exoFiscale*100)/100,
             tauxRemplissage:pct,detailSemaines,alertes,
             seuil,taux1,taux_inter,palier_inter,taux2,palier:palier1,contingent,
+            contingentBase, contingentProrata,
             ccnNom,prediction,
             a3Paliers: taux_inter !== null};
   },

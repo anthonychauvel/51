@@ -267,11 +267,42 @@ const M6_BioEngine = {
   analyzeForfaitJours(contract, data, year) {
     const plafond = contract.plafond || 218;
     const today   = new Date().toISOString().slice(0,10);
+
+    // ── B1 MULTI-ANNÉE : utiliser les bornes du contrat si présentes ──
+    // Un exercice peut chevaucher 2 années civiles (ex: déc 25 → déc 26)
+    // ── DÉTECTION AUTOMATIQUE DE L'ARRIVÉE (FJ) ──
+    // La 1ère date saisie dans le calendrier = point de départ réel.
+    // Aucune configuration requise — prorata calculé automatiquement.
+    const _allKeysFJ = Object.keys(data).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
+    const _firstFJ   = _allKeysFJ.length ? _allKeysFJ[0] : null;
+    const _exDebutFJ = contract.dateDebutExercice || `${year}-01-01`;
+    const _lateFJ    = _firstFJ && _firstFJ > _exDebutFJ &&
+      Math.round((new Date(_firstFJ+'T12:00:00') - new Date(_exDebutFJ+'T12:00:00')) / 86400000) > 14;
+    const exDeb = contract.dateArrivee || (_lateFJ ? _firstFJ : _exDebutFJ);
+    const exFin = contract.dateFinExercice || `${year}-12-31`;
+
     const entries = Object.entries(data)
-      .filter(([k]) => k.startsWith(String(year)) && k <= today)
+      .filter(([k]) => k >= exDeb && k <= exFin && k <= today)
       .sort(([a],[b]) => a.localeCompare(b));
 
-    if (!entries.length) return { hasData: false };
+    if (!entries.length) {
+      // Pas de saisie dans cet exercice — mais on charge quand même la baseline si elle existe
+      // pour préserver la continuité (B2)
+      const baseline = this._loadBaseline('forfait_jours');
+      if (baseline && baseline.fatigue > 0) {
+        return {
+          hasData: true,
+          fatigue: baseline.fatigue, stress: baseline.stress,
+          recovery: baseline.recovery, performance: 100 - baseline.fatigue,
+          cvRisk: 0, cogRisk: 0, agingRisk: 0, multiRisk: 0,
+          details: { rachetes:0, amplitudeLongue:0, amplitudeViola:0, semSurcharge:0, cumulSurcharge:0, rttPris:0, cpPris:0, joursTotal:0, hEquivMoyen:35 },
+          phase: this._phase(baseline.fatigue),
+          alertesBio: [{niveau:'info', icon:'📊', titre:'État reporté de l\'exercice précédent', texte:`Fatigue ${baseline.fatigue} · Stress ${baseline.stress} — saisissez vos premiers jours pour actualiser.`, loi:'Continuité physiologique'}],
+          fromBaseline: true
+        };
+      }
+      return { hasData: false };
+    }
 
     // ── Compteurs ──────────────────────────────────────────────
     let joursTotal = 0, rachetes = 0, rttPris = 0, cpPris = 0;
@@ -326,6 +357,20 @@ const M6_BioEngine = {
       }
     }
 
+    // ── B3 RÉCUPÉRATION AUTO : weekends et jours non-saisis ──
+    // Chaque jour non-saisi entre 1ère et dernière entrée = 1 jour de récup léger
+    // Conformément aux modèles Effort-Recovery Meijman & Mulder 1998
+    const missingDays = this._countMissingDays(entries);
+    cumulSurcharge = Math.max(0, cumulSurcharge - missingDays * 0.18);
+
+    // ── B2 BASELINE : dégrader ce qu'on a accumulé par la baseline si présente ──
+    // Si entrée rétroactive détectée (firstEntry a reculé depuis la dernière baseline),
+    // on ignore la baseline car les vraies données historiques priment
+    const _baselineValid = this._isBaselineValid('forfait_jours', _firstFJ);
+    const baseline = _baselineValid ? this._loadBaseline('forfait_jours') : null;
+    const baselineFat    = baseline?.fatigue || 0;
+    const baselineStress = baseline?.stress  || 0;
+
     // ── Équivalent heures hebdomadaires (pour les modèles horaires) ──
     // Pour FJ : on estime l'heq à partir du taux de forfait + amplitude réelle si saisie
     const tauxForfait = Math.min(1.3, joursTotal / Math.max(1, plafond * (nbSemaines / 52)));
@@ -360,6 +405,13 @@ const M6_BioEngine = {
     ));
     fatigue = Math.max(5, fatigue);
 
+    // ── B2 CONTINUITÉ : pondérer avec la baseline si on est en début d'exercice ──
+    // Si peu de saisies (<10 jours), la fatigue récente compte peu — on garde la mémoire
+    if (joursTotal < 10 && baselineFat > 0) {
+      const w = joursTotal / 10;  // poids progressif des nouvelles données
+      fatigue = Math.round(fatigue * w + baselineFat * (1 - w));
+    }
+
     // ── STRESS (HPA + épigénétique) ──────────────────────────
     // Basé sur : cortisol chronique [EPI], entretien [L3121-65], rachat [INF]
     const entretienDone = contract.entretienDate &&
@@ -373,6 +425,10 @@ const M6_BioEngine = {
       + amplitudeViola  * 3.0                            // violation repos = cortisol spike
     ));
     stress = Math.max(3, stress);
+    if (joursTotal < 10 && baselineStress > 0) {
+      const w = joursTotal / 10;
+      stress = Math.round(stress * w + baselineStress * (1 - w));
+    }
 
     // ── PERFORMANCE (Pencavel 2014) ───────────────────────────
     const perfBase  = Math.round(_pencavelPerf(hEquivMoyen) * 100);
@@ -406,6 +462,9 @@ const M6_BioEngine = {
       entretienDone, rttPris, cpPris, plafond, joursTotal, hEquivMoyen
     });
 
+    // ── B2 CONTINUITÉ : persister l'état bio pour le prochain exercice ──
+    this._saveBaseline('forfait_jours', { fatigue, stress, recovery }, _firstFJ);
+
     return {
       fatigue, stress, recovery, performance: perfFinal,
       cvRisk: cvRiskScore, cogRisk, agingRisk, multiRisk,
@@ -428,11 +487,55 @@ const M6_BioEngine = {
    */
   analyzeForfaitHeures(contract, data, year) {
     const seuil   = contract.seuilHebdo || 39;
+
+    // ── B1 MULTI-ANNÉE : utiliser bornes contrat ──
+    // ── DÉTECTION AUTOMATIQUE DE L'ARRIVÉE (FH) ──
+    const _allKeysFH = Object.keys(data).filter(k => /^\d{4}-W\d{2}$/.test(k)).sort();
+    const _firstFH   = _allKeysFH.length ? _allKeysFH[0] : null;
+    const _exDebutFH = contract.dateDebutExercice || `${year}-01-01`;
+    const _firstFHDate = _firstFH ? (() => {
+      const [y,w] = _firstFH.split('-W');
+      const d = new Date(parseInt(y), 0, 1 + (parseInt(w)-1)*7);
+      d.setDate(d.getDate() + (1-(d.getDay()||7)));
+      return d.toISOString().slice(0,10);
+    })() : null;
+    const _lateFH = _firstFHDate && _firstFHDate > _exDebutFH &&
+      Math.round((new Date(_firstFHDate+'T12:00:00') - new Date(_exDebutFH+'T12:00:00')) / 86400000) > 14;
+    const _autoArriveeFH = contract.dateArrivee || (_lateFH ? _firstFHDate : null);
+
+    const exDeb = _autoArriveeFH || contract.dateDebutExercice || `${year}-01-01`;
+    const exFin = contract.dateFinExercice   || `${year}-12-31`;
+    // Filtrer les semaines ISO qui chevauchent l'exercice
+    const filterWeek = (wkKey) => {
+      const m = wkKey.match(/^(\d{4})-W(\d{2})$/);
+      if (!m) return wkKey >= exDeb.slice(0,7) && wkKey <= exFin.slice(0,7);
+      const [,y,w] = m;
+      const d = new Date(parseInt(y), 0, 1 + (parseInt(w)-1)*7);
+      const iso = d.toISOString().slice(0,10);
+      return iso >= exDeb && iso <= exFin;
+    };
+
     const entries = Object.entries(data)
-      .filter(([k]) => k.startsWith(String(year)))
+      .filter(([k]) => filterWeek(k))
       .sort(([a],[b]) => a.localeCompare(b));
 
-    if (!entries.length) return { hasData: false };
+    if (!entries.length) {
+      // B2 baseline FH si pas de saisie
+      const baseline = this._loadBaseline('forfait_heures');
+      if (baseline && baseline.fatigue > 0) {
+        return {
+          hasData: true,
+          fatigue: baseline.fatigue, stress: baseline.stress,
+          recovery: baseline.recovery, performance: 100 - baseline.fatigue,
+          cvRisk: 0, cogRisk: 0, agingRisk: 0,
+          mean: 0, max: 0, surcharge: 0, n: 0,
+          phase: this._phase(baseline.fatigue),
+          alertesBio: [{niv:'info', titre:'État reporté de l\'exercice précédent', texte:`Fatigue ${baseline.fatigue} · Stress ${baseline.stress} — saisissez vos premières semaines pour actualiser.`}],
+          fromBaseline: true
+        };
+      }
+      return { hasData: false };
+    }
 
     const heuresArr = entries.map(([,v]) => parseFloat(v.heures) || 0);
     const n         = heuresArr.length;
@@ -480,7 +583,8 @@ const M6_BioEngine = {
         n
       },
       phase:      this._phase(fatigue),
-      alertesBio: this._buildAlertesFH({ fatigue, stress, cvRiskScore, cogRisk, agingRisk, mean, surcharge, n }),
+      alertesBio: (this._saveBaseline('forfait_heures', { fatigue, stress, recovery }, _firstFHDate),
+        this._buildAlertesFH({ fatigue, stress, cvRiskScore, cogRisk, agingRisk, mean, surcharge, n })),
       hasData:    true
     };
   },
@@ -584,6 +688,55 @@ const M6_BioEngine = {
     if (fat <= BIO.P2_MAX) return { code:'P2', label:'Fatigue chronique', color:'#C4853A' };
     if (fat <= BIO.P3_MAX) return { code:'P3', label:'Surmenage',         color:'#B85C50' };
     return                          { code:'P4', label:'Burn-out',         color:'#9B2C2C' };
+  },
+
+  // ── B2 CONTINUITÉ BIO : baseline persistée entre exercices ──
+  // Préserve l'état physiologique au passage à un nouvel exercice
+  // (loi : le 1er janvier ne réinitialise pas un cadre fatigué)
+  _loadBaseline(regime) {
+    try {
+      const raw = localStorage.getItem('M6_BIO_BASELINE_' + regime);
+      if (!raw) return null;
+      const b = JSON.parse(raw);
+      const daysSince = b.lastUpdate ? Math.floor((Date.now() - new Date(b.lastUpdate).getTime()) / 86400000) : 0;
+      const decay = Math.min(0.7, daysSince * 0.014);
+      return {
+        fatigue:  Math.max(0, Math.round((b.fatigue||0)  * (1 - decay))),
+        stress:   Math.max(0, Math.round((b.stress||0)   * (1 - decay))),
+        recovery: Math.min(100, Math.round((b.recovery||50) + decay * 30)),
+        lastUpdate: b.lastUpdate,
+        firstEntry: b.firstEntry || null,
+      };
+    } catch(_) { return null; }
+  },
+  // Vérifie si une entrée rétroactive a été ajoutée (firstEntry a reculé)
+  _isBaselineValid(regime, currentFirstEntry) {
+    try {
+      const raw = localStorage.getItem('M6_BIO_BASELINE_' + regime);
+      if (!raw) return false;
+      const b = JSON.parse(raw);
+      if (!b.firstEntry || !currentFirstEntry) return true;
+      return currentFirstEntry >= b.firstEntry;
+    } catch(_) { return true; }
+  },
+  _saveBaseline(regime, state, firstEntry = null) {
+    try {
+      localStorage.setItem('M6_BIO_BASELINE_' + regime, JSON.stringify({
+        fatigue: state.fatigue, stress: state.stress, recovery: state.recovery,
+        lastUpdate: new Date().toISOString(),
+        firstEntry,
+      }));
+    } catch(_) {}
+  },
+
+  // ── B3 RÉCUPÉRATION WEEKENDS : décroissance pour chaque jour non-saisi ──
+  // Retourne le nb de jours non-saisis entre la 1ère et dernière entrée
+  _countMissingDays(entries) {
+    if (entries.length < 2) return 0;
+    const first = new Date(entries[0][0] + 'T12:00:00');
+    const last  = new Date(entries[entries.length-1][0] + 'T12:00:00');
+    const totalDays = Math.floor((last - first) / 86400000) + 1;
+    return Math.max(0, totalDays - entries.length);
   },
 
   _isoWeek(d) {
