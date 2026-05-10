@@ -56,7 +56,8 @@ const M6_SimulateurNullite = {
     // ── Condition 2 : Clause explicite dans le contrat ─────────
     // Cass. Soc. 16/06/2010 : la convention de forfait doit figurer dans
     // le contrat de travail — elle ne peut pas être tacite
-    const hasContractMention = !!(contract.nomCadre && contract.plafond);
+    // B4 FIX : tester uniquement le plafond (le nom n'est pas requis pour la validité juridique)
+    const hasContractMention = !!(contract.plafond && contract.plafond > 0);
     conditions.push({
       id: 'clause_contrat',
       titre: 'Convention de forfait mentionnée dans le contrat',
@@ -65,7 +66,7 @@ const M6_SimulateurNullite = {
       niveau: hasContractMention ? 'ok' : 'danger',
       detail: hasContractMention
         ? `Forfait configuré à ${contract.plafond} jours — paramètre contractuel présent.`
-        : 'Le plafond annuel n\'est pas renseigné. La convention de forfait doit figurer noir sur blanc dans le contrat (et non être tacite).',
+        : 'Le plafond annuel n\'est pas configuré. La convention de forfait doit figurer noir sur blanc dans le contrat (et non être tacite).',
       recommandation: 'Vérifiez que votre contrat mentionne explicitement : "… dans le cadre d\'une convention de forfait annuel en jours à hauteur de X jours par an."',
     });
 
@@ -75,15 +76,41 @@ const M6_SimulateurNullite = {
     const entretienThisYear = contract.entretienDate &&
       new Date(contract.entretienDate).getFullYear() >= year;
     const entretienHistorique = M6_Storage?.getEntretiens?.(contract._regime || 'forfait_jours')?.length > 0;
+
+    // ── B5 + MID-YEAR FIX : niveau d'alerte progressif selon avancement de l'exercice ──
+    // Si le cadre est arrivé en cours d'exercice, le progrès se calcule depuis son arrivée
+    // L'entretien annuel n'est juridiquement requis qu'à proximité de la fin de l'exercice.
+    const exDeb = contract.dateArrivee
+      ? new Date(contract.dateArrivee)
+      : (contract.dateDebutExercice ? new Date(contract.dateDebutExercice) : new Date(year,0,1));
+    const exFin = contract.dateFinExercice ? new Date(contract.dateFinExercice) : new Date(year,11,31);
+    const _now  = new Date();
+    const _totalDays   = Math.max(1, (exFin - exDeb) / 86400000);
+    const _elapsedDays = Math.max(0, Math.min(_totalDays, (_now - exDeb) / 86400000));
+    const exerciceProgress = _elapsedDays / _totalDays; // 0 → 1+
+    // Si arrivée très récente (<3 mois), forcer 'info' quel que soit le ratio
+    const isRecentArrival = contract.dateArrivee &&
+      ((_now - new Date(contract.dateArrivee)) / 86400000) < 90;
+    let niveauEntretien;
+    if (entretienThisYear)                  niveauEntretien = 'ok';
+    else if (isRecentArrival)               niveauEntretien = 'info';   // <3 mois → pas encore requis
+    else if (exerciceProgress < 0.75)       niveauEntretien = 'info';
+    else if (exerciceProgress < 0.92)       niveauEntretien = 'warning';
+    else                                    niveauEntretien = 'danger';
+
     conditions.push({
       id: 'entretien_annuel',
       titre: 'Entretien annuel de suivi réalisé',
       loi: 'Art. L3121-65 + Cass. Soc. 02/07/2014',
       ok: entretienThisYear,
-      niveau: entretienThisYear ? 'ok' : 'danger',
+      niveau: niveauEntretien,
       detail: entretienThisYear
         ? `Entretien enregistré le ${new Date(contract.entretienDate).toLocaleDateString('fr-FR')} pour ${year}.`
-        : `Aucun entretien enregistré pour ${year}. La Cour de cassation a annulé des forfaits uniquement sur ce motif.`,
+        : (niveauEntretien === 'info'
+          ? `Aucun entretien encore enregistré pour ${year} — exercice à ${Math.round(exerciceProgress*100)}%. À programmer avant la fin de l\'exercice.`
+          : niveauEntretien === 'warning'
+          ? `Aucun entretien enregistré pour ${year} — exercice à ${Math.round(exerciceProgress*100)}%. À organiser rapidement (Art. L3121-65).`
+          : `Aucun entretien enregistré pour ${year}. La Cour de cassation a annulé des forfaits uniquement sur ce motif.`),
       recommandation: 'Organisez et documentez l\'entretien annuel portant sur : charge de travail, articulation vie pro/perso, rémunération, organisation. Consignez-le dans l\'onglet Entretien.',
     });
 
