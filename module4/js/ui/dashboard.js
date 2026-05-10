@@ -519,7 +519,9 @@ class Dashboard {
       {label:'Durée/jour',  value:7+(norm._avgExtra7||0), max:10, warn:8},
       {label:'Hebdoma.', value:35+(norm._avgExtra7||0)*5, max:48, warn:44},
       {label:'Consécutifs', value:norm._consec||0,        max:6,  warn:5},
-      {label:'Contingent',  value:norm._contingentPct||0, max:100,warn:75},
+      {label:'Contingent' + (norm._contingentMax && norm._contingentMax !== norm._contingentFull
+        ? ' (proraté ' + norm._contingentMax + 'h)' : ''),
+       value:norm._contingentPct||0, max:100, warn:75},
       {label:'Repos quoti.',value:Math.max(0,11-((norm._avgExtra7||0)*.5)),max:11,warn:9,invert:true},
       {label:'Fatigue',     value:scores.fatigue,         max:100,warn:75},
     ];
@@ -541,7 +543,11 @@ class Dashboard {
       const ccnRules = (typeof CCN_API !== 'undefined') 
         ? CCN_API.getGroupeForCCN(parseInt((()=>{try{return localStorage.getItem('CCN_IDCC')}catch(_){return '0'}})() || '0'))
         : {contingent: 220};
-      const _limit = (ccnRules && ccnRules.contingent) ? ccnRules.contingent : 220;
+      // Utiliser le contingent proraté si disponible (utilisateur arrivé en cours d'année)
+      const _normState = window.DTE?.engine?.getState()?.norm;
+      const _limit = (_normState && _normState._contingentMax)
+        ? _normState._contingentMax
+        : (ccnRules && ccnRules.contingent) ? ccnRules.contingent : 220;
       cont.textContent=`Contingent : ${raw&&raw.m1?Math.round(raw.m1.netOvertime||raw.m1.totalExtra||0):0}/${_limit}h`;
     }
     const st=document.getElementById('footer-status');
