@@ -256,17 +256,18 @@ const M6_Router = {
 
       this._root.querySelector('#wiz-next')?.addEventListener('click', () => {
         if (step === 1) {
-          const debut = this._root.querySelector('#wiz-debut')?.value;
-          const fin   = this._root.querySelector('#wiz-fin')?.value;
+          const debut    = this._root.querySelector('#wiz-debut')?.value;
+          const fin      = this._root.querySelector('#wiz-fin')?.value;
           if (debut && fin && debut > fin) { M6_toast('La date de fin doit être après le début'); return; }
           this._wizData = { ...this._wizData, debut, fin, nom: this._root.querySelector('#wiz-nom')?.value.trim() };
         }
         step++; render();
       });
+      // Prorata auto-détecté depuis 1ère saisie — aucune config requise.
       this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
       this._root.querySelector('#wiz-back')?.addEventListener('click', () => { this._regime = null; localStorage.removeItem('M6_REGIME'); M6_Header.reset(); this._showSelector(); });
       this._root.querySelector('#wiz-finish')?.addEventListener('click', () => {
-        let contract = { nomCadre: this._wizData?.nom||'', emailManager: this._root.querySelector('#wiz-email-mgr')?.value.trim()||'', dateDebutExercice: this._wizData?.debut||null, dateFinExercice: this._wizData?.fin||null };
+        let contract = { nomCadre: this._wizData?.nom||'', emailManager: this._root.querySelector('#wiz-email-mgr')?.value.trim()||'', dateDebutExercice: this._wizData?.debut||null, dateFinExercice: this._wizData?.fin||null, dateArrivee: this._wizData?.arrivee||null };
         if (regime === 'forfait_jours') {
           contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218, joursCPContrat: parseFloat(this._root.querySelector('#wiz-cp')?.value)||25, tauxJournalier: parseFloat(this._root.querySelector('#wiz-tj')?.value)||0, ccnLabel: this._root.querySelector('#wiz-ccn')?.value.trim()||'', tauxMajorationRachat: 10 };
         } else if (regime === 'forfait_heures') {
@@ -323,5 +324,65 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 });
 window.M6_Router = M6_Router;
+
+// ══════════════════════════════════════════════════════════════════
+//  R1 — MINI-TUTORIEL ONBOARDING
+//  Affiche 4 bulles contextuelles à la 1ère visite de chaque section.
+//  Stocké dans M6_TUTO_SEEN (clé globale, transverse aux régimes).
+// ══════════════════════════════════════════════════════════════════
+window.M6_Tuto = {
+  STEPS: [
+    { sel:'.m6-bottom-nav', titre:'Navigation rapide',
+      texte:'Toutes les fonctions sont accessibles ici. <strong>Bilan</strong> pour l\'aperçu, <strong>Calendrier/Semaines</strong> pour saisir, <strong>Santé</strong> pour vos indicateurs bio, <strong>Validité</strong> pour le contrôle juridique, <strong>Export</strong> pour les PDF.' },
+    { sel:'#m6-reset-btn', titre:'Reconfigurer le contrat',
+      texte:'Le bouton ⚙ permet de modifier votre contrat à tout moment. Vos données saisies sont conservées.' },
+    { sel:'#m6-regime-switch', titre:'Changer de régime',
+      texte:'Le bouton ⇄ permet de basculer entre Forfait Jours, Forfait Heures et Cadre Dirigeant.' },
+  ],
+  show() {
+    if (localStorage.getItem('M6_TUTO_SEEN') === '1') return;
+    let step = 0;
+    const overlay = document.createElement('div');
+    overlay.id = 'm6-tuto-overlay';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;animation:m6FadeIn 0.3s';
+    const render = () => {
+      const s = this.STEPS[step];
+      overlay.innerHTML = `
+      <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,0.4)">
+        <div style="display:flex;gap:6px;margin-bottom:12px">
+          ${this.STEPS.map((_,i)=>`<div style="flex:1;height:3px;border-radius:2px;background:${i<=step?'#C4A35A':'#E2DAD0'}"></div>`).join('')}
+        </div>
+        <div style="font-family:Georgia,serif;font-size:1.1rem;font-weight:600;color:#1A1714;margin-bottom:10px">${s.titre}</div>
+        <div style="font-size:0.86rem;color:#4A4540;line-height:1.55;margin-bottom:18px">${s.texte}</div>
+        <div style="display:flex;gap:8px">
+          ${step>0?`<button id="tuto-prev" style="flex:1;background:transparent;border:1px solid #E2DAD0;border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer">← Précédent</button>`:''}
+          <button id="tuto-skip" style="flex:1;background:transparent;border:1px solid #E2DAD0;border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer;color:#8A847C">Passer</button>
+          <button id="tuto-next" style="flex:1;background:#1A1714;color:#F7F3ED;border:none;border-radius:8px;padding:10px;font-size:0.88rem;font-weight:500;cursor:pointer">${step<this.STEPS.length-1?'Suivant →':'Commencer'}</button>
+        </div>
+        <div style="font-size:0.65rem;color:#8A847C;text-align:center;margin-top:10px">Étape ${step+1} / ${this.STEPS.length}</div>
+      </div>`;
+      overlay.querySelector('#tuto-next').onclick = () => {
+        if (step < this.STEPS.length-1) { step++; render(); }
+        else { localStorage.setItem('M6_TUTO_SEEN','1'); overlay.remove(); }
+      };
+      overlay.querySelector('#tuto-prev')?.addEventListener('click', () => { step--; render(); });
+      overlay.querySelector('#tuto-skip').onclick = () => { localStorage.setItem('M6_TUTO_SEEN','1'); overlay.remove(); };
+    };
+    render();
+    document.body.appendChild(overlay);
+  },
+  reset() { try{localStorage.removeItem('M6_TUTO_SEEN');}catch(_){} }
+};
+
+// Lancer le tuto une fois après le chargement initial (1.5s pour laisser la nav apparaître)
+setTimeout(() => {
+  if (document.querySelector('.m6-bottom-nav')) {
+    // Si M6_Coach disponible, son maybeAutoShow gère déjà l'auto-trigger par section
+    // Sinon fallback sur le tuto navigation basique
+    if (!window.M6_Coach && localStorage.getItem('M6_TUTO_SEEN') !== '1') {
+      window.M6_Tuto.show();
+    }
+  }
+}, 1500);
 
 })();
