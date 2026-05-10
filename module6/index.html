@@ -13,10 +13,13 @@
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="M6 Cadres">
   <meta name="mobile-web-app-capable" content="yes">
+  <!-- BLINDAGE PROD : doit être chargé EN PREMIER (patch localStorage, error boundary, version) -->
+  <script src="js/core/safe-boot.js"></script>
   <script src="../ccn/conventions-collectives.js"></script>
   <!-- CCN Cadres : données spécifiques forfait jours + cadres dirigeants (propre à M6) -->
   <!-- Le fichier ci-dessus (conventions-collectives.js) est partagé modules 1-5 et ne doit pas être modifié -->
   <script src="ccn/conventions-cadres.js"></script>
+  <script src="ccn/coefficients-grilles.js"></script>
   <link rel="stylesheet" href="css/main.css">
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
 </head>
@@ -62,6 +65,8 @@
 <script src="js/features/entretien-glossaire.js"></script>
 <script src="js/features/rupture-calculateur.js"></script>
 <script src="js/features/nullite-checker.js"></script>
+<script src="js/features/validite-heures-cd.js"></script>
+<script src="js/features/coach.js"></script>
 <script src="js/views/view-forfait-jours.js"></script>
 <script src="js/views/view-forfait-heures.js"></script>
 <script src="js/views/view-cadre-dirigeant.js"></script>
