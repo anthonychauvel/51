@@ -544,6 +544,15 @@ class DTEEngine {
     const m1 = this._m1(year);
     const m2 = this._m2(year);
     const rpg = this._rpg();
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] _readAll', 'color:#0af;font-weight:bold', { year });
+      console.log('[DTE-DBG] M1 days count:', Object.keys(m1.days || {}).length, 'totalExtra:', m1.totalExtra);
+      console.log('[DTE-DBG] M2 months count:', Object.keys(m2.months || {}).length);
+      // Détail mois courant
+      const yk = year + '-' + String(new Date().getMonth()+1).padStart(2,'0');
+      if (m2.months[yk]) console.log('[DTE-DBG] M2 mois courant', yk, ':', m2.months[yk]);
+      else console.log('[DTE-DBG] M2 mois courant', yk, ': ABSENT');
+    }
     return { year, m1, m2, rpg };
   }
 
@@ -658,7 +667,22 @@ class DTEEngine {
           if(k && k.startsWith('CA_HS_TRACKER_V1_DATA_') && !keys.includes(k)) keys.push(k);
         }
       } catch(_) {}
-
+      if (window.__DTE_DEBUG !== false) {
+        console.log('%c[DTE-DBG] _m2 keys testés:', 'color:#fa0', keys);
+        keys.forEach(k => {
+          const v = localStorage.getItem(k);
+          if (v && v !== '{}' && v !== 'null') {
+            try {
+              const p = JSON.parse(v);
+              const monthKeys = Object.keys(p).filter(mk => /^\d{4}-\d{2}$/.test(mk));
+              console.log('  ', k, '→', monthKeys.length, 'mois:',
+                monthKeys.map(mk => mk + '(' + Object.keys((p[mk] || {}).days || {}).length + 'j)').join(', '));
+            } catch(_) { console.log('  ', k, '→ JSON invalide'); }
+          } else {
+            console.log('  ', k, '→ vide ou absent');
+          }
+        });
+      }
       // FIX MULTI-ANNÉES : merger TOUS les fichiers M2 sans écraser les données réelles.
       // Problème Object.assign naïf : DATA_2026 peut contenir des mois vides créés par
       // navigation (ex: '2026-05': {days:{}} ) qui écrasent les vraies données de DATA_2025.
@@ -872,6 +896,22 @@ class DTEEngine {
       // Jour travaillé sans HS
       if (e) { count7++; hasAnyEntryThisWeek = true; }
     }
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] semaine courante', 'color:#0fa;font-weight:bold');
+      console.log('  weekMonday:', localDK(weekMondayA), 'today:', localDK(today), 'todayDowA:', todayDowA);
+      console.log('  hasAnyEntryThisWeek:', hasAnyEntryThisWeek, '| count7:', count7, '| sumExtra7:', sumExtra7);
+      // Détail jour par jour
+      for (let dd = 0; dd < todayDowA && dd < workDaysPerWeek; dd++) {
+        const d = new Date(weekMondayA); d.setDate(weekMondayA.getDate() + dd);
+        if (d > today) break;
+        const k = localDK(d);
+        const e = days[k];
+        const isFerie = specialDays[k] === 'ferie';
+        const isVac = !!vacances[k];
+        console.log('   ', k, '|', e ? ('extra='+e.extra) : 'NO M2/M1',
+          '| ferie=', isFerie, '| vacances=', isVac);
+      }
+    }
 
     // weeklyExtra : priorité à la semaine courante pour la progression jour par jour
     //
@@ -960,6 +1000,11 @@ class DTEEngine {
     }
     const _seuilEffective = Math.max(0, _ccnR.seuil - feriesInCurrentWeek * _baseJourCCN);
     const weeklyH7        = _seuilEffective + weeklyExtra;
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] weeklyH7', 'color:#f0f;font-weight:bold',
+        { seuilCCN: _ccnR.seuil, feriesInCurrentWeek, baseJourCCN: _baseJourCCN,
+          seuilEffective: _seuilEffective, weeklyExtra, weeklyH7 });
+    }
 
     // Signal "semaine sans travail" : aucune entrée M1/M2 cette semaine
     // FIX LUNDI : le 1er jour de semaine CCN sans saisie ≠ vacances (c'est juste le début de semaine)
@@ -1055,6 +1100,10 @@ class DTEEngine {
       lastBlankWeekMon = null;
       if (e && e.extra > 0) consecOT++;
     }
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] consecOT final:', 'color:#fa0;font-weight:bold', consecOT,
+        '| consecRest:', consecRest, '| blankWeeks:', blankWeeks);
+    }
 
     // ── CUMUL SEMAINES DE SURCHARGE — 2 passes pour éviter le bug d'ordre ────
     //
@@ -1093,17 +1142,9 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
         const isVacDay = !!vacances[k];
-        if (e) {
-          // Entrée réelle M1/M2 — contribue à weekH et marque la semaine comme active
-          weekH += baseJourCCN + (isVacDay ? 0 : (e.extra || 0));
-          hasAnyDay = true;
-          if (e.extra > 0 && !isVacDay) daysLogged++;
-        } else if (hasAnyDay) {
-          // Jour sans entrée dans une semaine DÉJÀ marquée active → ajouter base
-          // (ex: M1 stocke par monday, mardi-vendredi ont e=undefined mais la semaine est réelle)
-          weekH += baseJourCCN;
-        }
-        // Si hasAnyDay = false ET e = undefined → semaine inconnue, ne pas marquer active
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
+        hasAnyDay = true;
+        if (e && e.extra > 0 && !isVacDay) daysLogged++;
       }
       // FIX EXTRAPOLATION : semaine courante → weekH réel (HS faites + base jours restants)
       // Cohérent avec weeklyExtra conservative → weekH = seuil + HS réelles
@@ -1164,12 +1205,8 @@ class DTEEngine {
         if (e && (e.recup >= 7)) continue;
         // FIX VACANCES : jour vacances = 0h HS
         const isVacDay = !!vacances[k];
-        if (e) {
-          weekH += baseJourCCN + (isVacDay ? 0 : (e.extra || 0));
-          hasAnyDay = true;
-        } else if (hasAnyDay) {
-          weekH += baseJourCCN;
-        }
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
+        hasAnyDay = true;
       }
       // FIX : isM1RestWeekP2 requiert majorité des jours absents (même logique que Passe 1)
       // 1 jour absent seul (ex: lundi férié marqué absent) ne = pas semaine de vacances
@@ -1205,23 +1242,13 @@ class DTEEngine {
 
     // Fallback robuste : si cumulWeeks = 0 mais qu'il existe des logs,
     // estimer la durée d'exposition via la plage de dates réelle du log.
-    // CONDITION STRICTE : seulement si la moyenne des HS dépasse le seuil INRS (>40h/sem).
-    // Sinon le fallback gonflait cumulWeeks pour des utilisateurs avec peu de HS modérées.
-    // Ex : 14h HS sur 7 jours en avril → pass 1 = 0 → fallback donnait 5 semaines (faux).
+    // Corrige le cas où des semaines partielles tombent toutes sous H_OPTIMAL.
     if (cumulWeeks === 0 && Object.keys(days).length > 0) {
       const allDateKeys = Object.keys(days).filter(k => days[k] && days[k].extra > 0).sort();
-      if (allDateKeys.length >= 5) {
-        // Calculer la moyenne HS par semaine sur la période
-        const firstDate  = new Date(allDateKeys[0] + 'T12:00:00');
-        const diffDays   = Math.ceil((today - firstDate) / 864e5);
-        const diffWeeks  = Math.max(1, diffDays / 7);
-        const totalExtra = allDateKeys.reduce((s, k) => s + (days[k].extra || 0), 0);
-        const avgHSPerWeek = totalExtra / diffWeeks;
-        // Fallback uniquement si moyenne > seuil minimum INRS (5h HS/sem = 40h/sem sur base 35h)
-        // En dessous : l'utilisateur n'est pas en surcharge chronique → cumulWeeks reste 0
-        if (avgHSPerWeek >= 5) {
-          cumulWeeks = Math.max(1, Math.round(diffWeeks));
-        }
+      if (allDateKeys.length >= 5) { // au moins 1 semaine de données
+        const firstDate = new Date(allDateKeys[0] + 'T12:00:00');
+        const diffDays  = Math.ceil((today - firstDate) / 864e5);
+        cumulWeeks = Math.max(1, Math.round(diffDays / 7));
       }
     }
 
@@ -1431,29 +1458,9 @@ class DTEEngine {
     }
 
     // Contingent
-    // PRORATA CONTINGENT — Art. L3121-30 al.2 + jurisprudence CCN
-    // Si l'utilisateur arrive en cours d'année, le contingent est proraté
-    // sur la base de la CCN active (pas forfaitairement 220h).
-    // Règle : contingent_proraté = CCN.contingent × (jours_restants / 365)
-    // Source : première entrée détectée dans le days fusionné M1+M2.
-    const _allDayKeys = Object.keys(days).filter(k => k.startsWith(_currentYear)).sort();
-    const _firstEntryDate = _allDayKeys.length > 0 ? _allDayKeys[0] : (_currentYear + '-01-01');
-    const _yearStart = new Date(_currentYear + '-01-01');
-    const _yearEnd   = new Date(_currentYear + '-12-31');
-    const _entryDate = new Date(_firstEntryDate);
-    // Nombre de jours dans l'année (gestion années bisextiles)
-    const _daysInYear = (_yearEnd - _yearStart) / 86400000 + 1;
-    // Jours restants depuis la première entrée (inclusif)
-    const _daysFromEntry = Math.max(1, (_yearEnd - _entryDate) / 86400000 + 1);
-    // Prorata : si entrée avant le 15 janvier → considéré comme année pleine (tolérance 2 sem)
-    const _isFullYear = _daysFromEntry >= (_daysInYear - 14);
-    const contingentMax = _isFullYear
-      ? D.CONTINGENT_MAX
-      : Math.round(D.CONTINGENT_MAX * _daysFromEntry / _daysInYear);
-
-    const contingentPct = (netOvertimeYear / contingentMax) * 100;
+    const contingentPct = (netOvertimeYear / D.CONTINGENT_MAX) * 100;
     // RCO — Art. L3121-33
-    const rcoDepassement = Math.max(0, netOvertimeYear - contingentMax);
+    const rcoDepassement = Math.max(0, netOvertimeYear - D.CONTINGENT_MAX);
     const rcoH50  = rcoDepassement * 0.5;
     const rcoH100 = rcoDepassement;
 
@@ -1516,9 +1523,17 @@ class DTEEngine {
     // INTERDIT : useGlobalAverage() — règle d'or de l'architecture de référence.
     // Avant : si weeklyH7 ≤ seuil, fallback sur mean → 39h fantôme après 10 sem à 45h.
     // Après : toujours la semaine en cours. En vacances → seuil CCN (35h = perf 100%).
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] vacation flags', 'color:#fa0;font-weight:bold',
+        { isVacFromDTE, noWorkThisWeek, belowBaseThisWeek, isCurrentWeekVacation,
+          weeklyH7Effective, count7 });
+    }
     const recentWeeklyH = isCurrentWeekVacation
       ? _seuil
       : weeklyH7Effective;
+    if (window.__DTE_DEBUG !== false) {
+      console.log('%c[DTE-DBG] recentWeeklyH final:', 'color:#0fa;font-weight:bold', recentWeeklyH);
+    }
 
     return {
       heures:         clamp(avgH7, 0, 14),
@@ -1546,11 +1561,7 @@ class DTEEngine {
       _consecNonOTDays: consecNonOTDays,
       _recentVacDays28: recentVacDays28,
       _sigma:         sigma,
-      _contingentPct:  contingentPct,
-      _contingentMax:  contingentMax,     // proraté CCN (= CCN.contingent si année pleine)
-      _contingentFull: D.CONTINGENT_MAX,  // plafond CCN non proraté
-      _firstEntryDate: _firstEntryDate,   // première entrée détectée (YYYY-MM-DD)
-      _isFullYear:     _isFullYear,       // true si entrée ≤ 15 jan
+      _contingentPct: contingentPct,
       _rcoDepassement: rcoDepassement,
       _rcoH50:        rcoH50,
       _rcoH100:       rcoH100,
