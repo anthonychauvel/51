@@ -183,13 +183,28 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
+<script>
+/* Anti-CLS : applique mode-expert AVANT le rendu pour éviter layout shift au chargement */
+(function(){
+  try {
+    var _m = localStorage.getItem("APP_MODE") || localStorage.getItem("GLOSSAIRE_MODE");
+    if (_m === "expert") document.documentElement.classList.add("mode-expert");
+  } catch(_e) {}
+})();
+/* Une fois body parsé, transférer la classe sur body si présente sur html */
+document.addEventListener("DOMContentLoaded", function(){
+  if (document.documentElement.classList.contains("mode-expert")) {
+    document.body.classList.add("mode-expert");
+  }
+});
+</script>
 </head>
 <body>
 <div id="landscape-blocker" aria-hidden="true">
   <div class="lb-icon">📱</div>
   <div class="lb-title">Tournez votre téléphone</div>
   <div class="lb-msg">Cette application est optimisée pour le mode portrait. Veuillez remettre votre appareil à la verticale pour continuer.</div>
-</div><script>try{var _m=localStorage.getItem("APP_MODE")||localStorage.getItem("GLOSSAIRE_MODE");if(_m==="expert")document.body.classList.add("mode-expert");}catch(_e){}</script>
+</div>
 
 <div class="topbar">
   <button class="menu-btn" onclick="goMenu()">&#x2B05; Menu</button>
@@ -454,6 +469,13 @@ input[type="date"], input[type="time"] { -webkit-appearance: none; appearance: n
 
 <!-- CONTENU PRINCIPAL -->
 
+<div id="entryDateBar" style="max-width:900px;margin:6px auto 0;padding:0 12px">
+  <div style="background:#1c1f26;border-radius:10px;padding:9px 14px;display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+    <span style="font-size:12px;color:#9aa0a6;white-space:nowrap">📅 Date d'entrée (si cours d'année)</span>
+    <input type="date" id="entryDateInput" style="flex:1;min-width:130px;max-width:180px;background:#262a33;color:var(--text);border:1px solid #333;border-radius:6px;padding:5px 8px;font-size:13px" title="Si vous avez commencé en cours d'année, le contingent sera proratisé">
+    <span id="entryDateProrata" style="font-size:11px;color:#4FB3C2;display:none"></span>
+  </div>
+</div>
 <div id="contingentBar" style="max-width:900px;margin:10px auto;padding:0 12px"><div class="contingent-wrap"><div class="contingent-label"><span>📊 Contingent annuel <button class="tip-btn" onclick="showTip('contingent')">ℹ️</button></span><span id="contingentText">0h / 220h</span></div><div class="contingent-track"><div class="contingent-fill" id="contingentFill" style="width:0%;background:#2ecc71"></div></div></div><div class="rco-wrap" id="rcoWrap"><div class="rco-label"><span>🛌 Repos Compensateur Obligatoire (RCO) <button class="tip-btn" onclick="showTip('rco')">ℹ️</button></span><span id="rcoText">0h</span></div><div class="rco-detail" id="rcoDetail"></div></div></div>
 
 <div style="max-width:900px;margin:8px auto;padding:0 12px;text-align:center">
@@ -602,6 +624,9 @@ function switchYear(y){
   DATA = ALL_DATA[currentYear];
   const m = String(new Date().getMonth()+1).padStart(2,"0");
   monthPicker.value = currentYear + "-" + m;
+  // Rafraîchir l'input date d'entrée pour la nouvelle année
+  const _ei=document.getElementById("entryDateInput");
+  if(_ei){_ei.min=currentYear+"-01-01";_ei.max=currentYear+"-12-31";_ei.value=getEntryDateForYear(currentYear)||"";}
   closeYearsPopup();
   loadMonth();
   toast("📅 Exercice " + currentYear + " chargé","info");
@@ -790,6 +815,25 @@ const closingDate=document.getElementById("closingDate"),monthPicker=document.ge
 monthPicker.value=currentYear+"-"+(String(new Date().getMonth()+1).padStart(2,"0"));
 monthPicker.onchange=loadMonth;
 paidInput.oninput=()=>{if(!DATA||!DATA[currentKey])return;DATA[currentKey].paid=parseFloat(paidInput.value)||0;save();recalc()};
+
+/* DATE D'ENTRÉE — prorata contingent */
+;(function initEntryDate(){
+  const inp=document.getElementById("entryDateInput");
+  if(!inp) return;
+  // Borner l'input à l'année en cours
+  inp.min=currentYear+"-01-01"; inp.max=currentYear+"-12-31";
+  inp.value=getEntryDateForYear(currentYear)||"";
+  inp.onchange=()=>{
+    const v=inp.value;
+    // Valider que la date appartient à l'année active
+    if(v && new Date(v).getFullYear()!==parseInt(currentYear)){
+      toast("⚠️ La date d'entrée doit être dans l'année "+currentYear,"warn");
+      inp.value=getEntryDateForYear(currentYear)||""; return;
+    }
+    setEntryDateForYear(currentYear,v);
+    updateContingent();
+  };
+})();
 
 function getLastSunday(year,monthIndex){const d=new Date(year,monthIndex+1,0);const diff=d.getDay()===0?0:d.getDay();d.setDate(d.getDate()-diff);return d.getDate()}
 
@@ -1679,15 +1723,58 @@ function showSaveFeedback(dayNum){
 }
 
 /* CONTINGENT 220H */
+/* Prorata contingent — Art. D3121-24 : si le salarié arrive en cours d'année civile,
+   le contingent est proratisé au nombre de jours restants / jours de l'année. */
+function _getContingentEffectif(fullLimit, entryDateStr, year){
+  if(!entryDateStr) return fullLimit;
+  const eDate=new Date(entryDateStr); if(isNaN(eDate.getTime())) return fullLimit;
+  if(eDate.getFullYear()!==parseInt(year)) return fullLimit;
+  const yearStart=new Date(parseInt(year),0,1);
+  const yearEnd=new Date(parseInt(year),11,31);
+  const yearDays=(yearEnd-yearStart)/86400000+1;
+  const remDays=(yearEnd-eDate)/86400000+1;
+  const factor=remDays/yearDays;
+  if(factor>=0.98) return fullLimit;
+  return Math.max(1,Math.round(fullLimit*factor));
+}
+function _entryDateKey(year){return`entryDate_${year}`;}
+function getEntryDateForYear(year){return SETTINGS[_entryDateKey(year)]||"";}
+function setEntryDateForYear(year,val){SETTINGS[_entryDateKey(year)]=val;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));}
+// Auto-détection rétroactive : si aucune date explicite, cherche le 1er mois avec données
+function _autoDetectEntryDate(year){
+  const yd=ALL_DATA[year]||{};
+  const months=Object.keys(yd).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k.startsWith(String(year))).sort();
+  for(const mk of months){
+    const days=Object.entries(yd[mk].days||{});
+    if(days.some(([,h])=>(parseFloat(h)||0)>0)) return mk+'-01';
+  }
+  return null;
+}
+
 function updateContingent(){
   const rules=getCCNRules();
-  const LIMIT=rules.contingent;
-  
+  const _explicitEntry=getEntryDateForYear(currentYear);
+  const _detectedEntry=!_explicitEntry?_autoDetectEntryDate(currentYear):null;
+  const entryDate=_explicitEntry||_detectedEntry||"";
+  const _isAutoDetect=!_explicitEntry&&!!_detectedEntry;
+  const LIMIT=_getContingentEffectif(rules.contingent, entryDate, currentYear);
+  const _isProrata=LIMIT!==rules.contingent;
+  // Mettre à jour l'affichage du prorata
+  const prorataEl=document.getElementById("entryDateProrata");
+  if(prorataEl){
+    if(_isProrata){
+      const origin=_isAutoDetect?"(détecté automatiquement) ":"";
+      prorataEl.style.display="inline";
+      prorataEl.textContent=`→ ${origin}contingent proratisé : ${LIMIT}h / ${rules.contingent}h`;
+      prorataEl.style.color=_isAutoDetect?"#f39c12":"#4FB3C2";
+    } else {prorataEl.style.display="none";}
+  }
+
   // Dans M2, les heures saisies sont DÉJÀ des heures supplémentaires
   // On doit juste additionner toutes les HS de l'année
   let total=0;
   const yd=ALL_DATA[currentYear]||{};
-  
+
   // Parcourir tous les mois de l'année
   Object.entries(yd).forEach(([mk,m])=>{
     if(!/^\d{4}-\d{2}$/.test(mk)) return; // Ignorer les clés non-mois
@@ -1695,16 +1782,16 @@ function updateContingent(){
       total+=h; // Les heures sont déjà des HS, on additionne directement
     });
   });
-  
+
   const pct=Math.min(100,total/LIMIT*100);
   const fill=document.getElementById("contingentFill");
   const txt=document.getElementById("contingentText");
   if(!fill||!txt)return;
   fill.style.width=pct+"%";
   fill.style.background=pct<70?"#2ecc71":pct<90?"#f39c12":"#c0392b";
-  txt.textContent=fmtH(total)+" / "+LIMIT+"h";
-  if(pct>=100)toast("⚠️ Contingent annuel de "+LIMIT+"h atteint !","warn",5000);
-  else if(pct>=90&&!sessionStorage.getItem("contingent_warned")){sessionStorage.setItem("contingent_warned","1");toast("⚠️ Contingent annuel : "+Math.round(pct)+"% atteint","warn",4000);}
+  txt.textContent=fmtH(total)+" / "+LIMIT+"h"+(_isProrata?" (prorata)":"");
+  if(pct>=100)toast("⚠️ Contingent"+(_isProrata?" proratisé":"")+" de "+LIMIT+"h atteint !","warn",5000);
+  else if(pct>=90&&!sessionStorage.getItem("contingent_warned")){sessionStorage.setItem("contingent_warned","1");toast("⚠️ Contingent"+(_isProrata?` (prorata ${LIMIT}h)`:"")+` : ${Math.round(pct)}% atteint`,"warn",4000);}
   // RCO — Art. L3121-33
   const rcoWrap=document.getElementById("rcoWrap");
   const rcoText=document.getElementById("rcoText");
