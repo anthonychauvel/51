@@ -43,7 +43,7 @@ function getFeriesLocal(year) {
 }
 
 function getFeriesYear(year) {
-  // Priorité : données API gouvernement si disponibles
+  // Priorité : données API publique calendrier.api.gouv.fr si disponibles
   try {
     const stored=localStorage.getItem('M5_FERIES_API_'+year);
     if(stored) {
@@ -238,10 +238,8 @@ const CalcEngine = {
 
     let debutEx;
     if(exerciceStart && exerciceStart.includes('-')) {
-      // Format ISO date input type="date"
       debutEx = new Date(exerciceStart+'T12:00:00');
     } else if(exerciceStart && exerciceStart.includes('/')) {
-      // Ancien format "01/06"
       const [j,m] = exerciceStart.split('/').map(Number);
       const year = todayDate.getFullYear();
       debutEx = new Date(year, m-1, j);
@@ -249,6 +247,29 @@ const CalcEngine = {
     } else {
       debutEx = new Date(todayDate.getFullYear(), 0, 1);
     }
+
+    // ── AUTO-DÉTECTION du point de départ réel ────────────────────────
+    // Si l'utilisateur a des saisies, la première semaine saisie est le
+    // vrai point de départ — pas la date de configuration exerciceStart
+    // qui peut être laissée à 01/01 par défaut même si l'arrivée est en mars.
+    // On prend le MAX(exerciceStart configuré, première semaine saisie)
+    // → ainsi on ne pénalise jamais quelqu'un qui a commencé en cours d'année
+    if (allWeeks && allWeeks.length > 0) {
+      // Trouver la première semaine avec des heures réellement saisies
+      const firstSaisie = allWeeks
+        .filter(w => w.monday && (w.worked || 0) > 0)
+        .sort((a, b) => a.monday < b.monday ? -1 : 1)[0];
+      if (firstSaisie) {
+        const firstSaisieDate = new Date(firstSaisie.monday + 'T12:00:00');
+        // Si la première saisie est APRÈS le début d'exercice configuré
+        // → utiliser la première saisie comme point de départ
+        // → évite de comptabiliser des "heures dues" avant l'arrivée
+        if (firstSaisieDate > debutEx) {
+          debutEx = firstSaisieDate;
+        }
+      }
+    }
+
     const year = debutEx.getFullYear();
 
     // Bissextile ?
