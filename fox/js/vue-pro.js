@@ -257,14 +257,18 @@
     var el = document.getElementById('vue-pro'); if (!el) return;
     var yr     = getYear();
     
-    // Récupérer le contingent selon CCN — getGroupeForCCN retourne l'objet de règles directement
+    // Contingent CCN + prorata date d'entrée via moduleReader
     var contingent = 220; // Fallback
     if (typeof CCN_API !== 'undefined') {
       var idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
       var ccnRules = CCN_API.getGroupeForCCN(idcc);
-      if (ccnRules && ccnRules.contingent) {
-        contingent = ccnRules.contingent;
-      }
+      if (ccnRules && ccnRules.contingent) contingent = ccnRules.contingent;
+    }
+    if (typeof moduleReader !== 'undefined' && moduleReader._resolveEntryDate) {
+      try {
+        var _r = moduleReader._applyProrata(contingent, yr, moduleReader._resolveEntryDate(yr));
+        if (_r.isProrata) contingent = _r.limit;
+      } catch(e) {}
     }
     
     var annual = calcAnnual(yr);

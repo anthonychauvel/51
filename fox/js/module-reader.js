@@ -241,9 +241,9 @@ class ModuleReaderPro extends ModuleReader {
       const m2e = m2s['entryDate_' + year];
       if (m2e && new Date(m2e).getFullYear() === y) return m2e;
     } catch(e) {}
-    // 2. exerciseStart M1 (posé par le wizard, toujours un lundi)
+    // 2. entryDateM1 — champ dédié M1 (ENTRY_DATE_YYYY), distinct de l'exerciseStart comptable
     try {
-      const m1e = localStorage.getItem('EXERCISE_START_' + year);
+      const m1e = localStorage.getItem('ENTRY_DATE_' + year);
       if (m1e && new Date(m1e).getFullYear() === y) return m1e;
     } catch(e) {}
     // 3. Auto-détection rétroactive M1 — premier jour avec heures saisies
@@ -868,7 +868,7 @@ class ModuleReaderPro extends ModuleReader {
       netOvertime : totalExtra,
       weekCount,
       monthCount,
-      contingentMax         : rules.contingent,
+      contingentMax         : this._applyProrata(rules.contingent, this.year, this._resolveEntryDate(this.year)).limit,
       contingentUsedCurrent : totalPlus25 + totalPlus10 + totalPlus50,
       perYear,
     };
