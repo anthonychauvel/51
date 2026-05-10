@@ -3741,6 +3741,942 @@ const CCN_FJ_DATA = [
     alertes: ['Droit commun applicable — vérifier si un accord d\'entreprise prévoit des dispositions plus favorables'],
     notes: 'Régime de droit commun (Art. L3121-64). Plafond légal 218j. Vérifiez si votre entreprise a signé un accord collectif dérogatoire.',
   }
+,
+  {
+    idcc: 18, nom: 'Industries textiles', secteur: 'Textile',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 18 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie textile (IDCC 18). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 461, nom: 'Industries du bois et importations bois', secteur: 'Bois et dérivés',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 461 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Filière bois (IDCC 461). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 463, nom: 'Manutention nettoyage aéroports région parisienne', secteur: 'Manutention aéroportuaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 463 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Aéroports IDF (IDCC 463). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 468, nom: 'Commerces et services audiovisuel électronique équipement ménager', secteur: 'Commerce électronique',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 468 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution électronique (IDCC 468). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 487, nom: 'Cabinets d\'experts comptables et commissaires aux comptes', secteur: 'Comptabilité',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 487 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Cabinets EC/CAC — secteur exposé au forfait jours (IDCC 487). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 710, nom: 'Articles de sport et équipements de loisirs', secteur: 'Sport et loisirs distribution',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 710 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution sport (IDCC 710). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 723, nom: 'Personnel sédentaire navigation intérieure', secteur: 'Navigation fluviale',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 723 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Personnel sédentaire (IDCC 723). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 779, nom: 'Banque française commerciale étrangère France métropolitaine', secteur: 'Banque internationale',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 779 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Banque internationale (IDCC 779). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 829, nom: 'Distribution films cinématographiques', secteur: 'Cinéma distribution',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 829 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution films (IDCC 829). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 836, nom: 'Personnel cliniques vétérinaires', secteur: 'Vétérinaire personnel',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 836 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Personnel auxiliaire vétérinaire (IDCC 836). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 893, nom: 'Boyauderie', secteur: 'Boyauderie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 893 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Filière boyauderie (IDCC 893). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 953, nom: 'Fleuristes vente plantes graines animaux', secteur: 'Fleuriste animalerie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 953 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Commerce floral (IDCC 953). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1247, nom: 'Galeries d\'art commerce art', secteur: 'Galeries d\'art',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1247 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Marché de l\'art (IDCC 1247). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1257, nom: 'Industries panneaux à base de bois', secteur: 'Panneaux bois',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1257 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie panneaux bois (IDCC 1257). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1281, nom: 'Distribution conseil pharmaceutique vétérinaire', secteur: 'Pharmacie vétérinaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1281 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution vétérinaire (IDCC 1281). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1304, nom: 'Personnel ouvrier travaux publics', secteur: 'TP ouvriers',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1304 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Travaux publics ouvriers (IDCC 1304). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1420, nom: 'Personnel auxiliaire familial éducatif employeurs particuliers', secteur: 'Personnel familial',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1420 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Particuliers employeurs (IDCC 1420). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1424, nom: 'Reprographie', secteur: 'Reprographie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1424 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Reprographie services (IDCC 1424). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1495, nom: 'Vins cidres jus fruits sirops spiritueux', secteur: 'Boissons commerce',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1495 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution boissons (IDCC 1495). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1504, nom: 'Pâtisserie artisanale', secteur: 'Pâtisserie artisanale',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1504 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Boulangerie-pâtisserie artisans (IDCC 1504). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1505, nom: 'Commerce détail fruits et légumes alimentation générale', secteur: 'Commerce détail alimentation',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1505 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Commerce alimentation proximité (IDCC 1505). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1572, nom: 'Industries céramiques de France', secteur: 'Céramique',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1572 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie céramique (IDCC 1572). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1580, nom: 'Pompes funèbres', secteur: 'Pompes funèbres',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1580 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Services funéraires (IDCC 1580). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1605, nom: 'Entreprises de désinfection désinsectisation dératisation 3D', secteur: '3D désinfection',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1605 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Hygiène environnementale (IDCC 1605). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1612, nom: 'Logistique communication écrite directe', secteur: 'Logistique routage',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1612 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Routage publicitaire (IDCC 1612). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1635, nom: 'Cabinets ou entreprises géomètres experts', secteur: 'Géomètres experts',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1635 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Géomètres (IDCC 1635). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1671, nom: 'Cabinets dentaires d\'orthopédie dento-faciale ouvriers techniciens', secteur: 'Cabinets dentaires',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1671 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Cabinets dentaires personnel (IDCC 1671). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1701, nom: 'Carrefour bleu Carrefour proximité', secteur: 'Distribution alimentation',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1701 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Carrefour proximité (IDCC 1701). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1710, nom: 'Casinos', secteur: 'Casinos',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1710 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Casinos jeux (IDCC 1710). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1794, nom: 'Industrie matériaux construction céramiques pour bâtiment', secteur: 'Matériaux construction céramique',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1794 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Céramique bâtiment (IDCC 1794). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1801, nom: 'Sociétés financières', secteur: 'Sociétés financières',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1801 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Établissements de crédit non bancaires — secteur cadres (IDCC 1801). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1812, nom: 'Industries pharmaceutiques fabrication', secteur: 'Pharmacie industrielle',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1812 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie pharma (IDCC 1812). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1820, nom: 'Jardineries graineteries', secteur: 'Jardinerie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1820 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution horticole (IDCC 1820). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1828, nom: 'Marchés alimentaires détaillants vente alimentation générale', secteur: 'Marchés alimentation',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1828 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Commerce sur marchés (IDCC 1828). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1843, nom: 'Cabinets et cliniques vétérinaires personnel salarié', secteur: 'Cliniques vétérinaires',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1843 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Personnel salarié vétérinaire (IDCC 1843). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1880, nom: 'Distributeurs conseils hors domicile', secteur: 'Distribution boissons CHD',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1880 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution boissons CHD (IDCC 1880). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1909, nom: 'Organismes de tourisme', secteur: 'Tourisme organismes',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1909 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Offices de tourisme (IDCC 1909). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1922, nom: 'Personnels radiodiffusion radios privées', secteur: 'Radios privées',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1922 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Radiodiffusion personnel (IDCC 1922). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1930, nom: 'Métiers transformation grains', secteur: 'Meunerie biscuiterie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1930 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Transformation grains (IDCC 1930). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1938, nom: 'Industries chocolaterie confiserie biscuiterie', secteur: 'Chocolaterie biscuiterie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1938 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie sucrée (IDCC 1938). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1941, nom: 'Mareyeurs expéditeurs', secteur: 'Mareyage',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1941 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Mareyeurs (IDCC 1941). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1944, nom: 'Marchés financiers ouvriers employés techniciens cadres', secteur: 'Marchés financiers',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1944 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Marchés financiers — forfait jours fréquent (IDCC 1944). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1947, nom: 'Habillement industrie', secteur: 'Habillement industrie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1947 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie habillement (IDCC 1947). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1951, nom: 'Cabinets immobiliers administrateurs biens', secteur: 'Immobilier cabinets',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1951 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Administrateurs de biens — cadres souvent en forfait jours (IDCC 1951). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1960, nom: 'Conchyliculture', secteur: 'Conchyliculture',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1960 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Élevage coquillages (IDCC 1960). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1961, nom: 'Personnel petits magasins équipement foyer non alimentaires', secteur: 'Équipement foyer',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1961 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Petits magasins équipement (IDCC 1961). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1967, nom: 'Importation distribution films cinématographiques', secteur: 'Cinéma importation',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1967 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Importation films (IDCC 1967). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 1987, nom: 'Pâtisserie', secteur: 'Pâtisserie industrielle',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 1987 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Pâtisserie artisans patrons (IDCC 1987). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2017, nom: 'Industries graphiques cadres', secteur: 'Graphisme cadres',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2017 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industries graphiques cadres — forfait jours fréquent (IDCC 2017). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2089, nom: 'Industries carrières et matériaux ouvriers', secteur: 'Carrières matériaux',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2089 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industries carrières ouvriers (IDCC 2089). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2111, nom: 'Salariés du particulier employeur', secteur: 'Particulier employeur salarié',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2111 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Salariés particuliers employeurs (IDCC 2111). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2147, nom: 'Entreprises eaux-de-vie eaux mises', secteur: 'Eaux-de-vie spiritueux',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2147 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Production spiritueux (IDCC 2147). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2150, nom: 'Personnels organismes Sécurité Sociale agricole MSA', secteur: 'Sécurité Sociale agricole',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2150 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'MSA personnel (IDCC 2150). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2156, nom: 'Grands magasins et magasins populaires', secteur: 'Grands magasins',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2156 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution grands magasins (IDCC 2156). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2174, nom: 'Crédit Agricole', secteur: 'Crédit Agricole',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2174 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Banque Crédit Agricole — cadres souvent en forfait jours (IDCC 2174). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2206, nom: 'CRPCEN clercs et employés notaires', secteur: 'Notariat clercs',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2206 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Notariat clercs employés (IDCC 2206). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2257, nom: 'Casinos employés', secteur: 'Casinos employés',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2257 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Casinos personnel (IDCC 2257). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2272, nom: 'Personnel sédentaire transports maritimes', secteur: 'Maritime sédentaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2272 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Transport maritime sédentaire (IDCC 2272). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2326, nom: 'Production audiovisuelle techniciens', secteur: 'Audiovisuel techniciens',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2326 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Production audiovisuelle (IDCC 2326). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2336, nom: 'Entreprises sociales pour l\'habitat ESH', secteur: 'Logement social ESH',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2336 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Bailleurs sociaux (IDCC 2336). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2389, nom: 'Industries fabrication ciment', secteur: 'Cimenterie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2389 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie ciment (IDCC 2389). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2405, nom: 'Centres immatriculation véhicules', secteur: 'Immatriculation véhicules',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2405 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Service immatriculation (IDCC 2405). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2408, nom: 'Personnel coopératives consommateurs', secteur: 'Coopératives consommation',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2408 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Coopératives consommateurs (IDCC 2408). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2411, nom: 'Chaînes thématiques', secteur: 'Télévision thématique',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2411 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Chaînes télé thématiques (IDCC 2411). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2542, nom: 'Entreprises gardiennage sécurité conducteurs cynophiles', secteur: 'Cynophile sécurité',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2542 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Maîtres-chiens sécurité (IDCC 2542). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2603, nom: 'Branche ferroviaire personnel sédentaire', secteur: 'Ferroviaire sédentaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2603 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Personnel ferroviaire (IDCC 2603). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2622, nom: 'Crédit Maritime Mutuel', secteur: 'Crédit Maritime',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2622 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Banque crédit maritime (IDCC 2622). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2666, nom: 'Pâtes alimentaires sèches couscous non préparé', secteur: 'Pâtes couscous',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2666 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie pâtes (IDCC 2666). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2706, nom: 'Personnel sédentaire transports maritimes ETA', secteur: 'Maritime sédentaire ETA',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2706 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Transport maritime ETA (IDCC 2706). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2728, nom: 'Sucreries distilleries raffineries', secteur: 'Sucre raffinerie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2728 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie sucrière (IDCC 2728). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2754, nom: 'Vins Champagne ouvriers employés', secteur: 'Champagne',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2754 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Champagne ouvriers (IDCC 2754). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2768, nom: 'Télécommunications', secteur: 'Télécoms',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2768 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Opérateurs télécoms — cadres souvent en forfait jours (IDCC 2768). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2785, nom: 'Industrie pétrolière', secteur: 'Pétrole industrie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2785 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industries pétrolières (IDCC 2785). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2796, nom: 'Personnel sociétés coopératives HLM', secteur: 'Coopératives HLM',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2796 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Sociétés HLM coopératives (IDCC 2796). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2847, nom: 'Activités directe d\'autoroute', secteur: 'Autoroutes',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2847 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Sociétés autoroutières (IDCC 2847). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2964, nom: 'Personnel sociétés assistance', secteur: 'Sociétés assistance',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2964 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Assistance dépannage (IDCC 2964). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2978, nom: 'Golf', secteur: 'Golf',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2978 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Activités golf (IDCC 2978). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2980, nom: 'Branche ferroviaire', secteur: 'Ferroviaire branche',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2980 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Branche ferroviaire générale (IDCC 2980). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 2998, nom: 'Personnels organismes mutualité', secteur: 'Mutualité personnel',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 2998 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Mutuelles santé (IDCC 2998). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3028, nom: 'Médecine du travail interentreprises SSTI', secteur: 'SST interentreprises',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3028 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'SSTI médecine travail (IDCC 3028). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3105, nom: 'Conseils architecture urbanisme environnement CAUE', secteur: 'CAUE',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3105 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'CAUE conseils architecture (IDCC 3105). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3128, nom: 'Cabinets ophtalmologistes', secteur: 'Ophtalmologie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3128 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Cabinets ophtalmologie (IDCC 3128). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3144, nom: 'Producteurs de films français', secteur: 'Cinéma production',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3144 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Production cinéma (IDCC 3144). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3168, nom: 'Avocats salariés', secteur: 'Avocats salariés',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3168 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Cabinets d\'avocats salariés — forfait jours fréquent (IDCC 3168). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3204, nom: 'Chemin de fer secondaire local industriel', secteur: 'Ferroviaire secondaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3204 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Chemin fer secondaire (IDCC 3204). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3206, nom: 'Acteurs commerce restauration livraison rapide', secteur: 'Livraison rapide',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3206 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Livraison restauration (IDCC 3206). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3213, nom: 'Sucres et raffineries', secteur: 'Sucre raffinerie',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3213 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industrie sucrière (IDCC 3213). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3216, nom: 'Activités industrielles boulangerie pâtisserie', secteur: 'Boulangerie industrielle',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3216 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Industries boulangerie (IDCC 3216). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3221, nom: 'Salariés cabinets dentaires', secteur: 'Cabinets dentaires salariés',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3221 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Cabinets dentaires personnel (IDCC 3221). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3251, nom: 'Officines pharmaceutiques personnel', secteur: 'Officines personnel',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3251 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Pharmacie officine personnel (IDCC 3251). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3275, nom: 'Activités sport et équipements loisirs', secteur: 'Sport équipements',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3275 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Sport et loisirs distribution (IDCC 3275). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3284, nom: 'Régies du contrat publicité', secteur: 'Régies publicitaires',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3284 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Publicité régies (IDCC 3284). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3292, nom: 'Personnel sociétés interbancaires', secteur: 'Sociétés interbancaires',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3292 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Sociétés financières spécialisées (IDCC 3292). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3301, nom: 'Personnel cabinets entreprises économiste construction métreurs vérificateurs', secteur: 'Économistes construction',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3301 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Métreurs vérificateurs (IDCC 3301). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3303, nom: 'Personnel salarié OPCO', secteur: 'OPCO',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3303 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Opérateurs compétences (IDCC 3303). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3305, nom: 'Personnel France Domaine immobilier État', secteur: 'Domaine État',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3305 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Personnel France Domaine (IDCC 3305). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3309, nom: 'Boulangerie pâtisserie de France', secteur: 'Boulangerie pâtisserie France',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3309 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Boulangerie pâtisserie nationale (IDCC 3309). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3311, nom: 'Branche transports voyageurs', secteur: 'Transports voyageurs',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3311 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Voyageurs interurbain (IDCC 3311). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3320, nom: 'Filière bois construction commerce', secteur: 'Bois construction',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3320 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Filière bois (IDCC 3320). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3322, nom: 'Métiers commerce détail alimentation spécialisée', secteur: 'Commerce alimentation spé',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3322 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Détaillants alimentation (IDCC 3322). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3340, nom: 'Filière distribution domaine matériaux construction', secteur: 'Matériaux distribution',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3340 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Distribution matériaux construction (IDCC 3340). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3346, nom: 'Personnel sociétés gestion plein air', secteur: 'Plein air gestion',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3346 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Camping plein air (IDCC 3346). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3364, nom: 'Personnel salarié Caisse Épargne', secteur: 'Caisse Épargne',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3364 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Banque Caisse d\'Épargne — cadres en forfait jours (IDCC 3364). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
+,
+  {
+    idcc: 3373, nom: 'Personnel salarié Banque Populaire', secteur: 'Banque Populaire',
+    plafond: 218, plafondCDRef: 218, tauxRachat: 10,
+    entretienFreq: 'annuel', entretienRef: 'CCN 3373 L3121-65',
+    clauseDeconn: false, suiviCharge: 'Art. L3121-65',
+    alertes: ['Vérifier que l\'accord d\'entreprise ou de branche autorise explicitement le forfait jours pour les cadres concernés', 'Mention obligatoire dans le contrat de travail (Cass. Soc. 16/06/2010)'],
+    notes: 'Banque Populaire — cadres en forfait jours (IDCC 3373). Régime droit commun applicable. Vérifier accord de branche pour spécificités forfait jours cadres.',
+  }
 ];
 
 const CCN_CD_DATA = [
@@ -7862,6 +8798,1056 @@ const CCN_CD_DATA = [
     droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
     alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
     notesCD: 'Exploitations agricoles Val-d-Oise — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation). Agriculture.',
+  }
+,
+  {
+    idcc: 18, nom: 'Industries textiles — Cadres Dirigeants', secteur: 'Textile',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie textile (IDCC 18) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 461, nom: 'Industries du bois et importations bois — Cadres Dirigeants', secteur: 'Bois et dérivés',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Filière bois (IDCC 461) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 463, nom: 'Manutention nettoyage aéroports région parisienne — Cadres Dirigeants', secteur: 'Manutention aéroportuaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Aéroports IDF (IDCC 463) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 468, nom: 'Commerces et services audiovisuel électronique équipement ménager — Cadres Dirigeants', secteur: 'Commerce électronique',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution électronique (IDCC 468) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 487, nom: 'Cabinets d\'experts comptables et commissaires aux comptes — Cadres Dirigeants', secteur: 'Comptabilité',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Cabinets EC/CAC — secteur exposé au forfait jours (IDCC 487) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 710, nom: 'Articles de sport et équipements de loisirs — Cadres Dirigeants', secteur: 'Sport et loisirs distribution',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution sport (IDCC 710) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 723, nom: 'Personnel sédentaire navigation intérieure — Cadres Dirigeants', secteur: 'Navigation fluviale',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Personnel sédentaire (IDCC 723) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 779, nom: 'Banque française commerciale étrangère France métropolitaine — Cadres Dirigeants', secteur: 'Banque internationale',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Banque internationale (IDCC 779) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 829, nom: 'Distribution films cinématographiques — Cadres Dirigeants', secteur: 'Cinéma distribution',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution films (IDCC 829) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 836, nom: 'Personnel cliniques vétérinaires — Cadres Dirigeants', secteur: 'Vétérinaire personnel',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Personnel auxiliaire vétérinaire (IDCC 836) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 893, nom: 'Boyauderie — Cadres Dirigeants', secteur: 'Boyauderie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Filière boyauderie (IDCC 893) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 953, nom: 'Fleuristes vente plantes graines animaux — Cadres Dirigeants', secteur: 'Fleuriste animalerie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Commerce floral (IDCC 953) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1247, nom: 'Galeries d\'art commerce art — Cadres Dirigeants', secteur: 'Galeries d\'art',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Marché de l\'art (IDCC 1247) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1257, nom: 'Industries panneaux à base de bois — Cadres Dirigeants', secteur: 'Panneaux bois',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie panneaux bois (IDCC 1257) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1281, nom: 'Distribution conseil pharmaceutique vétérinaire — Cadres Dirigeants', secteur: 'Pharmacie vétérinaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution vétérinaire (IDCC 1281) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1304, nom: 'Personnel ouvrier travaux publics — Cadres Dirigeants', secteur: 'TP ouvriers',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Travaux publics ouvriers (IDCC 1304) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1420, nom: 'Personnel auxiliaire familial éducatif employeurs particuliers — Cadres Dirigeants', secteur: 'Personnel familial',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Particuliers employeurs (IDCC 1420) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1424, nom: 'Reprographie — Cadres Dirigeants', secteur: 'Reprographie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Reprographie services (IDCC 1424) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1495, nom: 'Vins cidres jus fruits sirops spiritueux — Cadres Dirigeants', secteur: 'Boissons commerce',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution boissons (IDCC 1495) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1504, nom: 'Pâtisserie artisanale — Cadres Dirigeants', secteur: 'Pâtisserie artisanale',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Boulangerie-pâtisserie artisans (IDCC 1504) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1505, nom: 'Commerce détail fruits et légumes alimentation générale — Cadres Dirigeants', secteur: 'Commerce détail alimentation',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Commerce alimentation proximité (IDCC 1505) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1572, nom: 'Industries céramiques de France — Cadres Dirigeants', secteur: 'Céramique',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie céramique (IDCC 1572) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1580, nom: 'Pompes funèbres — Cadres Dirigeants', secteur: 'Pompes funèbres',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Services funéraires (IDCC 1580) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1605, nom: 'Entreprises de désinfection désinsectisation dératisation 3D — Cadres Dirigeants', secteur: '3D désinfection',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Hygiène environnementale (IDCC 1605) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1612, nom: 'Logistique communication écrite directe — Cadres Dirigeants', secteur: 'Logistique routage',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Routage publicitaire (IDCC 1612) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1635, nom: 'Cabinets ou entreprises géomètres experts — Cadres Dirigeants', secteur: 'Géomètres experts',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Géomètres (IDCC 1635) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1671, nom: 'Cabinets dentaires d\'orthopédie dento-faciale ouvriers techniciens — Cadres Dirigeants', secteur: 'Cabinets dentaires',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Cabinets dentaires personnel (IDCC 1671) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1701, nom: 'Carrefour bleu Carrefour proximité — Cadres Dirigeants', secteur: 'Distribution alimentation',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Carrefour proximité (IDCC 1701) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1710, nom: 'Casinos — Cadres Dirigeants', secteur: 'Casinos',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Casinos jeux (IDCC 1710) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1794, nom: 'Industrie matériaux construction céramiques pour bâtiment — Cadres Dirigeants', secteur: 'Matériaux construction céramique',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Céramique bâtiment (IDCC 1794) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1801, nom: 'Sociétés financières — Cadres Dirigeants', secteur: 'Sociétés financières',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Établissements de crédit non bancaires — secteur cadres (IDCC 1801) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1812, nom: 'Industries pharmaceutiques fabrication — Cadres Dirigeants', secteur: 'Pharmacie industrielle',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie pharma (IDCC 1812) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1820, nom: 'Jardineries graineteries — Cadres Dirigeants', secteur: 'Jardinerie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution horticole (IDCC 1820) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1828, nom: 'Marchés alimentaires détaillants vente alimentation générale — Cadres Dirigeants', secteur: 'Marchés alimentation',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Commerce sur marchés (IDCC 1828) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1843, nom: 'Cabinets et cliniques vétérinaires personnel salarié — Cadres Dirigeants', secteur: 'Cliniques vétérinaires',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Personnel salarié vétérinaire (IDCC 1843) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1880, nom: 'Distributeurs conseils hors domicile — Cadres Dirigeants', secteur: 'Distribution boissons CHD',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution boissons CHD (IDCC 1880) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1909, nom: 'Organismes de tourisme — Cadres Dirigeants', secteur: 'Tourisme organismes',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Offices de tourisme (IDCC 1909) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1922, nom: 'Personnels radiodiffusion radios privées — Cadres Dirigeants', secteur: 'Radios privées',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Radiodiffusion personnel (IDCC 1922) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1930, nom: 'Métiers transformation grains — Cadres Dirigeants', secteur: 'Meunerie biscuiterie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Transformation grains (IDCC 1930) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1938, nom: 'Industries chocolaterie confiserie biscuiterie — Cadres Dirigeants', secteur: 'Chocolaterie biscuiterie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie sucrée (IDCC 1938) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1941, nom: 'Mareyeurs expéditeurs — Cadres Dirigeants', secteur: 'Mareyage',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Mareyeurs (IDCC 1941) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1944, nom: 'Marchés financiers ouvriers employés techniciens cadres — Cadres Dirigeants', secteur: 'Marchés financiers',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Marchés financiers — forfait jours fréquent (IDCC 1944) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1947, nom: 'Habillement industrie — Cadres Dirigeants', secteur: 'Habillement industrie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie habillement (IDCC 1947) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1951, nom: 'Cabinets immobiliers administrateurs biens — Cadres Dirigeants', secteur: 'Immobilier cabinets',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Administrateurs de biens — cadres souvent en forfait jours (IDCC 1951) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1960, nom: 'Conchyliculture — Cadres Dirigeants', secteur: 'Conchyliculture',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Élevage coquillages (IDCC 1960) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1961, nom: 'Personnel petits magasins équipement foyer non alimentaires — Cadres Dirigeants', secteur: 'Équipement foyer',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Petits magasins équipement (IDCC 1961) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1967, nom: 'Importation distribution films cinématographiques — Cadres Dirigeants', secteur: 'Cinéma importation',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Importation films (IDCC 1967) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 1987, nom: 'Pâtisserie — Cadres Dirigeants', secteur: 'Pâtisserie industrielle',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Pâtisserie artisans patrons (IDCC 1987) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2017, nom: 'Industries graphiques cadres — Cadres Dirigeants', secteur: 'Graphisme cadres',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industries graphiques cadres — forfait jours fréquent (IDCC 2017) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2089, nom: 'Industries carrières et matériaux ouvriers — Cadres Dirigeants', secteur: 'Carrières matériaux',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industries carrières ouvriers (IDCC 2089) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2111, nom: 'Salariés du particulier employeur — Cadres Dirigeants', secteur: 'Particulier employeur salarié',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Salariés particuliers employeurs (IDCC 2111) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2147, nom: 'Entreprises eaux-de-vie eaux mises — Cadres Dirigeants', secteur: 'Eaux-de-vie spiritueux',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Production spiritueux (IDCC 2147) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2150, nom: 'Personnels organismes Sécurité Sociale agricole MSA — Cadres Dirigeants', secteur: 'Sécurité Sociale agricole',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'MSA personnel (IDCC 2150) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2156, nom: 'Grands magasins et magasins populaires — Cadres Dirigeants', secteur: 'Grands magasins',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution grands magasins (IDCC 2156) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2174, nom: 'Crédit Agricole — Cadres Dirigeants', secteur: 'Crédit Agricole',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Banque Crédit Agricole — cadres souvent en forfait jours (IDCC 2174) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2206, nom: 'CRPCEN clercs et employés notaires — Cadres Dirigeants', secteur: 'Notariat clercs',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Notariat clercs employés (IDCC 2206) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2257, nom: 'Casinos employés — Cadres Dirigeants', secteur: 'Casinos employés',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Casinos personnel (IDCC 2257) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2272, nom: 'Personnel sédentaire transports maritimes — Cadres Dirigeants', secteur: 'Maritime sédentaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Transport maritime sédentaire (IDCC 2272) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2326, nom: 'Production audiovisuelle techniciens — Cadres Dirigeants', secteur: 'Audiovisuel techniciens',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Production audiovisuelle (IDCC 2326) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2336, nom: 'Entreprises sociales pour l\'habitat ESH — Cadres Dirigeants', secteur: 'Logement social ESH',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Bailleurs sociaux (IDCC 2336) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2389, nom: 'Industries fabrication ciment — Cadres Dirigeants', secteur: 'Cimenterie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie ciment (IDCC 2389) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2405, nom: 'Centres immatriculation véhicules — Cadres Dirigeants', secteur: 'Immatriculation véhicules',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Service immatriculation (IDCC 2405) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2408, nom: 'Personnel coopératives consommateurs — Cadres Dirigeants', secteur: 'Coopératives consommation',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Coopératives consommateurs (IDCC 2408) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2411, nom: 'Chaînes thématiques — Cadres Dirigeants', secteur: 'Télévision thématique',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Chaînes télé thématiques (IDCC 2411) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2542, nom: 'Entreprises gardiennage sécurité conducteurs cynophiles — Cadres Dirigeants', secteur: 'Cynophile sécurité',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Maîtres-chiens sécurité (IDCC 2542) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2603, nom: 'Branche ferroviaire personnel sédentaire — Cadres Dirigeants', secteur: 'Ferroviaire sédentaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Personnel ferroviaire (IDCC 2603) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2622, nom: 'Crédit Maritime Mutuel — Cadres Dirigeants', secteur: 'Crédit Maritime',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Banque crédit maritime (IDCC 2622) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2666, nom: 'Pâtes alimentaires sèches couscous non préparé — Cadres Dirigeants', secteur: 'Pâtes couscous',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie pâtes (IDCC 2666) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2706, nom: 'Personnel sédentaire transports maritimes ETA — Cadres Dirigeants', secteur: 'Maritime sédentaire ETA',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Transport maritime ETA (IDCC 2706) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2728, nom: 'Sucreries distilleries raffineries — Cadres Dirigeants', secteur: 'Sucre raffinerie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie sucrière (IDCC 2728) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2754, nom: 'Vins Champagne ouvriers employés — Cadres Dirigeants', secteur: 'Champagne',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Champagne ouvriers (IDCC 2754) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2768, nom: 'Télécommunications — Cadres Dirigeants', secteur: 'Télécoms',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Opérateurs télécoms — cadres souvent en forfait jours (IDCC 2768) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2785, nom: 'Industrie pétrolière — Cadres Dirigeants', secteur: 'Pétrole industrie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industries pétrolières (IDCC 2785) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2796, nom: 'Personnel sociétés coopératives HLM — Cadres Dirigeants', secteur: 'Coopératives HLM',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Sociétés HLM coopératives (IDCC 2796) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2847, nom: 'Activités directe d\'autoroute — Cadres Dirigeants', secteur: 'Autoroutes',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Sociétés autoroutières (IDCC 2847) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2964, nom: 'Personnel sociétés assistance — Cadres Dirigeants', secteur: 'Sociétés assistance',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Assistance dépannage (IDCC 2964) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2978, nom: 'Golf — Cadres Dirigeants', secteur: 'Golf',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Activités golf (IDCC 2978) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2980, nom: 'Branche ferroviaire — Cadres Dirigeants', secteur: 'Ferroviaire branche',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Branche ferroviaire générale (IDCC 2980) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 2998, nom: 'Personnels organismes mutualité — Cadres Dirigeants', secteur: 'Mutualité personnel',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Mutuelles santé (IDCC 2998) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3028, nom: 'Médecine du travail interentreprises SSTI — Cadres Dirigeants', secteur: 'SST interentreprises',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'SSTI médecine travail (IDCC 3028) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3105, nom: 'Conseils architecture urbanisme environnement CAUE — Cadres Dirigeants', secteur: 'CAUE',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'CAUE conseils architecture (IDCC 3105) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3128, nom: 'Cabinets ophtalmologistes — Cadres Dirigeants', secteur: 'Ophtalmologie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Cabinets ophtalmologie (IDCC 3128) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3144, nom: 'Producteurs de films français — Cadres Dirigeants', secteur: 'Cinéma production',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Production cinéma (IDCC 3144) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3168, nom: 'Avocats salariés — Cadres Dirigeants', secteur: 'Avocats salariés',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Cabinets d\'avocats salariés — forfait jours fréquent (IDCC 3168) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3204, nom: 'Chemin de fer secondaire local industriel — Cadres Dirigeants', secteur: 'Ferroviaire secondaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Chemin fer secondaire (IDCC 3204) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3206, nom: 'Acteurs commerce restauration livraison rapide — Cadres Dirigeants', secteur: 'Livraison rapide',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Livraison restauration (IDCC 3206) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3213, nom: 'Sucres et raffineries — Cadres Dirigeants', secteur: 'Sucre raffinerie',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industrie sucrière (IDCC 3213) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3216, nom: 'Activités industrielles boulangerie pâtisserie — Cadres Dirigeants', secteur: 'Boulangerie industrielle',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Industries boulangerie (IDCC 3216) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3221, nom: 'Salariés cabinets dentaires — Cadres Dirigeants', secteur: 'Cabinets dentaires salariés',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Cabinets dentaires personnel (IDCC 3221) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3251, nom: 'Officines pharmaceutiques personnel — Cadres Dirigeants', secteur: 'Officines personnel',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Pharmacie officine personnel (IDCC 3251) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3275, nom: 'Activités sport et équipements loisirs — Cadres Dirigeants', secteur: 'Sport équipements',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Sport et loisirs distribution (IDCC 3275) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3284, nom: 'Régies du contrat publicité — Cadres Dirigeants', secteur: 'Régies publicitaires',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Publicité régies (IDCC 3284) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3292, nom: 'Personnel sociétés interbancaires — Cadres Dirigeants', secteur: 'Sociétés interbancaires',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Sociétés financières spécialisées (IDCC 3292) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3301, nom: 'Personnel cabinets entreprises économiste construction métreurs vérificateurs — Cadres Dirigeants', secteur: 'Économistes construction',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Métreurs vérificateurs (IDCC 3301) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3303, nom: 'Personnel salarié OPCO — Cadres Dirigeants', secteur: 'OPCO',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Opérateurs compétences (IDCC 3303) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3305, nom: 'Personnel France Domaine immobilier État — Cadres Dirigeants', secteur: 'Domaine État',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Personnel France Domaine (IDCC 3305) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3309, nom: 'Boulangerie pâtisserie de France — Cadres Dirigeants', secteur: 'Boulangerie pâtisserie France',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Boulangerie pâtisserie nationale (IDCC 3309) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3311, nom: 'Branche transports voyageurs — Cadres Dirigeants', secteur: 'Transports voyageurs',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Voyageurs interurbain (IDCC 3311) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3320, nom: 'Filière bois construction commerce — Cadres Dirigeants', secteur: 'Bois construction',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Filière bois (IDCC 3320) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3322, nom: 'Métiers commerce détail alimentation spécialisée — Cadres Dirigeants', secteur: 'Commerce alimentation spé',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Détaillants alimentation (IDCC 3322) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3340, nom: 'Filière distribution domaine matériaux construction — Cadres Dirigeants', secteur: 'Matériaux distribution',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Distribution matériaux construction (IDCC 3340) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3346, nom: 'Personnel sociétés gestion plein air — Cadres Dirigeants', secteur: 'Plein air gestion',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Camping plein air (IDCC 3346) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3364, nom: 'Personnel salarié Caisse Épargne — Cadres Dirigeants', secteur: 'Caisse Épargne',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Banque Caisse d\'Épargne — cadres en forfait jours (IDCC 3364) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3373, nom: 'Personnel salarié Banque Populaire — Cadres Dirigeants', secteur: 'Banque Populaire',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Banque Populaire — cadres en forfait jours (IDCC 3373) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
+  }
+,
+  {
+    idcc: 3044, nom: 'Commerce de gros non alimentaire — Cadres Dirigeants', secteur: 'Commerce de gros non alim.',
+    critereCD: 'Application standard Art. L3111-2 : pouvoir de direction effectif, rémunération parmi les plus élevées de l\'entreprise, autonomie réelle dans l\'organisation du temps. Ces 3 critères sont CUMULATIFS (Cass. Soc. 31/01/2012).',
+    rmgCD: 'Aucun minimum fixé conventionnellement — hors grille de classification',
+    entretienCD: 'Pas d\'obligation légale formelle pour les CD — recommandé annuellement (Art. L4121-1)',
+    droitsCP: '25 jours ouvrables minimum (Art. L3141-1)',
+    alertesCD: ['3 critères cumulatifs L3111-2 obligatoires', 'En cas de requalification : rappel HS sur 3 ans (Cass. Soc. 2011)', 'Obligation de sécurité maintenue (Art. L4121-1)', '218 jours dépassés : recommander un entretien de charge'],
+    notesCD: 'Commerce de gros non alimentaire (IDCC 3044) — Application standard L3111-2 (pouvoir de direction effectif, rémunération parmi les plus élevées, autonomie d\'organisation).',
   }
 ];
 
