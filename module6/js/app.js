@@ -51,8 +51,9 @@ const M6_Header = {
 
     if (rb) {
       rb.style.display = showReset ? 'flex' : 'none';
-      rb.onclick = null;
-      if (showReset && onReset) rb.addEventListener('click', onReset, { once: true });
+      // Utiliser onclick (pas addEventListener) pour éviter l'empilement de listeners
+      // { once: true } + re-render causait la perte du handler au 2e clic
+      rb.onclick = (showReset && onReset) ? onReset : null;
     }
     if (sw) {
       sw.style.display = showSwitch ? 'flex' : 'none';
@@ -340,7 +341,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bannière in-app d'invitation (pas de popup navigateur direct)
         const banner = document.createElement('div');
         banner.id = 'm6-notif-banner';
-        banner.style.cssText = 'position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;animation:m6FadeIn 0.4s ease-out';
+        banner.style.cssText = 'position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;opacity:0;transition:opacity 0.25s ease';
         banner.innerHTML = `
           <span style="font-size:1.4rem;flex-shrink:0">🔔</span>
           <div style="flex:1;line-height:1.4">Activer les rappels vendredi ?<br><span style="font-size:0.7rem;color:var(--pierre-2)">100% local — aucune donnée envoyée</span></div>
@@ -384,7 +385,7 @@ window.M6_Tuto = {
     let step = 0;
     const overlay = document.createElement('div');
     overlay.id = 'm6-tuto-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;animation:m6FadeIn 0.3s';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.25s ease';
     const render = () => {
       const s = this.STEPS[step];
       overlay.innerHTML = `
@@ -410,6 +411,7 @@ window.M6_Tuto = {
     };
     render();
     document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
   },
   reset() { try{localStorage.removeItem('M6_TUTO_SEEN');}catch(_){} }
 };
