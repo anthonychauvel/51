@@ -35,22 +35,29 @@ const M6_SimulateurNullite = {
     // ── Condition 1 : Accord de branche valide ─────────────────
     // Kivimäki / Cass. 2011 : le forfait doit reposer sur un accord collectif
     // garantissant le respect des durées maximales de repos
+    // Accord branche : OK si IDCC présent dans la base CCN (conventions-cadres.js)
+    // ou si label CCN saisi. Pas de saisie manuelle requise si CCN sélectionnée via l'app.
     const ccn = (contract.ccnLabel || '').toLowerCase();
-    const ccnsValidees = ['syntec', 'banque', 'afb', 'bureaux', 'cadres', 'metallurgie',
-                          'chimie', 'pharma', 'assurance', 'mutuelles', 'commerce'];
-    const ccnConnue = ccnsValidees.some(k => ccn.includes(k));
+    const ccnIdcc = contract.ccnIdcc || 0;
+    // Vérifier via la base CCN si l'IDCC est dans la liste des CCN reconnues pour le forfait jours
+    const ccnDansBase = ccnIdcc > 0 && (
+      window.CCN_CADRES_API?.getFJ?.(ccnIdcc) ||
+      window.CCN_FJ_DATA?.some?.(c => c.idcc === ccnIdcc)
+    );
+    const ccnNomConnue = ccn.length > 2;
+    const accordOk = ccnDansBase || ccnNomConnue;
     conditions.push({
       id: 'accord_branche',
       titre: 'Accord de branche ou d\'entreprise valide',
       loi: 'Art. L3121-64 + Cass. Soc. 29/06/2011',
-      ok: ccnConnue || (ccn.length > 3),
-      niveau: ccnConnue ? 'ok' : (ccn.length > 3 ? 'warning' : 'danger'),
-      detail: ccnConnue
-        ? `CCN "${contract.ccnLabel}" reconnue — accord de branche probable.`
-        : ccn.length > 3
-          ? `CCN "${contract.ccnLabel}" saisie mais non vérifiée. Confirmez que votre accord de branche garantit le respect des repos.`
-          : 'Aucune CCN renseignée. Sans accord collectif valide, le forfait est nul de plein droit (Cass. Soc. 29/06/2011).',
-      recommandation: 'Renseignez votre CCN dans les paramètres du contrat et vérifiez sur légifrance.fr que l\'accord autorise le forfait jours.',
+      ok: accordOk,
+      niveau: ccnDansBase ? 'ok' : (ccnNomConnue ? 'warning' : 'danger'),
+      detail: ccnDansBase
+        ? `CCN "${contract.ccnLabel}" (IDCC ${ccnIdcc}) reconnue dans la base — accord de branche confirmé.`
+        : ccnNomConnue
+          ? `CCN "${contract.ccnLabel}" saisie. Vérifiez que votre accord de branche autorise le forfait jours.`
+          : 'Aucune CCN renseignée. Sélectionnez votre CCN dans les paramètres du contrat.',
+      recommandation: 'Sélectionnez votre CCN via le menu de configuration du contrat. Si votre CCN n\'est pas dans la liste, vérifiez sur légifrance.fr que l\'accord autorise le forfait jours.',
     });
 
     // ── Condition 2 : Clause explicite dans le contrat ─────────
@@ -153,19 +160,19 @@ const M6_SimulateurNullite = {
     });
 
     // ── Condition 6 : Droit à la déconnexion formalisé ─────────
-    // L3121-65 — depuis loi Travail 2016, l'accord ou la charte doit
-    // prévoir des modalités concrètes
-    const hasDeconnexion = !!(contract.ccnLabel);
+    // Si CCN sélectionnée, l'obligation incombe à l'employeur — pas à remplir par le salarié
+    // Niveau info (pas danger) : ne rend pas le forfait nul (simple obligation employeur)
+    const hasDeconn = ccnDansBase || ccnNomConnue || !!(contract.clauseDeconn);
     conditions.push({
       id: 'deconnexion',
       titre: 'Droit à la déconnexion formalisé',
       loi: 'Art. L3121-65 al.3 + Loi Travail 2016',
-      ok: hasDeconnexion,
-      niveau: hasDeconnexion ? 'warning' : 'info',
-      detail: hasDeconnexion
-        ? `CCN "${contract.ccnLabel}" renseignée — vérifiez que votre accord d'entreprise ou charte prévoit des modalités concrètes.`
-        : 'Non vérifié. Votre accord d\'entreprise ou charte unilatérale doit prévoir des modalités de droit à la déconnexion.',
-      recommandation: 'Demandez à votre DRH la charte de déconnexion numérique. Son absence ne rend pas le forfait nul mais expose l\'employeur à des dommages-intérêts.',
+      ok: true,  // Ne rend pas le forfait nul — obligation de l'employeur
+      niveau: hasDeconn ? 'ok' : 'info',
+      detail: hasDeconn
+        ? `CCN "${contract.ccnLabel || 'sélectionnée'}" — vérifiez que votre accord d\'entreprise ou charte prévoit des modalités concrètes.`
+        : 'Votre employeur doit prévoir des modalités de droit à la déconnexion. Son absence n\'invalide pas le forfait mais expose l\'employeur à des dommages-intérêts.',
+      recommandation: 'Demandez à votre DRH la charte de déconnexion numérique. Cette condition est à la charge de l\'employeur, pas du salarié.',
     });
 
     // ── Score global ───────────────────────────────────────────

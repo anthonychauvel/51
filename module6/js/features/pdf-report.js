@@ -69,62 +69,9 @@ function _pdfSanitize(str) {
 
 const M6_PDF = {
 
-  // ── Certification obligatoire avant export ────────────────────
-  _askCertification(onConfirm) {
-    let el = document.getElementById('pdf-cert-modal');
-    if (el) el.remove();
-    el = document.createElement('div');
-    el.id = 'pdf-cert-modal';
-    el.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.7);z-index:9999;display:flex;align-items:flex-end;justify-content:center';
-    el.innerHTML = `
-    <div style="background:#fff;width:100%;max-width:480px;border-radius:16px 16px 0 0;padding:24px 20px;padding-bottom:calc(24px + env(safe-area-inset-bottom,0))">
-      <div style="font-family:var(--font-display,Georgia,serif);font-size:1.3rem;font-weight:600;margin-bottom:16px;color:#1A1714">Certification avant export</div>
-
-      <div style="background:#F7F3ED;border-radius:8px;padding:14px;margin-bottom:16px;font-size:0.82rem;color:#4A4540;line-height:1.6">
-        Pour avoir une valeur probante, ce document doit attester du respect de vos obligations legales.
-      </div>
-
-      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#EEF3FA;border-radius:8px;margin-bottom:10px;cursor:pointer;border:2px solid transparent" id="cert1-wrap">
-        <input type="checkbox" id="cert1" style="margin-top:2px;width:16px;height:16px;flex-shrink:0">
-        <div style="font-size:0.78rem;color:#1A1714;line-height:1.5">
-          Je certifie l exactitude des informations saisies dans ce document.
-        </div>
-      </label>
-
-      <label style="display:flex;align-items:flex-start;gap:10px;padding:12px;background:#EEF3FA;border-radius:8px;margin-bottom:16px;cursor:pointer;border:2px solid transparent" id="cert2-wrap">
-        <input type="checkbox" id="cert2" style="margin-top:2px;width:16px;height:16px;flex-shrink:0">
-        <div style="font-size:0.78rem;color:#1A1714;line-height:1.5">
-          Je certifie avoir respecte mes temps de repos quotidien (11h) et hebdomadaire (35h) pendant la periode couverte — Art. L3131-1 et L3132-2 du Code du travail.
-        </div>
-      </label>
-
-      <div id="cert-warn" style="display:none;color:#9B2C2C;font-size:0.75rem;margin-bottom:12px;padding:8px 12px;background:#FBEAEA;border-radius:6px">
-        Cochez les deux cases pour continuer.
-      </div>
-
-      <button id="cert-ok" style="width:100%;background:#1A1714;color:#F7F3ED;border:none;border-radius:8px;padding:13px;font-size:0.88rem;font-weight:500;cursor:pointer;margin-bottom:8px">
-        Generer le PDF
-      </button>
-      <button id="cert-cancel" style="width:100%;background:transparent;border:1px solid #E2DAD0;border-radius:8px;padding:11px;font-size:0.85rem;cursor:pointer;color:#8A847C">
-        Annuler
-      </button>
-    </div>`;
-    document.body.appendChild(el);
-
-    el.querySelector('#cert-ok').addEventListener('click', () => {
-      const c1 = el.querySelector('#cert1')?.checked;
-      const c2 = el.querySelector('#cert2')?.checked;
-      if (!c1 || !c2) { el.querySelector('#cert-warn').style.display='block'; return; }
-      el.remove();
-      onConfirm();
-    });
-    el.querySelector('#cert-cancel').addEventListener('click', () => el.remove());
-    el.addEventListener('click', e => { if(e.target===el) el.remove(); });
-  },
-
-  // ── Export mensuel ────────────────────────────────────────────
-  exportMensuel(opts) {
-    this._askCertification(() => this._genMensuel(opts));
+  _askCertification(onConfirm) { onConfirm(); }, // Certification supprimée — PDF direct
+portMensuel(opts) {
+    this._genMensuel(opts);
   },
 
   _genMensuel({ regime, year, mois, contract, data, moods, analysis, validations }) {
@@ -276,7 +223,7 @@ const M6_PDF = {
 
   // ── Export periode libre ──────────────────────────────────────
   exportPeriode(opts) {
-    this._askCertification(() => this._genPeriode(opts));
+    this._genPeriode(opts);
   },
 
   _genPeriode({ regime, year, contract, data, moods, dateDebut, dateFin }) {
@@ -378,7 +325,7 @@ const M6_PDF = {
 
   // ── Export annuel ─────────────────────────────────────────────
   exportAnnuel(opts) {
-    this._askCertification(() => this._genAnnuel(opts));
+    this._genAnnuel(opts);
   },
 
   _genAnnuel({ regime, year, contract, data, moods, analysis }) {

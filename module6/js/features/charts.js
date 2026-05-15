@@ -35,20 +35,37 @@ const M6_Charts = {
     const cv = typeof canvas === 'string' ? document.getElementById(canvas) : canvas;
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const DPR = window.devicePixelRatio || 1;
-    const W = cv.offsetWidth || 340;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2); // plafonner à 2x pour perf mobile
+    // Lire la largeur CSS réelle (getBoundingClientRect > offsetWidth sur mobile)
+    const rect = cv.getBoundingClientRect();
+    const W = Math.floor(rect.width || cv.parentElement?.getBoundingClientRect()?.width || 320);
     const H = cv.offsetHeight || 180;
-    cv.width = W * DPR; cv.height = H * DPR;
+    // Forcer les attributs de taille (sans ça le canvas déborde)
+    cv.style.width  = '100%';
+    cv.style.maxWidth = '100%';
+    cv.style.height = H + 'px';
+    cv.width  = W * DPR;
+    cv.height = H * DPR;
     ctx.scale(DPR, DPR);
 
     // ── Calculer les scores par mois ──────────────────────────
     const monthScores = []; // [{mois, fatigue, stress, recovery, performance}]
     const monthNames  = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
-    const today       = new Date();
-    const currentMois = today.getFullYear() === year ? today.getMonth() : 11;
+    // Trouver tous les mois qui ont au moins une saisie
+    // (pas de limite à aujourd'hui : les saisies rétroactives doivent s'afficher)
+    const moisAvecData = new Set();
+    for (const dk of Object.keys(data)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) {
+        const mois = parseInt(dk.slice(5,7)) - 1;
+        moisAvecData.add(mois);
+      }
+    }
+    // Calculer aussi les mois intermédiaires (pour une courbe continue)
+    const minMois = moisAvecData.size ? Math.min(...moisAvecData) : 0;
+    const maxMois = moisAvecData.size ? Math.max(...moisAvecData) : 11;
 
-    for (let m = 0; m <= currentMois; m++) {
-      // Données cumulées jusqu'à ce mois
+    for (let m = minMois; m <= maxMois; m++) {
+      // Données cumulées jusqu'à ce mois (inclut saisies rétroactives)
       const dataCumul = {};
       for (const [dk, v] of Object.entries(data)) {
         if (dk.startsWith(String(year))) {
@@ -146,10 +163,15 @@ const M6_Charts = {
     const cv = typeof canvas === 'string' ? document.getElementById(canvas) : canvas;
     if (!cv) return;
     const ctx = cv.getContext('2d');
-    const DPR = window.devicePixelRatio || 1;
-    const W = cv.offsetWidth || 340;
+    const DPR = Math.min(window.devicePixelRatio || 1, 2);
+    const rect = cv.getBoundingClientRect();
+    const W = Math.floor(rect.width || cv.parentElement?.getBoundingClientRect()?.width || 320);
     const H = cv.offsetHeight || 150;
-    cv.width = W * DPR; cv.height = H * DPR;
+    cv.style.width  = '100%';
+    cv.style.maxWidth = '100%';
+    cv.style.height = H + 'px';
+    cv.width  = W * DPR;
+    cv.height = H * DPR;
     ctx.scale(DPR, DPR);
 
     const monthNames = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
@@ -318,50 +340,85 @@ const M6_Charts = {
    */
   renderSection(analysis, bio, data, contract, year) {
     return `
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution & Tendances</div><div class="m6-ornement-line"></div></div>
+    <div style="width:100%;box-sizing:border-box;overflow-x:hidden">
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution &amp; Tendances</div><div class="m6-ornement-line"></div></div>
 
-    <!-- Radar -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-header">
-        <div class="m6-card-icon">🎯</div>
-        <div><div class="m6-card-label">Tableau de bord</div><div class="m6-card-title">Score instantané</div></div>
-      </div>
-      <div class="m6-card-body" style="display:flex;justify-content:center">
-        <canvas id="m6-radar" style="width:180px;height:180px"></canvas>
+    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
+      <div class="m6-card-header"><div class="m6-card-icon">🎯</div>
+        <div><div class="m6-card-label">Score instantané</div><div class="m6-card-title">Tableau de bord</div></div></div>
+      <div class="m6-card-body" style="display:flex;justify-content:center;overflow:hidden">
+        <canvas id="m6-radar" style="width:180px;height:180px;max-width:100%"></canvas>
       </div>
     </div>
 
-    <!-- Évolution bio -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-header">
-        <div class="m6-card-icon">📈</div>
-        <div><div class="m6-card-label">Tendances biologiques</div><div class="m6-card-title">Évolution mensuelle ${year}</div></div>
-      </div>
-      <div class="m6-card-body">
-        <div class="m6-legend" style="margin-bottom:10px">
-          ${[['Fatigue','fatigue'],['Stress','stress'],['Récupération','recovery'],['Performance','performance']].map(([l,k])=>`
-          <div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE[k]}"></div>${l}</div>`).join('')}
+    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
+      <div class="m6-card-header"><div class="m6-card-icon">📈</div>
+        <div><div class="m6-card-label">Tendances biologiques</div><div class="m6-card-title">Évolution mensuelle ${year}</div></div></div>
+      <div class="m6-card-body" style="overflow:hidden;padding:12px 8px">
+        <div class="m6-legend" style="margin-bottom:10px;flex-wrap:wrap;gap:4px">
+          ${[['Fatigue','fatigue'],['Stress','stress'],['Récup.','recovery'],['Perf.','performance']].map(([l,k])=>`<div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE[k]}"></div>${l}</div>`).join('')}
         </div>
-        <canvas id="m6-bio-chart" style="width:100%;height:180px;display:block"></canvas>
-        <div style="font-size:0.68rem;color:var(--pierre);margin-top:6px;text-align:center">Les scores sont recalculés mois par mois depuis les données saisies</div>
+        <div style="width:100%;max-width:100%;overflow:hidden">
+          <canvas id="m6-bio-chart" style="width:100%;height:180px;display:block;max-width:100%;box-sizing:border-box"></canvas>
+        </div>
+        <div style="font-size:0.68rem;color:var(--pierre);margin-top:6px;text-align:center">Scores recalculés mois par mois</div>
       </div>
     </div>
 
-    <!-- Consommation forfait -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-header">
-        <div class="m6-card-icon">📊</div>
-        <div><div class="m6-card-label">Consommation</div><div class="m6-card-title">Jours travaillés / mois</div></div>
-      </div>
-      <div class="m6-card-body">
-        <canvas id="m6-forfait-chart" style="width:100%;height:150px;display:block"></canvas>
-        <div class="m6-legend" style="margin-top:8px">
+    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
+      <div class="m6-card-header"><div class="m6-card-icon">📊</div>
+        <div><div class="m6-card-label">Consommation</div><div class="m6-card-title">Jours travaillés / mois</div></div></div>
+      <div class="m6-card-body" style="overflow:hidden;padding:12px 8px">
+        <div style="width:100%;max-width:100%;overflow:hidden">
+          <canvas id="m6-forfait-chart" style="width:100%;height:150px;display:block;max-width:100%;box-sizing:border-box"></canvas>
+        </div>
+        <div class="m6-legend" style="margin-top:8px;flex-wrap:wrap;gap:4px">
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:rgba(196,163,90,0.45)"></div>Jours/mois</div>
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE.forfait}"></div>Cumulatif</div>
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:#9B2C2C"></div>Plafond (${analysis?.plafond||218}j)</div>
         </div>
       </div>
+    </div>
     </div>`;
+  },
+
+  /**
+   * renderPage — injection complète de la section Tendances dans un container.
+   * Compatible mobile : canvas 100% width, overflow hidden, padding adapté.
+   * @param {HTMLElement} container
+   * @param {object}      contract
+   * @param {object}      data
+   * @param {number}      year
+   */
+  renderPage(container, contract, data, year) {
+    if (!container) return;
+    const analysis = window.M6_ForfaitJours?.analyze
+      ? M6_ForfaitJours.analyze(contract, data, year)
+      : (window.M6_ForfaitHeures?.analyze ? M6_ForfaitHeures.analyze(contract, data, year) : null);
+    const bio = window.M6_BioEngine?.analyzeForfaitJours
+      ? M6_BioEngine.analyzeForfaitJours(contract, data, year)
+      : null;
+
+    // HTML responsive — box-sizing + overflow:hidden sur chaque card
+    container.style.cssText = (container.style.cssText||'') + ';box-sizing:border-box;overflow-x:hidden;width:100%';
+    container.innerHTML = this.renderSection(analysis, bio, data, contract, year);
+
+    // Forcer tous les canvases à prendre la largeur du container parent
+    // en attendant que le RAF recalcule les dims
+    container.querySelectorAll('canvas').forEach(cv => {
+      cv.style.maxWidth = '100%';
+      cv.style.boxSizing = 'border-box';
+    });
+
+    // Laisser le layout se stabiliser avant de dessiner
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        this.drawRadar('m6-radar', bio);
+        this.drawBioEvolution('m6-bio-chart', contract, data, {}, year,
+          ['fatigue','stress','recovery','performance']);
+        this.drawForfaitEvolution('m6-forfait-chart', data, analysis, year);
+      });
+    });
   },
 
   /** À appeler après que renderSection() soit dans le DOM */
