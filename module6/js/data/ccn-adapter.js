@@ -40,9 +40,30 @@ const FALLBACK_FJ = [
 ];
 
 const FALLBACK_HS = [
-  { idcc: 1486, nom: 'Syntec (ETAM — contingent 130h)', contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
-  { idcc: 675,  nom: 'Banque AFB', contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
-  { idcc: 0,    nom: 'Droit commun', contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  // Contingents réels 2024 — sources : Légifrance + avenants de branche
+  { idcc: 1486, nom: 'Syntec / Bureaux études',      contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 3248, nom: 'Métallurgie (ANI 2024)',        contingent: 475, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1979, nom: 'HCR',                           contingent: 360, taux1: 10, taux2: 20, seuil: 39, palier1: 4, taux_inter: 20, palier_inter: 4, taux2: 50 },
+  { idcc: 2120, nom: 'Banque AFB',                    contingent: 202, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1672, nom: 'Sociétés assurances',           contingent: 230, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1996, nom: 'Pharmacie officine',            contingent: 180, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc:   16, nom: 'Transport routier',             contingent: 195, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 2511, nom: 'Sport',                         contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 2596, nom: 'Restauration rapide',           contingent: 220, taux1: 10, taux2: 20, seuil: 35, palier1: 8, taux2: 50 },
+  { idcc: 1597, nom: 'Bâtiment ETAM',                contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1090, nom: 'Réparation automobile',        contingent: 250, taux1: 25, taux2: 50, seuil: 39, palier1: 8 },
+  { idcc: 1413, nom: 'Travail temporaire',            contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 2247, nom: 'Hospitalisation privée',        contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 2941, nom: 'Aide à domicile (BASS)',        contingent:  90, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1043, nom: 'Gardiennage sécurité',         contingent: 120, taux1: 10, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc:  650, nom: 'Métallurgie OETAM (pré-2024)', contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 2128, nom: 'Cabinets dentaires',            contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 7 },
+  { idcc: 3127, nom: 'Services à la personne',        contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 3044, nom: 'Commerce gros non alim.',       contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc:  573, nom: 'Commerce gros alim.',           contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc: 1517, nom: 'Commerce détail non alim.',     contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc:  675, nom: 'Banque (Caisse Épargne)',       contingent: 202, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
+  { idcc:    0, nom: 'Droit commun',                  contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
 ];
 
 function _norm(s) {
