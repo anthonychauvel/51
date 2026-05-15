@@ -356,9 +356,11 @@ function ensureHelpButton(regime) {
   btn.addEventListener('mouseleave', () => { btn.style.transform='scale(1)'; });
   btn.addEventListener('click', () => {
     const r = btn.dataset.regime;
-    // Détecter la section active
-    const activeBtn = document.querySelector('.m6-nav-item.active');
-    const section = activeBtn?.dataset.sec || 'bilan';
+    // Chercher le bouton actif dans toute la page (data-sec + classe active)
+    const activeBtn = document.querySelector('.m6-nav-item.active, [data-sec].active');
+    const section = activeBtn?.dataset?.sec
+      || document.querySelector('[data-sec]')?.dataset?.sec
+      || 'bilan';
     showGuide(r, section);
   });
   document.body.appendChild(btn);
