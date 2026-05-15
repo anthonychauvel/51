@@ -239,10 +239,22 @@ const M6_Router = {
               <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="218" min="100" max="235" style="font-size:16px"></div>
               <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
               <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" placeholder="ex : 350" style="font-size:16px"></div>
-              <div class="m6-field"><label>CCN applicable (optionnel)</label><input type="text" id="wiz-ccn" placeholder="ex : Syntec, Banque AFB…" style="font-size:16px"></div>
+              <div class="m6-field" style="position:relative">
+                <label>CCN applicable — tapez pour chercher</label>
+                <input type="text" id="wiz-ccn" placeholder="ex : Syntec, 1486, Banque AFB…" style="font-size:16px" autocomplete="off">
+                <div id="wiz-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.15);max-height:220px;overflow-y:auto"></div>
+                <div id="wiz-ccn-info" style="margin-top:6px"></div>
+              </div>
             `:regime==='forfait_heures'?`
               <div class="m6-field"><label>Durée hebdo contractuelle (h)</label><input type="number" id="wiz-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
-              <div class="m6-field"><label>Contingent annuel HS (h)</label><input type="number" id="wiz-cont" value="220" min="100" max="500" style="font-size:16px"></div>
+              <div class="m6-field">
+                <label>Contingent annuel HS (h) <span style="font-weight:400;font-size:0.75rem;color:var(--pierre)">— légal : 220h, ou défini par votre CCN</span></label>
+                <input type="number" id="wiz-cont" value="220" min="100" max="500" style="font-size:16px">
+                <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
+                  <input type="checkbox" id="wiz-prorata-cont" style="width:16px;height:16px">
+                  <label for="wiz-prorata-cont" style="font-size:0.78rem;color:var(--pierre);cursor:pointer">Appliquer un prorata si j'arrive en cours d'année</label>
+                </div>
+              </div>
               <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" placeholder="25.50" style="font-size:16px"></div>
             `:`
               <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond" value="218" min="100" max="300" style="font-size:16px"></div>
@@ -263,15 +275,43 @@ const M6_Router = {
         }
         step++; render();
       });
-      // Prorata auto-détecté depuis 1ère saisie — aucune config requise.
+      // Bind autocomplete CCN dans le wizard si on est à l'étape contrat
+      if (step === 2 && regime === 'forfait_jours' && window.M6_CCN_Adapter) {
+        const wInp  = this._root.querySelector('#wiz-ccn');
+        const wDrop = this._root.querySelector('#wiz-ccn-drop');
+        const wInfo = this._root.querySelector('#wiz-ccn-info');
+        if (wInp && wDrop) {
+          M6_CCN_Adapter.bindAutocomplete(wInp, wDrop, (ccn) => {
+            // Sauvegarder l'IDCC pour la validation
+            wInp.dataset.idcc = ccn.idcc || '';
+            // Pré-remplir plafond si différent de 218
+            const defs = M6_CCN_Adapter.buildContractDefaults?.(ccn, 'forfait_jours');
+            if (defs?.plafond && defs.plafond !== 218) {
+              const pEl = this._root.querySelector('#wiz-plafond');
+              if (pEl) pEl.value = defs.plafond;
+            }
+            // Afficher la carte CCN
+            if (wInfo) {
+              wInfo.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
+            }
+          }, 'forfait_jours');
+        }
+      }
       this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
       this._root.querySelector('#wiz-back')?.addEventListener('click', () => { this._regime = null; localStorage.removeItem('M6_REGIME'); M6_Header.reset(); this._showSelector(); });
       this._root.querySelector('#wiz-finish')?.addEventListener('click', () => {
         let contract = { nomCadre: this._wizData?.nom||'', emailManager: this._root.querySelector('#wiz-email-mgr')?.value.trim()||'', dateDebutExercice: this._wizData?.debut||null, dateFinExercice: this._wizData?.fin||null, dateArrivee: this._wizData?.arrivee||null };
         if (regime === 'forfait_jours') {
-          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218, joursCPContrat: parseFloat(this._root.querySelector('#wiz-cp')?.value)||25, tauxJournalier: parseFloat(this._root.querySelector('#wiz-tj')?.value)||0, ccnLabel: this._root.querySelector('#wiz-ccn')?.value.trim()||'', tauxMajorationRachat: 10 };
+          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218, joursCPContrat: parseFloat(this._root.querySelector('#wiz-cp')?.value)||25, tauxJournalier: parseFloat(this._root.querySelector('#wiz-tj')?.value)||0, ccnLabel: this._root.querySelector('#wiz-ccn')?.value.trim()||'',
+                  ccnIdcc: parseInt(this._root.querySelector('#wiz-ccn')?.dataset.idcc||'0')||0,
+                  tauxMajorationRachat: 10 };
         } else if (regime === 'forfait_heures') {
-          contract = { ...contract, seuilHebdo: parseFloat(this._root.querySelector('#wiz-seuil')?.value)||39, contingent: parseInt(this._root.querySelector('#wiz-cont')?.value)||220, tauxHoraire: parseFloat(this._root.querySelector('#wiz-tauxH')?.value)||0, taux1: 25, taux2: 50, palier1: 8 };
+          contract = { ...contract,
+                  seuilHebdo:    parseFloat(this._root.querySelector('#wiz-seuil')?.value)||39,
+                  contingent:    parseInt(this._root.querySelector('#wiz-cont')?.value)||220,
+                  prorataContingent: !!(this._root.querySelector('#wiz-prorata-cont')?.checked),
+                  tauxHoraire:   parseFloat(this._root.querySelector('#wiz-tauxH')?.value)||0,
+                  taux1: 25, taux2: 50, palier1: 8 };
         } else {
           contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218 };
         }
