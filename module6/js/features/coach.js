@@ -254,7 +254,7 @@ function showGuide(regime, section, opts = {}) {
 
   const overlay = document.createElement('div');
   overlay.id = 'm6-coach-overlay';
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99997;display:flex;align-items:center;justify-content:center;padding:16px;animation:m6FadeIn 0.25s';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99997;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s ease';
 
   const flow = FLOWS[regime] || [];
   const idx  = flow.indexOf(section);
@@ -387,7 +387,7 @@ function attachTooltip(element, text) {
 
 function showTooltipModal(title, text) {
   const overlay = document.createElement('div');
-  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;animation:m6FadeIn 0.2s';
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.6);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.18s ease';
   overlay.innerHTML = `
     <div style="background:#fff;border-radius:12px;max-width:380px;padding:18px;box-shadow:0 10px 32px rgba(0,0,0,0.35)">
       <div style="font-family:Georgia,serif;font-size:1.05rem;font-weight:600;color:#1A1714;margin-bottom:10px">${title}</div>
@@ -399,6 +399,9 @@ function showTooltipModal(title, text) {
   overlay.querySelector('#ttm-close').onclick = close;
   overlay.addEventListener('click', e => { if (e.target === overlay) close(); });
   document.body.appendChild(overlay);
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
+  // Déclencher la transition APRÈS l'insertion (évite le flash)
+  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
 }
 
 // Activer auto les ⓘ existants dans le DOM
