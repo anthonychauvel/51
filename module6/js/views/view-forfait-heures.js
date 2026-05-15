@@ -192,12 +192,25 @@ const VFH = {
 
   _tplNav() {
     const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'validite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
-    return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
+    return `<nav class="m6-bottom-nav">
+      ${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}
+      <button class="m6-nav-item" id="fh-nav-contrat" title="Reconfigurer le contrat" style="color:var(--pierre)"><span class="nav-icon">⚙</span>Contrat</button>
+    </nav>`;
   },
 
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b=>b.addEventListener('click',()=>{this._section=b.dataset.sec;this.render();}));
-    // Bouton reconfigurer contrat (accessible depuis n'importe quelle section)
+    // Bouton ⚙ Contrat dans la nav — toujours accessible
+    this._c.querySelector('#fh-nav-contrat')?.addEventListener('click', () => {
+      if (!confirm('Reconfigurer le contrat FH ? Les données saisies sont conservées.')) return;
+      this._editContract();
+    });
+    // Bouton ⚙ Contrat dans le bilan (si visible)
+    this._c.querySelector('#fh-edit-contract')?.addEventListener('click', () => {
+      if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
+      this._editContract();
+    });
+    // Bouton ⚙ fantôme (compatibilité ancienne version)
     this._c.querySelector('#fh-nav-edit-contract')?.addEventListener('click', () => {
       if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
       this._editContract();

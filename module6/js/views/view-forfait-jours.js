@@ -576,6 +576,7 @@ const VFJ = {
           <div style="background:var(--ivoire-2);border-radius:var(--radius);padding:12px;margin-top:6px">
             <div style="font-size:0.72rem;color:var(--pierre);margin-bottom:10px">Si votre accord de branche ou d'entreprise déroge au droit commun, renseignez directement les valeurs applicables. Ces données écrasent celles de la CCN sélectionnée.</div>
             <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" min="100" max="235" placeholder="ex: 205" style="font-size:16px"></div>
+            <div class="m6-field"><label>Contingent HS annuel (h) <span style="font-weight:400;font-size:0.74rem;color:var(--pierre)">— si présent dans votre CCN</span></label><input type="number" id="s-contingent" min="0" max="500" placeholder="ex: 130 (Syntec) ou 220 (droit commun)" style="font-size:16px"></div>
             <div class="m6-field"><label>Taux de rachat personnalisé (%)</label><input type="number" id="s-taux-rachat-manuel" min="10" max="100" placeholder="ex: 25" style="font-size:16px"></div>
             <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
           </div>
@@ -603,6 +604,9 @@ const VFJ = {
         const pEl  = this._c.querySelector('#s-p');
         const majEl = this._c.querySelector('#s-maj');
         if (pEl  && defaults.plafond !== 218) pEl.value  = defaults.plafond;
+        // Pré-remplir le contingent HS depuis la CCN (Syntec=130h, droit commun=220h, etc.)
+        const cEl = this._c.querySelector('#s-contingent');
+        if (cEl && defaults.contingent && defaults.contingent !== 220) cEl.value = defaults.contingent;
         if (majEl && defaults.tauxMajorationRachat > 10) majEl.value = defaults.tauxMajorationRachat;
         // Carte info CCN
         if (info) {
@@ -637,7 +641,7 @@ const VFJ = {
       }, 'forfait_jours');
     }
     this._c.querySelector('#s-save')?.addEventListener('click', () => {
-      const c = { plafond:parseInt(this._c.querySelector('#s-plafond-manuel')?.value)||parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-taux-rachat-manuel')?.value)||parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null, refAccordDerogatoire:this._c.querySelector('#s-ref-accord')?.value.trim()||null };
+      const c = { plafond:parseInt(this._c.querySelector('#s-plafond-manuel')?.value)||parseInt(this._c.querySelector('#s-p')?.value)||218, contingent:parseInt(this._c.querySelector('#s-contingent')?.value)||220, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-taux-rachat-manuel')?.value)||parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null, refAccordDerogatoire:this._c.querySelector('#s-ref-accord')?.value.trim()||null };
       M6_Storage.setContract(this._regime, c);
       M6_Storage.createYear(this._regime, this._year);
       this._load(); this.render();
