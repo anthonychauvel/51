@@ -94,7 +94,7 @@ const VCD = {
     const yrPickerCD = yrsCD.length > 1
       ? `<select id="cd-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrsCD.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`
       : '';
-    M6_Header.set({
+    window.M6_Header?.set({
       title: `${this._contract.fonction||'Cadre Dirigeant'} ${this._year}`,
       sub: `${this._contract.entreprise||'L3111-2'} · CP: ${stats.cpSolde}j restants`,
       showReset: true,
@@ -126,12 +126,50 @@ const VCD = {
       case 'projets':   ct.innerHTML = zenjiHtml + this._tplProjets(); this._bindProjets(); break;
       case 'sante':     ct.innerHTML = zenjiHtml + this._tplSante(bio,stats); break;
       case 'entretien': ct.innerHTML = zenjiHtml;
-        M6_Entretien.renderForm(ct, REGIME, this._year, this._contract,
-          {joursEffectifs:stats.jTravailles,plafond:218,rttPris:stats.rttPris,alertes:[]},
-          ()=>{this._load();this.render();}); break;
+        if (window.M6_Entretien) {
+          M6_Entretien.renderForm(ct, REGIME, this._year, this._contract,
+            {joursEffectifs:stats.jTravailles,plafond:218,rttPris:stats.rttPris,alertes:[]},
+            ()=>{this._load();this.render();});
+        } else {
+          ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
+        }
+        break;
       case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(stats,bio); this._bindExport(stats,bio); break;
+      case 'tendances':
+        ct.innerHTML = zenjiHtml + '<div style="padding:4px 0"></div>';
+        try {
+          if (window.M6_Charts) {
+            M6_Charts.renderPage(ct, { plafond: 218, joursCPContrat: 25, seuilHebdo: 35 }, this._data, this._year);
+          } else {
+            ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module graphiques non chargé.</div></div>';
+          }
+        } catch(e) {
+          ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`;
+        }
+        break;
+      case 'validite':
+        ct.innerHTML = zenjiHtml + '<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">⚖ Validité du statut Cadre Dirigeant</div><div class="m6-ornement-line"></div></div><div id="cd-validite-ct"></div>';
+        if (window.M6_ValiditeCD) {
+          window.M6_ValiditeCD.render(ct.querySelector('#cd-validite-ct'), this._contract);
+        } else {
+          ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Validité non chargé.</div></div>';
+        }
+        break;
+      case 'glossaire':
+        ct.innerHTML = zenjiHtml;
+        if (window.M6_GlossaireUI) {
+          M6_GlossaireUI.render(ct);
+        } else {
+          ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
+        }
+        break;
     }
     this._bindNav();
+    // Coach contextuel
+    if (window.M6_Coach) {
+      window.M6_Coach.ensureButton('cadre_dirigeant');
+      window.M6_Coach.maybeAutoShow('cadre_dirigeant', this._section);
+    }
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
     // Popup Zenji flottant
     if (window.M6_ZenjiPopup) {
@@ -181,7 +219,7 @@ const VCD = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Agenda'},{id:'projets',icon:'◆',label:'Projets'},{id:'sante',icon:'♡',label:'Santé'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'≡',label:'Export'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Agenda'},{id:'projets',icon:'◐',label:'Projets'},{id:'sante',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'validite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
@@ -194,6 +232,22 @@ const VCD = {
   // ── BILAN ──────────────────────────────────────────────────────
   _tplBilan(s, bio) {
     return `
+    <!-- QUICK ACTIONS -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <button class="m6-quick-action" data-quick="calendrier" style="background:#1A1714;color:#F7F3ED;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">📅</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Saisir<br>aujourd'hui</span>
+      </button>
+      <button class="m6-quick-action" data-quick="projets" style="background:#C4A35A;color:#1A1714;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">◐</span>
+        <span style="font-size:0.7rem;font-weight:600;line-height:1.2">Mes<br>projets</span>
+      </button>
+      <button class="m6-quick-action" data-quick="export" style="background:#F7F3ED;color:#1A1714;border:1px solid #E2DAD0;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">◆</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Exporter<br>PDF</span>
+      </button>
+    </div>
+
     <div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
       <span>⚖️</span><div><strong>Régime Cadre Dirigeant (L3111-2)</strong> — Pas de compteur d'heures légal. Autonomie totale sur l'organisation du temps. Obligations : CP, protection santé, entretien de charge si engagement contractuel.</div>
     </div>
@@ -270,6 +324,13 @@ const VCD = {
   },
 
   _bindBilan() {
+    // Quick Actions
+    this._c.querySelectorAll('[data-quick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        this._section = btn.dataset.quick;
+        this.render();
+      });
+    });
     this._c.querySelector('#cd-saisir')?.addEventListener('click',()=>{this._section='calendrier';this.render();});
     this._c.querySelector('#cd-bio-card')?.addEventListener('click',()=>{this._section='sante';this.render();});
     this._c.querySelector('#cd-newyr')?.addEventListener('click',()=>{const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1);if(!y||isNaN(y))return;const yr=parseInt(y);M6_Storage.createYear(REGIME,yr);this._year=yr;M6_Storage.setActiveYear(yr);this._load();this.render();M6_toast(`Exercice ${yr} créé`);});
@@ -595,10 +656,7 @@ const VCD = {
       <div class="m6-field"><label>Votre nom</label><input type="text" id="pdf-nom" value="${this._contract.nom||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Fonction</label><input type="text" id="pdf-fnc" value="${this._contract.fonction||''}" placeholder="Directeur Général…" style="font-size:16px"></div>
       <div style="margin-bottom:12px">
-        <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;color:var(--charbon);cursor:pointer">
-          <input type="checkbox" id="pdf-attest" style="margin-top:2px;flex-shrink:0">
-          <span>Je certifie l'exactitude de ces informations et le respect recommandé des temps de repos quotidien et hebdomadaire.</span>
-        </label>
+        
       </div>
       <div class="m6-field"><label>PDF Periode — date debut</label><input type="date" id="cd-per-d1" value="${this._year}-01-01" style="font-size:16px"></div>
       <div class="m6-field"><label>PDF Periode — date fin</label><input type="date" id="cd-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px"></div>

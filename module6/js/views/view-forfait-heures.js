@@ -43,7 +43,7 @@ const VFH = {
     const yrPickerHtml2 = yrs2.length > 1
       ? `<select id="vfh-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrs2.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`
       : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
-    M6_Header.set({
+    window.M6_Header?.set({
       title: `Forfait Heures ${this._year}`,
       sub: `Seuil ${this._formatH(this._contract.seuilHebdo)} · Contingent ${this._contract.contingent||220}h · ${analysis.totalHS}h HS`,
       showReset: true,
@@ -75,6 +75,14 @@ const VFH = {
         case 'semaines':  ct.innerHTML = this._tplSemaines(analysis); this._bindSemaines(); break;
         case 'bio':       ct.innerHTML = zenjiHtml + this._tplBio(bio); break;
         case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(analysis); this._bindExport(analysis); break;
+        case 'validite':
+          ct.innerHTML = zenjiHtml + '<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">⚖ Validité juridique</div><div class="m6-ornement-line"></div></div><div id="vfh-validite-ct"></div>';
+          if (window.M6_ValiditeFH) {
+            window.M6_ValiditeFH.render(ct.querySelector('#vfh-validite-ct'), this._contract, analysis);
+          } else {
+            ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Validité non chargé.</div></div>';
+          }
+          break;
         case 'entretien':
           ct.innerHTML = zenjiHtml;
           if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, {}, ()=>{this._load();this.render();});
@@ -108,6 +116,11 @@ const VFH = {
       console.error('[VFH render]', e);
     } finally {
       this._bindNav();
+    }
+    // Coach contextuel
+    if (window.M6_Coach) {
+      window.M6_Coach.ensureButton('forfait_heures');
+      window.M6_Coach.maybeAutoShow('forfait_heures', this._section);
     }
     // Détruire l'ancienne bulle avant réinitialisation
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
@@ -178,12 +191,17 @@ const VFH = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'semaines',icon:'◻',label:'Semaines'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'validite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
     return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b=>b.addEventListener('click',()=>{this._section=b.dataset.sec;this.render();}));
+    // Bouton reconfigurer contrat (accessible depuis n'importe quelle section)
+    this._c.querySelector('#fh-nav-edit-contract')?.addEventListener('click', () => {
+      if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
+      this._editContract();
+    });
     const yp = this._c.querySelector('#vfh-yr');
     if (yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
     const ypHdr2 = document.querySelector('#vfh-yr-hdr');
@@ -192,7 +210,39 @@ const VFH = {
 
   // ── BILAN ──────────────────────────────────────────────────
   _tplBilan(a, bio) {
-    return `
+    // Bannière prorata mid-year
+    // Prorata auto : basé sur la 1ère saisie ou dateArrivee explicite
+    const _prrDateRef = this._contract.dateArrivee || a.firstEntry || null;
+    const _prrActive  = a.contingentProrata || (this._contract.dateArrivee && a.isProrata !== false);
+    const midYearBanner = (_prrActive && _prrDateRef) ? (() => {
+      const dt = new Date(_prrDateRef + 'T12:00:00');
+      const p  = a.contingentBase ? Math.round(a.contingent / a.contingentBase * 100) : 100;
+      return `<div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
+        <span>📐</span><div>
+          <strong>Prorata automatique</strong> — Démarrage détecté le
+          <strong>${dt.toLocaleDateString('fr-FR')}</strong> (1ère semaine saisie)<br>
+          Contingent HS ajusté : <strong>${a.contingent}h</strong>${a.contingentBase ? ` sur ${a.contingentBase}h (${p}%)` : ''}
+          — Compteurs calculés depuis cette date.
+        </div>
+      </div>`;
+    })() : '';
+    return `${midYearBanner}
+    <!-- QUICK ACTIONS -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <button class="m6-quick-action" data-quick="semaines" style="background:#1A1714;color:#F7F3ED;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">📅</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Saisir<br>la semaine</span>
+      </button>
+      <button class="m6-quick-action" data-quick="bio" style="background:#C4A35A;color:#1A1714;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">♡</span>
+        <span style="font-size:0.7rem;font-weight:600;line-height:1.2">Voir mes<br>indicateurs</span>
+      </button>
+      <button class="m6-quick-action" data-quick="export" style="background:#F7F3ED;color:#1A1714;border:1px solid #E2DAD0;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">◆</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Exporter<br>PDF</span>
+      </button>
+    </div>
+
     <div class="m6-stats-grid" style="margin-bottom:14px">
       <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHS}h</div><div class="m6-stat-label">Total HS</div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.semaines}</div><div class="m6-stat-label">Semaines saisies</div></div>
@@ -239,6 +289,20 @@ const VFH = {
   },
 
   _bindBilan(analysis) {
+    // Quick Actions
+    this._c.querySelectorAll('[data-quick]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const action = btn.dataset.quick;
+        if (action === 'semaines') {
+          this._section = 'semaines'; this.render();
+          setTimeout(() => this._c.querySelector('#fh-add')?.click(), 250);
+        } else if (action === 'bio') {
+          this._section = 'bio'; this.render();
+        } else if (action === 'export') {
+          this._section = 'export'; this.render();
+        }
+      });
+    });
     this._c.querySelector('#fh-saisir')?.addEventListener('click', () => { this._section='semaines'; this.render(); setTimeout(()=>this._c.querySelector('#fh-add')?.click(),200); });
     this._c.querySelector('#fh-bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
     this._c.querySelector('#fh-edit-contract')?.addEventListener('click', () => { if(!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return; this._editContract(); });
@@ -367,10 +431,7 @@ const VFH = {
           </div>
 
           <!-- Attestation repos -->
-          <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:10px 0;cursor:pointer">
-            <input type="checkbox" id="fh-repos" style="margin-top:2px;flex-shrink:0">
-            <span>J'atteste avoir respecté les temps de repos légaux cette semaine (11h quotidien, 35h hebdomadaire).</span>
-          </label>
+          
 
           <button class="m6-btn m6-btn-primary" id="fh-sv">Enregistrer</button>
           <div style="height:8px"></div>
@@ -480,10 +541,7 @@ const VFH = {
         <select id="fh-pdf-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}" ${i===new Date().getMonth()?'selected':''}>${m}</option>`).join('')}</select>
       </div>
       <div class="m6-field"><label>Email manager (copie PDF)</label><input type="email" id="fh-mgr-email" value="${this._contract.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:8px 0 10px;cursor:pointer;padding:10px;background:var(--ivoire-2);border-radius:var(--radius);border:1px solid var(--ivoire-3)">
-        <input type="checkbox" id="fh-certif" style="margin-top:2px;flex-shrink:0">
-        <span>✍️ Je certifie l'exactitude de ces données de suivi d'heures supplémentaires</span>
-      </label>
+      
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <button class="m6-btn m6-btn-ghost" id="fh-pdf-m" style="flex:1;min-width:120px;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="fh-pdf-a" style="flex:1;min-width:120px;font-size:0.78rem">📋 PDF Annuel</button>
@@ -508,9 +566,7 @@ const VFH = {
 
   _bindExport(analysis) {
     const checkCertifFH = () => {
-      if (!this._c.querySelector('#fh-certif')?.checked) {
-        M6_toast('⚠️ Cochez la case de certification'); return false;
-      }
+
       return true;
     };
     const saveEmailFH = () => {
@@ -646,7 +702,14 @@ const VFH = {
     const e=Math.floor(h), m=Math.round((h-e)*60);
     return m>0?`${e}h${String(m).padStart(2,'0')}`:`${e}h`;
   },
-  _editContract() { M6_Storage.setContract(this._regime,null); this._contract=null; this._c.innerHTML=this._tplSetup(); this._bindSetup(); }
+  _editContract() {
+    M6_Storage.setContract(this._regime, null);
+    this._contract = null;
+    this._section = 'bilan';  // reset section pour éviter boucle sur export
+    try { document.getElementById('m6-coach-fab')?.remove(); } catch(_) {}
+    this._c.innerHTML = this._tplSetup();
+    this._bindSetup();
+  }
 };
 
 global.VFH = VFH;
