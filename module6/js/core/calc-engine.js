@@ -248,7 +248,9 @@ const M6_ForfaitHeures = {
 
     let contingent = contingentBase;
     let contingentProrata = false;
-    if (_effectiveArrFH) {
+    // Prorata du contingent : seulement si l'utilisateur a coché l'option dans le wizard
+    // (contract.prorataContingent = true). Pas imposé automatiquement.
+    if (_effectiveArrFH && contract.prorataContingent) {
       const arrDate   = new Date(_effectiveArrFH + 'T12:00:00');
       const exDebDate = new Date(_exDebutFH + 'T12:00:00');
       const exFinDate = contract.dateFinExercice
