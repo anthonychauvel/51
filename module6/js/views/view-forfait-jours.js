@@ -651,7 +651,7 @@ const VFJ = {
     const grille = window.CCN_Coefficients?.getGrille(idcc);
     if (!grille) return;
     const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:16px;animation:m6FadeIn 0.2s';
+    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s ease';
     let html = `<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
       <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px;gap:12px">
         <div>
@@ -684,6 +684,7 @@ const VFJ = {
     overlay.querySelector('#grille-close').onclick = () => overlay.remove();
     overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
     document.body.appendChild(overlay);
+    requestAnimationFrame(() => { overlay.style.opacity = '1'; });
   }
 };
 
