@@ -247,6 +247,12 @@ const M6_Router = {
                 <div id="wiz-ccn-info" style="margin-top:6px"></div>
               </div>
             `:regime==='forfait_heures'?`
+              <div class="m6-field" style="position:relative">
+                <label>Votre CCN — tapez pour chercher</label>
+                <input type="text" id="wiz-ccn-fh" placeholder="ex : HCR, Syntec, Transport, Banque…" style="font-size:16px" autocomplete="off">
+                <div id="wiz-ccn-fh-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.15);max-height:180px;overflow-y:auto"></div>
+                <div id="wiz-ccn-fh-info" style="margin-top:4px;font-size:0.72rem;color:var(--pierre)">Pré-remplit automatiquement seuil, contingent et taux.</div>
+              </div>
               <div class="m6-field"><label>Durée hebdo contractuelle (h)</label><input type="number" id="wiz-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
               <div class="m6-field">
                 <label>Contingent annuel HS (h) <span style="font-weight:400;font-size:0.75rem;color:var(--pierre)">— légal : 220h, ou défini par votre CCN</span></label>
@@ -285,17 +291,32 @@ const M6_Router = {
           M6_CCN_Adapter.bindAutocomplete(wInp, wDrop, (ccn) => {
             // Sauvegarder l'IDCC pour la validation
             wInp.dataset.idcc = ccn.idcc || '';
-            // Pré-remplir plafond si différent de 218
+            const pEl = this._root.querySelector('#wiz-plafond');
             const defs = M6_CCN_Adapter.buildContractDefaults?.(ccn, 'forfait_jours');
-            if (defs?.plafond && defs.plafond !== 218) {
-              const pEl = this._root.querySelector('#wiz-plafond');
-              if (pEl) pEl.value = defs.plafond;
+            // Pré-remplir le plafond depuis la CCN SEULEMENT si l'utilisateur n'a pas déjà saisi une valeur custom
+            if (pEl && defs?.plafond) {
+              const current = parseInt(pEl.value);
+              if (current === 218 || isNaN(current)) pEl.value = defs.plafond;
             }
             // Afficher la carte CCN
-            if (wInfo) {
-              wInfo.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
-            }
+            if (wInfo) wInfo.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
           }, 'forfait_jours');
+        }
+      }
+      if (step === 2 && regime === 'forfait_heures' && window.M6_CCN_Adapter) {
+        const wInpFH  = this._root.querySelector('#wiz-ccn-fh');
+        const wDropFH = this._root.querySelector('#wiz-ccn-fh-drop');
+        const wInfoFH = this._root.querySelector('#wiz-ccn-fh-info');
+        if (wInpFH && wDropFH) {
+          M6_CCN_Adapter.bindAutocomplete(wInpFH, wDropFH, (ccn) => {
+            wInpFH.dataset.idcc = ccn.idcc || '';
+            const defs = M6_CCN_Adapter.buildContractDefaults?.(ccn, 'forfait_heures');
+            const contEl  = this._root.querySelector('#wiz-cont');
+            const seuilEl = this._root.querySelector('#wiz-seuil');
+            if (contEl  && defs?.contingent) contEl.value  = defs.contingent;
+            if (seuilEl && defs?.seuilHebdo) seuilEl.value = defs.seuilHebdo;
+            if (wInfoFH) wInfoFH.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_heures');
+          }, 'forfait_heures');
         }
       }
       this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
@@ -312,6 +333,8 @@ const M6_Router = {
                   contingent:    parseInt(this._root.querySelector('#wiz-cont')?.value)||220,
                   prorataContingent: !!(this._root.querySelector('#wiz-prorata-cont')?.checked),
                   tauxHoraire:   parseFloat(this._root.querySelector('#wiz-tauxH')?.value)||0,
+                  ccnLabel:      this._root.querySelector('#wiz-ccn-fh')?.value.trim()||'',
+                  ccnIdcc:       parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc||'0')||0,
                   taux1: 25, taux2: 50, palier1: 8 };
         } else {
           contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218 };
@@ -341,7 +364,7 @@ document.addEventListener('DOMContentLoaded', () => {
         // Bannière in-app d'invitation (pas de popup navigateur direct)
         const banner = document.createElement('div');
         banner.id = 'm6-notif-banner';
-        banner.style.cssText = 'position:fixed;bottom:calc(76px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;opacity:0;transition:opacity 0.25s ease';
+        banner.style.cssText = 'position:fixed;bottom:calc(120px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;opacity:0;transition:opacity 0.25s ease';
         banner.innerHTML = `
           <span style="font-size:1.4rem;flex-shrink:0">🔔</span>
           <div style="flex:1;line-height:1.4">Activer les rappels vendredi ?<br><span style="font-size:0.7rem;color:var(--pierre-2)">100% local — aucune donnée envoyée</span></div>
