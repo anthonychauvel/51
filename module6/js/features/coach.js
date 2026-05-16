@@ -344,7 +344,7 @@ function ensureHelpButton(regime) {
   btn.title = 'Aide';
   btn.innerHTML = '?';
   btn.style.cssText = `
-    position:fixed;bottom:80px;right:14px;z-index:99996;
+    position:fixed;bottom:calc(116px + env(safe-area-inset-bottom,0));right:14px;z-index:99996;
     width:46px;height:46px;border-radius:50%;
     background:#C4A35A;color:#1A1714;border:none;
     font-size:1.4rem;font-weight:700;font-family:Georgia,serif;
