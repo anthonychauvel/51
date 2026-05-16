@@ -219,8 +219,21 @@ const VCD = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Agenda'},{id:'projets',icon:'◐',label:'Projets'},{id:'sante',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'validite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
-    return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
+    const mk = (id, icon, label) =>
+      `<button class="m6-nav-item ${this._section===id?'active':''}" data-sec="${id}">
+        <span class="nav-icon">${icon}</span>${label}
+      </button>`;
+    return `<nav class="m6-bottom-nav">
+      ${mk('bilan',     '◈', 'Bilan')}
+      ${mk('calendrier','◻', 'Agenda')}
+      ${mk('projets',   '◐', 'Projets')}
+      ${mk('sante',     '♡', 'Santé')}
+      <div class="m6-nav-row-sep"></div>
+      ${mk('tendances', '◗', 'Tendances')}
+      ${mk('validite',  '⚖', 'Validité')}
+      ${mk('entretien', '◉', 'Entretien')}
+      ${mk('export',    '◆', 'Export')}
+    </nav>`;
   },
 
   _bindNav() {
