@@ -291,31 +291,39 @@ body {
   padding-bottom: env(safe-area-inset-bottom, 0);
   background: var(--charbon);
   border-top: var(--gold-line);
-  display: flex;
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
   z-index: 100;
 }
+/* Boutons de la 2ème ligne : prennent 4/n colonnes */
 .m6-nav-item {
-  flex: 1;
   display: flex;
   flex-direction: column;
   align-items: center;
-  padding: 10px 4px;
+  padding: 8px 2px;
   cursor: pointer;
   border: none;
   background: none;
   color: var(--pierre);
   font-family: var(--font-body);
-  font-size: 0.6rem;
-  letter-spacing: 0.05em;
-  gap: 3px;
+  font-size: 0.58rem;
+  letter-spacing: 0.04em;
+  gap: 2px;
   transition: color 0.2s;
 }
 .m6-nav-item.active { color: var(--champagne); }
-.m6-nav-item .nav-icon { font-size: 1.1rem; }
+.m6-nav-item .nav-icon { font-size: 1.05rem; line-height: 1; }
+/* Séparateur entre les deux lignes */
+.m6-nav-row-sep {
+  grid-column: 1 / -1;
+  height: 1px;
+  background: rgba(196,163,90,0.15);
+  margin: 0;
+}
 
 /* ── Main scroll area ────────────────────────────────────────── */
 .m6-main {
-  padding: 20px 16px calc(72px + env(safe-area-inset-bottom, 0));
+  padding: 20px 16px calc(112px + env(safe-area-inset-bottom, 0));
   max-width: 480px;
   margin: 0 auto;
 }
