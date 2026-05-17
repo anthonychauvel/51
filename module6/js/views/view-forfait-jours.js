@@ -105,7 +105,6 @@ const VFJ = {
       case 'bio':
         try {
           ct.innerHTML = zenjiHtml + this._tplBio(bio);
-          if (window.M6_Charts) M6_Charts.bindCharts(analysis, bio, this._data, this._contract, this._year);
         } catch(e) {
           ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur module Santé</strong><br>${e.message}</div></div>`;
           console.error('[VFJ Santé]', e);
@@ -142,10 +141,12 @@ const VFJ = {
           break;
         case 'tendances':
           ct.innerHTML = '<div style="padding:4px 0"></div>';
-          try {
-            if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
-            else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
-          } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
+          if (window.M6_Charts) {
+            ct.innerHTML += M6_Charts.renderSection(analysis, bio, this._data, this._contract, this._year);
+            requestAnimationFrame(() => M6_Charts.drawForfaitEvolution('m6-forfait-chart', this._data, analysis, this._year));
+          } else {
+            ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module graphiques non chargé.</div></div>';
+          }
           break;
         case 'nullite':
           ct.innerHTML = zenjiHtml;
@@ -417,10 +418,7 @@ const VFJ = {
       <div class="m6-field"><label>Votre nom</label><input type="text" id="pdf-nom" value="${this._contract.nomCadre||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Nom manager</label><input type="text" id="pdf-mgr" value="${this._contract.nomManager||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Email manager (copie PDF)</label><input type="email" id="pdf-mgr-email" value="${this._contract.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.75rem;margin:10px 0 12px;cursor:pointer;padding:10px;background:var(--ivoire-2);border-radius:var(--radius);border:1px solid var(--ivoire-3)">
-        <input type="checkbox" id="pdf-certif" style="margin-top:2px;flex-shrink:0" required>
-        <span>✍️ Je certifie sur l'honneur l'exactitude des données saisies et l'exhaustivité de ce rapport de suivi de forfait.</span>
-      </label>
+      
       <div class="m6-field">
         <label>Période libre (du … au …)</label>
         <div style="display:flex;gap:8px;margin-bottom:8px">

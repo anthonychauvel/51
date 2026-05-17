@@ -136,15 +136,12 @@ const VCD = {
         break;
       case 'export':    ct.innerHTML = zenjiHtml + this._tplExport(stats,bio); this._bindExport(stats,bio); break;
       case 'tendances':
-        ct.innerHTML = zenjiHtml + '<div style="padding:4px 0"></div>';
-        try {
-          if (window.M6_Charts) {
-            M6_Charts.renderPage(ct, { plafond: 218, joursCPContrat: 25, seuilHebdo: 35 }, this._data, this._year);
-          } else {
-            ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module graphiques non chargé.</div></div>';
-          }
-        } catch(e) {
-          ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`;
+        ct.innerHTML = '<div style="padding:4px 0"></div>';
+        if (window.M6_Charts) {
+          ct.innerHTML += M6_Charts.renderSection({ plafond:218, plafondProrata:218 }, bio, this._data, this._contract, this._year);
+          requestAnimationFrame(() => M6_Charts.drawForfaitEvolution('m6-forfait-chart', this._data, { plafond:218 }, this._year));
+        } else {
+          ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module graphiques non chargé.</div></div>';
         }
         break;
       case 'validite':
@@ -714,7 +711,7 @@ const VCD = {
       this._saveContract();
     };
     const checkAttest = () => {
-      if(!this._c.querySelector('#pdf-attest')?.checked){M6_toast('Cochez la case de certification');return false;}
+      
       return true;
     };
 
