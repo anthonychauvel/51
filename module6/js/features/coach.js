@@ -355,8 +355,10 @@ function ensureHelpButton(regime) {
   btn.addEventListener('mouseenter', () => { btn.style.transform='scale(1.1)'; });
   btn.addEventListener('mouseleave', () => { btn.style.transform='scale(1)'; });
   btn.addEventListener('click', () => {
+    // Toujours réactiver le coach si l'utilisateur clique manuellement sur ❓
+    // (même s'il avait cliqué "Ne plus afficher")
+    try { localStorage.removeItem('M6_COACH_DISABLED'); } catch(_) {}
     const r = btn.dataset.regime;
-    // Chercher le bouton actif dans toute la page (data-sec + classe active)
     const activeBtn = document.querySelector('.m6-nav-item.active, [data-sec].active');
     const section = activeBtn?.dataset?.sec
       || document.querySelector('[data-sec]')?.dataset?.sec

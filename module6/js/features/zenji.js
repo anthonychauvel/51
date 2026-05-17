@@ -16,7 +16,7 @@
 const K = {
   MSG_IDX:   'M6_ZENJI_IDX',
   POPUP_DAY: 'M6_ZENJI_POPUP_DAY',
-  SEEN_KEYS: 'M6_ZENJI_SEEN',
+  SEEN_KEYS: 'M6_ZENJI_SEEN',  // clé de base — suffixée par régime
 };
 const _get  = (k,d='')  => { try { return localStorage.getItem(k)??d; } catch(_) { return d; } };
 const _set  = (k,v)     => { try { localStorage.setItem(k,String(v)); } catch(_) {} };
@@ -530,8 +530,8 @@ Savez-vous que le "Droit à la déconnexion" (L3121-65 al.3) doit être formalis
 
 // ── Onboarding state ─────────────────────────────────────────────
 const M6_ZenjiOnboarding = {
-  isFirstVisit() { return !_get('M6_ZENJI_SEEN'); },
-  markSeen()     { _set('M6_ZENJI_SEEN','1'); },
+  isFirstVisit(regime) { return !_get(regime ? 'M6_ZENJI_SEEN_'+regime : 'M6_ZENJI_SEEN'); },
+  markSeen(regime) { _set(regime ? 'M6_ZENJI_SEEN_'+regime : 'M6_ZENJI_SEEN','1'); },
   reset()        { try{localStorage.removeItem('M6_ZENJI_SEEN');}catch(_){} }
 };
 
