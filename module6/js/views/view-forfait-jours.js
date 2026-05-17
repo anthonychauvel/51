@@ -163,10 +163,6 @@ const VFJ = {
         break;
     }
     this._bindNav();
-    if (window.M6_Coach) {
-      window.M6_Coach.ensureButton('forfait_jours');
-      window.M6_Coach.maybeAutoShow('forfait_jours', this._section);
-    }
     // Alerte automatique si changement de phase
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime);
     // Init popup Zenji (bulle flottante)
