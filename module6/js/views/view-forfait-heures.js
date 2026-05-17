@@ -561,9 +561,7 @@ const VFH = {
   },
 
   _bindNav() {
-    this._c.querySelectorAll('[data-sec]').forEach(b => {
-      b.onclick = () => { this._section = b.dataset.sec; this.render(); };
-    });
+    this._c.querySelectorAll('[data-sec]').forEach(b => { b.onclick = () => { this._section = b.dataset.sec; this.render(); }; });
     const editBtn = this._c.querySelector('#fh-edit-contract');
     if (editBtn) editBtn.onclick = () => {
       if (!confirm('Reconfigurer le contrat FH ? Les données saisies sont conservées.')) return;

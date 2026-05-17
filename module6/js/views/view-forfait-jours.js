@@ -68,13 +68,14 @@ const VFJ = {
       : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
     const plafond = this._contract.plafond || 218;
     const restants = Math.max(0, plafond - analysis.joursEffectifs);
-    window.M6_Header?.set({
+    M6_Header.set({
       title: `Forfait Jours ${this._year}`,
       sub: `${this._contract.ccnLabel || 'Droit commun'} · ${plafond}j · ${restants}j restants`,
       showReset: true,
       showSwitch: true,
       onReset: () => {
         if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
+        if (window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
         M6_Storage.setContract(this._regime, null);
         this._contract = null;
         this._c.innerHTML = this._tplSetup();
@@ -93,11 +94,10 @@ const VFJ = {
       ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', this._section !== 'sante')
       : '';
 
-    try {
-      switch(this._section) {
-        case 'bilan':
-          ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
-          this._bindBilan(analysis,bio);
+    switch(this._section) {
+      case 'bilan':
+        ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
+        this._bindBilan(analysis,bio);
         break;
       case 'calendrier':
         this._renderCal(ct);
@@ -105,6 +105,7 @@ const VFJ = {
       case 'bio':
         try {
           ct.innerHTML = zenjiHtml + this._tplBio(bio);
+          if (window.M6_Charts) M6_Charts.bindCharts(analysis, bio, this._data, this._contract, this._year);
         } catch(e) {
           ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur module Santé</strong><br>${e.message}</div></div>`;
           console.error('[VFJ Santé]', e);
@@ -135,42 +136,33 @@ const VFJ = {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
         }
         break;
-        case 'export':
-          ct.innerHTML = zenjiHtml + this._tplExport(analysis);
-          this._bindExport(analysis);
-          break;
-        case 'tendances':
-          ct.innerHTML = '<div style="padding:4px 0"></div>';
-          if (window.M6_Charts) {
-            ct.innerHTML += M6_Charts.renderSection(analysis, bio, this._data, this._contract, this._year);
-            requestAnimationFrame(() => M6_Charts.drawForfaitEvolution('m6-forfait-chart', this._data, analysis, this._year));
-          } else {
-            ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module graphiques non chargé.</div></div>';
-          }
-          break;
-        case 'nullite':
-          ct.innerHTML = zenjiHtml;
-          if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
-          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
-          break;
-        case 'rupture':
-          ct.innerHTML = zenjiHtml + `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture Conventionnelle</div><div class="m6-ornement-line"></div></div><div id="rupture-main-ct"></div>`;
-          if (window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(ct.querySelector('#rupture-main-ct'), this._contract);
-          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Rupture Conventionnelle non chargé.</div></div>';
-          break;
-        case 'glossaire':
-          ct.innerHTML = zenjiHtml;
-          if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
-          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
-          break;
-      }
-    } catch(e) {
-      ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur section ${this._section}</strong><br>${e.message}</div></div>`;
-      console.error('[VFJ render]', e);
-    } finally {
-      this._bindNav();
+      case 'export':
+        ct.innerHTML = zenjiHtml + this._tplExport(analysis);
+        this._bindExport(analysis);
+        break;
+      case 'tendances':
+        ct.innerHTML = '<div style="padding:4px 0"></div>';
+        try {
+          if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
+          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
+        } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
+        break;
+      case 'nullite':
+        ct.innerHTML = zenjiHtml;
+        if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
+        break;
+      case 'rupture':
+        ct.innerHTML = zenjiHtml + `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Rupture Conventionnelle</div><div class="m6-ornement-line"></div></div><div id="rupture-main-ct"></div>`;
+        if (window.M6_RuptureCalculateur) M6_RuptureCalculateur.renderUI(ct.querySelector('#rupture-main-ct'), this._contract);
+        else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Rupture Conventionnelle non chargé.</div></div>';
+        break;
+      case 'glossaire':
+        ct.innerHTML = zenjiHtml;
+        M6_GlossaireUI.render(ct);
+        break;
     }
-    // Coach contextuel : bouton ❓ + auto-show 1ère visite
+    this._bindNav();
     if (window.M6_Coach) {
       window.M6_Coach.ensureButton('forfait_jours');
       window.M6_Coach.maybeAutoShow('forfait_jours', this._section);
@@ -226,21 +218,8 @@ const VFJ = {
   },
 
   _tplNav() {
-    const mk = (id, icon, label) =>
-      `<button class="m6-nav-item ${this._section===id?'active':''}" data-sec="${id}">
-        <span class="nav-icon">${icon}</span>${label}
-      </button>`;
-    return `<nav class="m6-bottom-nav">
-      ${mk('bilan',     '◈', 'Bilan')}
-      ${mk('calendrier','◻', 'Calendrier')}
-      ${mk('bio',       '♡', 'Santé')}
-      ${mk('tendances', '◗', 'Tendances')}
-      <div class="m6-nav-row-sep"></div>
-      ${mk('nullite',   '⚖', 'Validité')}
-      ${mk('entretien', '◉', 'Entretien')}
-      ${mk('export',    '◆', 'Export')}
-      ${mk('glossaire', '≡', 'Glossaire')}
-    </nav>`;
+    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
+    return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
   },
 
   _bindNav() {
@@ -256,30 +235,7 @@ const VFJ = {
   _tplBilan(a, bio) {
     const frac = a.fractionnement;
     return `
-    <!-- QUICK ACTIONS — accès direct aux fonctions principales -->
-    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
-      <button class="m6-quick-action" data-quick="saisir" style="background:#1A1714;color:#F7F3ED;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
-        <span style="font-size:1.4rem">📅</span>
-        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Saisir<br>aujourd'hui</span>
-      </button>
-      <button class="m6-quick-action" data-quick="sante" style="background:#C4A35A;color:#1A1714;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
-        <span style="font-size:1.4rem">♡</span>
-        <span style="font-size:0.7rem;font-weight:600;line-height:1.2">Voir mes<br>indicateurs</span>
-      </button>
-      <button class="m6-quick-action" data-quick="export" style="background:#F7F3ED;color:#1A1714;border:1px solid #E2DAD0;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
-        <span style="font-size:1.4rem">◆</span>
-        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Exporter<br>PDF</span>
-      </button>
-    </div>
-
-    ${a.isProrata ? `<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem">
-      <span>📐</span><div>
-        <strong>Prorata automatique</strong> — Données détectées depuis le
-        <strong>${new Date((a.effectiveArrivee || a.firstEntry)+'T12:00:00').toLocaleDateString('fr-FR')}</strong>
-        (${a.firstEntry && a.firstEntry < new Date().toISOString().slice(0,10) ? 'y compris les saisies rétroactives' : '1ère saisie du calendrier'})
-        → Plafond ajusté à <strong>${a.plafondProrata || a.plafond}j</strong> sur 218j (${Math.round(a.ratio*100)}%). <em style="opacity:0.75">Art. L3121-60</em>
-      </div>
-    </div>` : ''}
+    ${a.isProrata ? `<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>📐</span><div>Prorata appliqué (arrivée ${new Date(this._contract.dateArrivee+'T12:00:00').toLocaleDateString('fr-FR')}) → <strong>${a.plafondProrata}j</strong> (${Math.round(a.ratio*100)}%).</div></div>` : ''}
     ${frac?.droitFractionnement>0 ? `<div class="m6-alert success" style="margin-bottom:12px;font-size:0.78rem"><span>🗓️</span><div><strong>${frac.droitFractionnement}j de fractionnement</strong> acquis (CP hors mai-oct : ${frac.cpHorsPeriode}j — L3141-23).</div></div>` : ''}
 
     <div class="m6-stats-grid" style="margin-bottom:14px">
@@ -326,27 +282,11 @@ const VFJ = {
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
-
+      <button class="m6-btn m6-btn-ghost" id="vfj-certif-toggle" style="flex:1;font-size:0.78rem">🔒 Certif. ${this._contract.showCertif===false?'OFF':'ON'}</button>
     </div>`;
   },
 
   _bindBilan(analysis, bio) {
-    // Quick Actions
-    this._c.querySelectorAll('[data-quick]').forEach(btn => {
-      btn.addEventListener('click', () => {
-        const action = btn.dataset.quick;
-        if (action === 'saisir') {
-          this._section = 'calendrier'; this.render();
-          setTimeout(() => {
-            if (window.M6_Calendar) M6_Calendar._openPopup(new Date().toISOString().slice(0,10));
-          }, 300);
-        } else if (action === 'sante') {
-          this._section = 'bio'; this.render();
-        } else if (action === 'export') {
-          this._section = 'export'; this.render();
-        }
-      });
-    });
     this._c.querySelector('#vfj-saisir')?.addEventListener('click', () => {
       if (window.M6_Calendar) {
         this._section = 'calendrier'; this.render();
@@ -355,13 +295,19 @@ const VFJ = {
     });
     this._c.querySelector('#bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
     this._c.querySelector('#vfj-newyr')?.addEventListener('click', () => this._openNewYear());
-
+    this._c.querySelector('#vfj-certif-toggle')?.addEventListener('click', () => {
+      this._contract.showCertif = (this._contract.showCertif === false) ? true : false;
+      M6_Storage.setContract(this._regime, this._contract);
+      M6_toast('Certification ' + (this._contract.showCertif === false ? 'masquée' : 'visible'));
+      this.render();
+    });
     // Tooltip RTT clickable
     const tipWrap = this._c.querySelector('#rtt-tip-wrap');
     if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
     document.addEventListener('click', () => tipWrap?.classList.remove('open'), { once: false });
     this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
       if(!confirm('Relancer le wizard de bienvenue ? Votre configuration et données sont conservées.')) return;
+      if(window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
       M6_Storage.setContract(this._regime, null);
       this._contract = null;
       this._c.innerHTML = this._tplSetup();
@@ -392,7 +338,7 @@ const VFJ = {
       <div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive (Jang 2025)',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega F. et al. WHO/ILO 2021 · Kivimäki 2015 (Lancet) · Jang W. et al. 2025</div></div>
     </div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body"><div class="m6-card-label" style="margin-bottom:8px">Répartition de la charge déclarée</div><div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${(()=>{const MC={faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},'élevé':{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'⚡',label:'Élevé'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'⚡',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','élevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'⚡',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
+      ${(()=>{const MC=window.M6_MOOD_COLORS||window.MOOD_COLORS||{faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'😤',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','elevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#eee',border:'#aaa',text:'#333',icon:'?',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
     </div></div></div>
     ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">!</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
   },
@@ -411,7 +357,7 @@ const VFJ = {
       <div class="m6-row"><span class="m6-row-label">💾 Fichier</span><span class="m6-row-val" style="font-size:0.73rem;color:${fs?'var(--succes)':'var(--alerte)'}">${fs?new Date(fs).toLocaleString('fr-FR'):'Jamais exporté ⚠️'}</span></div>
     </div></div>
 
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF certifié</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Export PDF</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
       <div class="m6-field"><label>Mois à exporter</label>
         <select id="pdf-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}" ${i===new Date().getMonth()?'selected':''}>${m}</option>`).join('')}</select></div>
@@ -471,7 +417,8 @@ const VFJ = {
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Simulateur — Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
     <div id="rupture-container"></div>
 
-
+    <div style="display:none"><!-- placeholder pour eviter la double fermeture --></div
+    </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique des modifications</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card"><div class="m6-card-body">
@@ -487,7 +434,14 @@ const VFJ = {
       const emailMgr = this._c.querySelector('#pdf-mgr-email')?.value.trim();
       if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; this._contract.emailManager=emailMgr||''; M6_Storage.setContract(this._regime,this._contract); }
     };
+    const checkCertif = () => {
+      if (!this._c.querySelector('#pdf-certif')?.checked) {
+        M6_toast('⚠️ Cochez la case de certification avant d\'exporter'); return false;
+      }
+      return true;
+    };
     this._c.querySelector('#pdf-per')?.addEventListener('click', () => {
+      if(!checkCertif()) return;
       const d1 = this._c.querySelector('#pdf-per-d1')?.value;
       const d2 = this._c.querySelector('#pdf-per-d2')?.value;
       if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
@@ -495,12 +449,14 @@ const VFJ = {
       M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
     });
     this._c.querySelector('#pdf-m')?.addEventListener('click', () => {
-      saveMeta();
+      if(!checkCertif()) return; saveMeta();
       M6_PDF.exportMensuel({regime:this._regime,year:this._year,mois:parseInt(this._c.querySelector('#pdf-mois')?.value),contract:this._contract,data:this._data,moods:this._moods,analysis,validations:M6_Storage.getValidations(this._regime,this._year)});
+      this._tryEmailManager('mensuel');
     });
     this._c.querySelector('#pdf-a')?.addEventListener('click', () => {
-      saveMeta();
+      if(!checkCertif()) return; saveMeta();
       M6_PDF.exportAnnuel({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,analysis});
+      this._tryEmailManager('annuel');
     });
     this._c.querySelector('#pdf-preuve')?.addEventListener('click', () => {
       saveMeta();
@@ -515,9 +471,10 @@ const VFJ = {
       M6_ModePreuve.renderUI(preuveContainer, this._regime, this._year, this._contract, this._data, analysis);
     }
     this._c.querySelector('#exp-j')?.addEventListener('click', () => M6_ImportExport.export(this._regime));
-    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
+    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_jours, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
 
+    // PDF Période
     this._c.querySelector('#pdf-p')?.addEventListener('click', () => {
       saveMeta();
       const debut = this._c.querySelector('#pdf-debut')?.value;
@@ -619,14 +576,6 @@ const VFJ = {
         if (info) {
           info.style.display = 'block';
           info.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
-          // Bouton "Voir la grille de coefficients" si grille disponible
-          if (window.CCN_Coefficients?.hasGrille(ccn.idcc)) {
-            const btnDiv = document.createElement('div');
-            btnDiv.style.cssText = 'margin-top:8px';
-            btnDiv.innerHTML = `<button type="button" class="m6-btn m6-btn-ghost" id="ccn-show-grille" style="width:100%;font-size:0.78rem;padding:8px">📊 Voir la grille de coefficients (IDCC ${ccn.idcc})</button>`;
-            info.appendChild(btnDiv);
-            btnDiv.querySelector('#ccn-show-grille').addEventListener('click', () => this._showGrilleCoef(ccn.idcc));
-          }
         }
         // Alertes CCN
         const alertesCC = M6_CCN_Adapter.getAlertes(ccn.idcc, 'forfait_jours');
@@ -655,48 +604,7 @@ const VFJ = {
     });
   },
 
-  _editContract() { M6_Storage.setContract(this._regime,null); this._contract=null; this._c.innerHTML=this._tplSetup(); this._bindSetup(); },
-
-  // Modal grille de coefficients d'une CCN
-  _showGrilleCoef(idcc) {
-    const grille = window.CCN_Coefficients?.getGrille(idcc);
-    if (!grille) return;
-    const overlay = document.createElement('div');
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s ease';
-    let html = `<div style="background:#fff;border-radius:14px;max-width:520px;width:100%;max-height:85vh;overflow-y:auto;padding:20px">
-      <div style="display:flex;justify-content:space-between;align-items:start;margin-bottom:14px;gap:12px">
-        <div>
-          <div style="font-family:Georgia,serif;font-size:1.05rem;font-weight:600;color:#1A1714">Grille de coefficients</div>
-          <div style="font-size:0.78rem;color:#4A4540;margin-top:2px">${grille.nom} (IDCC ${grille.idcc})</div>
-          <div style="font-size:0.7rem;color:#8A847C;margin-top:2px">Mise à jour : ${grille.miseAjour}</div>
-        </div>
-        <button id="grille-close" style="background:#F7F3ED;border:none;width:32px;height:32px;border-radius:50%;font-size:1.1rem;cursor:pointer;color:#4A4540">×</button>
-      </div>`;
-    for (const [catName, niveaux] of Object.entries(grille.categories)) {
-      html += `<div style="margin-bottom:14px">
-        <div style="font-size:0.85rem;font-weight:600;color:#C4A35A;margin-bottom:6px;border-bottom:1px solid #E2DAD0;padding-bottom:4px">${catName}</div>
-        <div style="display:grid;grid-template-columns:auto auto 1fr;gap:6px 12px;font-size:0.78rem">
-          <div style="color:#8A847C;font-weight:600">Position</div>
-          <div style="color:#8A847C;font-weight:600">Coef</div>
-          <div style="color:#8A847C;font-weight:600">Description</div>`;
-      for (const n of niveaux) {
-        const isCD = /L3111-2|dirigeant/i.test(n.description);
-        html += `<div style="font-weight:500;color:#1A1714">${n.position}</div>
-          <div style="font-family:monospace;color:${isCD?'#9B2C2C':'#1A1714'};font-weight:${isCD?'700':'500'}">${n.coef}</div>
-          <div style="color:#4A4540;line-height:1.4">${n.description}${isCD?' <span style="color:#9B2C2C;font-size:0.7rem">⚖️ L3111-2</span>':''}</div>`;
-      }
-      html += `</div></div>`;
-    }
-    if (grille.notes) html += `<div style="background:#F7F3ED;padding:10px;border-radius:8px;font-size:0.74rem;color:#4A4540;line-height:1.5;margin-bottom:10px"><strong>Note :</strong> ${grille.notes}</div>`;
-    if (grille.refLegifrance) html += `<div style="font-size:0.7rem;color:#8A847C;text-align:center;margin-bottom:8px">Réf. Légifrance : ${grille.refLegifrance}</div>`;
-    html += `<div style="font-size:0.68rem;color:#8A847C;text-align:center;border-top:1px solid #E2DAD0;padding-top:10px">⚠️ Salaires minimums non inclus — vérifier le dernier avenant signé sur Légifrance.</div>
-    </div>`;
-    overlay.innerHTML = html;
-    overlay.querySelector('#grille-close').onclick = () => overlay.remove();
-    overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
-    document.body.appendChild(overlay);
-    requestAnimationFrame(() => { overlay.style.opacity = '1'; });
-  }
+  _editContract() { M6_Storage.setContract(this._regime,null); this._contract=null; this._c.innerHTML=this._tplSetup(); this._bindSetup(); }
 };
 
 global.VFJ = VFJ;
