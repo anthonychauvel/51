@@ -237,7 +237,7 @@ const M6_Router = {
           <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Ces données permettent les calculs réglementaires. Modifiables à tout moment.</p>
           <div class="m6-card"><div class="m6-card-body">
             ${regime==='forfait_jours'?`
-              <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="218" min="100" max="235" style="font-size:16px"></div>
+              <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="218" min="100" max="366" style="font-size:16px"></div>
               <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
               <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" placeholder="ex : 350" style="font-size:16px"></div>
               <div class="m6-field" style="position:relative">
@@ -389,65 +389,5 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.M6_Router = M6_Router;
 
-// ══════════════════════════════════════════════════════════════════
-//  R1 — MINI-TUTORIEL ONBOARDING
-//  Affiche 4 bulles contextuelles à la 1ère visite de chaque section.
-//  Stocké dans M6_TUTO_SEEN (clé globale, transverse aux régimes).
-// ══════════════════════════════════════════════════════════════════
-window.M6_Tuto = {
-  STEPS: [
-    { sel:'.m6-bottom-nav', titre:'Navigation rapide',
-      texte:'Toutes les fonctions sont accessibles ici. <strong>Bilan</strong> pour l\'aperçu, <strong>Calendrier/Semaines</strong> pour saisir, <strong>Santé</strong> pour vos indicateurs bio, <strong>Validité</strong> pour le contrôle juridique, <strong>Export</strong> pour les PDF.' },
-    { sel:'#m6-reset-btn', titre:'Reconfigurer le contrat',
-      texte:'Le bouton ⚙ permet de modifier votre contrat à tout moment. Vos données saisies sont conservées.' },
-    { sel:'#m6-regime-switch', titre:'Changer de régime',
-      texte:'Le bouton ⇄ permet de basculer entre Forfait Jours, Forfait Heures et Cadre Dirigeant.' },
-  ],
-  show() {
-    if (localStorage.getItem('M6_TUTO_SEEN') === '1') return;
-    let step = 0;
-    const overlay = document.createElement('div');
-    overlay.id = 'm6-tuto-overlay';
-    overlay.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.78);z-index:99998;display:flex;align-items:center;justify-content:center;padding:20px;opacity:0;transition:opacity 0.25s ease';
-    const render = () => {
-      const s = this.STEPS[step];
-      overlay.innerHTML = `
-      <div style="background:#fff;border-radius:14px;max-width:380px;width:100%;padding:20px;box-shadow:0 12px 40px rgba(0,0,0,0.4)">
-        <div style="display:flex;gap:6px;margin-bottom:12px">
-          ${this.STEPS.map((_,i)=>`<div style="flex:1;height:3px;border-radius:2px;background:${i<=step?'#C4A35A':'#E2DAD0'}"></div>`).join('')}
-        </div>
-        <div style="font-family:Georgia,serif;font-size:1.1rem;font-weight:600;color:#1A1714;margin-bottom:10px">${s.titre}</div>
-        <div style="font-size:0.86rem;color:#4A4540;line-height:1.55;margin-bottom:18px">${s.texte}</div>
-        <div style="display:flex;gap:8px">
-          ${step>0?`<button id="tuto-prev" style="flex:1;background:transparent;border:1px solid #E2DAD0;border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer">← Précédent</button>`:''}
-          <button id="tuto-skip" style="flex:1;background:transparent;border:1px solid #E2DAD0;border-radius:8px;padding:10px;font-size:0.85rem;cursor:pointer;color:#8A847C">Passer</button>
-          <button id="tuto-next" style="flex:1;background:#1A1714;color:#F7F3ED;border:none;border-radius:8px;padding:10px;font-size:0.88rem;font-weight:500;cursor:pointer">${step<this.STEPS.length-1?'Suivant →':'Commencer'}</button>
-        </div>
-        <div style="font-size:0.65rem;color:#8A847C;text-align:center;margin-top:10px">Étape ${step+1} / ${this.STEPS.length}</div>
-      </div>`;
-      overlay.querySelector('#tuto-next').onclick = () => {
-        if (step < this.STEPS.length-1) { step++; render(); }
-        else { localStorage.setItem('M6_TUTO_SEEN','1'); overlay.remove(); }
-      };
-      overlay.querySelector('#tuto-prev')?.addEventListener('click', () => { step--; render(); });
-      overlay.querySelector('#tuto-skip').onclick = () => { localStorage.setItem('M6_TUTO_SEEN','1'); overlay.remove(); };
-    };
-    render();
-    document.body.appendChild(overlay);
-  requestAnimationFrame(() => { overlay.style.opacity = '1'; });
-  },
-  reset() { try{localStorage.removeItem('M6_TUTO_SEEN');}catch(_){} }
-};
-
-// Lancer le tuto une fois après le chargement initial (1.5s pour laisser la nav apparaître)
-setTimeout(() => {
-  if (document.querySelector('.m6-bottom-nav')) {
-    // Si M6_Coach disponible, son maybeAutoShow gère déjà l'auto-trigger par section
-    // Sinon fallback sur le tuto navigation basique
-    if (!window.M6_Coach && localStorage.getItem('M6_TUTO_SEEN') !== '1') {
-      window.M6_Tuto.show();
-    }
-  }
-}, 1500);
 
 })();
