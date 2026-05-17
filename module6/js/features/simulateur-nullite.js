@@ -236,7 +236,11 @@ const M6_SimulateurNullite = {
     </div>
 
     <!-- Conditions détail -->
-    ${res.conditions.map(cond => `
+    ${res.conditions.map(cond => {
+      // Clé de persistance pour la case à cocher manuelle
+      const ckKey = `M6_VALID_CHECK_${regime}_${year}_${cond.id}`;
+      const checked = (typeof localStorage !== 'undefined' && localStorage.getItem(ckKey) === '1');
+      return `
     <div class="m6-card" style="margin-bottom:10px">
       <div class="m6-card-body" style="padding:12px 14px">
         <div style="display:flex;align-items:flex-start;gap:10px">
@@ -249,10 +253,15 @@ const M6_SimulateurNullite = {
               <div>${cond.detail}</div>
             </div>
             ${cond.niveau !== 'ok' ? `<div style="font-size:0.72rem;color:var(--charbon-3);margin-top:7px;line-height:1.5;border-left:2px solid var(--champagne);padding-left:8px"><strong>Recommandation :</strong> ${cond.recommandation}</div>` : ''}
+            <label style="display:flex;align-items:center;gap:8px;margin-top:9px;cursor:pointer;user-select:none">
+              <input type="checkbox" data-ck="${ckKey}" ${checked?'checked':''} style="width:17px;height:17px;accent-color:var(--champagne,#C4A35A);cursor:pointer">
+              <span style="font-size:0.74rem;color:var(--pierre)">Je confirme avoir vérifié ce point</span>
+            </label>
           </div>
         </div>
       </div>
-    </div>`).join('')}
+    </div>`;
+    }).join('')}
 
     <!-- Avertissement juridique -->
     <div class="m6-alert info" style="margin-top:4px;font-size:0.72rem">
@@ -646,12 +655,7 @@ const M6_ModePreuve = {
     <!-- Certification préalable -->
     <div class="m6-card" style="margin-bottom:14px">
       <div class="m6-card-body">
-        <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer">
-          <input type="checkbox" id="preuve-attest" style="margin-top:3px;flex-shrink:0">
-          <span style="font-size:0.82rem;color:var(--charbon-3);line-height:1.5">
-            Je certifie que les informations saisies dans ce module sont exactes et de bonne foi. Je comprends que ce rapport peut être présenté à l'inspection du travail ou dans le cadre d'une procédure prud'homale.
-          </span>
-        </label>
+        
       </div>
     </div>
 
@@ -664,10 +668,13 @@ const M6_ModePreuve = {
       <div>Ce rapport a une valeur probante <strong>symbolique</strong>. Pour une valeur juridique complète, faites valider le fichier par huissier ou notaire, ou utilisez un service de tiers-horodateur certifié (RFC 3161).</div>
     </div>`;
 
+    // Binding cases à cocher validation manuelle
+    container.querySelectorAll('[data-ck]').forEach(cb => {
+      cb.addEventListener('change', () => {
+        try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
+      });
+    });
     container.querySelector('#preuve-dl')?.addEventListener('click', async () => {
-      if (!container.querySelector('#preuve-attest')?.checked) {
-        M6_toast('Cochez la case de certification'); return;
-      }
       await M6_ModePreuve.download(regime, year, contract, data, analysis);
     });
   }
