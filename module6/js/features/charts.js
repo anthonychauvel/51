@@ -339,44 +339,85 @@ const M6_Charts = {
    * À injecter dans la vue Santé ou Bilan.
    */
   renderSection(analysis, bio, data, contract, year) {
+    // Construire le tableau des données bio par mois (chiffres, pas canvas)
+    const MOIS = ['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'];
+
+    // Calculer les scores bio cumulés mois par mois
+    const bioParMois = [];
+    const moisAvecData = new Set();
+    for (const dk of Object.keys(data)) {
+      if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) moisAvecData.add(parseInt(dk.slice(5,7)) - 1);
+    }
+    const minM = moisAvecData.size ? Math.min(...moisAvecData) : 0;
+    const maxM = moisAvecData.size ? Math.max(...moisAvecData) : new Date().getMonth();
+    for (let m = minM; m <= maxM; m++) {
+      const dataCumul = {};
+      for (const [dk,v] of Object.entries(data)) {
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk) && parseInt(dk.slice(5,7))-1 <= m) dataCumul[dk] = v;
+      }
+      let bio_m = { fatigue:0, stress:0, recovery:50, performance:100 };
+      if (window.M6_BioEngine && Object.keys(dataCumul).length) {
+        const r = M6_BioEngine.analyzeForfaitJours(contract, dataCumul, year);
+        if (r?.hasData) bio_m = { fatigue: r.fatigue, stress: r.stress, recovery: r.recovery, performance: r.performance ?? Math.max(0,100-r.fatigue) };
+      }
+      bioParMois.push({ m, bio: bio_m });
+    }
+
     return `
     <div style="width:100%;box-sizing:border-box;overflow-x:hidden">
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution &amp; Tendances</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution mensuelle ${year}</div><div class="m6-ornement-line"></div></div>
 
-    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
-      <div class="m6-card-header"><div class="m6-card-icon">🎯</div>
-        <div><div class="m6-card-label">Score instantané</div><div class="m6-card-title">Tableau de bord</div></div></div>
-      <div class="m6-card-body" style="display:flex;justify-content:center;overflow:hidden">
-        <canvas id="m6-radar" style="width:180px;height:180px;max-width:100%"></canvas>
-      </div>
-    </div>
-
-    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
-      <div class="m6-card-header"><div class="m6-card-icon">📈</div>
-        <div><div class="m6-card-label">Tendances biologiques</div><div class="m6-card-title">Évolution mensuelle ${year}</div></div></div>
-      <div class="m6-card-body" style="overflow:hidden;padding:12px 8px">
-        <div class="m6-legend" style="margin-bottom:10px;flex-wrap:wrap;gap:4px">
-          ${[['Fatigue','fatigue'],['Stress','stress'],['Récup.','recovery'],['Perf.','performance']].map(([l,k])=>`<div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE[k]}"></div>${l}</div>`).join('')}
-        </div>
-        <div style="width:100%;max-width:100%;overflow:hidden">
-          <canvas id="m6-bio-chart" style="width:100%;height:180px;display:block;max-width:100%;box-sizing:border-box"></canvas>
-        </div>
-        <div style="font-size:0.68rem;color:var(--pierre);margin-top:6px;text-align:center">Scores recalculés mois par mois</div>
-      </div>
-    </div>
-
+    <!-- Graphique consommation jours/mois -->
     <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
       <div class="m6-card-header"><div class="m6-card-icon">📊</div>
-        <div><div class="m6-card-label">Consommation</div><div class="m6-card-title">Jours travaillés / mois</div></div></div>
+        <div><div class="m6-card-label">Consommation forfait</div><div class="m6-card-title">Jours travaillés par mois</div></div></div>
       <div class="m6-card-body" style="overflow:hidden;padding:12px 8px">
         <div style="width:100%;max-width:100%;overflow:hidden">
-          <canvas id="m6-forfait-chart" style="width:100%;height:150px;display:block;max-width:100%;box-sizing:border-box"></canvas>
+          <canvas id="m6-forfait-chart" style="width:100%;height:160px;display:block;max-width:100%;box-sizing:border-box"></canvas>
         </div>
         <div class="m6-legend" style="margin-top:8px;flex-wrap:wrap;gap:4px">
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:rgba(196,163,90,0.45)"></div>Jours/mois</div>
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE.forfait}"></div>Cumulatif</div>
           <div class="m6-legend-item"><div class="m6-legend-dot" style="background:#9B2C2C"></div>Plafond (${analysis?.plafond||218}j)</div>
         </div>
+      </div>
+    </div>
+
+    <!-- Tableau bio chiffres par mois -->
+    <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
+      <div class="m6-card-header"><div class="m6-card-icon">🧬</div>
+        <div><div class="m6-card-label">Indicateurs biologiques</div><div class="m6-card-title">Scores mensuels</div></div></div>
+      <div class="m6-card-body" style="padding:8px 4px">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:0.74rem;text-align:center">
+            <thead>
+              <tr style="color:var(--pierre);font-size:0.65rem">
+                <th style="text-align:left;padding:4px 6px;font-weight:600">Mois</th>
+                <th style="padding:4px 4px">💤 Fatigue</th>
+                <th style="padding:4px 4px">🧠 Stress</th>
+                <th style="padding:4px 4px">✨ Récup.</th>
+                <th style="padding:4px 4px">⚡ Perf.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${bioParMois.map(({m, bio}) => {
+                const fatColor = bio.fatigue >= 70 ? '#9B2C2C' : bio.fatigue >= 50 ? '#C4853A' : '#2D6A4F';
+                const stressColor = bio.stress >= 70 ? '#9B2C2C' : bio.stress >= 50 ? '#C4853A' : '#2D6A4F';
+                const recColor = bio.recovery <= 30 ? '#9B2C2C' : bio.recovery <= 50 ? '#C4853A' : '#2D6A4F';
+                const perfColor = bio.performance <= 30 ? '#9B2C2C' : bio.performance <= 60 ? '#C4853A' : '#2D6A4F';
+                return `<tr style="border-top:1px solid var(--ivoire-3)">
+                  <td style="text-align:left;padding:5px 6px;font-weight:600;color:var(--charbon)">${MOIS[m]}</td>
+                  <td style="padding:5px 4px;font-weight:600;color:${fatColor}">${bio.fatigue}</td>
+                  <td style="padding:5px 4px;font-weight:600;color:${stressColor}">${bio.stress}</td>
+                  <td style="padding:5px 4px;font-weight:600;color:${recColor}">${bio.recovery}</td>
+                  <td style="padding:5px 4px;font-weight:600;color:${perfColor}">${bio.performance}</td>
+                </tr>`;
+              }).join('')}
+              ${bioParMois.length === 0 ? `<tr><td colspan="5" style="padding:14px;color:var(--pierre);font-style:italic">Aucune donnée saisie</td></tr>` : ''}
+            </tbody>
+          </table>
+        </div>
+        <div style="font-size:0.65rem;color:var(--pierre);margin-top:6px;text-align:center">Scores calculés cumulativement — 0=optimal · 100=critique</div>
       </div>
     </div>
     </div>`;
@@ -413,9 +454,6 @@ const M6_Charts = {
     // Laisser le layout se stabiliser avant de dessiner
     requestAnimationFrame(() => {
       requestAnimationFrame(() => {
-        this.drawRadar('m6-radar', bio);
-        this.drawBioEvolution('m6-bio-chart', contract, data, {}, year,
-          ['fatigue','stress','recovery','performance']);
         this.drawForfaitEvolution('m6-forfait-chart', data, analysis, year);
       });
     });
@@ -424,9 +462,6 @@ const M6_Charts = {
   /** À appeler après que renderSection() soit dans le DOM */
   bindCharts(analysis, bio, data, contract, year) {
     requestAnimationFrame(() => {
-      this.drawRadar('m6-radar', bio);
-      this.drawBioEvolution('m6-bio-chart', contract, data, {}, year,
-        ['fatigue','stress','recovery','performance']);
       this.drawForfaitEvolution('m6-forfait-chart', data, analysis, year);
     });
   }

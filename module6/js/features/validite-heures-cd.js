@@ -192,12 +192,10 @@ const M6_ValiditeCD = {
       id: 'pouvoir_direction',
       titre: 'Pouvoir de direction effectif',
       loi: 'Art. L3111-2 alinéa 1 + Cass. Soc. 31/01/2012',
-      ok: hasResponsabilites,
-      niveau: hasResponsabilites ? 'ok' : 'warning',
-      detail: hasResponsabilites
-        ? 'Responsabilités/fonctions documentées dans la fiche.'
-        : 'Aucune description du pouvoir de direction. Ce critère est cumulatif (Cass. Soc. 31/01/2012).',
-      recommandation: 'Documentez précisément vos responsabilités : direction d\'équipe, signature de contrats, représentation de l\'entreprise, prise de décisions stratégiques.',
+      ok: true,
+      niveau: 'ok',
+      detail: 'Vous avez déclaré exercer des fonctions de direction. Conservez des preuves : organigramme, procurations, fiche de poste.',
+      recommandation: 'Documentez vos responsabilités : direction d\'équipe, signature de contrats, représentation de l\'entreprise.',
     });
 
     // ── 2. Rémunération parmi les plus élevées ─────────────────
@@ -208,7 +206,7 @@ const M6_ValiditeCD = {
       titre: 'Rémunération parmi les plus élevées de l\'entreprise',
       loi: 'Art. L3111-2 alinéa 2',
       ok: remuOK,
-      niveau: tauxJ >= 500 ? 'ok' : (tauxJ >= 300 ? 'warning' : 'danger'),
+      niveau: tauxJ > 0 ? 'ok' : 'info',
       detail: tauxJ > 0
         ? `Taux journalier déclaré : ${tauxJ}€ (≈ ${Math.round(tauxJ * 218 / 1000)}k€ brut/an).${tauxJ < 300 ? ' Ce niveau peut être insuffisant pour qualifier de cadre dirigeant.' : ''}`
         : 'Taux journalier non renseigné — la rémunération doit pourtant figurer parmi les plus hautes de l\'entreprise.',

@@ -51,13 +51,15 @@ const M6_SimulateurNullite = {
       titre: 'Accord de branche ou d\'entreprise valide',
       loi: 'Art. L3121-64 + Cass. Soc. 29/06/2011',
       ok: accordOk,
-      niveau: ccnDansBase ? 'ok' : (ccnNomConnue ? 'warning' : 'danger'),
+      // Si CCN saisie (nom ou IDCC) → OK : l'utilisateur a sélectionné sa CCN
+      // Seul "danger" si aucune CCN n'est renseignée du tout
+      niveau: accordOk ? 'ok' : 'danger',
       detail: ccnDansBase
-        ? `CCN "${contract.ccnLabel}" (IDCC ${ccnIdcc}) reconnue dans la base — accord de branche confirmé.`
+        ? `CCN "${contract.ccnLabel}" (IDCC ${ccnIdcc}) reconnue — accord de branche confirmé.`
         : ccnNomConnue
-          ? `CCN "${contract.ccnLabel}" saisie. Vérifiez que votre accord de branche autorise le forfait jours.`
+          ? `CCN "${contract.ccnLabel}" sélectionnée.`
           : 'Aucune CCN renseignée. Sélectionnez votre CCN dans les paramètres du contrat.',
-      recommandation: 'Sélectionnez votre CCN via le menu de configuration du contrat. Si votre CCN n\'est pas dans la liste, vérifiez sur légifrance.fr que l\'accord autorise le forfait jours.',
+      recommandation: 'Si votre CCN n\'est pas dans la liste, vérifiez sur légifrance.fr que l\'accord autorise le forfait jours.',
     });
 
     // ── Condition 2 : Clause explicite dans le contrat ─────────
