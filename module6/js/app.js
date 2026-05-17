@@ -139,7 +139,7 @@ const M6_Router = {
     this._root.innerHTML = '';
 
     // Premier lancement → page de bienvenue Zenji, PUIS wizard de configuration
-    if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit()) {
+    if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit(regime)) {
       this._showWelcome(regime);
       return;
     }
@@ -166,7 +166,7 @@ const M6_Router = {
       this._showWizard(regime);
     });
     this._root.querySelector('#zenji-skip')?.addEventListener('click', () => {
-      M6_ZenjiOnboarding.markSeen();
+      M6_ZenjiOnboarding.markSeen(regime);
       this._loadView(regime);
     });
   },
@@ -293,10 +293,13 @@ const M6_Router = {
             wInp.dataset.idcc = ccn.idcc || '';
             const pEl = this._root.querySelector('#wiz-plafond');
             const defs = M6_CCN_Adapter.buildContractDefaults?.(ccn, 'forfait_jours');
-            // Pré-remplir le plafond depuis la CCN SEULEMENT si l'utilisateur n'a pas déjà saisi une valeur custom
+            // Pré-remplir le plafond depuis la CCN seulement si le champ est vierge ou à la valeur par défaut
+            // NE JAMAIS écraser une valeur saisie manuellement par l'utilisateur
             if (pEl && defs?.plafond) {
               const current = parseInt(pEl.value);
-              if (current === 218 || isNaN(current)) pEl.value = defs.plafond;
+              const isDefault = isNaN(current) || current === 218;
+              if (isDefault) pEl.value = defs.plafond;
+              // Sinon : l'utilisateur a saisi une valeur personnalisée → on la respecte
             }
             // Afficher la carte CCN
             if (wInfo) wInfo.innerHTML = M6_CCN_Adapter.renderCCNCard(ccn, 'forfait_jours');
