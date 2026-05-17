@@ -45,6 +45,15 @@ const M6_Header = {
     const s  = document.getElementById('m6-header-sub');
     const rb = document.getElementById('m6-reset-btn');
     const sw = document.getElementById('m6-regime-switch');
+    // Bouton tutoriel
+    const helpBtn = document.getElementById('m6-help-btn');
+    if (helpBtn && !helpBtn.dataset.bound) {
+      helpBtn.dataset.bound = '1';
+      helpBtn.onclick = () => {
+        const regime = localStorage.getItem('M6_REGIME') || 'forfait_jours';
+        if (window.M6_openTutorial) M6_openTutorial(regime);
+      };
+    }
 
     if (t  && title) t.textContent = title;
     if (s  && sub  ) s.textContent = sub;
@@ -264,7 +273,7 @@ const M6_Router = {
               </div>
               <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" placeholder="25.50" style="font-size:16px"></div>
             `:`
-              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond" value="218" min="100" max="300" style="font-size:16px"></div>
+              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="218" min="100" max="300" style="font-size:16px"></div>
             `}
             <div class="m6-field"><label>Email manager (copie exports)</label><input type="email" id="wiz-email-mgr" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
           </div></div>
@@ -340,7 +349,7 @@ const M6_Router = {
                   ccnIdcc:       parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc||'0')||0,
                   taux1: 25, taux2: 50, palier1: 8 };
         } else {
-          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218 };
+          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond-cd')?.value)||218 };
         }
         if (window.M6_Storage) {
           M6_Storage.setContract(regime, contract);
@@ -392,5 +401,83 @@ document.addEventListener('DOMContentLoaded', () => {
 });
 window.M6_Router = M6_Router;
 
+
+// ═══════════════════════════════════════════════════════════
+//  TUTORIEL POPUP — un par régime, accessible depuis le header
+// ═══════════════════════════════════════════════════════════
+const TUTO_CONTENT = {
+  forfait_jours: {
+    titre: '🗓️ Forfait Jours — Guide complet',
+    sections: [
+      { icon: '◈', titre: 'Bilan', texte: 'Vue d\'ensemble de votre exercice : jours travaillés, RTT disponibles, CP, indicateurs santé. Les <strong>Quick Actions</strong> vous mènent directement aux fonctions clés.' },
+      { icon: '◻', titre: 'Calendrier', texte: 'Saisissez chaque jour : <strong>Travail, RTT, CP, Maladie, Déplacement</strong>... Appuyez sur un jour pour le modifier. L\'amplitude (heure début/fin) améliore l\'analyse bio.' },
+      { icon: '♡', titre: 'Santé', texte: '4 indicateurs biologiques : <strong>Fatigue, Stress, Récupération, Performance</strong>. Calibrés sur la littérature scientifique (INRS, Kivimäki 2015). Phase P1→P4 selon votre charge cumulée.' },
+      { icon: '◗', titre: 'Tendances', texte: 'Graphique de consommation mensuelle + tableau des scores bio par mois. Idéal pour repérer les périodes de surcharge.' },
+      { icon: '⚖', titre: 'Validité', texte: '6 conditions cumulatives pour que votre forfait soit juridiquement opposable (L3121-58 à 65). Cochez manuellement celles que vous pouvez confirmer.' },
+      { icon: '◉', titre: 'Entretien', texte: 'L\'entretien annuel est <strong>obligatoire</strong> (Art. L3121-65 + Cass. Soc. 2014). Documentez-le ici : charge de travail, vie pro/perso, organisation.' },
+      { icon: '◆', titre: 'Export', texte: 'Générez vos PDF : mensuel, annuel, période libre, mode preuve. Le mode preuve inclut un hash horodaté opposable aux prud\'hommes.' },
+      { icon: '≡', titre: 'Glossaire', texte: 'Définitions des termes juridiques : forfait, plafond, rachat, contingent, repos quotidien... avec références aux articles du Code du travail.' },
+    ]
+  },
+  forfait_heures: {
+    titre: '⏱️ Forfait Heures — Guide complet',
+    sections: [
+      { icon: '◈', titre: 'Bilan', texte: 'Total des heures supplémentaires, montant brut TEPA, pourcentage du contingent consommé. Le bouton ⚙️ Contrat permet de reconfigurer.' },
+      { icon: '◻', titre: 'Semaines', texte: 'Saisissez vos heures par semaine ISO. Le formulaire calcule automatiquement les HS à +25% et +50% selon votre seuil contractuel.' },
+      { icon: '♡', titre: 'Santé', texte: 'Indicateurs bio adaptés au régime horaire : au-delà de 48h/semaine régulier, le risque cardio augmente significativement (Kivimäki 2015).' },
+      { icon: '◗', titre: 'Tendances', texte: 'Graphique hebdomadaire + tableau des scores bio par mois.' },
+      { icon: '⚖', titre: 'Validité', texte: '6 conditions : convention écrite, accord collectif (si annuel), contingent respecté, majoration conforme, repos 11h, max 48h.' },
+      { icon: '◉', titre: 'Entretien', texte: 'Documentez votre entretien annuel pour respecter L4121-1 (obligation de sécurité employeur).' },
+      { icon: '◆', titre: 'Export', texte: 'PDF mensuel, périodique et rupture conventionnelle.' },
+    ]
+  },
+  cadre_dirigeant: {
+    titre: '👔 Cadre Dirigeant — Guide complet',
+    sections: [
+      { icon: '◈', titre: 'Bilan', texte: 'Statut L3111-2 : exclu des durées du travail mais soumis à L4121-1 (sécurité). Suivi informatif de vos jours et de votre charge.' },
+      { icon: '◻', titre: 'Agenda', texte: 'Saisie indicative des jours travaillés. Utile en cas de contestation du statut CD par un juge.' },
+      { icon: '◐', titre: 'Projets', texte: 'Documentez vos projets stratégiques : preuve de votre autonomie réelle (critère L3111-2).' },
+      { icon: '♡', titre: 'Santé', texte: 'Le statut CD ne protège pas du burn-out. Indicateurs bio informatifs pour anticiper.' },
+      { icon: '◗', titre: 'Tendances', texte: 'Évolution de votre activité et scores bio mensuels.' },
+      { icon: '⚖', titre: 'Validité', texte: '3 critères CUMULATIFS L3111-2 (Cass. 31/01/2012) : pouvoir de direction, rémunération élevée, autonomie réelle. Un seul manquant → requalification possible.' },
+      { icon: '◉', titre: 'Entretien', texte: 'Non obligatoire légalement mais fortement recommandé (Art. L4121-1). Utile en cas de requalification.' },
+      { icon: '◆', titre: 'Export', texte: 'PDF annuel pour archivage et rupture conventionnelle calculée.' },
+    ]
+  }
+};
+
+function openTutorial(regime) {
+  document.getElementById('m6-tuto-overlay')?.remove();
+  const tuto = TUTO_CONTENT[regime] || TUTO_CONTENT.forfait_jours;
+  const ov = document.createElement('div');
+  ov.id = 'm6-tuto-overlay';
+  ov.style.cssText = 'position:fixed;inset:0;background:rgba(26,23,20,0.82);z-index:99997;display:flex;align-items:center;justify-content:center;padding:16px;opacity:0;transition:opacity 0.2s';
+  ov.innerHTML = `
+    <div style="background:#fff;border-radius:14px;max-width:460px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 12px 40px rgba(0,0,0,0.4)">
+      <div style="background:var(--charbon,#1A1714);color:var(--champagne,#C4A35A);padding:18px 20px 14px;border-radius:14px 14px 0 0;display:flex;justify-content:space-between;align-items:center">
+        <div style="font-family:Georgia,serif;font-size:1.05rem;font-weight:600">${tuto.titre}</div>
+        <button id="tuto-close" style="background:rgba(255,255,255,0.1);border:none;color:#fff;width:32px;height:32px;border-radius:50%;font-size:1.2rem;cursor:pointer;display:flex;align-items:center;justify-content:center">×</button>
+      </div>
+      <div style="padding:16px 18px">
+        ${tuto.sections.map(s=>`
+          <div style="display:flex;gap:12px;padding:12px 0;border-bottom:1px solid #F0EBE4">
+            <div style="font-size:1.3rem;width:28px;text-align:center;flex-shrink:0;margin-top:2px">${s.icon}</div>
+            <div>
+              <div style="font-weight:600;font-size:0.9rem;color:#1A1714;margin-bottom:3px">${s.titre}</div>
+              <div style="font-size:0.78rem;color:#4A4540;line-height:1.5">${s.texte}</div>
+            </div>
+          </div>`).join('')}
+        <button id="tuto-ok" style="width:100%;margin-top:16px;background:#1A1714;color:#F7F3ED;border:none;border-radius:8px;padding:12px;font-size:0.88rem;font-weight:600;cursor:pointer">Compris ✓</button>
+      </div>
+    </div>`;
+  document.body.appendChild(ov);
+  requestAnimationFrame(() => { ov.style.opacity='1'; });
+  ov.querySelector('#tuto-close').onclick = ov.querySelector('#tuto-ok').onclick = () => {
+    ov.style.opacity='0';
+    setTimeout(()=>ov.remove(),200);
+  };
+  ov.addEventListener('click',e=>{ if(e.target===ov){ ov.style.opacity='0'; setTimeout(()=>ov.remove(),200); } });
+}
+global.M6_openTutorial = openTutorial;
 
 })();
