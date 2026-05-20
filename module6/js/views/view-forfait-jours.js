@@ -524,7 +524,7 @@ const VFJ = {
     return `<div style="padding:32px 16px;padding-top:calc(40px + env(safe-area-inset-top,0));min-height:100dvh;background:var(--ivoire)">
       <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Jours</div><div class="m6-ornement-line"></div></div>
       <div class="m6-card"><div class="m6-card-body">
-        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="218" min="100" max="235" style="font-size:16px"></div>
+        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="218" min="100" max="366" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
         <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${this._year}-01-01" style="font-size:16px"></div>
         <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${this._year}-12-31" style="font-size:16px"></div>
@@ -539,7 +539,7 @@ const VFJ = {
           <summary style="font-size:0.78rem;color:var(--pierre);cursor:pointer;padding:8px 0">⚙️ Mode manuel — accord de branche dérogatoire</summary>
           <div style="background:var(--ivoire-2);border-radius:var(--radius);padding:12px;margin-top:6px">
             <div style="font-size:0.72rem;color:var(--pierre);margin-bottom:10px">Si votre accord de branche ou d'entreprise déroge au droit commun, renseignez directement les valeurs applicables. Ces données écrasent celles de la CCN sélectionnée.</div>
-            <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" min="100" max="235" placeholder="ex: 205" style="font-size:16px"></div>
+            <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" min="100" max="366" placeholder="ex: 205" style="font-size:16px"></div>
             <div class="m6-field"><label>Taux de rachat personnalisé (%)</label><input type="number" id="s-taux-rachat-manuel" min="10" max="100" placeholder="ex: 25" style="font-size:16px"></div>
             <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
           </div>
@@ -566,7 +566,13 @@ const VFJ = {
         // Pré-remplir les champs selon les données CCN cadres
         const pEl  = this._c.querySelector('#s-p');
         const majEl = this._c.querySelector('#s-maj');
-        if (pEl  && defaults.plafond !== 218) pEl.value  = defaults.plafond;
+        // Pré-remplir le plafond depuis la CCN UNIQUEMENT si l'utilisateur n'a pas saisi de valeur custom
+        // (ne JAMAIS écraser une valeur saisie manuellement)
+        if (pEl && defaults.plafond) {
+          const current = parseInt(pEl.value);
+          const isDefault = isNaN(current) || current === 218;
+          if (isDefault && defaults.plafond !== 218) pEl.value = defaults.plafond;
+        }
         if (majEl && defaults.tauxMajorationRachat > 10) majEl.value = defaults.tauxMajorationRachat;
         // Carte info CCN
         if (info) {
