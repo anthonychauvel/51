@@ -5,7 +5,7 @@
  * - Router : sélection régime → vue
  */
 'use strict';
-(function() {
+(function(global) {
 
 // ══════════════════════════════════════════════════════════════════
 //  TOAST GLOBAL
@@ -147,7 +147,19 @@ const M6_Router = {
   _load(regime) {
     this._root.innerHTML = '';
 
-    // Premier lancement → page de bienvenue Zenji, PUIS wizard de configuration
+    // ── PRIORITÉ ABSOLUE : si un contrat existe déjà pour ce régime, charger la vue
+    // Évite d'écraser les données en relançant le wizard de bienvenue à chaque retour
+    const existingContract = window.M6_Storage ? M6_Storage.getContract(regime) : null;
+    if (existingContract && Object.keys(existingContract).length > 0) {
+      // Marquer Zenji comme vu si pas encore fait (cohérence)
+      if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit(regime)) {
+        M6_ZenjiOnboarding.markSeen(regime);
+      }
+      this._loadView(regime);
+      return;
+    }
+
+    // Premier lancement de ce régime → page de bienvenue Zenji, PUIS wizard de configuration
     if (window.M6_ZenjiOnboarding && M6_ZenjiOnboarding.isFirstVisit(regime)) {
       this._showWelcome(regime);
       return;
@@ -480,4 +492,4 @@ function openTutorial(regime) {
 }
 global.M6_openTutorial = openTutorial;
 
-})();
+})(window);
