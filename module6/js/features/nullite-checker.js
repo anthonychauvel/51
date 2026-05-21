@@ -382,19 +382,13 @@ const M6_ModePreuve = {
       <div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem">
         <span>🔒</span><div>Le rapport de preuve contient un hash SHA-256 de vos données. En cas de contrôle ou de litige, il documente l\'état exact de votre forfait à un instant T.</div>
       </div>
-      <label style="display:flex;align-items:flex-start;gap:8px;font-size:0.8rem;margin-bottom:12px;cursor:pointer">
-        <input type="checkbox" id="preuve-attest" style="margin-top:2px;accent-color:var(--champagne)">
-        <span>Je certifie l\'exactitude des données saisies et le respect recommandé des temps de repos (L3131-1 · L3132-2).</span>
-      </label>
+      
       <button class="m6-btn m6-btn-primary" id="preuve-btn">Générer le rapport de preuve</button>
     </div></div>`;
   },
 
   bindPreuve(regime, year, contract, data, moods, analysis, bio) {
     document.getElementById('preuve-btn')?.addEventListener('click', async () => {
-      if (!document.getElementById('preuve-attest')?.checked) {
-        if(window.M6_toast) M6_toast('Cochez la case de certification'); return;
-      }
       await this.genererPreuve(regime, year, contract, data, moods, analysis, bio);
     });
   }

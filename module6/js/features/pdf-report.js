@@ -119,7 +119,7 @@ portMensuel(opts) {
 
     // Lignes du mois
     const feries = M6_Feries?.getSet(year) || new Set();
-    let joursT = 0, rttP = 0, cpP = 0, reposCertifies = 0;
+    let joursT = 0, rttP = 0, cpP = 0;
     let rowCount = 0;
 
     for (let j=1; j<=new Date(year,mois+1,0).getDate(); j++) {
@@ -160,7 +160,6 @@ portMensuel(opts) {
       if (type==='travail'||type==='rachat') joursT++;
       if (type==='rtt') rttP++;
       if (type==='cp')  cpP++;
-      if (entry?.reposOk) reposCertifies++;
 
       y += 6; rowCount++;
       if (y > 260) { doc.addPage(); y = 15; }
@@ -184,7 +183,7 @@ portMensuel(opts) {
     doc.text('CERTIFICATION LEGALE', M, y+4);
     doc.setFont('helvetica','normal');
     const certLines = doc.splitTextToSize(
-      'Le cadre soussigne certifie avoir respecte ses temps de repos quotidien (11h consecutives - Art. L3131-1) et hebdomadaire (35h consecutives - Art. L3132-2) pendant la periode ci-dessus.',
+      'Document de suivi indicatif de votre forfait. À conserver pour vos archives personnelles.',
       W-2*M);
     doc.text(certLines, M, y+8.5);
     y += 18;
@@ -491,7 +490,7 @@ portMensuel(opts) {
     txt('CERTIFICATION LÉGALE ANNUELLE',M+3,y+5,8,[30,90,60],'bold');
     doc.setFontSize(7.5); doc.setTextColor(74,69,64); doc.setFont('helvetica','normal');
     const certText = doc.splitTextToSize(
-      `Je soussigné(e) ${_pdfSanitize(contract.nomCadre||'_________________')} certifie l'exactitude du présent document et atteste avoir respecté les repos quotidien (11h, Art. L3131-1) et hebdomadaire (35h, Art. L3132-2) sur l'exercice ${year}. Réf. : ${hashStr}`,
+      `Document généré le ${new Date().toLocaleDateString('fr-FR')} pour ${_pdfSanitize(contract.nomCadre||'_________________')} — Exercice ${year}. Réf. : ${hashStr}`,
       PW-6);
     doc.text(certText, M+3, y+10);
     y += 34;
@@ -599,7 +598,7 @@ portMensuel(opts) {
     doc.text('CERTIFICATION LEGALE ANNUELLE', M, y+5);
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
     const certAnnuel = doc.splitTextToSize(
-      `Je soussigne(e) ${contract.nomCadre||'_________________'} certifie l exactitude du present document et atteste avoir respecte mes temps de repos quotidien (11h - Art. L3131-1) et hebdomadaire (35h - Art. L3132-2) sur l'ensemble de l'exercice ${year}.`,
+      `Document de suivi annuel pour ${contract.nomCadre||'_________________'} - Exercice ${year}.`,
       W-2*M);
     doc.text(certAnnuel, M, y+10);
     y += 24;
@@ -892,7 +891,6 @@ portMensuel(opts) {
     if(y>255) { doc.addPage(); y=20; }
     doc.setFillColor(248,244,238); doc.rect(M,y,W,24,'F');
     doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(74,69,64);
-    doc.text(_pdfSanitize('Je certifie l exactitude des informations ci-dessus et le respect des temps de repos legaux.'), M+3, y+7);
     doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleString('fr-FR') + ' par M6 Cadres'), M+3, y+12);
     doc.setTextColor(139,105,20);
     doc.text(_pdfSanitize('Signature cadre : _________________________   Date : ________'), M+3, y+19);

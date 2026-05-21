@@ -332,40 +332,9 @@ function showGuide(regime, section, opts = {}) {
 //  BOUTON FLOTTANT ❓
 // ══════════════════════════════════════════════════════════════════
 function ensureHelpButton(regime) {
-  let btn = document.getElementById('m6-coach-fab');
-  if (btn) {
-    btn.dataset.regime = regime;
-    return;
-  }
-  btn = document.createElement('button');
-  btn.id = 'm6-coach-fab';
-  btn.dataset.regime = regime;
-  btn.setAttribute('aria-label', 'Aide contextuelle');
-  btn.title = 'Aide';
-  btn.innerHTML = '?';
-  btn.style.cssText = `
-    position:fixed;bottom:calc(116px + env(safe-area-inset-bottom,0));right:14px;z-index:99996;
-    width:46px;height:46px;border-radius:50%;
-    background:#C4A35A;color:#1A1714;border:none;
-    font-size:1.4rem;font-weight:700;font-family:Georgia,serif;
-    cursor:pointer;box-shadow:0 4px 12px rgba(0,0,0,0.25);
-    display:flex;align-items:center;justify-content:center;
-    transition:transform 0.15s, box-shadow 0.15s;
-  `;
-  btn.addEventListener('mouseenter', () => { btn.style.transform='scale(1.1)'; });
-  btn.addEventListener('mouseleave', () => { btn.style.transform='scale(1)'; });
-  btn.addEventListener('click', () => {
-    // Toujours réactiver le coach si l'utilisateur clique manuellement sur ❓
-    // (même s'il avait cliqué "Ne plus afficher")
-    try { localStorage.removeItem('M6_COACH_DISABLED'); } catch(_) {}
-    const r = btn.dataset.regime;
-    const activeBtn = document.querySelector('.m6-nav-item.active, [data-sec].active');
-    const section = activeBtn?.dataset?.sec
-      || document.querySelector('[data-sec]')?.dataset?.sec
-      || 'bilan';
-    showGuide(r, section);
-  });
-  document.body.appendChild(btn);
+  // FAB Coach désactivé — le tutoriel est maintenant accessible via le bouton ? du header
+  const existing = document.getElementById('m6-coach-fab');
+  if (existing) existing.remove();
 }
 
 // ══════════════════════════════════════════════════════════════════

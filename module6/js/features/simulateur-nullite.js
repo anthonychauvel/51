@@ -201,13 +201,15 @@ const M6_SimulateurNullite = {
   /**
    * Rend le simulateur en HTML.
    */
-  render(container, contract, analysis, data, year) {
+  render(container, contract, analysis, data, year, regime) {
+    regime = regime || 'forfait_jours';
     if (!container) return;
     const res = this.analyze(contract, analysis, data, year);
 
     const niveauIcon = { ok:'✅', warning:'⚠️', danger:'❌', info:'ℹ️' };
     const niveauClass = { ok:'success', warning:'warning', danger:'danger', info:'info' };
 
+    container.__validityRegime = regime;
     container.innerHTML = `
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Validité du forfait jours</div><div class="m6-ornement-line"></div></div>
 
@@ -235,32 +237,26 @@ const M6_SimulateurNullite = {
       </div>
     </div>
 
-    <!-- Conditions détail -->
+    <!-- Conditions détail — disclosure progressive -->
     ${res.conditions.map(cond => {
-      // Clé de persistance pour la case à cocher manuelle
       const ckKey = `M6_VALID_CHECK_${regime}_${year}_${cond.id}`;
       const checked = (typeof localStorage !== 'undefined' && localStorage.getItem(ckKey) === '1');
       return `
-    <div class="m6-card" style="margin-bottom:10px">
-      <div class="m6-card-body" style="padding:12px 14px">
-        <div style="display:flex;align-items:flex-start;gap:10px">
-          <span style="font-size:1.1rem;flex-shrink:0;margin-top:1px">${niveauIcon[cond.niveau]}</span>
-          <div style="flex:1">
-            <div style="font-size:0.82rem;font-weight:600;color:var(--charbon);margin-bottom:3px">${cond.titre}</div>
-            <div style="font-size:0.7rem;color:var(--pierre);margin-bottom:6px">Réf. ${cond.loi}</div>
-            <div class="m6-alert ${niveauClass[cond.niveau]}" style="margin:0;font-size:0.75rem;padding:8px 10px">
-              <span>${niveauIcon[cond.niveau]}</span>
-              <div>${cond.detail}</div>
-            </div>
-            ${cond.niveau !== 'ok' ? `<div style="font-size:0.72rem;color:var(--charbon-3);margin-top:7px;line-height:1.5;border-left:2px solid var(--champagne);padding-left:8px"><strong>Recommandation :</strong> ${cond.recommandation}</div>` : ''}
-            <label style="display:flex;align-items:center;gap:8px;margin-top:9px;cursor:pointer;user-select:none">
-              <input type="checkbox" data-ck="${ckKey}" ${checked?'checked':''} style="width:17px;height:17px;accent-color:var(--champagne,#C4A35A);cursor:pointer">
-              <span style="font-size:0.74rem;color:var(--pierre)">Je confirme avoir vérifié ce point</span>
-            </label>
-          </div>
-        </div>
+    <details class="m6-collapsible">
+      <summary class="m6-collapsible-header">
+        <span class="m6-collapsible-icon">${niveauIcon[cond.niveau]}</span>
+        <span class="m6-collapsible-title">${cond.titre}</span>
+        <label style="display:flex;align-items:center;gap:6px;margin:0 8px;cursor:pointer" onclick="event.stopPropagation()">
+          <input type="checkbox" data-ck="${ckKey}" ${checked?'checked':''} style="width:18px;height:18px;accent-color:var(--champagne,#C4A35A);cursor:pointer">
+        </label>
+        <span class="m6-collapsible-chevron">›</span>
+      </summary>
+      <div class="m6-collapsible-body">
+        <div style="font-size:0.68rem;color:var(--pierre);margin-bottom:6px">Réf. ${cond.loi}</div>
+        <div style="margin-bottom:7px">${cond.detail}</div>
+        ${cond.niveau !== 'ok' ? `<div style="font-size:0.74rem;color:var(--charbon-3);line-height:1.5;border-left:2px solid var(--champagne);padding-left:8px;margin-top:6px"><strong>Recommandation :</strong> ${cond.recommandation}</div>` : ''}
       </div>
-    </div>`;
+    </details>`;
     }).join('')}
 
     <!-- Avertissement juridique -->
@@ -415,6 +411,7 @@ const M6_Charts = {
    * Rend la page complète des graphiques dans un container.
    */
   renderPage(container, contract, allData, year) {
+    container.__validityRegime = regime;
     container.innerHTML = `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution biologique ${year}</div><div class="m6-ornement-line"></div></div>
     <div style="text-align:center;padding:40px 0;color:var(--pierre);font-size:0.85rem">
       Calcul en cours…
@@ -426,7 +423,8 @@ const M6_Charts = {
       const hasDonnees = monthly.some(m => !m.vide);
 
       if (!hasDonnees) {
-        container.innerHTML = `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution biologique ${year}</div><div class="m6-ornement-line"></div></div>
+        container.__validityRegime = regime;
+    container.innerHTML = `<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution biologique ${year}</div><div class="m6-ornement-line"></div></div>
           <div class="m6-alert info"><span>ℹ️</span><div>Pas encore assez de données pour tracer les courbes. Saisissez vos journées sur au moins 2 mois différents.</div></div>`;
         return;
       }
@@ -449,7 +447,8 @@ const M6_Charts = {
         </tr>`;
       }).join('');
 
-      container.innerHTML = `
+      container.__validityRegime = regime;
+    container.innerHTML = `
       <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution biologique ${year}</div><div class="m6-ornement-line"></div></div>
 
       <!-- Fatigue + Stress -->
@@ -618,6 +617,7 @@ const M6_ModePreuve = {
     const fileSave = M6_Storage?.getFileSaveDate?.(regime, year);
     const log      = M6_Storage?.getLog?.(regime, year) || [];
 
+    container.__validityRegime = regime;
     container.innerHTML = `
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Mode Preuve opposable</div><div class="m6-ornement-line"></div></div>
 

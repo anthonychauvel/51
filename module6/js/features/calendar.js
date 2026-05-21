@@ -1,7 +1,6 @@
 /**
  * CALENDAR M6 v2 — Corrections audit complètes
  * - Mood OBLIGATOIRE avant enregistrement
- * - Certification repos (checkbox obligatoire)
  * - Déplacement = TOGGLE sur Travail (pas exclusif)
  * - Horaires défaut 09:00-18:30 pré-remplis
  * - Bandeau compteur global annuel fixe
@@ -325,12 +324,7 @@ const M6_Calendar = {
     </div>
 
     <!-- Certification repos -->
-    <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--ivoire);border-radius:var(--radius);margin-bottom:12px;cursor:pointer">
-      <input type="checkbox" id="pop-repos-ok" ${entry.reposOk?'checked':''} style="margin-top:3px;width:16px;height:16px;flex-shrink:0">
-      <div style="font-size:0.75rem;color:var(--charbon-3);line-height:1.4">
-        J'ai respecté mes repos quotidien (11h) et hebdomadaire (35h) — Art. L3131-1, L3132-2
-      </div>
-    </label>
+    
 
     <!-- Note -->
     <div class="m6-field" style="margin-bottom:14px">
@@ -441,11 +435,10 @@ const M6_Calendar = {
       const debut   = sheet.querySelector('#pop-deb')?.value||null;
       const fin     = sheet.querySelector('#pop-fin')?.value||null;
       const note    = sheet.querySelector('#pop-note')?.value.trim()||null;
-      const reposOk = sheet.querySelector('#pop-repos-ok')?.checked||false;
       const projetId = sheet.querySelector('#pop-projet')?.value || null;
       const hProjet  = projetId ? (parseFloat(sheet.querySelector('#pop-hproj')?.value)||7) : null;
       const demiPeriode = selType === 'demi' ? (sheet.querySelector('input[name="demi-period"]:checked')?.value || 'matin') : null;
-      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, reposOk, projetId, hProjet, demiPeriode } : null;
+      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, projetId, hProjet, demiPeriode } : null;
       this._closePopup();
       if (this._onSave) this._onSave(dk, value, selMood?{niveau:selMood}:null);
     });
@@ -505,12 +498,7 @@ const M6_Calendar = {
     </div>
 
     <!-- Certification obligatoire -->
-    <label style="display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:var(--ivoire);border-radius:var(--radius);margin-bottom:14px;cursor:pointer">
-      <input type="checkbox" id="sem-repos" style="margin-top:2px;width:16px;height:16px;flex-shrink:0">
-      <div style="font-size:0.75rem;color:var(--charbon-3);line-height:1.4">
-        Je certifie avoir respecté mes repos quotidien (11h) et hebdomadaire (35h) — Art. L3131-1, L3132-2
-      </div>
-    </label>
+    
 
     <div style="margin-bottom:12px;font-size:0.75rem;color:var(--pierre)">
       Jours : ${jours.map(dk=>new Date(dk+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})).join(' · ')}
@@ -548,13 +536,12 @@ const M6_Calendar = {
     sheet.querySelector('#sem-save')?.addEventListener('click', () => {
       if (!selMood) { sheet.querySelector('#sem-mood-warn')?.style.setProperty('display','flex'); return; }
       const type    = sheet.querySelector('#sem-type')?.value || 'travail';
-      const reposOk = sheet.querySelector('#sem-repos')?.checked || false;
       // Anti-doublon : ne pas écraser les jours déjà saisis différemment
       let écrasés = 0;
       jours.forEach(dk => {
         const existing = this._data[dk];
         if (existing && existing.type !== type) écrasés++;
-        if (this._onSave) this._onSave(dk, { type, reposOk }, { niveau: selMood });
+        if (this._onSave) this._onSave(dk, { type }, { niveau: selMood });
       });
       this._closePopup();
       M6_toast(`✓ ${jours.length} jours validés${écrasés?` (${écrasés} modifiés)`:''}`);
