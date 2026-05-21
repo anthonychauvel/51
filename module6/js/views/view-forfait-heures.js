@@ -52,8 +52,7 @@ const VFH = {
         if (!confirm('Reconfigurer le contrat FH ? Les données saisies sont conservées.')) return;
         M6_Storage.setContract(this._regime, null);
         this._contract = null;
-        try { document.getElementById('m6-coach-fab')?.remove(); } catch(_) {}
-        if (window.M6_Router?._showWizard) M6_Router._showWizard(this._regime);
+            if (window.M6_Router?._showWizard) M6_Router._showWizard(this._regime);
         else location.reload();
       },
       yearPicker: yrPickerHtml2,
@@ -112,12 +111,7 @@ const VFH = {
     } finally {
       this._bindNav();
     }
-    // Coach contextuel
-    if (window.M6_Coach) {
-      window.M6_Coach.ensureButton('forfait_heures');
-      window.M6_Coach.maybeAutoShow('forfait_heures', this._section);
-    }
-    // Détruire l'ancienne bulle avant réinitialisation
+    // Coach contextuel// Détruire l'ancienne bulle avant réinitialisation
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
     // Popup Zenji flottant
     if (window.M6_ZenjiPopup) {
@@ -148,46 +142,63 @@ const VFH = {
   },
 
   _tplBilan(a, bio) {
+    const restantHS = Math.max(0, (a.contingent||220) - a.totalHS);
+    const couleurRestant = a.tauxRemplissage >= 100 ? 'var(--alerte)' : (a.tauxRemplissage >= 80 ? 'var(--champagne-2)' : 'var(--charbon)');
     return `
-    <div class="m6-stats-grid" style="margin-bottom:14px">
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHS}h</div><div class="m6-stat-label">Total HS</div></div>
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.semaines}</div><div class="m6-stat-label">Semaines saisies</div></div>
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux1}h</div><div class="m6-stat-label">HS à +${a.taux1}%</div></div>
-      <div class="m6-stat-box" style="border-color:rgba(196,163,90,0.35)">
-        <div class="m6-stat-val" style="color:var(--champagne-2)">${a.tauxHoraire>0?a.montantTotal.toFixed(0)+'€':'—'}</div>
-        <div class="m6-stat-label">Montant brut HS</div>
+    <!-- HERO : chiffre dominant = HS cumulées -->
+    <div class="m6-hero-kpi">
+      <div class="m6-hero-kpi-label">Heures supplémentaires ${this._year}</div>
+      <div class="m6-hero-kpi-value" style="color:${couleurRestant}">${a.totalHS}<span class="m6-hero-kpi-unit">h / ${a.contingent||220}h</span></div>
+      <div class="m6-hero-kpi-sub">${a.tauxRemplissage}% du contingent · ${restantHS}h restantes</div>
+    </div>
+
+    <!-- 3 KPI mini -->
+    <div class="m6-kpi-row">
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value">${a.semaines}</div>
+        <div class="m6-kpi-mini-label">Semaines saisies</div>
+      </div>
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value" style="color:var(--champagne-2)">${a.tauxHoraire>0?a.montantTotal.toFixed(0)+'€':'—'}</div>
+        <div class="m6-kpi-mini-label">Brut HS</div>
+      </div>
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value">${bio?.fatigue ?? '–'}</div>
+        <div class="m6-kpi-mini-label">Fatigue</div>
       </div>
     </div>
 
-    <!-- Barre de progression forfait heures -->
-    <div class="m6-progress-bar-wrap">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:2px">
-        <span style="font-size:0.72rem;font-weight:600;color:var(--charbon)">Consommation du contingent <span class="m6-tooltip-wrap" id="fh-cont-tip" style="cursor:pointer;font-size:0.65rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">Contingent annuel de ${a.contingent||220}h fixé par votre CCN ou accord d'entreprise. Au-delà, une autorisation de l'inspection du travail peut être requise (Art. L3121-30).</span></span></span>
-        <span style="font-size:0.72rem;color:${a.tauxRemplissage>=90?'var(--alerte)':'var(--pierre)'}"><strong>${a.totalHS}h</strong> / ${a.contingent||220}h</span>
+    <!-- Barre de progression contingent en disclosure -->
+    <details class="m6-collapsible">
+      <summary class="m6-collapsible-header">
+        <span class="m6-collapsible-icon">📊</span>
+        <span class="m6-collapsible-title">Détail consommation contingent</span>
+        <span class="m6-collapsible-chevron">›</span>
+      </summary>
+      <div class="m6-collapsible-body">
+        <div class="m6-progress-track" style="margin-top:6px">
+          <div class="m6-progress-fill" style="width:${Math.min(100,a.tauxRemplissage)}%;background:${a.tauxRemplissage>=100?'linear-gradient(90deg,#9B2C2C,#E53E3E)':a.tauxRemplissage>=90?'linear-gradient(90deg,var(--champagne-2),var(--champagne))':'linear-gradient(90deg,#2D6A4F,#4A7C6F)'}"></div>
+        </div>
+        <div style="display:flex;justify-content:space-between;font-size:0.7rem;color:var(--pierre);margin-top:5px">
+          <span>HS à +${a.taux1}% : ${a.totalHSTaux1}h</span>
+          <span>HS à +${a.taux2}% : ${a.totalHSTaux2||0}h</span>
+        </div>
+        <div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Contingent annuel ${a.contingent||220}h fixé par CCN ou droit commun (Art. L3121-30).</div>
       </div>
-      <div class="m6-progress-track">
-        <div class="m6-progress-fill" style="width:${Math.min(100,a.tauxRemplissage)}%;background:${a.tauxRemplissage>=100?'linear-gradient(90deg,#9B2C2C,#E53E3E)':a.tauxRemplissage>=90?'linear-gradient(90deg,var(--champagne-2),var(--champagne))':'linear-gradient(90deg,#2D6A4F,#4A7C6F)'}"></div>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:0.65rem;color:var(--pierre);margin-top:3px">
-        <span>${a.tauxRemplissage}% utilisé</span>
-        <span style="color:${(a.contingent||220)-a.totalHS <= 20?'var(--alerte)':'inherit'}">Reste : <strong>${Math.max(0,(a.contingent||220)-a.totalHS)}h</strong></span>
-      </div>
-    </div>
+    </details>
 
-    ${a.tauxHoraire>0||this._contract.tauxHoraire>0?`<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">💶</div><div><div class="m6-card-label">Loi TEPA 2007 ${a.ccnNom?'· '+a.ccnNom:''}</div><div class="m6-card-title">Réduction de cotisations salariales et exonération fiscale</div></div></div><div class="m6-card-body">
+    ${a.tauxHoraire>0||this._contract.tauxHoraire>0?`<details class="m6-collapsible"><summary class="m6-collapsible-header"><span class="m6-collapsible-icon">💶</span><span class="m6-collapsible-title">Loi TEPA — Détail rémunération</span><span class="m6-collapsible-chevron">›</span></summary><div class="m6-collapsible-body">
       <div class="m6-row"><span class="m6-row-label">HS à +${a.taux1||25}% (${a.palier||8}h/sem)</span><span class="m6-row-val">${(a.montantHS1||0).toFixed(2)} €</span></div>
       ${a.a3Paliers&&a.taux_inter?`<div class="m6-row"><span class="m6-row-label">HS à +${a.taux_inter}% (${a.palier_inter}h/sem)</span><span class="m6-row-val">${(a.montantHS_inter||0).toFixed(2)} €</span></div>`:''}
       <div class="m6-row"><span class="m6-row-label">HS à +${a.taux2||50}%</span><span class="m6-row-val">${(a.montantHS2||0).toFixed(2)} €</span></div>
       <div class="m6-row"><span style="font-weight:600">Total brut</span><span class="m6-row-val gold" style="font-family:var(--font-display);font-size:1.2rem">${(a.montantTotal||0).toFixed(2)} €</span></div>
       <div class="m6-row"><span class="m6-row-label">Exo IR (plaf. 7 500€/an)</span><span class="m6-row-val ok">${(a.exoFiscale||0).toFixed(2)} €</span></div>
-      <div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Art. L241-17 CSS · Loi TEPA 2007 · Loi 2022-1158</div>
-    </div></div>`:''}
+      <div style="font-size:0.68rem;color:var(--pierre);margin-top:6px">Art. L241-17 CSS · Loi TEPA 2007 · Loi 2022-1158</div>
+    </div></details>`:''}
 
-    ${bio.hasData?`<div class="m6-card" style="margin-bottom:14px;cursor:pointer" id="fh-bio-card"><div class="m6-card-body" style="padding:12px 14px"><div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px"><div class="m6-card-label">Santé — Phase ${bio.phase?.code}</div><span class="m6-badge" style="background:${bio.phase?.color}20;color:${bio.phase?.color};border-radius:99px;font-size:0.65rem;padding:2px 8px">${bio.phase?.label}</span></div><div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;text-align:center">${[['Fatigue',bio.fatigue,true],['Stress',bio.stress,true],['Récup.',bio.recovery,false],['Perf.',bio.performance,false]].map(([l,v,inv])=>{const c=inv?(v>60?'#B85C50':v>35?'#C4853A':'#4A7C6F'):(v<40?'#B85C50':v<65?'#C4853A':'#4A7C6F');return `<div style="background:var(--ivoire);border-radius:8px;padding:8px 4px"><div style="font-family:var(--font-display);font-size:1.4rem;font-weight:700;color:${c}">${v}</div><div style="font-size:0.6rem;color:var(--pierre);text-transform:uppercase">${l}</div></div>`;}).join('')}</div><div style="font-size:0.68rem;color:var(--pierre);margin-top:6px;text-align:right">→ onglet Santé</div></div></div>`:''}
+    ${a.alertes.length ? a.alertes.filter(al => al.niveau === 'danger').map(al=>`<div class="m6-alert ${al.niveau}" style="margin:14px 0 10px"><span class="m6-alert-icon">${al.icon}</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}
 
-    ${a.alertes.length?a.alertes.map(al=>`<div class="m6-alert ${al.niveau}" style="margin-bottom:10px"><span class="m6-alert-icon">${al.icon}</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span><br><span style="font-size:0.65rem;color:var(--pierre)">Art. ${al.loi}</span></div></div>`).join('') : `<div class="m6-alert success" style="margin-bottom:14px"><span class="m6-alert-icon">✅</span><div><strong>Contingent conforme</strong> — Aucune alerte pour ${this._year}.</div></div>`}
-
-    <button class="m6-btn m6-btn-primary" id="fh-saisir" style="margin-bottom:8px">＋ Saisir une semaine</button>
+    <button class="m6-btn m6-btn-primary" id="fh-saisir" style="margin-top:14px;margin-bottom:8px">＋ Saisir une semaine</button>
     <div style="display:flex;gap:8px">
       <button class="m6-btn m6-btn-ghost" id="fh-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
       <button class="m6-btn m6-btn-ghost" id="fh-edit-contract" style="flex:1;font-size:0.78rem">⚙️ Contrat</button>
@@ -353,9 +364,7 @@ const VFH = {
         });
 
         sh.querySelector('#fh-sv')?.addEventListener('click', () => {
-          if (!sh.querySelector('#fh-repos')?.checked) {
-            M6_toast('Attestez le respect des temps de repos'); return;
-          }
+          
           let heures, joursArr = null;
           if (saisieMode === 'jours') {
             joursArr = [0,1,2,3,4].map(i => parseFloat(sh.querySelector('#fh-j'+i)?.value) || 0);
@@ -543,26 +552,54 @@ const VFH = {
   },
 
   _tplNav() {
-    const mk = (id, icon, label) =>
-      `<button class="m6-nav-item ${this._section===id?'active':''}" data-sec="${id}">
-        <span class="nav-icon">${icon}</span>${label}
-      </button>`;
-    return `<nav class="m6-bottom-nav">
-      ${mk('bilan',     '◈', 'Bilan')}
-      ${mk('semaines',  '◻', 'Semaines')}
-      ${mk('bio',       '♡', 'Santé')}
-      ${mk('tendances', '◗', 'Tendances')}
-      <div class="m6-nav-row-sep"></div>
-      ${mk('validite',  '⚖', 'Validité')}
-      ${mk('entretien', '◉', 'Entretien')}
-      ${mk('export',    '◆', 'Export')}
-      ${mk('glossaire', '≡', 'Glossaire')}
+    const suivreActif = ['bilan','bio','tendances'].includes(this._section);
+    const verifActif  = ['validite','entretien'].includes(this._section);
+    const plusActif   = ['export','glossaire'].includes(this._section);
+    const mk = (sec, icon, label, isActive, dataMore) =>
+      `<button class="m6-nav-item ${isActive?'active':''}" data-sec="${sec}" ${dataMore?`data-more="${dataMore}"`:''}><span class="nav-icon">${icon}</span>${label}</button>`;
+    return `<nav class="m6-bottom-nav m6-nav-4">
+      ${mk('semaines',  '◻', 'Saisir',   this._section==='semaines')}
+      ${mk('bilan',     '◈', 'Suivre',   suivreActif, 'suivre')}
+      ${mk('validite',  '⚖', 'Vérifier', verifActif,  'verif')}
+      ${mk('__more',    '⋯', 'Plus',     plusActif,   'plus')}
     </nav>`;
   },
 
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b => {
-      b.onclick = () => { this._section = b.dataset.sec; this.render(); };
+      b.onclick = () => {
+        const more = b.dataset.more;
+        if (more === 'plus') {
+          window.M6_showMoreSheet([
+            { id: 'export',    icon: '◆', label: 'Export PDF' },
+            { id: 'glossaire', icon: '≡', label: 'Glossaire' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        if (more === 'suivre') {
+          if (!['bilan','bio','tendances'].includes(this._section)) {
+            this._section = 'bilan'; this.render(); return;
+          }
+          window.M6_showMoreSheet([
+            { id: 'bilan',     icon: '◈', label: 'Bilan' },
+            { id: 'bio',       icon: '♡', label: 'Santé' },
+            { id: 'tendances', icon: '◗', label: 'Tendances' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        if (more === 'verif') {
+          if (!['validite','entretien'].includes(this._section)) {
+            this._section = 'validite'; this.render(); return;
+          }
+          window.M6_showMoreSheet([
+            { id: 'validite',  icon: '⚖', label: 'Validité juridique' },
+            { id: 'entretien', icon: '◉', label: 'Entretien annuel' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        this._section = b.dataset.sec;
+        this.render();
+      };
     });
     const editBtn = this._c.querySelector('#fh-edit-contract');
     if (editBtn) editBtn.onclick = () => {
@@ -584,7 +621,6 @@ const VFH = {
     M6_Storage.setContract(this._regime, null);
     this._contract = null;
     this._section = 'bilan';
-    try { document.getElementById('m6-coach-fab')?.remove(); } catch(_) {}
     // Relancer le wizard de configuration via le router
     if (window.M6_Router?._showWizard) {
       M6_Router._showWizard(this._regime);

@@ -149,7 +149,7 @@ const VFJ = {
         break;
       case 'nullite':
         ct.innerHTML = zenjiHtml;
-        if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year);
+        if(window.M6_SimulateurNullite) M6_SimulateurNullite.render(ct, this._contract, analysis, this._data, this._year, this._regime);
         else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module non chargé.</div></div>';
         break;
       case 'rupture':
@@ -214,15 +214,61 @@ const VFJ = {
   },
 
   _tplNav() {
-    const tabs = [{id:'bilan',icon:'◈',label:'Bilan'},{id:'calendrier',icon:'◻',label:'Calendrier'},{id:'bio',icon:'♡',label:'Santé'},{id:'tendances',icon:'◗',label:'Tendances'},{id:'nullite',icon:'⚖',label:'Validité'},{id:'entretien',icon:'◉',label:'Entretien'},{id:'export',icon:'◆',label:'Export'},{id:'glossaire',icon:'≡',label:'Glossaire'}];
-    return `<nav class="m6-bottom-nav">${tabs.map(t=>`<button class="m6-nav-item ${this._section===t.id?'active':''}" data-sec="${t.id}"><span class="nav-icon">${t.icon}</span>${t.label}</button>`).join('')}</nav>`;
+    // Regroupement : 4 onglets principaux + sheet "Plus"
+    const suivreActif = ['bilan','bio','tendances'].includes(this._section);
+    const verifActif  = ['nullite','entretien'].includes(this._section);
+    const plusActif   = ['export','glossaire','rupture'].includes(this._section);
+    const mk = (sec, icon, label, isActive, dataMore) =>
+      `<button class="m6-nav-item ${isActive?'active':''}" data-sec="${sec}" ${dataMore?`data-more="${dataMore}"`:''}><span class="nav-icon">${icon}</span>${label}</button>`;
+    return `<nav class="m6-bottom-nav m6-nav-4">
+      ${mk('calendrier', '◻', 'Saisir',   this._section==='calendrier')}
+      ${mk('bilan',      '◈', 'Suivre',   suivreActif, 'suivre')}
+      ${mk('nullite',    '⚖', 'Vérifier', verifActif,  'verif')}
+      ${mk('__more',     '⋯', 'Plus',     plusActif,   'plus')}
+    </nav>`;
   },
 
   _bindNav() {
-    this._c.querySelectorAll('[data-sec]').forEach(b => b.addEventListener('click', () => { this._section=b.dataset.sec; this.render(); }));
+    this._c.querySelectorAll('[data-sec]').forEach(b => {
+      b.onclick = () => {
+        const more = b.dataset.more;
+        if (more === 'plus') {
+          window.M6_showMoreSheet([
+            { id: 'export',    icon: '◆', label: 'Export PDF' },
+            { id: 'rupture',   icon: '⚖', label: 'Rupture conventionnelle' },
+            { id: 'glossaire', icon: '≡', label: 'Glossaire' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        if (more === 'suivre') {
+          // Si pas déjà dans "suivre", on entre direct sur bilan
+          if (!['bilan','bio','tendances'].includes(this._section)) {
+            this._section = 'bilan'; this.render(); return;
+          }
+          // Sinon on ouvre le picker des sous-sections
+          window.M6_showMoreSheet([
+            { id: 'bilan',     icon: '◈', label: 'Bilan' },
+            { id: 'bio',       icon: '♡', label: 'Santé' },
+            { id: 'tendances', icon: '◗', label: 'Tendances' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        if (more === 'verif') {
+          if (!['nullite','entretien'].includes(this._section)) {
+            this._section = 'nullite'; this.render(); return;
+          }
+          window.M6_showMoreSheet([
+            { id: 'nullite',   icon: '⚖', label: 'Validité juridique' },
+            { id: 'entretien', icon: '◉', label: 'Entretien annuel' },
+          ], (id) => { this._section = id; this.render(); });
+          return;
+        }
+        this._section = b.dataset.sec;
+        this.render();
+      };
+    });
     const yp = this._c.querySelector('#vfj-yr') || document.querySelector('#vfj-yr-hdr');
     if (yp) yp.addEventListener('change', () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
-    // Year picker dans le header global
     const ypHdr = document.querySelector('#vfj-yr-hdr');
     if (ypHdr && ypHdr !== yp) ypHdr.addEventListener('change', () => { this._year=parseInt(ypHdr.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
   },
@@ -230,11 +276,37 @@ const VFJ = {
   // ── BILAN ────────────────────────────────────────────────────
   _tplBilan(a, bio) {
     const frac = a.fractionnement;
+    const restants = Math.max(0, (a.plafondProrata||a.plafond) - a.joursEffectifs);
+    const couleurRestants = restants <= 10 ? 'var(--alerte)' : (restants <= 30 ? 'var(--champagne-2)' : 'var(--charbon)');
     return `
     ${a.isProrata ? `<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>📐</span><div>Prorata appliqué (arrivée ${new Date(this._contract.dateArrivee+'T12:00:00').toLocaleDateString('fr-FR')}) → <strong>${a.plafondProrata}j</strong> (${Math.round(a.ratio*100)}%).</div></div>` : ''}
-    ${frac?.droitFractionnement>0 ? `<div class="m6-alert success" style="margin-bottom:12px;font-size:0.78rem"><span>🗓️</span><div><strong>${frac.droitFractionnement}j de fractionnement</strong> acquis (CP hors mai-oct : ${frac.cpHorsPeriode}j — L3141-23).</div></div>` : ''}
 
-    <div class="m6-stats-grid" style="margin-bottom:14px">
+    <!-- HERO : chiffre dominant = jours restants -->
+    <div class="m6-hero-kpi">
+      <div class="m6-hero-kpi-label">Jours restants ${this._year}</div>
+      <div class="m6-hero-kpi-value" style="color:${couleurRestants}">${restants}<span class="m6-hero-kpi-unit">/ ${a.plafondProrata||a.plafond}</span></div>
+      <div class="m6-hero-kpi-sub">${a.joursEffectifs} jours travaillés · ${this._contract.ccnLabel || 'Droit commun'}</div>
+    </div>
+
+    <!-- 3 KPI mini -->
+    <div class="m6-kpi-row">
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value" style="color:${a.rttSolde<0?'var(--alerte)':'var(--charbon)'}">${a.rttSolde>=0?'+':''}${a.rttSolde}</div>
+        <div class="m6-kpi-mini-label">Solde RTT</div>
+      </div>
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value">${a.rttPris}</div>
+        <div class="m6-kpi-mini-label">RTT pris</div>
+      </div>
+      <div class="m6-kpi-mini">
+        <div class="m6-kpi-mini-value">${bio?.fatigue ?? '–'}</div>
+        <div class="m6-kpi-mini-label">Fatigue</div>
+      </div>
+    </div>
+
+    ${frac?.droitFractionnement>0 ? `<details class="m6-collapsible"><summary class="m6-collapsible-header"><span class="m6-collapsible-icon">🗓️</span><span class="m6-collapsible-title"><strong>${frac.droitFractionnement}j de fractionnement</strong> acquis</span><span class="m6-collapsible-chevron">›</span></summary><div class="m6-collapsible-body">CP hors mai-oct : ${frac.cpHorsPeriode}j — Réf. Art. L3141-23.</div></details>` : ''}
+
+    <div class="m6-stats-grid" style="margin-bottom:14px;display:none">
       <div class="m6-stat-box"><div class="m6-stat-val">${a.joursEffectifs}</div><div class="m6-stat-label">Jours travaillés</div></div>
       <div class="m6-stat-box" style="border-color:${a.rttSolde<0?'var(--alerte)':'rgba(196,163,90,0.35)'}">
         <div class="m6-stat-val" style="color:${a.rttSolde<0?'var(--alerte)':'var(--champagne-2)'}">${a.rttSolde>=0?'+':''}${a.rttSolde}</div>
@@ -431,9 +503,6 @@ const VFJ = {
       if (nom||mgr) { this._contract.nomCadre=nom||''; this._contract.nomManager=mgr||''; this._contract.emailManager=emailMgr||''; M6_Storage.setContract(this._regime,this._contract); }
     };
     const checkCertif = () => {
-      if (!this._c.querySelector('#pdf-certif')?.checked) {
-        M6_toast('⚠️ Cochez la case de certification avant d\'exporter'); return false;
-      }
       return true;
     };
     this._c.querySelector('#pdf-per')?.addEventListener('click', () => {
@@ -524,13 +593,13 @@ const VFJ = {
     return `<div style="padding:32px 16px;padding-top:calc(40px + env(safe-area-inset-top,0));min-height:100dvh;background:var(--ivoire)">
       <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Jours</div><div class="m6-ornement-line"></div></div>
       <div class="m6-card"><div class="m6-card-body">
-        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="218" min="100" max="366" style="font-size:16px"></div>
-        <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
+        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="${this._contract?.plafond||218}" min="100" max="366" style="font-size:16px"></div>
+        <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="${this._contract?.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
         <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${this._year}-01-01" style="font-size:16px"></div>
         <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${this._year}-12-31" style="font-size:16px"></div>
         <div class="m6-field" style="position:relative">
           <label>CCN applicable — tapez pour chercher</label>
-          <input type="text" id="s-ccn" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
+          <input type="text" id="s-ccn" value="${(this._contract?.ccnLabel||'').replace(/"/g,'&quot;')}" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
           <div id="s-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:200px;overflow-y:auto"></div>
           <div id="s-ccn-info" style="display:none;margin-top:6px"></div>
         </div>
@@ -544,8 +613,8 @@ const VFJ = {
             <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
           </div>
         </details>
-        <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" placeholder="ex : 350" style="font-size:16px"></div>
-        <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
+        <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" value="${this._contract?.tauxJournalier||''}" placeholder="ex : 350" style="font-size:16px"></div>
+        <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" value="${(this._contract?.nomCadre||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
         <div class="m6-field"><label>Date d'arrivée si en cours d'année</label><input type="date" id="s-arr" style="font-size:16px"></div>
         <div class="m6-field"><label>Taux majoration rachat (%)</label><input type="number" id="s-maj" value="10" min="10" max="100" style="font-size:16px"></div>
         <button class="m6-btn m6-btn-gold" id="s-save">Commencer →</button>
