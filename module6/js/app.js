@@ -226,6 +226,8 @@ const M6_Router = {
 
   _showWizard(regime) {
     // Wizard de bienvenue : paramétrage du contrat avant affichage de la vue
+    // Récupérer le contrat existant pour pré-remplir si reconfiguration
+    const existing = (window.M6_Storage && M6_Storage.getContract(regime)) || {};
     M6_Header.set({ title: 'Bienvenue', sub: 'Configuration initiale', showReset: false, showSwitch: false });
     const steps = ['Régime', 'Exercice', 'Contrat'];
     let step = 0;
@@ -258,36 +260,36 @@ const M6_Router = {
           <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Ces données permettent les calculs réglementaires. Modifiables à tout moment.</p>
           <div class="m6-card"><div class="m6-card-body">
             ${regime==='forfait_jours'?`
-              <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="218" min="100" max="366" style="font-size:16px"></div>
-              <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="25" min="25" max="40" step="0.5" style="font-size:16px"></div>
-              <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" placeholder="ex : 350" style="font-size:16px"></div>
+              <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="${existing.plafond||218}" min="100" max="366" style="font-size:16px"></div>
+              <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="${existing.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
+              <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" value="${existing.tauxJournalier||''}" placeholder="ex : 350" style="font-size:16px"></div>
               <div class="m6-field" style="position:relative">
                 <label>CCN applicable — tapez pour chercher</label>
-                <input type="text" id="wiz-ccn" placeholder="ex : Syntec, 1486, Banque AFB…" style="font-size:16px" autocomplete="off">
+                <input type="text" id="wiz-ccn" value="${(existing.ccnLabel||'').replace(/"/g,'&quot;')}" data-idcc="${existing.ccnIdcc||0}" placeholder="ex : Syntec, 1486, Banque AFB…" style="font-size:16px" autocomplete="off">
                 <div id="wiz-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.15);max-height:220px;overflow-y:auto"></div>
                 <div id="wiz-ccn-info" style="margin-top:6px"></div>
               </div>
             `:regime==='forfait_heures'?`
               <div class="m6-field" style="position:relative">
                 <label>Votre CCN — tapez pour chercher</label>
-                <input type="text" id="wiz-ccn-fh" placeholder="ex : HCR, Syntec, Transport, Banque…" style="font-size:16px" autocomplete="off">
+                <input type="text" id="wiz-ccn-fh" value="${(existing.ccnLabel||'').replace(/"/g,'&quot;')}" data-idcc="${existing.ccnIdcc||0}" placeholder="ex : HCR, Syntec, Transport, Banque…" style="font-size:16px" autocomplete="off">
                 <div id="wiz-ccn-fh-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.15);max-height:180px;overflow-y:auto"></div>
                 <div id="wiz-ccn-fh-info" style="margin-top:4px;font-size:0.72rem;color:var(--pierre)">Pré-remplit automatiquement seuil, contingent et taux.</div>
               </div>
-              <div class="m6-field"><label>Durée hebdo contractuelle (h)</label><input type="number" id="wiz-seuil" value="39" min="35" max="48" step="0.5" style="font-size:16px"></div>
+              <div class="m6-field"><label>Durée hebdo contractuelle (h)</label><input type="number" id="wiz-seuil" value="${existing.seuilHebdo||39}" min="35" max="48" step="0.5" style="font-size:16px"></div>
               <div class="m6-field">
                 <label>Contingent annuel HS (h) <span style="font-weight:400;font-size:0.75rem;color:var(--pierre)">— légal : 220h, ou défini par votre CCN</span></label>
-                <input type="number" id="wiz-cont" value="220" min="100" max="500" style="font-size:16px">
+                <input type="number" id="wiz-cont" value="${existing.contingent||220}" min="100" max="500" style="font-size:16px">
                 <div style="display:flex;align-items:center;gap:6px;margin-top:6px">
-                  <input type="checkbox" id="wiz-prorata-cont" style="width:16px;height:16px">
+                  <input type="checkbox" id="wiz-prorata-cont" ${existing.prorataContingent?'checked':''} style="width:16px;height:16px">
                   <label for="wiz-prorata-cont" style="font-size:0.78rem;color:var(--pierre);cursor:pointer">Appliquer un prorata si j'arrive en cours d'année</label>
                 </div>
               </div>
-              <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" placeholder="25.50" style="font-size:16px"></div>
+              <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" value="${existing.tauxHoraire||''}" placeholder="25.50" style="font-size:16px"></div>
             `:`
-              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="218" min="100" max="300" style="font-size:16px"></div>
+              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="${existing.plafond||218}" min="100" max="300" style="font-size:16px"></div>
             `}
-            <div class="m6-field"><label>Email manager (copie exports)</label><input type="email" id="wiz-email-mgr" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
+            <div class="m6-field"><label>Email manager (copie exports)</label><input type="email" id="wiz-email-mgr" value="${existing.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
           </div></div>
           <button class="m6-btn m6-btn-gold" id="wiz-finish" style="width:100%">Commencer →</button>
           <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
@@ -491,5 +493,48 @@ function openTutorial(regime) {
   ov.addEventListener('click',e=>{ if(e.target===ov){ ov.style.opacity='0'; setTimeout(()=>ov.remove(),200); } });
 }
 global.M6_openTutorial = openTutorial;
+
+// ═══════════════════════════════════════════════════════
+//  Bottom-sheet "Plus" — réutilisable par les 3 vues
+// ═══════════════════════════════════════════════════════
+function showMoreSheet(items, onSelect) {
+  document.getElementById('m6-more-sheet')?.remove();
+  document.getElementById('m6-more-sheet-bd')?.remove();
+  const bd = document.createElement('div');
+  bd.id = 'm6-more-sheet-bd';
+  bd.className = 'm6-more-sheet-backdrop';
+  const sh = document.createElement('div');
+  sh.id = 'm6-more-sheet';
+  sh.className = 'm6-more-sheet';
+  sh.innerHTML = `
+    <div class="m6-more-sheet-handle"></div>
+    ${items.map((it,i) => `
+      <button class="m6-more-sheet-item" data-i="${i}">
+        <span class="m6-more-sheet-item-icon">${it.icon}</span>
+        <span class="m6-more-sheet-item-label">${it.label}</span>
+        <span style="color:var(--pierre);font-size:0.8rem">›</span>
+      </button>`).join('')}
+  `;
+  document.body.appendChild(bd);
+  document.body.appendChild(sh);
+  requestAnimationFrame(() => {
+    bd.classList.add('open');
+    sh.classList.add('open');
+  });
+  const close = () => {
+    bd.classList.remove('open');
+    sh.classList.remove('open');
+    setTimeout(() => { bd.remove(); sh.remove(); }, 220);
+  };
+  bd.onclick = close;
+  sh.querySelectorAll('[data-i]').forEach(btn => {
+    btn.onclick = () => {
+      const i = parseInt(btn.dataset.i);
+      close();
+      if (onSelect) onSelect(items[i].id);
+    };
+  });
+}
+global.M6_showMoreSheet = showMoreSheet;
 
 })(window);
