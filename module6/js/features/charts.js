@@ -345,8 +345,17 @@ const M6_Charts = {
     // Calculer les scores bio cumulés mois par mois
     const bioParMois = [];
     const moisAvecData = new Set();
-    for (const dk of Object.keys(data)) {
-      if (/^\d{4}-\d{2}-\d{2}$/.test(dk)) moisAvecData.add(parseInt(dk.slice(5,7)) - 1);
+    // Filtrer uniquement les clés de type YYYY-MM-DD (jours, pas semaines)
+    const dayKeys = Object.keys(data).filter(dk => /^\d{4}-\d{2}-\d{2}$/.test(dk));
+    for (const dk of dayKeys) {
+      moisAvecData.add(parseInt(dk.slice(5,7)) - 1);
+    }
+    // Si aucune clé journalière (régime FH en semaines), on n'affiche pas le tableau bio
+    if (!dayKeys.length) {
+      return `<div style="padding:24px;text-align:center;color:var(--pierre)">
+        <div style="font-size:2rem;margin-bottom:8px">📊</div>
+        <div style="font-size:0.88rem">Données mensuelles non disponibles pour ce régime.</div>
+      </div>`;
     }
     const minM = moisAvecData.size ? Math.min(...moisAvecData) : 0;
     const maxM = moisAvecData.size ? Math.max(...moisAvecData) : new Date().getMonth();

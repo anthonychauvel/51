@@ -668,12 +668,15 @@ const M6_ModePreuve = {
       <div>Ce rapport a une valeur probante <strong>symbolique</strong>. Pour une valeur juridique complète, faites valider le fichier par huissier ou notaire, ou utilisez un service de tiers-horodateur certifié (RFC 3161).</div>
     </div>`;
 
-    // Binding cases à cocher validation manuelle
-    container.querySelectorAll('[data-ck]').forEach(cb => {
-      cb.addEventListener('change', () => {
-        try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
-      });
+    // Binding cases à cocher validation manuelle — event delegation + anti-toggle collapsible
+    container.addEventListener('change', e => {
+      const cb = e.target.closest('input[data-ck]');
+      if (!cb) return;
+      try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
     });
+    container.addEventListener('click', e => {
+      if (e.target.closest('input[data-ck]')) e.stopPropagation();
+    }, true);
     container.querySelector('#preuve-dl')?.addEventListener('click', async () => {
       await M6_ModePreuve.download(regime, year, contract, data, analysis);
     });

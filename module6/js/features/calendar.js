@@ -280,6 +280,14 @@ const M6_Calendar = {
         <label><input type="radio" name="demi-period" value="matin" ${(entry.demiPeriode||'matin')==='matin'?'checked':''}><span>🌅 Matin</span></label>
         <label><input type="radio" name="demi-period" value="apresmidi" ${entry.demiPeriode==='apresmidi'?'checked':''}><span>🌇 Après-midi</span></label>
       </div>
+      <div style="font-size:0.68rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre);margin:8px 0 4px">Nature de la demi-journée</div>
+      <div class="m6-am-pm" style="flex-wrap:wrap;gap:6px">
+        <label><input type="radio" name="demi-nature" value="travail" ${(entry.demiNature||'travail')==='travail'?'checked':''}><span>💼 Travail</span></label>
+        <label><input type="radio" name="demi-nature" value="rtt" ${entry.demiNature==='rtt'?'checked':''}><span>🏖️ RTT</span></label>
+        <label><input type="radio" name="demi-nature" value="cp" ${entry.demiNature==='cp'?'checked':''}><span>🌴 CP</span></label>
+        <label><input type="radio" name="demi-nature" value="repos" ${entry.demiNature==='repos'?'checked':''}><span>🛋️ Repos</span></label>
+        <label><input type="radio" name="demi-nature" value="deplacement" ${entry.demiNature==='deplacement'?'checked':''}><span>✈️ Déplacement</span></label>
+      </div>
     </div>
 
     <!-- Déplacement : toggle sur Travail -->
@@ -438,7 +446,10 @@ const M6_Calendar = {
       const projetId = sheet.querySelector('#pop-projet')?.value || null;
       const hProjet  = projetId ? (parseFloat(sheet.querySelector('#pop-hproj')?.value)||7) : null;
       const demiPeriode = selType === 'demi' ? (sheet.querySelector('input[name="demi-period"]:checked')?.value || 'matin') : null;
-      const value   = selType ? { type:selType, debut, fin, note, deplacement:selDep, projetId, hProjet, demiPeriode } : null;
+      const demiNature  = selType === 'demi' ? (sheet.querySelector('input[name="demi-nature"]:checked')?.value || 'travail') : null;
+      // Déplacement : lire depuis la sélection (bouton déplacement dans les types OU case dans form)
+      const deplacement = selDep || (selType === 'deplacement') || (demiNature === 'deplacement') ? (selDep || selType === 'deplacement' ? selDep : 'fr') : null;
+      const value   = selType ? { type:selType, debut, fin, note, deplacement, projetId, hProjet, demiPeriode, demiNature } : null;
       this._closePopup();
       if (this._onSave) this._onSave(dk, value, selMood?{niveau:selMood}:null);
     });

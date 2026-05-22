@@ -75,6 +75,7 @@ portMensuel(opts) {
   },
 
   _genMensuel({ regime, year, mois, contract, data, moods, analysis, validations }) {
+    mois = (typeof mois === 'number' && !isNaN(mois)) ? mois : new Date().getMonth();
     const jsPDF = window.jspdf?.jsPDF;
     if (!jsPDF) { alert('PDF non disponible — verifiez votre connexion internet (jsPDF CDN).'); return; }
 
