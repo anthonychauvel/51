@@ -141,11 +141,13 @@ const VFJ = {
         this._bindExport(analysis);
         break;
       case 'tendances':
-        ct.innerHTML = '<div style="padding:4px 0"></div>';
-        try {
-          if(window.M6_Charts) M6_Charts.renderPage(ct, this._contract, this._data, this._year);
-          else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module graphiques non chargé.</div></div>';
-        } catch(e) { ct.innerHTML += `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div>Erreur graphiques : ${e.message}</div></div>`; }
+        ct.innerHTML = '';
+        if (window.M6_Charts) {
+          ct.innerHTML = M6_Charts.renderSection(analysis, bio, this._data, this._contract, this._year);
+          // Pas de canvas — tableau bio chiffres uniquement
+        } else {
+          ct.innerHTML = '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Aucune donnée.</div></div>';
+        }
         break;
       case 'nullite':
         ct.innerHTML = zenjiHtml;
@@ -350,7 +352,7 @@ const VFJ = {
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
       <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
-      <button class="m6-btn m6-btn-ghost" id="vfj-certif-toggle" style="flex:1;font-size:0.78rem">🔒 Certif. ${this._contract.showCertif===false?'OFF':'ON'}</button>
+
     </div>`;
   },
 
@@ -406,7 +408,7 @@ const VFJ = {
       <div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive (Jang 2025)',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega F. et al. WHO/ILO 2021 · Kivimäki 2015 (Lancet) · Jang W. et al. 2025</div></div>
     </div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body"><div class="m6-card-label" style="margin-bottom:8px">Répartition de la charge déclarée</div><div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${(()=>{const MC=window.M6_MOOD_COLORS||window.MOOD_COLORS||{faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'😤',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','elevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#eee',border:'#aaa',text:'#333',icon:'?',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
+      ${(()=>{const MC=window.M6_MOOD_COLORS||window.MOOD_COLORS||{faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'⚡',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','elevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#eee',border:'#aaa',text:'#333',icon:'?',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
     </div></div></div>
     ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">!</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
   },
@@ -536,7 +538,7 @@ const VFJ = {
       M6_ModePreuve.renderUI(preuveContainer, this._regime, this._year, this._contract, this._data, analysis);
     }
     this._c.querySelector('#exp-j')?.addEventListener('click', () => M6_ImportExport.export(this._regime));
-    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(forfait_jours, this._year));
+    this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
 
     // PDF Période
