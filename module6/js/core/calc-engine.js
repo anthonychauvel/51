@@ -59,7 +59,10 @@ const M6_ForfaitJours = {
       cur.setDate(cur.getDate()+1);
     }
     const ratio=joursCalendaires>0?joursEffPeriode/joursCalendaires:1;
-    const plafondProrata=Math.round(plafond*ratio);
+    // Si période comptable personnalisée (pas 1er jan - 31 déc), le plafond est déjà fixé pour la période
+    const hasPeriodeCustom = contract.dateDebutExercice && contract.dateFinExercice &&
+      (contract.dateDebutExercice.slice(5) !== '01-01' || contract.dateFinExercice.slice(5) !== '12-31');
+    const plafondProrata=hasPeriodeCustom ? plafond : Math.round(plafond*ratio);
     const cpProrata=Math.round(cpContrat*ratio);
     const rttTheoriques=Math.max(0,(joursEffPeriode-WE)-cpProrata-feriesOuvres-plafondProrata);
     return { rttTheoriques,feriesOuvres,joursTravailMax:plafondProrata,
@@ -77,7 +80,7 @@ const M6_ForfaitJours = {
     // comme point de départ du prorata. Aucune configuration requise.
     const allKeys = Object.keys(data).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
     const firstEntry = allKeys.length ? allKeys[0] : null;
-    const autoArrivee = contract.dateArrivee || firstEntry;
+    const autoArrivee = contract.dateArrivee || null; // Prorata UNIQUEMENT si date d'arrivée explicite
 
     // N'appliquer le prorata que si l'arrivée est significativement après le début d'exercice (>14j)
     const exDebutStr = contract.dateDebutExercice || `${year}-01-01`;
