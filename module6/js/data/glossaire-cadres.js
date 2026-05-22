@@ -384,12 +384,42 @@ const M6_GlossaireAPI = {
   getAll() { return M6_GLOSSAIRE; },
   search(q) {
     if (!q) return M6_GLOSSAIRE;
-    const lq = q.toLowerCase();
-    return M6_GLOSSAIRE.filter(e =>
-      e.terme.toLowerCase().includes(lq) ||
-      e.def.toLowerCase().includes(lq) ||
-      e.tags.some(t => t.toLowerCase().includes(lq))
-    );
+    const lq = q.toLowerCase().trim();
+    const lqNoAccent = lq.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+    const terms = lq.split(/\s+/).filter(t => t.length > 1);
+
+    return M6_GLOSSAIRE.filter(e => {
+      const txt = (e.terme + ' ' + e.def + ' ' + (e.ref||'') + ' ' + (e.tags||[]).join(' ')).toLowerCase();
+      const txtNoAcc = txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+
+      // Recherche exacte d'abord
+      if (txt.includes(lq) || txtNoAcc.includes(lqNoAccent)) return true;
+
+      // Recherche par article de loi (ex: "L3121" → inclure L3121-58 à L3121-65)
+      if (/^l?\d{4}/i.test(lq)) {
+        const artNum = lq.replace(/^l/i,'');
+        if (txt.match(new RegExp('l?' + artNum.replace(/-/g,'[-.]?'), 'i'))) return true;
+      }
+
+      // Recherche multi-mots : tous les termes doivent être présents
+      if (terms.length > 1 && terms.every(t => txtNoAcc.includes(t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))) return true;
+
+      // Abbréviations courantes
+      const abbrevMap = {
+        'fj': 'forfait jours', 'fh': 'forfait heures', 'cd': 'cadre dirigeant',
+        'hs': 'heures supplémentaires', 'rtt': 'réduction du temps', 'cp': 'congés payés',
+        'ccn': 'convention collective', 'tepa': 'loi tepa', 'rps': 'risques psychosociaux',
+        'dtt': 'droit temps travail', 'kb': 'kivimäki'
+      };
+      if (abbrevMap[lq] && txt.includes(abbrevMap[lq])) return true;
+
+      return false;
+    }).sort((a, b) => {
+      // Prioriser les correspondances dans le terme (titre) plutôt que la def
+      const aInTitre = a.terme.toLowerCase().includes(lq) ? 0 : 1;
+      const bInTitre = b.terme.toLowerCase().includes(lq) ? 0 : 1;
+      return aInTitre - bInTitre;
+    });
   },
   getByTag(tag) {
     return M6_GLOSSAIRE.filter(e => e.tags.includes(tag));
