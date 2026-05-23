@@ -80,10 +80,8 @@ const VFJ = {
       showReset: true,
       showSwitch: true,
       onReset: () => {
-        if (!confirm('Reconfigurer le contrat ? Les données sont conservées.')) return;
-        if (window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
-        M6_Storage.setContract(this._regime, null);
-        this._contract = null;
+        // NE PAS effacer le contrat — afficher le wizard pré-rempli avec les valeurs actuelles.
+        // L'utilisateur modifie ce qu'il veut puis Enregistre, ou Annule.
         this._c.innerHTML = this._tplSetup();
         this._bindSetup();
       },
@@ -361,59 +359,11 @@ const VFJ = {
     ${(this._contract.ccnLabel||'').toLowerCase().includes('syntec') ? `<div class="m6-alert warning" style="margin-bottom:14px"><span class="m6-alert-icon">⚠️</span><div><strong>Vigilance CCN Syntec</strong><br><span style="font-size:0.77rem">La CCN Syntec impose un suivi de charge renforcé (art. 3 de l'accord du 22/06/1999). Entretiens semestriels obligatoires. Un mode manuel est disponible pour les accords de branche dérogatoires.</span></div></div>` : ''}
 
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
-    <div style="display:flex;gap:8px;margin-bottom:8px">
-      
-        <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;min-width:110px;font-size:0.78rem">📅 PDF Période</button>
-      </div>
-    </div></div>
-
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF Periode personnalisee</div><div class="m6-ornement-line"></div></div>
-    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
-      <div class="m6-field">
-        <label>Date de debut</label>
-        <input type="date" id="pdf-per-d1" value="${this._year}-01-01" style="font-size:16px">
-      </div>
-      <div class="m6-field">
-        <label>Date de fin</label>
-        <input type="date" id="pdf-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px">
-      </div>
-      <button class="m6-btn m6-btn-ghost" id="pdf-per" style="width:100%;font-size:0.78rem">📄 PDF Periode</button>
-    </div></div>
-
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Validation mensuelle</div><div class="m6-ornement-line"></div></div>
-    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
-      <div class="m6-field"><label>Mois à valider</label>
-        <select id="v-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}">${m}${valid[i]?' ✓':''}</option>`).join('')}</select></div>
-      <div class="m6-field"><label>Votre nom</label><input type="text" id="v-nom" value="${this._contract.nomCadre||''}" style="font-size:16px"></div>
-      <button class="m6-btn m6-btn-gold" id="v-btn" style="font-size:0.8rem">🔏 Valider</button>
-      ${Object.entries(valid).length?`<div style="margin-top:10px">${Object.entries(valid).sort(([a],[b])=>a-b).map(([m,v])=>`<div class="m6-row"><span class="m6-row-label">${['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][m]}</span><span style="font-size:0.65rem;color:var(--pierre)">${new Date(v.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})} · #${v.hash}</span></div>`).join('')}</div>`:''}
-    </div></div>
-
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Mode Preuve opposable</div><div class="m6-ornement-line"></div></div>
-    <div id="preuve-container"></div>
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
-    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
-      <div style="display:flex;gap:8px;margin-bottom:8px">
-        <button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">💾 Exporter JSON</button>
-        <button class="m6-btn m6-btn-primary" id="exp-csv" style="flex:1;font-size:0.78rem">📊 CSV SIRH</button>
-        <button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">📂 Importer</button>
-      </div>
-      <button class="m6-btn m6-btn-ghost" id="rgpd" style="width:100%;font-size:0.75rem">📋 Export RGPD complet</button>
-    </div></div>
-
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Simulateur — Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
-    <div id="rupture-container"></div>
-
-    <div style="display:none"><!-- placeholder pour eviter la double fermeture --></div
-    </div></div>
-
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique des modifications</div><div class="m6-ornement-line"></div></div>
-    <div class="m6-card"><div class="m6-card-body">
-      ${!log.length ? '<div style="font-size:0.78rem;color:var(--pierre)">Aucune modification.</div>' :
-        log.map(l=>`<div class="m6-row" style="padding:5px 0;align-items:flex-start"><div><div style="font-size:0.72rem;font-weight:500">${l.action}</div><div style="font-size:0.65rem;color:var(--pierre)">${l.detail}</div></div><span style="font-size:0.6rem;color:var(--pierre);flex-shrink:0;margin-left:8px">${new Date(l.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</span></div>`).join('')}
-    </div></div>`;
+    <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
+      <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
+      <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
+    </div>
+    <div style="font-size:0.7rem;color:var(--pierre);text-align:center;margin-top:6px">→ Onglet <strong>Exports</strong> pour PDF mensuel, période libre, validations et JSON</div>`;
   },
 
   _bindBilan(analysis, bio) {
@@ -430,10 +380,7 @@ const VFJ = {
     if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
     document.addEventListener('click', () => tipWrap?.classList.remove('open'), { once: false });
     this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
-      if(!confirm('Relancer le wizard de bienvenue ? Votre configuration et données sont conservées.')) return;
-      if(window.M6_ZenjiOnboarding) M6_ZenjiOnboarding.reset();
-      M6_Storage.setContract(this._regime, null);
-      this._contract = null;
+      // Ouvre le wizard pré-rempli — l'utilisateur modifie ce qu'il veut et enregistre, ou annule.
       this._c.innerHTML = this._tplSetup();
       this._bindSetup();
     });
@@ -462,7 +409,27 @@ const VFJ = {
       <div class="m6-card-body">${bar('Risque CV (OMS/OIT 2021)',bio.cvRisk,true)}${bar('Charge cognitive (Jang 2025)',bio.cogRisk,true)}<div style="font-size:0.7rem;color:var(--pierre);margin-top:6px">Pega F. et al. WHO/ILO 2021 · Kivimäki 2015 (Lancet) · Jang W. et al. 2025</div></div>
     </div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body"><div class="m6-card-label" style="margin-bottom:8px">Répartition de la charge déclarée</div><div style="display:flex;gap:8px;flex-wrap:wrap">
-      ${(()=>{const MC=window.M6_MOOD_COLORS||window.MOOD_COLORS||{faible:{bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'😌',label:'Faible'},ok:{bg:'#EEF2FF',border:'#3730A3',text:'#2D2680',icon:'😊',label:'OK'},elevé:{bg:'#FFF8E6',border:'#C4853A',text:'#7A5C00',icon:'⚡',label:'Élevé'},critique:{bg:'#FBEAEA',border:'#9B2C2C',text:'#9B2C2C',icon:'🔴',label:'Critique'}};return['faible','ok','elevé','critique'].map(niv=>{const c=MC[niv]||{bg:'#eee',border:'#aaa',text:'#333',icon:'?',label:niv};const n=Object.values(this._moods||{}).filter(m=>m.niveau===niv).length;return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;}).join('');})()}
+      ${(()=>{
+        // Mapping commun avec calendar.js (clé sans accent : 'eleve')
+        // mais l'app utilise parfois 'elevé' historiquement → on tente les deux
+        const DEFAULTS = {
+          faible:   {bg:'#E8F5F0',border:'#2D6A4F',text:'#1A4035',icon:'🌿',label:'Légère'},
+          ok:       {bg:'#EEF3FA',border:'#3B6098',text:'#1E3A5F',icon:'✓', label:'Normale'},
+          eleve:    {bg:'#FFF7E6',border:'#C4853A',text:'#8B5A1A',icon:'⚡',label:'Soutenue'},
+          critique: {bg:'#FFF0EE',border:'#B85C50',text:'#7A3028',icon:'🔥',label:'Critique'},
+        };
+        const MC = window.M6_MOOD_COLORS || window.MOOD_COLORS || DEFAULTS;
+        const moods = this._moods || {};
+        // Compter sur les deux orthographes possibles (eleve / elevé)
+        const countNiveau = (...niveaux) =>
+          Object.values(moods).filter(m => niveaux.includes(m?.niveau)).length;
+        return ['faible','ok','eleve','critique'].map(niv => {
+          // Toujours utiliser le défaut si la palette source manque l'icône ou utilise la mauvaise clé
+          const c = MC[niv] || (niv==='eleve' && MC['elevé']) || DEFAULTS[niv];
+          const n = niv === 'eleve' ? countNiveau('eleve','elevé') : countNiveau(niv);
+          return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:10px;padding:10px 14px;text-align:center;min-width:60px"><div style="font-size:1.4rem">${c.icon}</div><div style="font-family:var(--font-display);font-size:1.3rem;font-weight:700;color:${c.text}">${n}</div><div style="font-size:0.65rem;color:${c.text};opacity:0.8">${c.label}</div></div>`;
+        }).join('');
+      })()}
     </div></div></div>
     ${bio.alertesBio.length ? bio.alertesBio.map(al=>`<div class="m6-alert ${al.niv}" style="margin-bottom:10px"><span class="m6-alert-icon">!</span><div><strong>${al.titre}</strong><br><span style="font-size:0.77rem">${al.texte}</span></div></div>`).join('') : ''}`;
   },
@@ -646,36 +613,40 @@ const VFJ = {
   },
 
   _tplSetup() {
+    const c = this._contract || {};
+    const isEdit = !!c.plafond; // déjà configuré → mode édition
     return `<div style="padding:32px 16px;padding-top:calc(40px + env(safe-area-inset-top,0));min-height:100dvh;background:var(--ivoire)">
-      <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Configuration Forfait Jours</div><div class="m6-ornement-line"></div></div>
+      <div class="m6-ornement" style="margin-top:0"><div class="m6-ornement-line"></div><div class="m6-ornement-text">${isEdit?'Modifier ma configuration':'Configuration Forfait Jours'}</div><div class="m6-ornement-line"></div></div>
+      ${isEdit?`<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>✏️</span><div>Vos paramètres actuels sont pré-remplis. Modifiez uniquement ce qui change — vos données saisies (jours, RTT, entretiens) sont conservées.</div></div>`:''}
       <div class="m6-card"><div class="m6-card-body">
-        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="${this._contract?.plafond||218}" min="100" max="366" style="font-size:16px"></div>
-        <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="${this._contract?.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
-        <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${this._year}-01-01" style="font-size:16px"></div>
-        <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${this._year}-12-31" style="font-size:16px"></div>
+        <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="${c.plafond||218}" min="100" max="366" style="font-size:16px"></div>
+        <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="${c.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
+        <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${c.dateDebutExercice||`${this._year}-01-01`}" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${c.dateFinExercice||`${this._year}-12-31`}" style="font-size:16px"></div>
         <div class="m6-field" style="position:relative">
           <label>CCN applicable — tapez pour chercher</label>
-          <input type="text" id="s-ccn" value="${(this._contract?.ccnLabel||'').replace(/"/g,'&quot;')}" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
+          <input type="text" id="s-ccn" value="${(c.ccnLabel||'').replace(/"/g,'&quot;')}" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
           <div id="s-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:200px;overflow-y:auto"></div>
           <div id="s-ccn-info" style="display:none;margin-top:6px"></div>
         </div>
         <!-- Mode manuel — accord de branche dérogatoire -->
-        <details style="margin-bottom:12px">
-          <summary style="font-size:0.78rem;color:var(--pierre);cursor:pointer;padding:8px 0">⚙️ Mode manuel — accord de branche dérogatoire</summary>
+        <details style="margin-bottom:12px" ${c.refAccordDerogatoire?'open':''}>
+          <summary style="font-size:0.78rem;color:var(--pierre);cursor:pointer;padding:8px 0">⚙️ Mode manuel — accord de branche dérogatoire${c.refAccordDerogatoire?' <span style="color:var(--champagne-2);font-weight:600">· renseigné</span>':''}</summary>
           <div style="background:var(--ivoire-2);border-radius:var(--radius);padding:12px;margin-top:6px">
             <div style="font-size:0.72rem;color:var(--pierre);margin-bottom:10px">Si votre accord de branche ou d'entreprise déroge au droit commun, renseignez directement les valeurs applicables. Ces données écrasent celles de la CCN sélectionnée.</div>
-            <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" min="100" max="366" placeholder="ex: 205" style="font-size:16px"></div>
-            <div class="m6-field"><label>Taux de rachat personnalisé (%)</label><input type="number" id="s-taux-rachat-manuel" min="10" max="100" placeholder="ex: 25" style="font-size:16px"></div>
-            <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
+            <div class="m6-field"><label>Plafond personnalisé (jours)</label><input type="number" id="s-plafond-manuel" value="${c.plafondManuel||''}" min="100" max="366" placeholder="ex: 205" style="font-size:16px"></div>
+            <div class="m6-field"><label>Taux de rachat personnalisé (%)</label><input type="number" id="s-taux-rachat-manuel" value="${c.tauxRachatManuel||''}" min="10" max="100" placeholder="ex: 25" style="font-size:16px"></div>
+            <div class="m6-field"><label>Référence de l'accord dérogatoire</label><input type="text" id="s-ref-accord" value="${(c.refAccordDerogatoire||'').replace(/"/g,'&quot;')}" placeholder="ex: Accord d'entreprise XYZ du 01/01/2024" style="font-size:16px"></div>
           </div>
         </details>
-        <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" value="${this._contract?.tauxJournalier||''}" placeholder="ex : 350" style="font-size:16px"></div>
-        <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" value="${(this._contract?.nomCadre||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
-        <div class="m6-field"><label>Date d'arrivée si en cours d'année</label><input type="date" id="s-arr" style="font-size:16px"></div>
-        <div class="m6-field"><label>Taux majoration rachat (%)</label><input type="number" id="s-maj" value="10" min="10" max="100" style="font-size:16px"></div>
-        <button class="m6-btn m6-btn-gold" id="s-save">Commencer →</button>
+        <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="s-tj" min="0" step="10" value="${c.tauxJournalier||''}" placeholder="ex : 350" style="font-size:16px"></div>
+        <div class="m6-field"><label>Votre nom (PDF)</label><input type="text" id="s-nom" value="${(c.nomCadre||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
+        <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata uniquement si renseignée)</small></label><input type="date" id="s-arr" value="${c.dateArrivee||''}" style="font-size:16px"></div>
+        <div class="m6-field"><label>Taux majoration rachat (%)</label><input type="number" id="s-maj" value="${c.tauxMajorationRachat||10}" min="10" max="100" style="font-size:16px"></div>
+        <button class="m6-btn m6-btn-gold" id="s-save">${isEdit?'💾 Enregistrer les modifications':'Commencer →'}</button>
+        ${isEdit?`<button class="m6-btn m6-btn-ghost" id="s-cancel" style="margin-top:8px;width:100%;font-size:0.8rem">Annuler</button>`:''}
       </div></div>
-      <div class="m6-alert info" style="margin-top:12px"><span>ℹ️</span><div>Plafond légal : <strong>218 jours</strong> (L3121-64). Prorata automatique si arrivée en cours d'année.</div></div>
+      <div class="m6-alert info" style="margin-top:12px"><span>ℹ️</span><div>Plafond légal : <strong>218 jours</strong> (L3121-64). Le prorata ne s'applique que si une date d'arrivée est saisie ci-dessus.</div></div>
       <a href="../menu.html" style="display:block;text-align:center;margin-top:20px;font-size:0.8rem;color:var(--pierre)">← Menu</a>
     </div>`;
   },
@@ -724,14 +695,42 @@ const VFJ = {
       }, 'forfait_jours');
     }
     this._c.querySelector('#s-save')?.addEventListener('click', () => {
-      const c = { plafond:parseInt(this._c.querySelector('#s-plafond-manuel')?.value)||parseInt(this._c.querySelector('#s-p')?.value)||218, joursCPContrat:parseFloat(this._c.querySelector('#s-cp')?.value)||25, ccnLabel:this._c.querySelector('#s-ccn')?.value.trim(), tauxJournalier:parseFloat(this._c.querySelector('#s-tj')?.value)||0, nomCadre:this._c.querySelector('#s-nom')?.value.trim(), dateArrivee:this._c.querySelector('#s-arr')?.value||null, tauxMajorationRachat:parseInt(this._c.querySelector('#s-taux-rachat-manuel')?.value)||parseInt(this._c.querySelector('#s-maj')?.value)||10, dateDebutExercice:this._c.querySelector('#s-debut')?.value||null, dateFinExercice:this._c.querySelector('#s-fin')?.value||null, refAccordDerogatoire:this._c.querySelector('#s-ref-accord')?.value.trim()||null };
+      const $ = (id) => this._c.querySelector(id);
+      const plafondManuel = parseInt($('#s-plafond-manuel')?.value) || null;
+      const tauxRachatManuel = parseInt($('#s-taux-rachat-manuel')?.value) || null;
+      // Garder l'ancien contrat pour ne PAS effacer les champs non touchés (nomManager, emailManager…)
+      const existing = this._contract || {};
+      const c = {
+        ...existing,
+        plafond: plafondManuel || parseInt($('#s-p')?.value) || 218,
+        plafondManuel,                    // sauvegardé pour pré-remplir au retour
+        tauxRachatManuel,
+        joursCPContrat: parseFloat($('#s-cp')?.value) || 25,
+        ccnLabel: $('#s-ccn')?.value.trim() || existing.ccnLabel || '',
+        tauxJournalier: parseFloat($('#s-tj')?.value) || 0,
+        nomCadre: $('#s-nom')?.value.trim() || existing.nomCadre || '',
+        dateArrivee: $('#s-arr')?.value || null,    // null si vide → pas de prorata
+        tauxMajorationRachat: tauxRachatManuel || parseInt($('#s-maj')?.value) || 10,
+        dateDebutExercice: $('#s-debut')?.value || null,
+        dateFinExercice: $('#s-fin')?.value || null,
+        refAccordDerogatoire: $('#s-ref-accord')?.value.trim() || null,
+      };
       M6_Storage.setContract(this._regime, c);
       M6_Storage.createYear(this._regime, this._year);
+      this._load(); this.render();
+      M6_toast?.('💾 Configuration enregistrée');
+    });
+    // Bouton Annuler (mode édition uniquement)
+    this._c.querySelector('#s-cancel')?.addEventListener('click', () => {
       this._load(); this.render();
     });
   },
 
-  _editContract() { M6_Storage.setContract(this._regime,null); this._contract=null; this._c.innerHTML=this._tplSetup(); this._bindSetup(); }
+  _editContract() {
+    // NE PAS effacer le contrat — juste afficher le wizard pré-rempli
+    this._c.innerHTML = this._tplSetup();
+    this._bindSetup();
+  }
 };
 
 global.VFJ = VFJ;

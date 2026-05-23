@@ -371,8 +371,13 @@ const VFH = {
         const rtPanel = sh.querySelector('#fh-realtime-calcul');
         const rtHS = sh.querySelector('#fh-rt-hs');
         const rtReste = sh.querySelector('#fh-rt-reste');
-        const seuilC = this._contract?.seuilHebdo || 39;
-        const contingent = this._contract?.contingent || 220;
+        // PRIORITÉ : saisie manuelle (contract) > CCN > droit commun
+        let ccnRules = null;
+        if (window.CCN_API && this._contract?.ccnIdcc && this._contract.ccnIdcc > 0) {
+          try { ccnRules = CCN_API.getGroupeForCCN(this._contract.ccnIdcc); } catch(_) {}
+        }
+        const seuilC     = this._contract?.seuilHebdo || ccnRules?.seuil || 35;
+        const contingent = this._contract?.contingent || ccnRules?.contingent || 220;
         const totalHSActuel = Object.values(this._data).reduce((acc, v) => acc + Math.max(0, (v.heures||0) - seuilC), 0);
         const updateRT = () => {
           const h = parseFloat(hInput?.value) || 0;
@@ -380,9 +385,10 @@ const VFH = {
           if (rtPanel && h > 0) { rtPanel.style.display = ''; }
           if (rtHS) rtHS.textContent = hs > 0 ? `+${hs.toFixed(1)}h HS` : '0h HS';
           const reste = Math.max(0, contingent - totalHSActuel - hs);
-          if (rtReste) { rtReste.textContent = `${reste.toFixed(0)}h`; rtReste.style.color = reste < 20 ? 'var(--alerte)' : 'var(--succes)'; }
+          if (rtReste) { rtReste.textContent = `${reste.toFixed(0)}h / ${contingent}h`; rtReste.style.color = reste < 20 ? 'var(--alerte)' : 'var(--succes)'; }
         };
         hInput?.addEventListener('input', updateRT);
+        updateRT(); // initial render
       };
       bindRealtime();
       sh.querySelector('#fh-cl').addEventListener('click',()=>ov.classList.remove('open'));
