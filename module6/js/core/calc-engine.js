@@ -43,7 +43,7 @@ const M6_Feries = {
 // ══════════════════════════════════════════════════════════════════
 const M6_ForfaitJours = {
 
-  calcRTT(year, plafond=218, cpContrat=25, dateArrivee=null, dateDepart=null, dateDebutExercice=null, dateFinExercice=null) {
+  calcRTT(year, plafond=218, cpContrat=25, dateArrivee=null, dateDepart=null, exDebut=null, exFin=null) {
     const isLeap = y => (y%4===0&&y%100!==0)||y%400===0;
     const feries = M6_Feries.getSet(year);
     const debut  = dateArrivee ? new Date(dateArrivee+'T12:00:00') : new Date(year,0,1);
@@ -59,10 +59,10 @@ const M6_ForfaitJours = {
       cur.setDate(cur.getDate()+1);
     }
     const ratio=joursCalendaires>0?joursEffPeriode/joursCalendaires:1;
-    // Si période comptable personnalisée (pas 1er jan - 31 déc), le plafond est déjà fixé pour la période
-    const hasPeriodeCustom = dateDebutExercice && dateFinExercice &&
-      (dateDebutExercice.slice(5) !== '01-01' || dateFinExercice.slice(5) !== '12-31');
-    const plafondProrata=hasPeriodeCustom ? plafond : Math.round(plafond*ratio);
+    // Période comptable custom → le plafond saisi couvre déjà toute la période
+    const hasPeriodeCustom = exDebut && exFin &&
+      (exDebut.slice(5) !== '01-01' || exFin.slice(5) !== '12-31');
+    const plafondProrata = hasPeriodeCustom ? plafond : Math.round(plafond*ratio);
     const cpProrata=Math.round(cpContrat*ratio);
     const rttTheoriques=Math.max(0,(joursEffPeriode-WE)-cpProrata-feriesOuvres-plafondProrata);
     return { rttTheoriques,feriesOuvres,joursTravailMax:plafondProrata,
@@ -80,7 +80,8 @@ const M6_ForfaitJours = {
     // comme point de départ du prorata. Aucune configuration requise.
     const allKeys = Object.keys(data).filter(k => /^\d{4}-\d{2}-\d{2}$/.test(k)).sort();
     const firstEntry = allKeys.length ? allKeys[0] : null;
-    const autoArrivee = contract.dateArrivee || null; // Prorata UNIQUEMENT si date d'arrivée explicite
+    // Prorata uniquement si une date d'arrivée est explicitement saisie
+    const autoArrivee = contract.dateArrivee || null;
 
     // N'appliquer le prorata que si l'arrivée est significativement après le début d'exercice (>14j)
     const exDebutStr = contract.dateDebutExercice || `${year}-01-01`;
