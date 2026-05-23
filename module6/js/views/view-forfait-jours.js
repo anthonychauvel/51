@@ -362,9 +362,58 @@ const VFJ = {
 
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px">
-      <button class="m6-btn m6-btn-ghost" id="vfj-newyr" style="flex:1;font-size:0.78rem">📅 Nouvel exercice</button>
+      
+        <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
+        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;min-width:110px;font-size:0.78rem">📅 PDF Période</button>
+      </div>
+    </div></div>
 
-    </div>`;
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF Periode personnalisee</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
+      <div class="m6-field">
+        <label>Date de debut</label>
+        <input type="date" id="pdf-per-d1" value="${this._year}-01-01" style="font-size:16px">
+      </div>
+      <div class="m6-field">
+        <label>Date de fin</label>
+        <input type="date" id="pdf-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px">
+      </div>
+      <button class="m6-btn m6-btn-ghost" id="pdf-per" style="width:100%;font-size:0.78rem">📄 PDF Periode</button>
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Validation mensuelle</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
+      <div class="m6-field"><label>Mois à valider</label>
+        <select id="v-mois" style="font-size:14px">${['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'].map((m,i)=>`<option value="${i}">${m}${valid[i]?' ✓':''}</option>`).join('')}</select></div>
+      <div class="m6-field"><label>Votre nom</label><input type="text" id="v-nom" value="${this._contract.nomCadre||''}" style="font-size:16px"></div>
+      <button class="m6-btn m6-btn-gold" id="v-btn" style="font-size:0.8rem">🔏 Valider</button>
+      ${Object.entries(valid).length?`<div style="margin-top:10px">${Object.entries(valid).sort(([a],[b])=>a-b).map(([m,v])=>`<div class="m6-row"><span class="m6-row-label">${['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][m]}</span><span style="font-size:0.65rem;color:var(--pierre)">${new Date(v.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})} · #${v.hash}</span></div>`).join('')}</div>`:''}
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Mode Preuve opposable</div><div class="m6-ornement-line"></div></div>
+    <div id="preuve-container"></div>
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
+      <div style="display:flex;gap:8px;margin-bottom:8px">
+        <button class="m6-btn m6-btn-primary" id="exp-j" style="flex:1;font-size:0.78rem">💾 Exporter JSON</button>
+        <button class="m6-btn m6-btn-primary" id="exp-csv" style="flex:1;font-size:0.78rem">📊 CSV SIRH</button>
+        <button class="m6-btn m6-btn-ghost" id="imp-j" style="flex:1;font-size:0.78rem">📂 Importer</button>
+      </div>
+      <button class="m6-btn m6-btn-ghost" id="rgpd" style="width:100%;font-size:0.75rem">📋 Export RGPD complet</button>
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Simulateur — Rupture conventionnelle</div><div class="m6-ornement-line"></div></div>
+    <div id="rupture-container"></div>
+
+    <div style="display:none"><!-- placeholder pour eviter la double fermeture --></div
+    </div></div>
+
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique des modifications</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-card"><div class="m6-card-body">
+      ${!log.length ? '<div style="font-size:0.78rem;color:var(--pierre)">Aucune modification.</div>' :
+        log.map(l=>`<div class="m6-row" style="padding:5px 0;align-items:flex-start"><div><div style="font-size:0.72rem;font-weight:500">${l.action}</div><div style="font-size:0.65rem;color:var(--pierre)">${l.detail}</div></div><span style="font-size:0.6rem;color:var(--pierre);flex-shrink:0;margin-left:8px">${new Date(l.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})}</span></div>`).join('')}
+    </div></div>`;
   },
 
   _bindBilan(analysis, bio) {
@@ -376,12 +425,6 @@ const VFJ = {
     });
     this._c.querySelector('#bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
     this._c.querySelector('#vfj-newyr')?.addEventListener('click', () => this._openNewYear());
-    this._c.querySelector('#vfj-certif-toggle')?.addEventListener('click', () => {
-      this._contract.showCertif = (this._contract.showCertif === false) ? true : false;
-      M6_Storage.setContract(this._regime, this._contract);
-      M6_toast('Certification ' + (this._contract.showCertif === false ? 'masquée' : 'visible'));
-      this.render();
-    });
     // Tooltip RTT clickable
     const tipWrap = this._c.querySelector('#rtt-tip-wrap');
     if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
