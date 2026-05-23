@@ -264,6 +264,22 @@ const M6_SimulateurNullite = {
       <span>⚖️</span>
       <div>Cette analyse est indicative et ne constitue pas un avis juridique. En cas de doute, consultez un avocat spécialisé en droit social ou votre représentant syndical. Sources : Légifrance, Cour de cassation.</div>
     </div>`;
+
+    // ── Binding des cases à cocher (persistance localStorage) ──────
+    // Crucial : les checkboxes data-ck ne sauvegardent QUE si on attache le listener ici.
+    // (Avant : seul M6_ModePreuve.renderUI bindait, et il n'est pas appelé dans la section nullité.)
+    if (!container.__ckBound) {
+      container.__ckBound = true;
+      container.addEventListener('change', e => {
+        const cb = e.target.closest('input[data-ck]');
+        if (!cb) return;
+        try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
+      });
+      // Empêcher le toggle <details> quand on coche la case dans le <summary>
+      container.addEventListener('click', e => {
+        if (e.target.closest('input[data-ck]')) e.stopPropagation();
+      }, true);
+    }
   }
 };
 
@@ -649,13 +665,6 @@ const M6_ModePreuve = {
       </div>
       <div class="m6-card-body">
         ${['Identification (nom, fonction, CCN, plafond)','Données forfait annuelles complètes (jours, RTT, CP, fériés)','Historique des entretiens annuels','Toutes les validations mensuelles avec timestamp','Log des 20 dernières modifications','Alertes légales actives','Empreinte numérique (hash) pour vérification d\'intégrité','Blocs signature cadre + manager'].map(item=>`<div class="m6-row"><span class="m6-row-label" style="color:var(--charbon-3)">→ ${item}</span></div>`).join('')}
-      </div>
-    </div>
-
-    <!-- Certification préalable -->
-    <div class="m6-card" style="margin-bottom:14px">
-      <div class="m6-card-body">
-        
       </div>
     </div>
 

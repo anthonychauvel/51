@@ -346,23 +346,87 @@ const M6_Charts = {
     const bioParMois = [];
     const moisAvecData = new Set();
     // Filtrer uniquement les clés de type YYYY-MM-DD (jours, pas semaines)
-    const dayKeys = Object.keys(data).filter(dk => /^\d{4}-\d{2}-\d{2}$/.test(dk));
+    const dayKeys = Object.keys(data).filter(dk => /^\d{4}-\d{2}-\d{2}$/.test(dk) && dk.startsWith(String(year)));
     for (const dk of dayKeys) {
       moisAvecData.add(parseInt(dk.slice(5,7)) - 1);
     }
-    // Si aucune clé journalière (régime FH en semaines), on n'affiche pas le tableau bio
+    // Si aucune clé journalière (régime FH en semaines), on construit depuis les semaines
     if (!dayKeys.length) {
-      return `<div style="padding:24px;text-align:center;color:var(--pierre)">
-        <div style="font-size:2rem;margin-bottom:8px">📊</div>
-        <div style="font-size:0.88rem">Données mensuelles non disponibles pour ce régime.</div>
+      // Fallback FH : agrégation par mois depuis les semaines
+      const wkKeys = Object.keys(data).filter(k => /^\d{4}-W\d{2}$/.test(k) && k.startsWith(String(year)));
+      if (!wkKeys.length) {
+        return `<div style="padding:24px;text-align:center;color:var(--pierre)">
+          <div style="font-size:2rem;margin-bottom:8px">📊</div>
+          <div style="font-size:0.88rem">Aucune donnée saisie pour ${year}.</div>
+        </div>`;
+      }
+      // Regrouper par mois (approximation : numéro semaine → mois moyen)
+      const moisData = {};
+      for (const wk of wkKeys) {
+        const [, w] = wk.split('-W');
+        const moisApprox = Math.min(11, Math.floor((parseInt(w)-1) / 4.33));
+        if (!moisData[moisApprox]) moisData[moisApprox] = { heures:0, semaines:0 };
+        moisData[moisApprox].heures += (data[wk].heures || 0);
+        moisData[moisApprox].semaines++;
+      }
+      const seuil = contract?.seuilHebdo || 35;
+      return `
+      <div style="width:100%;box-sizing:border-box;overflow-x:hidden">
+        <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution mensuelle ${year}</div><div class="m6-ornement-line"></div></div>
+        <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
+          <div class="m6-card-header"><div class="m6-card-icon">⏱️</div>
+            <div><div class="m6-card-label">Heures supp.</div><div class="m6-card-title">Évolution mensuelle</div></div></div>
+          <div class="m6-card-body" style="padding:8px 4px">
+            <div style="overflow-x:auto">
+              <table style="width:100%;border-collapse:collapse;font-size:0.78rem;text-align:center">
+                <thead>
+                  <tr style="color:var(--pierre);font-size:0.7rem;border-bottom:1px solid var(--ivoire-3)">
+                    <th style="text-align:left;padding:6px">Mois</th>
+                    <th style="padding:6px">Sem.</th>
+                    <th style="padding:6px">Total h</th>
+                    <th style="padding:6px">HS</th>
+                    <th style="padding:6px">Moy/sem</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  ${Object.entries(moisData).sort(([a],[b])=>a-b).map(([m,d]) => {
+                    const totalHS = Math.max(0, d.heures - seuil * d.semaines);
+                    const moy = d.semaines ? (d.heures/d.semaines).toFixed(1) : 0;
+                    const hsColor = totalHS > 0 ? '#C4853A' : '#2D6A4F';
+                    return `<tr style="border-top:1px solid var(--ivoire-3)">
+                      <td style="text-align:left;padding:6px;font-weight:600;color:var(--charbon)">${MOIS[m]}</td>
+                      <td style="padding:6px">${d.semaines}</td>
+                      <td style="padding:6px;font-weight:600">${d.heures.toFixed(1)}</td>
+                      <td style="padding:6px;font-weight:600;color:${hsColor}">${totalHS.toFixed(1)}</td>
+                      <td style="padding:6px;color:var(--pierre)">${moy}h</td>
+                    </tr>`;
+                  }).join('')}
+                </tbody>
+              </table>
+            </div>
+            <div style="font-size:0.65rem;color:var(--pierre);margin-top:6px;text-align:center">Seuil HS : ${seuil}h/sem</div>
+          </div>
+        </div>
       </div>`;
     }
     const minM = moisAvecData.size ? Math.min(...moisAvecData) : 0;
     const maxM = moisAvecData.size ? Math.max(...moisAvecData) : new Date().getMonth();
+    // Compteur cumulé jours travaillés par mois
+    const joursParMois = {};
+    for (const dk of dayKeys) {
+      const m = parseInt(dk.slice(5,7)) - 1;
+      const t = data[dk]?.type || 'travail';
+      if (!joursParMois[m]) joursParMois[m] = { travail:0, rtt:0, cp:0, repos:0 };
+      if (t === 'travail' || t === 'rachat' || t === 'teletravail') joursParMois[m].travail++;
+      else if (t === 'demi') joursParMois[m].travail += 0.5;
+      else if (t === 'rtt') joursParMois[m].rtt++;
+      else if (t === 'cp') joursParMois[m].cp++;
+      else if (t === 'repos' || t === 'ferie') joursParMois[m].repos++;
+    }
     for (let m = minM; m <= maxM; m++) {
       const dataCumul = {};
       for (const [dk,v] of Object.entries(data)) {
-        if (/^\d{4}-\d{2}-\d{2}$/.test(dk) && parseInt(dk.slice(5,7))-1 <= m) dataCumul[dk] = v;
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dk) && dk.startsWith(String(year)) && parseInt(dk.slice(5,7))-1 <= m) dataCumul[dk] = v;
       }
       let bio_m = { fatigue:0, stress:0, recovery:50, performance:100 };
       if (window.M6_BioEngine && Object.keys(dataCumul).length) {
@@ -376,18 +440,38 @@ const M6_Charts = {
     <div style="width:100%;box-sizing:border-box;overflow-x:hidden">
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Évolution mensuelle ${year}</div><div class="m6-ornement-line"></div></div>
 
-    <!-- Graphique consommation jours/mois -->
+    <!-- Tableau consommation forfait jours/mois -->
     <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
       <div class="m6-card-header"><div class="m6-card-icon">📊</div>
-        <div><div class="m6-card-label">Consommation forfait</div><div class="m6-card-title">Jours travaillés par mois</div></div></div>
-      <div class="m6-card-body" style="overflow:hidden;padding:12px 8px">
-        <div style="width:100%;max-width:100%;overflow:hidden">
-          <canvas id="m6-forfait-chart" style="width:100%;height:160px;display:block;max-width:100%;box-sizing:border-box"></canvas>
-        </div>
-        <div class="m6-legend" style="margin-top:8px;flex-wrap:wrap;gap:4px">
-          <div class="m6-legend-item"><div class="m6-legend-dot" style="background:rgba(196,163,90,0.45)"></div>Jours/mois</div>
-          <div class="m6-legend-item"><div class="m6-legend-dot" style="background:${PALETTE.forfait}"></div>Cumulatif</div>
-          <div class="m6-legend-item"><div class="m6-legend-dot" style="background:#9B2C2C"></div>Plafond (${analysis?.plafond||218}j)</div>
+        <div><div class="m6-card-label">Consommation forfait</div><div class="m6-card-title">Jours par mois (${analysis?.plafond||218}j max)</div></div></div>
+      <div class="m6-card-body" style="padding:8px 4px">
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:0.74rem;text-align:center">
+            <thead>
+              <tr style="color:var(--pierre);font-size:0.65rem;border-bottom:1px solid var(--ivoire-3)">
+                <th style="text-align:left;padding:5px 6px;font-weight:600">Mois</th>
+                <th style="padding:5px 4px">💼 Trav.</th>
+                <th style="padding:5px 4px">🏖️ RTT</th>
+                <th style="padding:5px 4px">🌴 CP</th>
+                <th style="padding:5px 4px">Cumul</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${(() => {
+                let cumul = 0;
+                return Object.entries(joursParMois).sort(([a],[b])=>a-b).map(([m,d]) => {
+                  cumul += d.travail;
+                  return `<tr style="border-top:1px solid var(--ivoire-3)">
+                    <td style="text-align:left;padding:5px 6px;font-weight:600;color:var(--charbon)">${MOIS[m]}</td>
+                    <td style="padding:5px 4px;font-weight:600;color:#1E3A5F">${d.travail}</td>
+                    <td style="padding:5px 4px;color:#4A7C6F">${d.rtt}</td>
+                    <td style="padding:5px 4px;color:#2D6A4F">${d.cp}</td>
+                    <td style="padding:5px 4px;font-weight:600;color:${cumul>=(analysis?.plafond||218)*0.9?'#C4853A':'var(--pierre)'}">${cumul}</td>
+                  </tr>`;
+                }).join('');
+              })()}
+            </tbody>
+          </table>
         </div>
       </div>
     </div>
@@ -395,12 +479,12 @@ const M6_Charts = {
     <!-- Tableau bio chiffres par mois -->
     <div class="m6-card" style="margin-bottom:14px;overflow:hidden">
       <div class="m6-card-header"><div class="m6-card-icon">🧬</div>
-        <div><div class="m6-card-label">Indicateurs biologiques</div><div class="m6-card-title">Scores mensuels</div></div></div>
+        <div><div class="m6-card-label">Indicateurs biologiques</div><div class="m6-card-title">Scores mensuels cumulés</div></div></div>
       <div class="m6-card-body" style="padding:8px 4px">
         <div style="overflow-x:auto">
           <table style="width:100%;border-collapse:collapse;font-size:0.74rem;text-align:center">
             <thead>
-              <tr style="color:var(--pierre);font-size:0.65rem">
+              <tr style="color:var(--pierre);font-size:0.65rem;border-bottom:1px solid var(--ivoire-3)">
                 <th style="text-align:left;padding:4px 6px;font-weight:600">Mois</th>
                 <th style="padding:4px 4px">💤 Fatigue</th>
                 <th style="padding:4px 4px">🧠 Stress</th>
@@ -468,11 +552,9 @@ const M6_Charts = {
     });
   },
 
-  /** À appeler après que renderSection() soit dans le DOM */
-  bindCharts(analysis, bio, data, contract, year) {
-    requestAnimationFrame(() => {
-      this.drawForfaitEvolution('m6-forfait-chart', data, analysis, year);
-    });
+  /** No-op : la section Tendances n'utilise plus de canvas (tableaux uniquement) */
+  bindCharts(/* analysis, bio, data, contract, year */) {
+    // Conservé pour compatibilité — plus rien à dessiner.
   }
 };
 

@@ -386,15 +386,17 @@ const M6_Calendar = {
       });
     });
 
-    // Toggle déplacement
+    // Toggle déplacement — clic sur toute la zone label (pas juste le petit rond)
     const depBtn = sheet.querySelector('#dep-toggle');
-    const depWrap = depBtn?.parentElement;
-    depBtn?.addEventListener('click', () => {
+    const depWrap = depBtn?.closest('label');
+    const toggleDep = () => {
       selDep = !selDep;
-      if (depBtn) {
-        depBtn.style.background = selDep ? '#5C3F9B' : 'var(--ivoire-3)';
-      }
+      if (depBtn) depBtn.style.background = selDep ? '#5C3F9B' : 'var(--ivoire-3)';
       if (depWrap) depWrap.style.borderColor = selDep ? '#5C3F9B' : 'var(--ivoire-3)';
+    };
+    depWrap?.addEventListener('click', (e) => {
+      e.preventDefault(); // évite double-trigger du label
+      toggleDep();
     });
 
     // Pills mood
@@ -447,9 +449,10 @@ const M6_Calendar = {
       const hProjet  = projetId ? (parseFloat(sheet.querySelector('#pop-hproj')?.value)||7) : null;
       const demiPeriode = selType === 'demi' ? (sheet.querySelector('input[name="demi-period"]:checked')?.value || 'matin') : null;
       const demiNature  = selType === 'demi' ? (sheet.querySelector('input[name="demi-nature"]:checked')?.value || 'travail') : null;
-      // Déplacement : lire depuis la sélection (bouton déplacement dans les types OU case dans form)
-      const deplacement = selDep || (selType === 'deplacement') || (demiNature === 'deplacement') ? (selDep || selType === 'deplacement' ? selDep : 'fr') : null;
-      const value   = selType ? { type:selType, debut, fin, note, deplacement, projetId, hProjet, demiPeriode, demiNature } : null;
+      // Déplacement = toggle booléen (calc-engine teste === true)
+      // Soit l'utilisateur a coché le bouton "En déplacement", soit la demi-journée est "déplacement"
+      const deplacement = selDep === true || demiNature === 'deplacement';
+      const value = selType ? { type:selType, debut, fin, note, deplacement, projetId, hProjet, demiPeriode, demiNature } : null;
       this._closePopup();
       if (this._onSave) this._onSave(dk, value, selMood?{niveau:selMood}:null);
     });

@@ -70,7 +70,8 @@ function _pdfSanitize(str) {
 const M6_PDF = {
 
   _askCertification(onConfirm) { onConfirm(); }, // Certification supprimée — PDF direct
-portMensuel(opts) {
+
+  exportMensuel(opts) {
     this._genMensuel(opts);
   },
 
@@ -784,124 +785,7 @@ portMensuel(opts) {
     doc.text('Ce document ne remplace pas un avis juridique ou medical professionnel.', M, 290);
 
     doc.save(_pdfSanitize('dirigeant_' + (contract.nom||'cadre').replace(/\s+/g,'_').toLowerCase() + '_' + year + '.pdf'));
-        doc.save(_pdfSanitize('dirigeant_' + (contract.nom||'cadre').replace(/\s+/g,'_').toLowerCase() + '_' + year + '.pdf'));
     M6_toast?.('PDF Dirigeant genere');
-  },
-
-  // ── Export sur une periode libre ────────────────────────────────
-  exportPeriode({ regime, year, dateDebut, dateFin, contract, data, moods }) {
-    if(typeof window==='undefined'||!window.jspdf) { M6_toast?.('jsPDF non charge'); return; }
-    const { jsPDF } = window.jspdf;
-    const doc = new jsPDF({ orientation:'portrait', unit:'mm', format:'a4' });
-    const M=15, W=doc.internal.pageSize.getWidth()-2*M;
-    let y=20;
-
-    // En-tete
-    doc.setFillColor(26,23,20); doc.rect(0,0,210,32,'F');
-    doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(247,243,237);
-    doc.text(_pdfSanitize('Rapport de periode - Forfait Cadres'), M, 14);
-    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(196,163,90);
-    doc.text(_pdfSanitize('Du ' + dateDebut + ' au ' + dateFin + ' - ' + (contract.nomCadre||contract.nom||'N/A')), M, 22);
-    doc.text(_pdfSanitize('CCN : ' + (contract.ccnLabel||'N/A') + ' - Forfait : ' + (contract.plafond||218) + 'j'), M, 28);
-    y = 42;
-
-    // Identification
-    doc.setFillColor(240,235,225); doc.rect(M,y,W,16,'F');
-    doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(74,69,64);
-    doc.text(_pdfSanitize('Cadre : ' + (contract.nomCadre||contract.nom||'N/A')), M+3, y+5);
-    doc.text(_pdfSanitize('Periode analysee : ' + dateDebut + ' au ' + dateFin), M+3, y+10);
-    doc.text(_pdfSanitize('Exporte le : ' + new Date().toLocaleDateString('fr-FR')), M+3, y+14);
-    y += 22;
-
-    // Filtrer les entrees sur la periode
-    const debut = dateDebut; const fin = dateFin;
-    const entries = Object.entries(data)
-      .filter(([dk]) => dk >= debut && dk <= fin)
-      .sort(([a],[b]) => a.localeCompare(b));
-
-    // Comptages
-    let travailles=0, rttPris=0, cpPris=0, rachat=0, maladie=0, deplacement=0, demis=0;
-    entries.forEach(([dk,v]) => {
-      const t = v.type||'travail';
-      if(t==='travail')    travailles++;
-      if(t==='rachat')     { travailles++; rachat++; }
-      if(t==='demi')       { travailles+=0.5; demis++; }
-      if(t==='rtt')        rttPris++;
-      if(t==='cp')         cpPris++;
-      if(t==='maladie')    maladie++;
-      if(v.deplacement)    deplacement++;
-    });
-
-    // Tableau recap
-    doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,23,20);
-    doc.text(_pdfSanitize('RECAPITULATIF DE LA PERIODE'), M, y); y+=6;
-    const recap = [
-      ['Jours travailles (dont '+rachat+' rachetes)', travailles],
-      ['Demi-journees (x0.5)', demis],
-      ['RTT pris', rttPris],
-      ['Conges payes pris', cpPris],
-      ['Arrets maladie', maladie],
-      ['Deplacements professionnels', deplacement],
-      ['Total jours saisis', entries.length],
-    ];
-    recap.forEach(([l,v],i) => {
-      if(i%2===0) { doc.setFillColor(248,244,238); doc.rect(M,y-3,W,7,'F'); }
-      doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(74,69,64);
-      doc.text(_pdfSanitize(l), M+2, y+1);
-      doc.setFont('helvetica','bold'); doc.setTextColor(26,23,20);
-      doc.text(String(v), M+W-15, y+1, {align:'right'});
-      y+=7;
-    });
-    y+=8;
-
-    // Tableau journalier (si < 62 jours)
-    if(entries.length > 0 && entries.length <= 62) {
-      doc.setFont('helvetica','bold'); doc.setFontSize(10); doc.setTextColor(26,23,20);
-      doc.text(_pdfSanitize('DETAIL JOURNALIER'), M, y); y+=6;
-      doc.setFontSize(8);
-      doc.setFillColor(26,23,20);
-      doc.rect(M,y-3,W,6,'F');
-      doc.setTextColor(247,243,237);
-      doc.text('Date',M+2,y+1); doc.text('Type',M+35,y+1);
-      doc.text('Debut',M+65,y+1); doc.text('Fin',M+85,y+1);
-      doc.text('Note',M+105,y+1);
-      y+=8;
-      const typeNames = { travail:'Travail',rtt:'RTT',cp:'Conge',ferie:'Ferie',repos:'Repos',rachat:'Rachat',demi:'Demi-j.',maladie:'Maladie',maternite:'Maternite',css:'CSS',formation:'Formation',cet:'CET',astreinte:'Astreinte',teletravail:'Teletravail' };
-      entries.forEach(([dk,v],i) => {
-        if(y > 265) { doc.addPage(); y=20; }
-        if(i%2===0) { doc.setFillColor(248,244,238); doc.rect(M,y-3,W,6,'F'); }
-        const d = new Date(dk+'T12:00:00');
-        const dateStr = d.toLocaleDateString('fr-FR',{weekday:'short',day:'2-digit',month:'2-digit'});
-        const typeStr = typeNames[v.type||'travail']||v.type||'?';
-        const depl = v.deplacement ? ' [D]' : '';
-        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(26,23,20);
-        doc.text(_pdfSanitize(dateStr),M+2,y+1);
-        doc.text(_pdfSanitize(typeStr+depl),M+35,y+1);
-        doc.text(_pdfSanitize(v.debut||''),M+65,y+1);
-        doc.text(_pdfSanitize(v.fin||''),M+85,y+1);
-        if(v.note) doc.text(_pdfSanitize((v.note||'').substring(0,25)),M+105,y+1);
-        y+=6;
-      });
-      y+=6;
-    } else if(entries.length > 62) {
-      doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(138,132,124);
-      doc.text(_pdfSanitize('Detail journalier omis (periode > 2 mois). Utilisez l export JSON pour le detail complet.'), M, y); y+=10;
-    }
-
-    // Certification
-    if(y>255) { doc.addPage(); y=20; }
-    doc.setFillColor(248,244,238); doc.rect(M,y,W,24,'F');
-    doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(74,69,64);
-    doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleString('fr-FR') + ' par M6 Cadres'), M+3, y+12);
-    doc.setTextColor(139,105,20);
-    doc.text(_pdfSanitize('Signature cadre : _________________________   Date : ________'), M+3, y+19);
-    y+=30;
-
-    doc.setFontSize(7); doc.setTextColor(138,132,124); doc.setFont('helvetica','normal');
-    doc.text('Ce document ne remplace pas un avis juridique. Sources : Code du travail L3121-41 a L3121-65.', M, 290);
-
-    const nomFichier = _pdfSanitize('periode_' + debut + '_' + fin + '_' + (contract.nomCadre||'cadre').replace(/\s+/g,'_').toLowerCase() + '.pdf');
-    _shareOrSave(doc, nomFichier, 'PDF période généré : ' + entries.length + ' jours');
   },
   // ── PDF Mensuel Forfait Heures ────────────────────────────────
   exportMensuelFH({ regime, year, mois, contract, data, analysis }) {

@@ -174,75 +174,90 @@ const MSG_ANNEE_FIN = [
 
 // ══════════════════════════════════════════════════════════════════
 //  MOTEUR DE SÉLECTION — choisit le bon pool selon le contexte
+//  Lit fidèlement les données de l'utilisateur pour adapter le message.
 // ══════════════════════════════════════════════════════════════════
 function _selectPopup(analysis, bio, prenom, regime) {
   const n = prenom ? prenom + ' ! ' : '';
+  const a = analysis || {};
+  const b = bio || {};
 
   // ── Cadre Dirigeant : messages spécifiques ─────────────────────
   if (regime === 'cadre_dirigeant') {
     // P4/P3 santé toujours prioritaire
-    if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
-    if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
-    if (bio?.phase?.code === 'P2') return _pick(MSG_P2)(n);
+    if (b.phase?.code === 'P4') return _pick(MSG_P4)(n);
+    if (b.phase?.code === 'P3') return _pick(MSG_P3)(n);
+    if (b.phase?.code === 'P2') return _pick(MSG_P2)(n);
     // Pour les CD : afficher seulement si des données existent
-    if (!analysis || !analysis.joursEffectifs || analysis.joursEffectifs === 0) {
+    if (!a.joursEffectifs || a.joursEffectifs === 0) {
       return { titre: 'Bonjour', icon: '🎯', level: 'ok',
         msg: `${n}En tant que Cadre Dirigeant (Art. L3111-2), vous n'êtes pas soumis aux règles de durée légale du travail. L'appli suit vos projets, missions et votre équilibre vie pro/perso.`,
         actions: ['Ajouter un projet', 'Voir l\'entretien de charge'] };
     }
-    const jours = analysis.joursEffectifs || 0;
-    if (jours > 218) return { titre: '⚠️ Alerte charge', icon: '🚨', level: 'alerte',
-      msg: `${n}${jours} jours constatés dépassent le seuil de référence de 218j. Même sans compteur légal, l'obligation de sécurité de l'employeur s'applique (Art. L4121-1). Un entretien de charge est recommandé.`,
+    const jours = a.joursEffectifs || 0;
+    if (jours > 218) return { titre: 'Alerte charge', icon: '🚨', level: 'alerte',
+      msg: `${n}${jours} jours travaillés constatés cette année — au-delà du seuil indicatif de 218j. Même sans compteur légal en régime CD, l'obligation de sécurité de l'employeur s'applique (Art. L4121-1). Un entretien de charge est recommandé.`,
       actions: ['Ouvrir l\'entretien de charge'] };
     return { titre: 'Bilan dirigeant', icon: '📊', level: 'ok',
-      msg: `${n}${jours} jours constatés cette année. Votre régime CD vous laisse l'autonomie totale — pensez à documenter votre charge pour les entretiens annuels.`,
+      msg: `${n}${jours} jours travaillés cette année. Votre régime CD vous laisse l'autonomie totale — pensez à documenter votre charge pour les entretiens annuels.`,
       actions: ['Voir mes projets', 'Entretien de charge'] };
   }
 
   // ── Forfait Heures ─────────────────────────────────────────────
   if (regime === 'forfait_heures') {
-    if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
-    if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
-    if (!analysis || !analysis.semaines) {
+    if (b.phase?.code === 'P4') return _pick(MSG_P4)(n);
+    if (b.phase?.code === 'P3') return _pick(MSG_P3)(n);
+    if (!a || !a.semaines) {
       return { titre: 'Démarrage', icon: '⏱️', level: 'ok',
         msg: `${n}Saisissez vos premières semaines pour que je puisse analyser votre rythme. Je calculerai automatiquement vos heures supplémentaires et la consommation de votre contingent.`,
         actions: ['Saisir une semaine'] };
     }
-    const tauxRempli = analysis.tauxRemplissage || 0;
-    if (tauxRempli >= 95) return { titre: 'Contingent HS critique', icon: '🔴', level: 'critique',
-      msg: `${n}Vous avez consommé ${tauxRempli}% de votre contingent HS. Au-delà du contingent, des heures supp restent légalement possibles mais nécessitent une autorisation de l'inspection du travail (Art. L3121-30).`,
+    const tauxRempli = a.tauxRemplissage || 0;
+    const totalHS = Math.round(a.totalHS || 0);
+    const contingent = a.contingent || 220;
+    if (tauxRempli >= 95) return { titre: `Contingent HS à ${tauxRempli}%`, icon: '🔴', level: 'critique',
+      msg: `${n}Vous avez consommé ${totalHS}h sur ${contingent}h de contingent (${tauxRempli}%). Au-delà du contingent, des HS restent légalement possibles mais nécessitent l'avis du CSE et déclenchent une COR (contrepartie obligatoire en repos) — Art. L3121-30.`,
       actions: ['Voir le bilan HS'] };
-    if (tauxRempli >= 80) return { titre: 'Contingent HS — vigilance', icon: '🟠', level: 'vigilance',
-      msg: `${n}${tauxRempli}% de votre contingent annuel est consommé. Planifiez la fin de l'année pour éviter le dépassement.`,
+    if (tauxRempli >= 80) return { titre: 'Contingent — vigilance', icon: '🟠', level: 'vigilance',
+      msg: `${n}${totalHS}h de HS sur ${contingent}h de contingent (${tauxRempli}%). Planifiez la fin de l'année pour rester sous le plafond et éviter la procédure CSE/COR.`,
       actions: ['Voir le bilan'] };
     return _pick(MSG_CONFORME)(n);
   }
 
   // ── Forfait Jours (défaut) ─────────────────────────────────────
-  if (bio?.phase?.code === 'P4') return _pick(MSG_P4)(n);
-  if (bio?.phase?.code === 'P3') return _pick(MSG_P3)(n);
+  if (b.phase?.code === 'P4') return _pick(MSG_P4)(n);
+  if (b.phase?.code === 'P3') return _pick(MSG_P3)(n);
 
-  const excedent = analysis ? analysis.joursEffectifs - analysis.plafond : 0;
-  if (excedent > 0) return _pick(MSG_DEPASSE)(n, excedent);
-  if (bio?.phase?.code === 'P2') return _pick(MSG_P2)(n);
+  // Pas de saisie → message de démarrage adapté
+  if (!a.joursEffectifs && !a.cpPris && !a.rttPris) {
+    return { titre: 'Bienvenue', icon: '🎯', level: 'ok',
+      msg: `${n}Commencez par saisir vos jours travaillés — chaque saisie alimente votre compteur de forfait et votre suivi biologique. Plus vous saisissez, plus mes analyses sont précises.`,
+      actions: ['Saisir aujourd\'hui', 'Voir le glossaire'] };
+  }
 
-  const restants = analysis?.joursRestants ?? 999;
-  if (restants <= 15 && restants >= 0 && analysis?.joursEffectifs > 0)
+  const plafond = a.plafond || a.plafondProrata || 218;
+  const jours = a.joursEffectifs || 0;
+  const excedent = jours - plafond;
+
+  if (excedent > 0) return _pick(MSG_DEPASSE)(n, Math.round(excedent));
+  if (b.phase?.code === 'P2') return _pick(MSG_P2)(n);
+
+  const restants = a.joursRestants ?? Math.max(0, plafond - jours);
+  if (restants <= 15 && restants >= 0 && jours > 0)
     return _pick(MSG_APPROCHE)(n, restants);
 
-  if (analysis?.rachetes > 3)
-    return _pick(MSG_RACHAT)(n, analysis.rachetes,
-      analysis.simulRachat?.montantMajoré ? Math.round(analysis.simulRachat.montantMajoré) : null);
+  if ((a.rachetes||0) > 3)
+    return _pick(MSG_RACHAT)(n, a.rachetes,
+      a.simulRachat?.montantMajoré ? Math.round(a.simulRachat.montantMajoré) : null);
 
-  if (!analysis?.entretienDate) return _pick(MSG_ENTRETIEN)(n);
+  if (!a.entretienDate) return _pick(MSG_ENTRETIEN)(n);
 
-  if (analysis?.rttPris === 0 && analysis?.rttTheoriques > 0 && analysis?.joursEffectifs > 40)
-    return _pick(MSG_RTT_ZERO)(n, analysis.rttTheoriques);
+  if (a.rttPris === 0 && (a.rttTheoriques||0) > 0 && jours > 40)
+    return _pick(MSG_RTT_ZERO)(n, a.rttTheoriques);
 
-  if (bio?.details?.amplitudeViola > 3) return _pick(MSG_AMPLITUDE)(n, '13+');
+  if ((b.details?.amplitudeViola || 0) > 3) return _pick(MSG_AMPLITUDE)(n, '13+');
 
   const mois = new Date().getMonth();
-  if (mois === 11 && analysis?.joursEffectifs > 0) return _pick(MSG_ANNEE_FIN)(n);
+  if (mois === 11 && jours > 0) return _pick(MSG_ANNEE_FIN)(n);
 
   return _pick(MSG_CONFORME)(n);
 }
