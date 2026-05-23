@@ -369,7 +369,7 @@ const M6_Router = {
           M6_Storage.setContract(regime, contract);
           M6_Storage.createYear(regime, new Date().getFullYear());
         }
-        M6_ZenjiOnboarding?.markSeen();
+        M6_ZenjiOnboarding?.markSeen(regime);
         this._loadView(regime);
       });
     };
@@ -493,48 +493,5 @@ function openTutorial(regime) {
   ov.addEventListener('click',e=>{ if(e.target===ov){ ov.style.opacity='0'; setTimeout(()=>ov.remove(),200); } });
 }
 global.M6_openTutorial = openTutorial;
-
-// ═══════════════════════════════════════════════════════
-//  Bottom-sheet "Plus" — réutilisable par les 3 vues
-// ═══════════════════════════════════════════════════════
-function showMoreSheet(items, onSelect) {
-  document.getElementById('m6-more-sheet')?.remove();
-  document.getElementById('m6-more-sheet-bd')?.remove();
-  const bd = document.createElement('div');
-  bd.id = 'm6-more-sheet-bd';
-  bd.className = 'm6-more-sheet-backdrop';
-  const sh = document.createElement('div');
-  sh.id = 'm6-more-sheet';
-  sh.className = 'm6-more-sheet';
-  sh.innerHTML = `
-    <div class="m6-more-sheet-handle"></div>
-    ${items.map((it,i) => `
-      <button class="m6-more-sheet-item" data-i="${i}">
-        <span class="m6-more-sheet-item-icon">${it.icon}</span>
-        <span class="m6-more-sheet-item-label">${it.label}</span>
-        <span style="color:var(--pierre);font-size:0.8rem">›</span>
-      </button>`).join('')}
-  `;
-  document.body.appendChild(bd);
-  document.body.appendChild(sh);
-  requestAnimationFrame(() => {
-    bd.classList.add('open');
-    sh.classList.add('open');
-  });
-  const close = () => {
-    bd.classList.remove('open');
-    sh.classList.remove('open');
-    setTimeout(() => { bd.remove(); sh.remove(); }, 220);
-  };
-  bd.onclick = close;
-  sh.querySelectorAll('[data-i]').forEach(btn => {
-    btn.onclick = () => {
-      const i = parseInt(btn.dataset.i);
-      close();
-      if (onSelect) onSelect(items[i].id);
-    };
-  });
-}
-global.M6_showMoreSheet = showMoreSheet;
 
 })(window);
