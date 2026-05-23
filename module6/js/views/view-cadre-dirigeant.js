@@ -120,6 +120,7 @@ const VCD = {
     const ct = this._c.querySelector('#cd-ct');
     const zenjiHtml = zenjiMsg ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code||'P1', true) : '';
 
+    try {
     switch(this._section) {
       case 'bilan':     ct.innerHTML = zenjiHtml + this._tplBilan(stats,bio); this._bindBilan(); break;
       case 'calendrier':this._renderCal(ct); break;
@@ -160,6 +161,9 @@ const VCD = {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
         }
         break;
+    }
+    } catch(e) {
+      console.error('[VCD render]', e);
     }
     this._bindNav();
     // Coach contextuelif (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
@@ -211,112 +215,79 @@ const VCD = {
   },
 
   _tplNav() {
-    const suivreActif = ['bilan','sante','tendances'].includes(this._section);
-    const verifActif  = ['validite','entretien'].includes(this._section);
-    const plusActif   = ['export','projets'].includes(this._section);
-    const mk = (sec, icon, label, isActive, dataMore) =>
-      `<button class="m6-nav-item ${isActive?'active':''}" data-sec="${sec}" ${dataMore?`data-more="${dataMore}"`:''}><span class="nav-icon">${icon}</span>${label}</button>`;
-    return `<nav class="m6-bottom-nav m6-nav-4">
-      ${mk('calendrier','◻', 'Saisir',   this._section==='calendrier')}
-      ${mk('bilan',     '◈', 'Suivre',   suivreActif, 'suivre')}
-      ${mk('validite',  '⚖', 'Vérifier', verifActif,  'verif')}
-      ${mk('__more',    '⋯', 'Plus',     plusActif,   'plus')}
+    const mk = (id, icon, label) =>
+      `<button class="m6-nav-item ${this._section===id?'active':''}" data-sec="${id}">
+        <span class="nav-icon">${icon}</span>${label}
+      </button>`;
+    return `<nav class="m6-bottom-nav">
+      ${mk('bilan',     '◈', 'Bilan')}
+      ${mk('calendrier','◻', 'Agenda')}
+      ${mk('projets',   '◐', 'Projets')}
+      ${mk('sante',     '♡', 'Santé')}
+      <div class="m6-nav-row-sep"></div>
+      ${mk('tendances', '◗', 'Tendances')}
+      ${mk('validite',  '⚖', 'Validité')}
+      ${mk('entretien', '◉', 'Entretien')}
+      ${mk('export',    '◆', 'Export')}
     </nav>`;
   },
 
   _bindNav() {
-    this._c.querySelectorAll('[data-sec]').forEach(b => {
-      b.onclick = () => {
-        const more = b.dataset.more;
-        if (more === 'plus') {
-          window.M6_showMoreSheet([
-            { id: 'projets', icon: '◐', label: 'Projets stratégiques' },
-            { id: 'export',  icon: '◆', label: 'Export PDF' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
-        if (more === 'suivre') {
-          if (!['bilan','sante','tendances'].includes(this._section)) {
-            this._section = 'bilan'; this.render(); return;
-          }
-          window.M6_showMoreSheet([
-            { id: 'bilan',     icon: '◈', label: 'Bilan' },
-            { id: 'sante',     icon: '♡', label: 'Santé' },
-            { id: 'tendances', icon: '◗', label: 'Tendances' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
-        if (more === 'verif') {
-          if (!['validite','entretien'].includes(this._section)) {
-            this._section = 'validite'; this.render(); return;
-          }
-          window.M6_showMoreSheet([
-            { id: 'validite',  icon: '⚖', label: 'Validité juridique' },
-            { id: 'entretien', icon: '◉', label: 'Entretien annuel' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
-        this._section = b.dataset.sec;
-        this.render();
-      };
-    });
+    this._c.querySelectorAll('[data-sec]').forEach(b => { b.onclick = () => { this._section = b.dataset.sec; this.render(); }; });
     const yp=this._c.querySelector('#cd-yr');
     if(yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
   },
 
   // ── BILAN ──────────────────────────────────────────────────────
   _tplBilan(s, bio) {
-    const couleurJours = s.jTravailles > 218 ? 'var(--alerte)' : (s.jTravailles > 200 ? 'var(--champagne-2)' : 'var(--charbon)');
     return `
-    <!-- HERO : chiffre dominant = jours travaillés -->
-    <div class="m6-hero-kpi">
-      <div class="m6-hero-kpi-label">Jours travaillés ${this._year}</div>
-      <div class="m6-hero-kpi-value" style="color:${couleurJours}">${s.jTravailles}<span class="m6-hero-kpi-unit">/ 218 réf.</span></div>
-      <div class="m6-hero-kpi-sub">Cadre dirigeant · ${this._contract.ccnLabel || 'L3111-2'}</div>
+    <!-- QUICK ACTIONS -->
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px">
+      <button class="m6-quick-action" data-quick="calendrier" style="background:#1A1714;color:#F7F3ED;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">📅</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Saisir<br>aujourd'hui</span>
+      </button>
+      <button class="m6-quick-action" data-quick="projets" style="background:#C4A35A;color:#1A1714;border:none;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">◐</span>
+        <span style="font-size:0.7rem;font-weight:600;line-height:1.2">Mes<br>projets</span>
+      </button>
+      <button class="m6-quick-action" data-quick="export" style="background:#F7F3ED;color:#1A1714;border:1px solid #E2DAD0;border-radius:10px;padding:14px 6px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;text-align:center">
+        <span style="font-size:1.4rem">◆</span>
+        <span style="font-size:0.7rem;font-weight:500;line-height:1.2">Exporter<br>PDF</span>
+      </button>
     </div>
 
-    <!-- 3 KPI mini -->
-    <div class="m6-kpi-row">
-      <div class="m6-kpi-mini">
-        <div class="m6-kpi-mini-value" style="color:${s.cpSolde<=5?'var(--alerte)':'var(--charbon)'}">${s.cpSolde}</div>
-        <div class="m6-kpi-mini-label">CP restants</div>
-      </div>
-      <div class="m6-kpi-mini">
-        <div class="m6-kpi-mini-value" style="color:${s.amplitudesLong.length>5?'var(--champagne-2)':'var(--charbon)'}">${s.amplitudesLong.length}</div>
-        <div class="m6-kpi-mini-label">Jours &gt;11h</div>
-      </div>
-      <div class="m6-kpi-mini">
-        <div class="m6-kpi-mini-value">${bio?.fatigue ?? '–'}</div>
-        <div class="m6-kpi-mini-label">Fatigue</div>
-      </div>
+    <div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
+      <span>⚖️</span><div><strong>Régime Cadre Dirigeant (L3111-2)</strong> — Pas de compteur d'heures légal. Autonomie totale sur l'organisation du temps. Obligations : CP, protection santé, entretien de charge si engagement contractuel.</div>
     </div>
 
-    ${s.jTravailles > 218 ? `<div class="m6-alert" style="margin-bottom:12px;background:var(--ivoire-2);border-left:3px solid var(--alerte)"><span class="m6-alert-icon">🚨</span><div><strong>${s.jTravailles} jours &gt; 218j</strong><br><span style="font-size:0.77rem">Risque sur la santé au travail (Art. L4121-1). Entretien de charge recommandé.</span></div></div>` : ''}
+    ${s.jTravailles > 218 ? `<div class="m6-alert warning" style="margin-bottom:14px"><span class="m6-alert-icon">🚨</span><div><strong>${s.jTravailles} jours dépassent le plafond de référence de 218j</strong><br><span style="font-size:0.77rem">Même en régime Cadre Dirigeant, dépasser 218 jours de présence annuelle peut indiquer un déséquilibre vie pro/perso et signale un risque sur le plan de la santé au travail (Art. L4121-1). L'entretien de charge de travail est recommandé.</span></div></div>` : ''}
 
-    <!-- Analytics projets en disclosure -->
+    <!-- Analytics projets -->
     ${this._projets.length ? (() => {
       const hTotal = this._projets.reduce((s,p)=>s+(p.heures||0),0);
-      return `<details class="m6-collapsible"><summary class="m6-collapsible-header"><span class="m6-collapsible-icon">📊</span><span class="m6-collapsible-title">Ventilation par projet (${this._projets.length})</span><span class="m6-collapsible-chevron">›</span></summary><div class="m6-collapsible-body">${this._projets.map(p=>{const pct=hTotal>0?Math.round((p.heures||0)/hTotal*100):0;return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px"><span>${p.nom}</span><span style="color:var(--champagne-2);font-weight:500">${pct}% · ${p.heures||0}h</span></div><div style="height:6px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.couleur||'var(--champagne)'};border-radius:99px"></div></div></div>`;}).join('')}<div style="font-size:0.68rem;color:var(--pierre);margin-top:6px">Total : ${hTotal}h sur ${this._projets.length} projet(s)</div></div></details>`;
+      return `<div class="m6-card" style="margin-bottom:14px"><div class="m6-card-header"><div class="m6-card-icon">📊</div><div><div class="m6-card-label">Analytics</div><div class="m6-card-title">Ventilation du temps par projet</div></div></div><div class="m6-card-body">${this._projets.map(p=>{const pct=hTotal>0?Math.round((p.heures||0)/hTotal*100):0;return `<div style="margin-bottom:8px"><div style="display:flex;justify-content:space-between;font-size:0.78rem;margin-bottom:3px"><span>${p.nom}</span><span style="color:var(--champagne-2);font-weight:500">${pct}% · ${p.heures||0}h</span></div><div style="height:6px;background:var(--ivoire-2);border-radius:99px;overflow:hidden"><div style="height:100%;width:${pct}%;background:${p.couleur||'var(--champagne)'};border-radius:99px"></div></div></div>`;}).join('')}<div style="font-size:0.68rem;color:var(--pierre);margin-top:6px">Total : ${hTotal}h sur ${this._projets.length} projet(s)</div></div></div>`;
     })() : ''}
-
-    <!-- CP détail en disclosure -->
-    <details class="m6-collapsible">
-      <summary class="m6-collapsible-header">
-        <span class="m6-collapsible-icon">✈️</span>
-        <span class="m6-collapsible-title">Détail Congés Payés (${s.cpPris}/${s.cpTotal})</span>
-        <span class="m6-collapsible-chevron">›</span>
-      </summary>
-      <div class="m6-collapsible-body">
+    <div class="m6-card" style="margin-bottom:14px">
+      <div class="m6-card-header"><div class="m6-card-icon">✈️</div>
+        <div><div class="m6-card-label">Congés Payés ${this._year}</div><div class="m6-card-title">Solde CP</div></div>
+        <span class="m6-badge ${s.cpSolde<=5?'m6-badge-danger':'m6-badge-ok'}" style="margin-left:auto">${s.cpSolde}j restants</span>
+      </div>
+      <div class="m6-card-body">
         <div class="m6-progress-wrap" style="margin-bottom:8px">
           <div class="m6-progress-bar ${s.cpPris>=s.cpTotal?'ok':''}" style="width:${Math.min(100,s.cpPris/s.cpTotal*100)}%"></div>
         </div>
-        <div style="display:flex;justify-content:space-between;font-size:0.78rem;color:var(--charbon-3)">
-          <span>Total : <strong>${s.cpTotal}j</strong></span>
-          <span>Pris : <strong>${s.cpPris}j</strong></span>
-          <span style="color:${s.cpSolde<=5?'var(--alerte)':'var(--champagne-2)'}">Solde : <strong>${s.cpSolde}j</strong></span>
+        <div class="m6-stats-grid">
+          <div class="m6-stat-box"><div class="m6-stat-val">${s.cpTotal}</div><div class="m6-stat-label">CP contractuels</div></div>
+          <div class="m6-stat-box"><div class="m6-stat-val">${s.cpPris}</div><div class="m6-stat-label">CP pris</div></div>
+          <div class="m6-stat-box" style="border-color:${s.cpSolde<=5?'var(--alerte)':'rgba(196,163,90,0.35)'}">
+            <div class="m6-stat-val" style="color:${s.cpSolde<=5?'var(--alerte)':'var(--champagne-2)'}">${s.cpSolde}</div>
+            <div class="m6-stat-label">Solde CP</div>
+          </div>
+          <div class="m6-stat-box"><div class="m6-stat-val">${s.deplacements}</div><div class="m6-stat-label">Déplacements</div></div>
         </div>
       </div>
-    </details>
+    </div>
 
     <!-- Activité -->
     <div class="m6-card" style="margin-bottom:14px">

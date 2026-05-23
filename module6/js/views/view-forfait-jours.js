@@ -14,9 +14,15 @@ const VFJ = {
   _contract: null, _data: {}, _moods: {},
 
   init(container) {
+    if (!container) { console.error('[VFJ] container null'); return; }
     this._c = container;
     this._year = M6_Storage.getActiveYear();
-    this._load(); this.render();
+    this._section = 'bilan'; // reset section à chaque init
+    try { this._load(); } catch(e) { console.error('[VFJ._load]', e); }
+    try { this.render(); } catch(e) {
+      console.error('[VFJ.render]', e);
+      container.innerHTML = `<div style="padding:24px;color:red"><strong>Erreur : ${e.message}</strong><br><small>${e.stack?.split('\n')[1]||''}</small></div>`;
+    }
   },
 
   _load() {
@@ -94,6 +100,7 @@ const VFJ = {
       ? M6_Zenji.renderCard(zenjiMsg, bio?.phase?.code || 'P1', this._section !== 'sante')
       : '';
 
+    try {
     switch(this._section) {
       case 'bilan':
         ct.innerHTML = zenjiHtml + this._tplBilan(analysis,bio);
@@ -163,6 +170,10 @@ const VFJ = {
         ct.innerHTML = zenjiHtml;
         M6_GlossaireUI.render(ct);
         break;
+    }
+    } catch(e) {
+      console.error('[VFJ render]', e);
+      if(ct) ct.innerHTML = `<div class="m6-alert warning" style="margin:16px"><span>⚠️</span><div><strong>Erreur section ${this._section}</strong><br><code style="font-size:0.75rem">${e.message}</code></div></div>`;
     }
     this._bindNav();
     // Alerte automatique si changement de phase
