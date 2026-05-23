@@ -43,7 +43,7 @@ const M6_Feries = {
 // ══════════════════════════════════════════════════════════════════
 const M6_ForfaitJours = {
 
-  calcRTT(year, plafond=218, cpContrat=25, dateArrivee=null, dateDepart=null) {
+  calcRTT(year, plafond=218, cpContrat=25, dateArrivee=null, dateDepart=null, dateDebutExercice=null, dateFinExercice=null) {
     const isLeap = y => (y%4===0&&y%100!==0)||y%400===0;
     const feries = M6_Feries.getSet(year);
     const debut  = dateArrivee ? new Date(dateArrivee+'T12:00:00') : new Date(year,0,1);
@@ -60,8 +60,8 @@ const M6_ForfaitJours = {
     }
     const ratio=joursCalendaires>0?joursEffPeriode/joursCalendaires:1;
     // Si période comptable personnalisée (pas 1er jan - 31 déc), le plafond est déjà fixé pour la période
-    const hasPeriodeCustom = contract.dateDebutExercice && contract.dateFinExercice &&
-      (contract.dateDebutExercice.slice(5) !== '01-01' || contract.dateFinExercice.slice(5) !== '12-31');
+    const hasPeriodeCustom = dateDebutExercice && dateFinExercice &&
+      (dateDebutExercice.slice(5) !== '01-01' || dateFinExercice.slice(5) !== '12-31');
     const plafondProrata=hasPeriodeCustom ? plafond : Math.round(plafond*ratio);
     const cpProrata=Math.round(cpContrat*ratio);
     const rttTheoriques=Math.max(0,(joursEffPeriode-WE)-cpProrata-feriesOuvres-plafondProrata);
@@ -91,7 +91,7 @@ const M6_ForfaitJours = {
     // ── B1 MULTI-ANNÉE : bornes d'exercice ──
     const exDeb = effectiveArrivee || contract.dateDebutExercice || null;
     const exFin = contract.dateFinExercice || contract.dateDepart || null;
-    const recap=this.calcRTT(year,plafond,cpContrat,exDeb,exFin);
+    const recap=this.calcRTT(year,plafond,cpContrat,exDeb,exFin,contract.dateDebutExercice||null,contract.dateFinExercice||null);
     const feries=M6_Feries.getSet(year);
     let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0,demis_matin=0,demis_am=0;
     const alertes=[],entrees=[];
