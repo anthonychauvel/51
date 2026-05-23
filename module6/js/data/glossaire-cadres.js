@@ -386,40 +386,123 @@ const M6_GlossaireAPI = {
     if (!q) return M6_GLOSSAIRE;
     const lq = q.toLowerCase().trim();
     const lqNoAccent = lq.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
-    const terms = lq.split(/\s+/).filter(t => t.length > 1);
+    const terms = lqNoAccent.split(/\s+/).filter(t => t.length > 1);
 
-    return M6_GLOSSAIRE.filter(e => {
-      const txt = (e.terme + ' ' + e.def + ' ' + (e.ref||'') + ' ' + (e.tags||[]).join(' ')).toLowerCase();
+    // ── Synonymes & reformulations courantes ───────────────────────
+    // Map : mot tapé → mots à chercher en plus dans la définition
+    const synonyms = {
+      'depasser': 'rachat dépassement plafond',
+      'depassement': 'rachat dépassement plafond',
+      'trop': 'rachat dépassement plafond surcharge',
+      'fatigue': 'santé burn-out P3 P4 charge déconnexion repos',
+      'epuise': 'santé burn-out P3 P4 charge',
+      'epuisement': 'burn-out P4 santé charge',
+      'burn': 'burn-out P4 santé',
+      'burnout': 'burn-out P4 santé',
+      'stress': 'santé burn-out RPS charge',
+      'maladie': 'arrêt absence sécurité sociale',
+      'arret': 'maladie absence',
+      'enceinte': 'maternité paternité',
+      'grossesse': 'maternité paternité L1225',
+      'patron': 'employeur manager',
+      'chef': 'employeur manager',
+      'augmentation': 'rémunération salaire entretien',
+      'salaire': 'rémunération taux journalier',
+      'paye': 'rémunération salaire taux',
+      'paie': 'rémunération salaire taux',
+      'mon droit': 'droit déconnexion repos congés',
+      'mes droits': 'droit déconnexion repos congés',
+      'que faire': 'recommandation entretien charge déconnexion',
+      'litige': 'prud\'hommes nullité dépassement avenant',
+      'prudhommes': 'prud\'hommes nullité avenant L3121-59',
+      'inspecteur': 'inspection travail contingent contrôle',
+      'inspection': 'contingent L3121-30 contrôle',
+      'partir': 'rupture conventionnelle démission licenciement',
+      'demission': 'rupture démission préavis',
+      'licenciement': 'rupture licenciement préavis indemnité',
+      'rupture': 'rupture conventionnelle indemnité préavis',
+      'demi': 'demi-journée 0.5 forfait',
+      'demi journee': 'demi-journée 0.5',
+      'samedi': 'week-end repos hebdomadaire L3132-2',
+      'dimanche': 'week-end repos hebdomadaire L3132-2',
+      'soir': 'amplitude repos quotidien 11h L3131-1 déconnexion',
+      'nuit': 'amplitude repos quotidien 11h L3131-1',
+      'horaire': 'amplitude repos quotidien L3131-1',
+      'horaires': 'amplitude repos quotidien L3131-1',
+      'vacances': 'congés payés CP fractionnement',
+      'conges': 'congés payés CP L3141 fractionnement',
+      'rtt': 'RTT JRTT réduction temps travail',
+      'jour': 'forfait jours 218 plafond',
+      'jours': 'forfait jours 218 plafond rachat',
+      'heure': 'forfait heures HS contingent TEPA',
+      'heures': 'forfait heures HS contingent TEPA majoration',
+      'hs': 'heures supplémentaires HS TEPA majoration contingent',
+      'tepa': 'TEPA loi 2007 exonération heures supplémentaires',
+      'ccn': 'convention collective IDCC branche',
+      'idcc': 'convention collective IDCC branche',
+      'syntec': 'CCN Syntec 1486 ingénieurs cadres',
+      'banque': 'CCN Banque AFB 2120',
+      'metallurgie': 'CCN Métallurgie ANU 3109',
+      'cadre': 'forfait jours cadres dirigeants L3111-2',
+      'dirigeant': 'cadre dirigeant L3111-2',
+    };
+
+    // Expansion du query avec les synonymes
+    let expandedTerms = [...terms];
+    for (const [key, expansion] of Object.entries(synonyms)) {
+      if (lqNoAccent.includes(key)) {
+        const expTerms = expansion.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').split(/\s+/);
+        expandedTerms.push(...expTerms);
+      }
+    }
+    expandedTerms = [...new Set(expandedTerms)]; // dedupe
+
+    return M6_GLOSSAIRE.map(e => {
+      const txt = (e.terme + ' ' + e.def + ' ' + (e.exemple||'') + ' ' + (e.art||'') + ' ' + (e.tags||[]).join(' ')).toLowerCase();
       const txtNoAcc = txt.normalize('NFD').replace(/[\u0300-\u036f]/g,'');
+      const termeNoAcc = e.terme.toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');
 
-      // Recherche exacte d'abord
-      if (txt.includes(lq) || txtNoAcc.includes(lqNoAccent)) return true;
+      let score = 0;
 
-      // Recherche par article de loi (ex: "L3121" → inclure L3121-58 à L3121-65)
-      if (/^l?\d{4}/i.test(lq)) {
-        const artNum = lq.replace(/^l/i,'');
-        if (txt.match(new RegExp('l?' + artNum.replace(/-/g,'[-.]?'), 'i'))) return true;
+      // Correspondance exacte sur le terme (titre) — priorité max
+      if (termeNoAcc.includes(lqNoAccent)) score += 100;
+      if (termeNoAcc === lqNoAccent) score += 200;
+
+      // Correspondance dans la def
+      if (txtNoAcc.includes(lqNoAccent)) score += 50;
+
+      // Article de loi (ex: "L3121" → tous les L3121-XX)
+      if (/^l?\d{3,4}/i.test(lq)) {
+        const artNum = lqNoAccent.replace(/^l/i,'');
+        if (txtNoAcc.match(new RegExp('l?' + artNum.replace(/-/g,'[-.]?'), 'i'))) score += 40;
       }
 
-      // Recherche multi-mots : tous les termes doivent être présents
-      if (terms.length > 1 && terms.every(t => txtNoAcc.includes(t.normalize('NFD').replace(/[\u0300-\u036f]/g,'')))) return true;
+      // Mots multiples : score additif par mot trouvé
+      let matchedTerms = 0;
+      for (const t of expandedTerms) {
+        if (t.length > 1 && txtNoAcc.includes(t)) {
+          matchedTerms++;
+          score += 8;
+        }
+      }
+      // Bonus si tous les mots de la requête originale sont présents
+      if (terms.length > 0 && terms.every(t => txtNoAcc.includes(t))) score += 30;
 
-      // Abbréviations courantes
+      // Abréviations directes
       const abbrevMap = {
         'fj': 'forfait jours', 'fh': 'forfait heures', 'cd': 'cadre dirigeant',
-        'hs': 'heures supplémentaires', 'rtt': 'réduction du temps', 'cp': 'congés payés',
+        'hs': 'heures supplementaires', 'rtt': 'reduction du temps', 'cp': 'conges payes',
         'ccn': 'convention collective', 'tepa': 'loi tepa', 'rps': 'risques psychosociaux',
-        'dtt': 'droit temps travail', 'kb': 'kivimäki'
+        'dtt': 'droit temps travail', 'kb': 'kivimaki', 'cse': 'comite social',
+        'rc': 'rupture conventionnelle', 'idcc': 'convention collective',
       };
-      if (abbrevMap[lq] && txt.includes(abbrevMap[lq])) return true;
+      if (abbrevMap[lqNoAccent] && txtNoAcc.includes(abbrevMap[lqNoAccent])) score += 30;
 
-      return false;
-    }).sort((a, b) => {
-      // Prioriser les correspondances dans le terme (titre) plutôt que la def
-      const aInTitre = a.terme.toLowerCase().includes(lq) ? 0 : 1;
-      const bInTitre = b.terme.toLowerCase().includes(lq) ? 0 : 1;
-      return aInTitre - bInTitre;
-    });
+      return { e, score };
+    })
+    .filter(({score}) => score > 0)
+    .sort((a, b) => b.score - a.score)
+    .map(({e}) => e);
   },
   getByTag(tag) {
     return M6_GLOSSAIRE.filter(e => e.tags.includes(tag));
