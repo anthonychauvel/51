@@ -224,38 +224,29 @@ const M6_ForfaitHeures = {
     if (window.CCN_API && contract.ccnIdcc && contract.ccnIdcc > 0) {
       try { ccnRules = CCN_API.getGroupeForCCN(contract.ccnIdcc); } catch(_) {}
     }
-    const seuil     = (ccnRules?.seuil)    || contract.seuilHebdo || 35;
-    const taux1     = (ccnRules?.taux1)    || contract.taux1      || 25;
-    const palier1   = (ccnRules?.palier1)  || contract.palier1    || 8;
+    // PRIORITÉ : saisie manuelle (contract.*) > CCN > droit commun
+    // L'utilisateur peut sélectionner une CCN puis ajuster manuellement → sa saisie gagne.
+    const seuil     = contract.seuilHebdo || (ccnRules?.seuil)    || 35;
+    const taux1     = contract.taux1      || (ccnRules?.taux1)    || 25;
+    const palier1   = contract.palier1    || (ccnRules?.palier1)  || 8;
     // Taux intermédiaire (HCR a 3 paliers : 10%/4h, 20%/4h, 50%+)
     const taux_inter  = ccnRules?.taux_inter  || null;
     const palier_inter= ccnRules?.palier_inter|| null;
-    const taux2     = (ccnRules?.taux2)    || contract.taux2      || 50;
-    const contingentBase = (ccnRules?.contingent)|| contract.contingent|| 220;
+    const taux2     = contract.taux2      || (ccnRules?.taux2)    || 50;
+    const contingentBase = contract.contingent || (ccnRules?.contingent) || 220;
     const maxHebdo  = (ccnRules?.maxHebdo) || 48;
     const ccnNom    = ccnRules?.nom || contract.ccnLabel || 'Droit commun';
 
-    // ── PRORATA CONTINGENT : auto-détection depuis 1ère saisie ──
-    // La 1ère semaine saisie = point de départ. Aucune config requise.
-    const _allWkKeys = Object.keys(data).filter(k => /^\d{4}-W\d{2}$/.test(k)).sort();
-    const _firstWk = _allWkKeys.length ? _allWkKeys[0] : null;
-    const _firstWkDate = _firstWk ? (() => {
-      const [fy,fw] = _firstWk.split('-W');
-      const d = new Date(parseInt(fy), 0, 1 + (parseInt(fw)-1)*7);
-      d.setDate(d.getDate() + (1-(d.getDay()||7)));
-      return d.toISOString().slice(0,10);
-    })() : null;
+    // ── PRORATA CONTINGENT ──
+    // Appliqué UNIQUEMENT si :
+    // 1. L'utilisateur a saisi explicitement une dateArrivee dans la config
+    // 2. ET il a coché l'option "prorataContingent" dans le wizard
+    // Sinon : pas de prorata, contingent plein utilisé.
     const _exDebutFH = contract.dateDebutExercice || `${year}-01-01`;
-    const _lateFH = _firstWkDate && _firstWkDate > _exDebutFH &&
-      Math.round((new Date(_firstWkDate+'T12:00:00') - new Date(_exDebutFH+'T12:00:00')) / 86400000) > 14;
-    const _effectiveArrFH = contract.dateArrivee || (_lateFH ? _firstWkDate : null);
-
     let contingent = contingentBase;
     let contingentProrata = false;
-    // Prorata du contingent : seulement si l'utilisateur a coché l'option dans le wizard
-    // (contract.prorataContingent = true). Pas imposé automatiquement.
-    if (_effectiveArrFH && contract.prorataContingent) {
-      const arrDate   = new Date(_effectiveArrFH + 'T12:00:00');
+    if (contract.dateArrivee && contract.prorataContingent) {
+      const arrDate   = new Date(contract.dateArrivee + 'T12:00:00');
       const exDebDate = new Date(_exDebutFH + 'T12:00:00');
       const exFinDate = contract.dateFinExercice
         ? new Date(contract.dateFinExercice + 'T12:00:00')
