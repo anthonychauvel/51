@@ -43,13 +43,13 @@ const FALLBACK_HS = [
   // Contingents réels 2024 — sources : Légifrance + avenants de branche
   { idcc: 1486, nom: 'Syntec / Bureaux études',      contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc: 3248, nom: 'Métallurgie (ANI 2024)',        contingent: 475, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
-  { idcc: 1979, nom: 'HCR',                           contingent: 360, taux1: 10, taux2: 20, seuil: 39, palier1: 4, taux_inter: 20, palier_inter: 4, taux2: 50 },
+  { idcc: 1979, nom: 'HCR',                           contingent: 360, seuil: 39, taux1: 10, palier1: 4, taux_inter: 20, palier_inter: 4, taux2: 50 },
   { idcc: 2120, nom: 'Banque AFB',                    contingent: 202, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc: 1672, nom: 'Sociétés assurances',           contingent: 230, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc: 1996, nom: 'Pharmacie officine',            contingent: 180, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc:   16, nom: 'Transport routier',             contingent: 195, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc: 2511, nom: 'Sport',                         contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
-  { idcc: 2596, nom: 'Restauration rapide',           contingent: 220, taux1: 10, taux2: 20, seuil: 35, palier1: 8, taux2: 50 },
+  { idcc: 2596, nom: 'Restauration rapide',           contingent: 220, seuil: 35, taux1: 10, palier1: 8, taux_inter: 20, palier_inter: 8, taux2: 50 },
   { idcc: 1597, nom: 'Bâtiment ETAM',                contingent: 130, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
   { idcc: 1090, nom: 'Réparation automobile',        contingent: 250, taux1: 25, taux2: 50, seuil: 39, palier1: 8 },
   { idcc: 1413, nom: 'Travail temporaire',            contingent: 220, taux1: 25, taux2: 50, seuil: 35, palier1: 8 },
@@ -127,7 +127,10 @@ const M6_CCN_Adapter = {
     if (regime === 'forfait_heures') {
       return { ccnLabel: ccn.nom||'Droit commun', ccnIdcc: ccn.idcc||0,
         seuilHebdo: ccn.seuil||35, taux1: ccn.taux1||25, taux2: ccn.taux2||50,
-        palier1: ccn.palier1||8, contingent: ccn.contingent||220, ccnNotes: ccn.notes||'' };
+        palier1: ccn.palier1||8, contingent: ccn.contingent||220,
+        taux_inter: ccn.taux_inter || null,
+        palier_inter: ccn.palier_inter || null,
+        ccnNotes: ccn.notes||'' };
     }
     return { ccnLabel: ccn.nom||'Droit commun', ccnIdcc: ccn.idcc||0,
       plafond: ccn.plafond||218, tauxMajorationRachat: ccn.tauxRachat||10,
@@ -170,7 +173,12 @@ const M6_CCN_Adapter = {
     if (regime === 'forfait_heures') {
       rows.push(['Seuil HS', (ccn.seuil||35)+'h']);
       rows.push(['Contingent', (ccn.contingent||220)+'h']);
-      rows.push(['Majoration', `+${ccn.taux1||25}%(${ccn.palier1||8}h) / +${ccn.taux2||50}%`]);
+      if (ccn.taux_inter) {
+        // 3 paliers (ex: HCR — 10%/4h + 20%/4h + 50%)
+        rows.push(['Majoration', `+${ccn.taux1||10}%(${ccn.palier1||4}h) / +${ccn.taux_inter}%(${ccn.palier_inter||4}h) / +${ccn.taux2||50}%`]);
+      } else {
+        rows.push(['Majoration', `+${ccn.taux1||25}%(${ccn.palier1||8}h) / +${ccn.taux2||50}%`]);
+      }
     } else if (regime === 'cadre_dirigeant') {
       rows.push(['CP maintenus', ccn.droitsCP||'25j ouvrables']);
       if (ccn.critereCD) rows.push(['Critères CD', ccn.critereCD.slice(0,70)+'…']);
@@ -265,12 +273,17 @@ const M6_CCN_Adapter = {
       return { idcc: r.i, nom: r.n||'Convention collective', secteur: r.s||'',
         seuil: rules.seuil||35, taux1: rules.taux1||25, palier1: rules.palier1||8,
         taux2: rules.taux2||50, contingent: rules.contingent||220,
+        // 3 paliers (ex: HCR 10/20/50) — préserver si la source en a
+        taux_inter:   rules.taux_inter   || null,
+        palier_inter: rules.palier_inter || null,
         groupe: rules.id||'DC', groupeNom: rules.nom||'Droit commun',
         forfaitJour: r.fj||false, alertes:[], notes: rules.notes||'', _raw: r };
     }
     return { idcc:0, nom: r.nom||'Droit commun', secteur:'',
       seuil: r.seuil||35, taux1: r.taux1||25, palier1: r.palier1||8,
       taux2: r.taux2||50, contingent: r.contingent||220,
+      taux_inter:   r.taux_inter   || null,
+      palier_inter: r.palier_inter || null,
       groupe: r.id||'DC', groupeNom: r.nom||'Droit commun',
       alertes:[], notes: r.notes||'', _raw: r };
   },
