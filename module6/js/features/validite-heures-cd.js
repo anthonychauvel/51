@@ -15,7 +15,7 @@
 //  FORFAIT HEURES — 6 conditions cumulatives
 // ══════════════════════════════════════════════════════════════════
 const M6_ValiditeFH = {
-  analyze(contract, analysis) {
+  analyze(contract, analysis, year) {
     const conditions = [];
 
     // ── 1. Convention de forfait écrite (L3121-40) ─────────────
@@ -115,6 +115,23 @@ const M6_ValiditeFH = {
       recommandation: 'La durée hebdomadaire ne peut excéder 48h (plafond absolu UE). 44h en moyenne sur 12 semaines consécutives (L3121-22).',
     });
 
+    // ── PROMOTION par auto-attestation ─────────────────────────
+    // L'utilisateur peut cocher manuellement une condition warning/info pour
+    // déclarer qu'elle est en réalité respectée (ex: il a un accord d'entreprise
+    // que l'app ne peut pas vérifier automatiquement).
+    // Les conditions 'danger' (violations chiffrées dans les saisies) ne sont
+    // PAS promues — pas d'auto-attestation contre des données objectives.
+    const _yearFH = year || new Date().getFullYear();
+    const _safeLS = (k) => { try { return localStorage.getItem(k); } catch(_) { return null; } };
+    for (const c of conditions) {
+      if (c.niveau !== 'ok' && c.niveau !== 'danger') {
+        const ckKey = `M6_VALID_CHECK_forfait_heures_${_yearFH}_${c.id}`;
+        if (_safeLS(ckKey) === '1') {
+          c.niveau = 'ok'; c.ok = true; c.userValidated = true;
+        }
+      }
+    }
+
     // Synthèse
     const okCount = conditions.filter(c => c.ok).length;
     const dangerCount = conditions.filter(c => c.niveau === 'danger').length;
@@ -132,9 +149,11 @@ const M6_ValiditeFH = {
     };
   },
 
-  render(container, contract, analysis) {
+  render(container, contract, analysis, year) {
     if (!container) return;
-    const result = this.analyze(contract, analysis);
+    year = year || new Date().getFullYear();
+    const REGIME = 'forfait_heures';
+    const result = this.analyze(contract, analysis, year);
     const s = result.synthese;
 
     const headerColor = s.danger > 0 ? '#9B2C2C' : (s.warning > 0 ? '#C4853A' : '#2D6A4F');
@@ -150,19 +169,35 @@ const M6_ValiditeFH = {
         </div>
       </div>
     </div>
+    <div class="m6-alert info" style="margin-bottom:12px;font-size:0.76rem;line-height:1.45">
+      <span>☑️</span><div>Cochez une case pour <strong>attester manuellement</strong> qu'une condition est en réalité respectée (ex : votre contrat le précise mais l'app ne peut pas le vérifier automatiquement). Les conditions critiques ❌ (violations chiffrées dans vos saisies) ne sont pas attestables.</div>
+    </div>
     `;
+
+    const _safeLS = (k) => { try { return localStorage.getItem(k); } catch(_) { return null; } };
 
     for (const c of result.conditions) {
       const icon = c.niveau === 'ok' ? '✅' : (c.niveau === 'danger' ? '❌' : '⚠️');
       const bgColor = c.niveau === 'ok' ? '#E8F3EE' : (c.niveau === 'danger' ? '#FAE8E6' : '#FEF5E5');
       const borderColor = c.niveau === 'ok' ? '#2D6A4F' : (c.niveau === 'danger' ? '#9B2C2C' : '#C4853A');
+      // Case à cocher : disponible pour les conditions warning/info uniquement
+      // (pas pour les ok déjà conformes ni pour les danger objectifs)
+      const ckKey = `M6_VALID_CHECK_${REGIME}_${year}_${c.id}`;
+      const isChecked = _safeLS(ckKey) === '1';
+      const showCheck = c.niveau !== 'danger';
+      const checkboxHtml = showCheck
+        ? `<label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#4A4540;cursor:pointer;margin-top:8px;padding:8px;background:rgba(196,163,90,0.08);border-radius:6px">
+            <input type="checkbox" data-ck="${ckKey}" ${isChecked?'checked':''} style="width:18px;height:18px;accent-color:#C4A35A;cursor:pointer;flex-shrink:0">
+            <span><strong>J'atteste manuellement</strong> que cette condition est respectée dans mon contrat / mon entreprise</span>
+          </label>`
+        : '';
       html += `
       <div class="m6-card" style="margin-bottom:10px">
         <div style="padding:14px 14px 8px 14px">
           <div style="display:flex;gap:10px;align-items:start;margin-bottom:6px">
             <div style="font-size:1.2rem;flex-shrink:0">${icon}</div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:0.92rem;color:#1A1714;line-height:1.3">${c.titre}</div>
+              <div style="font-weight:600;font-size:0.92rem;color:#1A1714;line-height:1.3">${c.titre}${c.userValidated?' <span style="color:#C4A35A;font-size:0.72rem">· attesté</span>':''}</div>
               <div style="font-size:0.7rem;color:#8A847C;margin-top:2px">Réf. ${c.loi}</div>
             </div>
           </div>
@@ -170,12 +205,37 @@ const M6_ValiditeFH = {
           <div style="font-size:0.78rem;color:#4A4540;line-height:1.5;border-left:2px solid #E2DAD0;padding-left:10px">
             <strong>Recommandation :</strong> ${c.recommandation}
           </div>
+          ${checkboxHtml}
         </div>
       </div>
       `;
     }
 
     container.innerHTML = html;
+
+    // ── Binding des cases à cocher (persistance + re-render synchrone) ──
+    if (!container.__ckBoundFH) {
+      container.__ckBoundFH = true;
+      container.addEventListener('change', e => {
+        const cb = e.target.closest('input[data-ck]');
+        if (!cb) return;
+        try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
+        container.__ckBoundFH = false;
+        this.render(container, contract, analysis, year);
+        // Rafraîchir la bulle Zenji avec les nouvelles données
+        try {
+          if (window.M6_Forfait && window.M6_BioEngine && window.M6_ZenjiPopup) {
+            // Pour FH on n'a pas besoin de recalculer — la bulle Zenji n'utilise
+            // pas les ckKey FH dans son selectPopup. Mais on peut quand même
+            // déclencher un refresh générique pour cohérence visuelle.
+            M6_ZenjiPopup.refresh?.(analysis, null, contract, REGIME);
+          }
+        } catch(_) {}
+      });
+      container.addEventListener('click', e => {
+        if (e.target.closest('input[data-ck]')) e.stopPropagation();
+      }, true);
+    }
   }
 };
 
@@ -183,7 +243,7 @@ const M6_ValiditeFH = {
 //  CADRE DIRIGEANT — 3 critères cumulatifs L3111-2
 // ══════════════════════════════════════════════════════════════════
 const M6_ValiditeCD = {
-  analyze(contract) {
+  analyze(contract, year) {
     const conditions = [];
 
     // ── 1. Pouvoir de direction effectif ───────────────────────
@@ -236,6 +296,21 @@ const M6_ValiditeCD = {
       recommandation: 'Conservez des preuves : organigramme, fiche de poste, bulletins de paie, contrats signés en votre nom, documents stratégiques.',
     });
 
+    // ── PROMOTION par auto-attestation (cases cochées par l'utilisateur) ──
+    // Les conditions 'info' ou 'warning' peuvent être validées manuellement.
+    // CD a beaucoup de conditions 'info' (par nature, le statut CD est très
+    // déclaratif) → les cases permettent de les requalifier en 'ok'.
+    const _yearCD = year || new Date().getFullYear();
+    const _safeLS = (k) => { try { return localStorage.getItem(k); } catch(_) { return null; } };
+    for (const c of conditions) {
+      if (c.niveau !== 'ok' && c.niveau !== 'danger') {
+        const ckKey = `M6_VALID_CHECK_cadre_dirigeant_${_yearCD}_${c.id}`;
+        if (_safeLS(ckKey) === '1') {
+          c.niveau = 'ok'; c.ok = true; c.userValidated = true;
+        }
+      }
+    }
+
     const okCount = conditions.filter(c => c.ok && c.niveau === 'ok').length;
     const warningCount = conditions.filter(c => c.niveau === 'warning').length;
     const dangerCount = conditions.filter(c => c.niveau === 'danger').length;
@@ -252,9 +327,11 @@ const M6_ValiditeCD = {
     };
   },
 
-  render(container, contract) {
+  render(container, contract, year) {
     if (!container) return;
-    const result = this.analyze(contract);
+    year = year || new Date().getFullYear();
+    const REGIME = 'cadre_dirigeant';
+    const result = this.analyze(contract, year);
     const s = result.synthese;
 
     const headerColor = s.danger > 0 ? '#9B2C2C' : (s.warning > 0 ? '#C4853A' : '#2D6A4F');
@@ -276,19 +353,33 @@ const M6_ValiditeCD = {
         </div>
       </div>
     </div>
+    <div class="m6-alert info" style="margin-bottom:12px;font-size:0.76rem;line-height:1.45">
+      <span>☑️</span><div>Cochez une case pour <strong>attester</strong> qu'un critère est rempli dans votre situation (l'app ne peut pas vérifier objectivement votre niveau d'autonomie ou votre rang de rémunération). Conservez des preuves matérielles à l'appui.</div>
+    </div>
     `;
+
+    const _safeLS = (k) => { try { return localStorage.getItem(k); } catch(_) { return null; } };
 
     for (const c of result.conditions) {
       const icon = c.niveau === 'ok' ? '✅' : (c.niveau === 'danger' ? '❌' : (c.niveau === 'warning' ? '⚠️' : 'ℹ️'));
       const bgColor = c.niveau === 'ok' ? '#E8F3EE' : (c.niveau === 'danger' ? '#FAE8E6' : (c.niveau === 'warning' ? '#FEF5E5' : '#EFF4F8'));
       const borderColor = c.niveau === 'ok' ? '#2D6A4F' : (c.niveau === 'danger' ? '#9B2C2C' : (c.niveau === 'warning' ? '#C4853A' : '#5C7A8A'));
+      const ckKey = `M6_VALID_CHECK_${REGIME}_${year}_${c.id}`;
+      const isChecked = _safeLS(ckKey) === '1';
+      const showCheck = c.niveau !== 'danger';
+      const checkboxHtml = showCheck
+        ? `<label style="display:flex;align-items:center;gap:8px;font-size:0.78rem;color:#4A4540;cursor:pointer;margin-top:8px;padding:8px;background:rgba(196,163,90,0.08);border-radius:6px">
+            <input type="checkbox" data-ck="${ckKey}" ${isChecked?'checked':''} style="width:18px;height:18px;accent-color:#C4A35A;cursor:pointer;flex-shrink:0">
+            <span><strong>J'atteste que ce critère est rempli</strong> dans ma situation</span>
+          </label>`
+        : '';
       html += `
       <div class="m6-card" style="margin-bottom:10px">
         <div style="padding:14px 14px 8px 14px">
           <div style="display:flex;gap:10px;align-items:start;margin-bottom:6px">
             <div style="font-size:1.2rem;flex-shrink:0">${icon}</div>
             <div style="flex:1">
-              <div style="font-weight:600;font-size:0.92rem;color:#1A1714;line-height:1.3">${c.titre}</div>
+              <div style="font-weight:600;font-size:0.92rem;color:#1A1714;line-height:1.3">${c.titre}${c.userValidated?' <span style="color:#C4A35A;font-size:0.72rem">· attesté</span>':''}</div>
               <div style="font-size:0.7rem;color:#8A847C;margin-top:2px">Réf. ${c.loi}</div>
             </div>
           </div>
@@ -296,12 +387,28 @@ const M6_ValiditeCD = {
           <div style="font-size:0.78rem;color:#4A4540;line-height:1.5;border-left:2px solid #E2DAD0;padding-left:10px">
             <strong>Recommandation :</strong> ${c.recommandation}
           </div>
+          ${checkboxHtml}
         </div>
       </div>
       `;
     }
 
     container.innerHTML = html;
+
+    // ── Binding cases à cocher ──
+    if (!container.__ckBoundCD) {
+      container.__ckBoundCD = true;
+      container.addEventListener('change', e => {
+        const cb = e.target.closest('input[data-ck]');
+        if (!cb) return;
+        try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
+        container.__ckBoundCD = false;
+        this.render(container, contract, year);
+      });
+      container.addEventListener('click', e => {
+        if (e.target.closest('input[data-ck]')) e.stopPropagation();
+      }, true);
+    }
   }
 };
 
