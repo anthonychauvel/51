@@ -566,7 +566,21 @@ const M6_BioEngine = {
     ));
     fatigue = Math.max(5, fatigue);
 
-    const stress    = Math.min(100, Math.round(8 + surcharge * 4.5 + Math.max(0, mean - BIO.H_LEGAL) * 2.8));
+    let stress    = Math.min(100, Math.round(8 + surcharge * 4.5 + Math.max(0, mean - BIO.H_LEGAL) * 2.8));
+
+    // ── ÉCHANTILLON FAIBLE : tempérer pour les premières semaines ──
+    // Avec 1 ou 2 semaines, le mean est très volatil ; une seule semaine à 45h
+    // ne doit pas être lue comme "fatigue chronique 42". On pondère par n/4 plafonné.
+    // Au-delà de 4 semaines, le score est pris tel quel.
+    if (n < 4) {
+      const warmup = n / 4;   // 0.25 / 0.5 / 0.75 / 1.0
+      // baseline réaliste pour quelqu'un qui vient juste de commencer le suivi
+      const baseFat    = 12;
+      const baseStress = 8;
+      fatigue = Math.round(baseFat    + (fatigue - baseFat) * warmup);
+      stress  = Math.round(baseStress + (stress  - baseStress) * warmup);
+    }
+
     const perfFinal = Math.max(25, Math.round(_pencavelPerf(mean) * 100 - fatigue * 0.12));
     const recovery  = _recoveryScore(fatigue, semainesRecup, 0, n, surcharge);
     const cvRiskScore = Math.round(_cvRiskModel(mean, cumul / 4, surcharge) * 100);
