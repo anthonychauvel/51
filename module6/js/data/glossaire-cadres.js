@@ -376,6 +376,101 @@ const M6_GLOSSAIRE = [
     def: 'Le Conseil de Prud\'hommes est compétent pour tous les litiges individuels entre employeur et salarié, y compris cadres. Les litiges fréquents en forfait jours : nullité de la convention, heures supplémentaires non payées, rachat de jours imposé, entretien annuel non réalisé.',
     exemple: 'Cadre prouve via emails que la convention de forfait ne couvre pas ses heures réelles → prud\'hommes ordonnent le rappel de salaire pour HS.',
     tags: ['prud\'hommes', 'litige', 'cadre', 'forfait', 'recours']
+  },
+
+  // ══════════════════════════════════════════════════════════════
+  //  CADRE DIRIGEANT — VOLET SPÉCIFIQUE (Art. L3111-2)
+  // ══════════════════════════════════════════════════════════════
+  {
+    terme: 'Critères cumulatifs L3111-2',
+    art: 'Art. L3111-2 + Cass. Soc. 31/01/2012',
+    def: 'Le statut de cadre dirigeant exige TROIS critères CUMULATIFS : responsabilités importantes, grande indépendance dans l\'organisation du temps, et rémunération parmi les plus élevées. L\'absence d\'un seul critère permet au juge de requalifier le statut.',
+    exemple: 'Un directeur de site avec un emploi du temps imposé par le siège : critère "indépendance" manquant → requalification possible avec rappel d\'HS sur 3 ans.',
+    tags: ['cadre dirigeant', 'L3111-2', 'critères', 'cumulatif', 'dirigeant']
+  },
+  {
+    terme: 'Requalification du cadre dirigeant',
+    art: 'Cass. Soc. 02/07/2014 + 04/02/2015',
+    def: 'Si un juge estime que les 3 critères L3111-2 ne sont pas remplis, le salarié bascule au régime normal (35h, HS) avec effet rétroactif. Conséquence : rappel des heures supplémentaires non payées sur 3 ans + repos compensateurs + dommages-intérêts.',
+    exemple: 'DAF requalifié faute de preuve de "rémunération parmi les plus élevées" → 38 000€ de rappel HS + 12 000€ de dommages-intérêts.',
+    tags: ['requalification', 'dirigeant', 'jurisprudence', 'recours', 'rétroactif']
+  },
+  {
+    terme: 'Rémunération "parmi les plus élevées"',
+    art: 'Art. L3111-2 alinéa 2 + Cass. Soc. 13/12/2017',
+    def: 'Critère apprécié in concreto : la rémunération du cadre dirigeant doit se situer dans la tranche supérieure de l\'entreprise. La jurisprudence retient généralement le top 5-10% des rémunérations. Une simple "rémunération élevée" ne suffit pas — c\'est la position relative qui compte.',
+    exemple: 'Cadre à 90k€/an dans une entreprise où le DG est payé 250k€ → "élevée" en absolu mais pas dans "les plus élevées" → critère non rempli.',
+    tags: ['rémunération', 'dirigeant', 'L3111-2', 'critère', 'top 10%']
+  },
+  {
+    terme: 'Indépendance dans l\'organisation du temps',
+    art: 'Art. L3111-2 alinéa 3',
+    def: 'Le cadre dirigeant doit organiser librement son emploi du temps : pas de pointage, pas de validation hiérarchique des absences courtes, pas d\'horaires imposés. Demander des autorisations de congés ou suivre des process imposés (réunions obligatoires hebdomadaires, reportings hebdo) peut suffire à faire tomber le statut.',
+    exemple: 'Cadre devant valider ses absences > 1 jour auprès de son N+1 → indépendance fragile, statut CD contestable.',
+    tags: ['indépendance', 'autonomie', 'dirigeant', 'L3111-2', 'organisation']
+  },
+  {
+    terme: 'Décisions largement autonomes',
+    art: 'Art. L3111-2 alinéa 1',
+    def: 'Le cadre dirigeant doit prendre des décisions de manière largement autonome — signature de contrats, embauches, investissements significatifs, représentation de l\'entreprise. Un cadre exécutant des décisions prises par d\'autres ne remplit pas ce critère.',
+    exemple: 'Le DRH qui signe seul les contrats de travail, valide les budgets RH et représente l\'entreprise auprès des syndicats remplit ce critère.',
+    tags: ['décisions', 'autonomie', 'dirigeant', 'L3111-2', 'pouvoir']
+  },
+  {
+    terme: 'Droits préservés du cadre dirigeant',
+    art: 'Art. L3111-2 + Code du travail',
+    def: 'Même en tant que CD, le salarié conserve : 25 jours ouvrables de CP minimum (L3141-3), tous les congés spéciaux (maternité, paternité, deuil, mariage), la protection contre le licenciement, la médecine du travail (R4624-10), la formation professionnelle, le DIF/CPF, et la sécurité au travail (L4121-1).',
+    exemple: 'DG en burn-out → bénéficie pleinement de l\'arrêt maladie, de la médecine du travail et de l\'obligation de sécurité de l\'employeur.',
+    tags: ['dirigeant', 'droits', 'protection', 'CP', 'maintenu']
+  },
+  {
+    terme: 'Inapplicabilité de la durée du travail',
+    art: 'Art. L3111-2 + L3111-1',
+    def: 'Le cadre dirigeant échappe aux dispositions des titres II (durée du travail) et III (repos et jours fériés) du livre Ier du code du travail. Conséquences : pas de 35h, pas d\'heures supplémentaires, pas de durée maximale, pas de repos quotidien 11h imposé, pas de repos hebdo 35h imposé.',
+    exemple: 'Un DG qui travaille 70h une semaine → aucune HS, aucune violation légale. Mais responsabilité civile de l\'employeur sur la santé reste engagée.',
+    tags: ['durée', 'travail', 'inapplicable', 'dirigeant', 'L3111-2', '35h']
+  },
+  {
+    terme: 'Convention collective et cadre dirigeant',
+    art: 'Variable selon CCN',
+    def: 'Certaines CCN (Syntec, Banque AFB, etc.) prévoient des avantages spécifiques pour les cadres dirigeants : CP supplémentaires, indemnité de fin de carrière majorée, clauses de non-concurrence. Toujours consulter sa convention collective pour les droits maintenus ou majorés.',
+    exemple: 'CCN Syntec : cadres position 3.3 bénéficient de 25 jours de CP + 8 jours de RTT (selon accord d\'entreprise).',
+    tags: ['CCN', 'dirigeant', 'convention', 'droits', 'syntec']
+  },
+  {
+    terme: 'Mandat social vs cadre dirigeant',
+    art: 'Code de commerce + L3111-2',
+    def: 'À ne pas confondre : le mandataire social (gérant SARL, président SAS, DG SA) n\'est PAS un salarié sauf cumul mandat/contrat de travail validé. Le cadre dirigeant reste salarié soumis au code du travail (en partie). Beaucoup de DG cumulent les deux : ils ont un contrat de travail comme cadre dirigeant ET un mandat social.',
+    exemple: 'Un DG-mandataire social rémunéré uniquement via son mandat n\'est pas couvert par le code du travail. S\'il a aussi un contrat de salarié, le statut CD s\'applique.',
+    tags: ['mandat', 'social', 'dirigeant', 'salarié', 'gérant']
+  },
+  {
+    terme: 'Charge de la preuve (cadre dirigeant)',
+    art: 'Cass. Soc. 31/01/2012 + 13/04/2010',
+    def: 'C\'est à l\'EMPLOYEUR de prouver que les 3 critères L3111-2 sont remplis. Si le salarié conteste son statut CD, l\'employeur doit produire : fiche de poste, organigramme, bulletins de paie comparatifs, contrats signés par le cadre, procurations. À défaut, le statut tombe.',
+    exemple: 'Litige prud\'homal : l\'employeur ne produit qu\'un contrat mentionnant "cadre dirigeant" sans autre preuve → requalification automatique.',
+    tags: ['preuve', 'dirigeant', 'employeur', 'jurisprudence', 'prudhommes']
+  },
+  {
+    terme: 'Rupture conventionnelle du cadre dirigeant',
+    art: 'Art. L1237-11 et s.',
+    def: 'Le cadre dirigeant bénéficie pleinement du dispositif de rupture conventionnelle. L\'indemnité légale minimum est calculée comme pour tout salarié (1/4 mois par année jusqu\'à 10 ans, 1/3 ensuite). Les CCN peuvent prévoir des indemnités supérieures, fréquentes pour les CD.',
+    exemple: 'CD à 200k€ brut/an avec 15 ans d\'ancienneté → indemnité légale minimum ≈ 95 000€. Les négociations aboutissent souvent à 1,5 à 3x ce minimum.',
+    tags: ['rupture', 'conventionnelle', 'dirigeant', 'indemnité', 'L1237-11']
+  },
+  {
+    terme: 'Délégation de pouvoir',
+    art: 'Jurisprudence constante',
+    def: 'Un cadre dirigeant détient souvent une délégation de pouvoir formelle (signature, embauche, engagement financier). La preuve écrite (procuration, délégation notariée) renforce son statut. À l\'inverse, l\'absence de toute délégation fragilise le statut CD.',
+    exemple: 'DAF avec procuration bancaire signée par le DG + droit de signature jusqu\'à 50 000€ → statut CD solide.',
+    tags: ['délégation', 'pouvoir', 'dirigeant', 'preuve', 'procuration']
+  },
+  {
+    terme: 'Comité de direction (CODIR)',
+    art: 'Jurisprudence',
+    def: 'L\'appartenance au comité de direction est un indice fort (mais pas suffisant à lui seul) du statut de cadre dirigeant. Participer au CODIR signifie généralement détenir un pouvoir de décision sur la stratégie de l\'entreprise.',
+    exemple: 'Cadre membre du CODIR participant aux décisions trimestrielles, votant sur les recrutements stratégiques → indice de pouvoir réel.',
+    tags: ['codir', 'comité', 'direction', 'dirigeant', 'preuve']
   }
 ];
 
