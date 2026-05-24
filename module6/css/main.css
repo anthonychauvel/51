@@ -323,7 +323,8 @@ body {
 
 /* ── Main scroll area ────────────────────────────────────────── */
 .m6-main {
-  padding: 20px 16px calc(76px + env(safe-area-inset-bottom, 0));
+  /* Augmenté à 140px : la nav a maintenant 2 lignes (8 boutons) → ~120px de hauteur */
+  padding: 20px 16px calc(140px + env(safe-area-inset-bottom, 0));
   max-width: 480px;
   margin: 0 auto;
 }
