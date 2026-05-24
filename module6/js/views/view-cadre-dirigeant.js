@@ -164,7 +164,8 @@ const VCD = {
       console.error('[VCD render]', e);
     }
     this._bindNav();
-    // Coach contextuelif (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
+    // Coach contextuel — nettoyer l'ancien popup avant d'en injecter un nouveau
+    if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
     // Popup Zenji flottant
     if (window.M6_ZenjiPopup) {
       M6_ZenjiPopup.init(
@@ -182,7 +183,7 @@ const VCD = {
         'cadre_dirigeant'
       );
     }
-    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
+    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, 'cadre_dirigeant');
   },
 
   // ── HEADER ─────────────────────────────────────────────────────

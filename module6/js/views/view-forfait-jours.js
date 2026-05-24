@@ -346,16 +346,10 @@ const VFJ = {
       }
     });
     this._c.querySelector('#bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
-    this._c.querySelector('#vfj-newyr')?.addEventListener('click', () => this._openNewYear());
     // Tooltip RTT clickable
     const tipWrap = this._c.querySelector('#rtt-tip-wrap');
     if (tipWrap) tipWrap.addEventListener('click', e => { e.stopPropagation(); tipWrap.classList.toggle('open'); });
     document.addEventListener('click', () => tipWrap?.classList.remove('open'), { once: false });
-    this._c.querySelector('#vfj-reset')?.addEventListener('click', () => {
-      // Ouvre le wizard pré-rempli — l'utilisateur modifie ce qu'il veut et enregistre, ou annule.
-      this._c.innerHTML = this._tplSetup();
-      this._bindSetup();
-    });
     // ── PDF Annuel + Preuve (boutons présents dans le bilan) ─────
     this._c.querySelector('#pdf-a')?.addEventListener('click', () => {
       if (!window.M6_PDF) { M6_toast?.('Module PDF non chargé'); return; }
@@ -450,32 +444,24 @@ const VFJ = {
       <div class="m6-field"><label>Nom manager</label><input type="text" id="pdf-mgr" value="${this._contract.nomManager||''}" placeholder="Prénom NOM" style="font-size:16px"></div>
       <div class="m6-field"><label>Email manager (copie PDF)</label><input type="email" id="pdf-mgr-email" value="${this._contract.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
       
-      <div class="m6-field">
-        <label>Période libre (du … au …)</label>
-        <div style="display:flex;gap:8px;margin-bottom:8px">
-          <input type="date" id="pdf-debut" style="flex:1;font-size:14px" placeholder="Début">
-          <input type="date" id="pdf-fin" style="flex:1;font-size:14px" placeholder="Fin">
-        </div>
-      </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;min-width:110px;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-p" style="flex:1;min-width:110px;font-size:0.78rem">📅 PDF Période</button>
       </div>
     </div></div>
 
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF Periode personnalisee</div><div class="m6-ornement-line"></div></div>
+    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">PDF Période personnalisée</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
       <div class="m6-field">
-        <label>Date de debut</label>
+        <label>Date de début</label>
         <input type="date" id="pdf-per-d1" value="${this._year}-01-01" style="font-size:16px">
       </div>
       <div class="m6-field">
         <label>Date de fin</label>
         <input type="date" id="pdf-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px">
       </div>
-      <button class="m6-btn m6-btn-ghost" id="pdf-per" style="width:100%;font-size:0.78rem">📄 PDF Periode</button>
+      <button class="m6-btn m6-btn-ghost" id="pdf-per" style="width:100%;font-size:0.78rem">📄 PDF Période</button>
     </div></div>
 
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Validation mensuelle</div><div class="m6-ornement-line"></div></div>
@@ -526,7 +512,7 @@ const VFJ = {
       if(!checkCertif()) return;
       const d1 = this._c.querySelector('#pdf-per-d1')?.value;
       const d2 = this._c.querySelector('#pdf-per-d2')?.value;
-      if(!d1||!d2||d1>d2){M6_toast('Verifiez les dates');return;}
+      if(!d1||!d2||d1>d2){M6_toast('Vérifiez les dates');return;}
       saveMeta();
       M6_PDF.exportPeriode({regime:this._regime,year:this._year,contract:this._contract,data:this._data,moods:this._moods,dateDebut:d1,dateFin:d2});
     });
@@ -555,16 +541,6 @@ const VFJ = {
     this._c.querySelector('#exp-j')?.addEventListener('click', () => M6_ImportExport.export(this._regime));
     this._c.querySelector('#exp-csv')?.addEventListener('click', () => M6_ImportExport.exportCSV(this._regime, this._year));
     this._c.querySelector('#imp-j')?.addEventListener('click', () => M6_ImportExport.import(this._regime,()=>{this._load();this.render();}));
-
-    // PDF Période
-    this._c.querySelector('#pdf-p')?.addEventListener('click', () => {
-      saveMeta();
-      const debut = this._c.querySelector('#pdf-debut')?.value;
-      const fin   = this._c.querySelector('#pdf-fin')?.value;
-      if(!debut||!fin||debut>fin) { M6_toast('Renseignez une période valide'); return; }
-      M6_PDF.exportPeriode({ regime:this._regime, year:this._year, dateDebut:debut, dateFin:fin,
-        contract:this._contract, data:this._data, moods:this._moods });
-    });
 
     // Calculateur rupture
     const ruptureContainer = this._c.querySelector('#rupture-container');
