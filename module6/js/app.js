@@ -375,16 +375,27 @@ const M6_Router = {
             tauxMajorationRachat:  existing.tauxMajorationRachat || 10,
           };
         } else if (regime === 'forfait_heures') {
+          // Récupérer les vraies règles de la CCN sélectionnée (3 paliers HCR, etc.)
+          const idccFH = parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc || '0') || 0;
+          let rules = null;
+          if (idccFH && window.M6_CCN_Adapter) {
+            try { rules = window.M6_CCN_Adapter.get(idccFH, 'forfait_heures'); } catch(_) {}
+          }
           contract = { ...contract,
-            seuilHebdo:        parseFloat(this._root.querySelector('#wiz-seuil')?.value) || existing.seuilHebdo || 39,
-            contingent:        parseInt(this._root.querySelector('#wiz-cont')?.value) || existing.contingent || 220,
+            seuilHebdo:        parseFloat(this._root.querySelector('#wiz-seuil')?.value) || existing.seuilHebdo || rules?.seuil || 39,
+            contingent:        parseInt(this._root.querySelector('#wiz-cont')?.value) || existing.contingent || rules?.contingent || 220,
             prorataContingent: !!(this._root.querySelector('#wiz-prorata-cont')?.checked),
             tauxHoraire:       parseFloat(this._root.querySelector('#wiz-tauxH')?.value) || existing.tauxHoraire || 0,
             ccnLabel:          this._root.querySelector('#wiz-ccn-fh')?.value.trim() || existing.ccnLabel || '',
-            ccnIdcc:           parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
-            taux1:             existing.taux1 || 25,
-            taux2:             existing.taux2 || 50,
-            palier1:           existing.palier1 || 8,
+            ccnIdcc:           idccFH || existing.ccnIdcc || 0,
+            // Priorité : valeurs CCN sélectionnée > saisie existante > droit commun
+            // NE PAS écraser les taux corrects de la CCN par des hardcoded 25/50
+            taux1:             rules?.taux1   || existing.taux1   || 25,
+            taux2:             rules?.taux2   || existing.taux2   || 50,
+            palier1:           rules?.palier1 || existing.palier1 || 8,
+            // 3 paliers (HCR : 10%/4h + 20%/4h + 50%) — préserver si la CCN en a
+            taux_inter:        rules?.taux_inter   || existing.taux_inter   || null,
+            palier_inter:      rules?.palier_inter || existing.palier_inter || null,
           };
         } else {
           contract = { ...contract,
