@@ -289,7 +289,19 @@ const M6_Router = {
               </div>
               <div class="m6-field"><label>Taux horaire brut (€, optionnel)</label><input type="number" id="wiz-tauxH" step="0.01" value="${existing.tauxHoraire||''}" placeholder="25.50" style="font-size:16px"></div>
             `:`
-              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="${existing.plafond||218}" min="100" max="300" style="font-size:16px"></div>
+              <div class="m6-field"><label>Fonction</label><input type="text" id="wiz-cd-fnc" value="${(existing.fonction||'').replace(/"/g,'&quot;')}" placeholder="Directeur Général, DAF, DRH…" style="font-size:16px"></div>
+              <div class="m6-field"><label>Entreprise</label><input type="text" id="wiz-cd-ent" value="${(existing.entreprise||'').replace(/"/g,'&quot;')}" placeholder="Nom de l'entreprise" style="font-size:16px"></div>
+              <div class="m6-field" style="position:relative">
+                <label>CCN applicable — tapez pour chercher</label>
+                <input type="text" id="wiz-cd-ccn" value="${(existing.ccnLabel||'').replace(/"/g,'&quot;')}" data-idcc="${existing.ccnIdcc||0}" placeholder="ex : Syntec, 675, Banque AFB…" style="font-size:16px" autocomplete="off">
+                <div id="wiz-cd-ccn-drop" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:200;box-shadow:0 4px 16px rgba(0,0,0,0.15);max-height:180px;overflow-y:auto"></div>
+                <div id="wiz-cd-ccn-info" style="margin-top:4px;font-size:0.72rem;color:var(--pierre)">Affiche les critères L3111-2 et droits maintenus selon votre CCN.</div>
+              </div>
+              <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="wiz-cd-cp" value="${existing.joursCPContrat||25}" min="25" max="50" style="font-size:16px"></div>
+              <div class="m6-field"><label>Taux journalier brut (€, optionnel)</label><input type="number" id="wiz-cd-tj" step="10" value="${existing.tauxJournalier||''}" placeholder="ex : 500" style="font-size:16px"></div>
+              <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="wiz-cd-mgr" value="${(existing.nomManager||'').replace(/"/g,'&quot;')}" placeholder="Pour les PDF" style="font-size:16px"></div>
+              <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="${existing.plafond||218}" min="100" max="366" style="font-size:16px"></div>
+              <div class="m6-alert info" style="margin-top:10px;font-size:0.76rem;line-height:1.45"><span>⚖️</span><div>En tant que cadre dirigeant (L3111-2), vous n'êtes pas soumis à la durée légale du travail. Les CP, jours travaillés et missions sont suivis ici.</div></div>
             `}
             <div class="m6-field"><label>Email manager (copie exports)</label><input type="email" id="wiz-email-mgr" value="${existing.emailManager||''}" placeholder="manager@entreprise.fr" style="font-size:16px"></div>
           </div></div>
@@ -352,6 +364,17 @@ const M6_Router = {
           }, 'forfait_heures');
         }
       }
+      if (step === 2 && regime === 'cadre_dirigeant' && window.M6_CCN_Adapter) {
+        const wInpCD  = this._root.querySelector('#wiz-cd-ccn');
+        const wDropCD = this._root.querySelector('#wiz-cd-ccn-drop');
+        const wInfoCD = this._root.querySelector('#wiz-cd-ccn-info');
+        if (wInpCD && wDropCD) {
+          M6_CCN_Adapter.bindAutocomplete(wInpCD, wDropCD, (ccn) => {
+            wInpCD.dataset.idcc = ccn.idcc || '';
+            if (wInfoCD) wInfoCD.innerHTML = M6_CCN_Adapter.renderCCNCard?.(ccn, 'cadre_dirigeant') || '';
+          }, 'cadre_dirigeant');
+        }
+      }
       this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
       this._root.querySelector('#wiz-back')?.addEventListener('click', () => { this._regime = null; localStorage.removeItem('M6_REGIME'); M6_Header.reset(); this._showSelector(); });
       this._root.querySelector('#wiz-finish')?.addEventListener('click', () => {
@@ -399,7 +422,16 @@ const M6_Router = {
           };
         } else {
           contract = { ...contract,
-            plafond: parseInt(this._root.querySelector('#wiz-plafond-cd')?.value) || existing.plafond || 218,
+            // Nom : "nom" est utilisé par CD (vs "nomCadre" pour FJ/FH) → on duplique pour cohérence
+            nom:             this._wizData?.nom || existing.nom || existing.nomCadre || '',
+            fonction:        this._root.querySelector('#wiz-cd-fnc')?.value.trim() || existing.fonction || '',
+            entreprise:      this._root.querySelector('#wiz-cd-ent')?.value.trim() || existing.entreprise || '',
+            ccnLabel:        this._root.querySelector('#wiz-cd-ccn')?.value.trim() || existing.ccnLabel || '',
+            ccnIdcc:         parseInt(this._root.querySelector('#wiz-cd-ccn')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
+            joursCPContrat:  parseInt(this._root.querySelector('#wiz-cd-cp')?.value) || existing.joursCPContrat || 25,
+            tauxJournalier:  parseFloat(this._root.querySelector('#wiz-cd-tj')?.value) || existing.tauxJournalier || 0,
+            nomManager:      this._root.querySelector('#wiz-cd-mgr')?.value.trim() || existing.nomManager || '',
+            plafond:         parseInt(this._root.querySelector('#wiz-plafond-cd')?.value) || existing.plafond || 218,
           };
         }
         if (window.M6_Storage) {
