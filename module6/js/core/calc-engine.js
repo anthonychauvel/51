@@ -151,8 +151,11 @@ const M6_ForfaitJours = {
     else if(travailles>=Math.floor(recap.joursTravailMax*0.9)) alertes.push({niveau:'warning',icon:'📅',
       titre:`Approche du plafond — ${recap.joursTravailMax-travailles}j restants`,
       texte:'Planifiez vos RTT avant la fin de l\'exercice.',loi:'L3121-41'});
-    // Entretien
-    if(!contract.entretienDate) alertes.push({niveau:'info',icon:'🗓️',
+    // Entretien — considéré "fait" si date OU case auto-attestée dans Validité
+    let _entretienAutoOk = false;
+    try { _entretienAutoOk = (localStorage.getItem(`M6_VALID_CHECK_forfait_jours_${year}_entretien_annuel`) === '1'); } catch(_) {}
+    const _entretienOk = contract.entretienDate || _entretienAutoOk;
+    if(!_entretienOk) alertes.push({niveau:'info',icon:'🗓️',
       titre:'Entretien annuel non enregistré',
       texte:'Obligatoire — risque de nullité du forfait (L3121-65).',loi:'L3121-65'});
     const fractionnement=this._calcFractionnement(data,year);
@@ -167,7 +170,10 @@ const M6_ForfaitJours = {
       tauxRemplissage:Math.min(100,Math.round(travailles/recap.joursTravailMax*100)),
       joursRestants:Math.max(0,recap.joursTravailMax-travailles),
       alertes,amplitudeViolations,simulRachat,fractionnement,prediction,
-      entretienDate:contract.entretienDate||null,parSemaine,
+      // entretienDate publie la date OU un marqueur si la case est auto-attestée
+      entretienDate: contract.entretienDate || (_entretienAutoOk ? '__attested__' : null),
+      entretienAutoOk: _entretienAutoOk,
+      parSemaine,
       firstEntry, effectiveArrivee,
     };
   },

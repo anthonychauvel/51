@@ -414,8 +414,12 @@ const M6_BioEngine = {
 
     // ── STRESS (HPA + épigénétique) ──────────────────────────
     // Basé sur : cortisol chronique [EPI], entretien [L3121-65], rachat [INF]
-    const entretienDone = contract.entretienDate &&
-      new Date(contract.entretienDate).getFullYear() >= year;
+    // Entretien considéré "fait" si : date saisie OU case auto-attestée dans Validité.
+    const _attestKey = `M6_VALID_CHECK_forfait_jours_${year}_entretien_annuel`;
+    let _entretienAutoOk = false;
+    try { _entretienAutoOk = (localStorage.getItem(_attestKey) === '1'); } catch(_) {}
+    const entretienDone = (contract.entretienDate &&
+      new Date(contract.entretienDate).getFullYear() >= year) || _entretienAutoOk;
     let stress = Math.min(100, Math.round(
       8
       + (rachetes > 0 ? rachetes * BIO.RACHAT_STRESS_PAR_JOUR : 0)
