@@ -356,6 +356,21 @@ const VFJ = {
       this._c.innerHTML = this._tplSetup();
       this._bindSetup();
     });
+    // ── PDF Annuel + Preuve (boutons présents dans le bilan) ─────
+    this._c.querySelector('#pdf-a')?.addEventListener('click', () => {
+      if (!window.M6_PDF) { M6_toast?.('Module PDF non chargé'); return; }
+      M6_PDF.exportAnnuel({
+        regime: this._regime, year: this._year, contract: this._contract,
+        data: this._data, moods: this._moods, analysis
+      });
+    });
+    this._c.querySelector('#pdf-preuve')?.addEventListener('click', () => {
+      if (!window.M6_PDF?.exportPreuve) { M6_toast?.('Mode Preuve non disponible'); return; }
+      M6_PDF.exportPreuve({
+        regime: this._regime, year: this._year, contract: this._contract,
+        data: this._data, analysis
+      });
+    });
   },
 
   _renderCal(ct) {
@@ -392,9 +407,16 @@ const VFJ = {
         };
         const MC = window.M6_MOOD_COLORS || window.MOOD_COLORS || DEFAULTS;
         const moods = this._moods || {};
+        // Décapsuler récursivement si on tombe sur d'anciennes données mal stockées
+        // {niveau:{niveau:'eleve'}} → 'eleve'
+        const _flatNiv = (m) => {
+          let n = m?.niveau;
+          while (n && typeof n === 'object') n = n.niveau;
+          return (typeof n === 'string') ? n : null;
+        };
         // Compter sur les deux orthographes possibles (eleve / elevé)
         const countNiveau = (...niveaux) =>
-          Object.values(moods).filter(m => niveaux.includes(m?.niveau)).length;
+          Object.values(moods).filter(m => niveaux.includes(_flatNiv(m))).length;
         return ['faible','ok','eleve','critique'].map(niv => {
           // Toujours utiliser le défaut si la palette source manque l'icône ou utilise la mauvaise clé
           const c = MC[niv] || (niv==='eleve' && MC['elevé']) || DEFAULTS[niv];
