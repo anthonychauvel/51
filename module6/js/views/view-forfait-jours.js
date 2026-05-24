@@ -166,7 +166,7 @@ const VFJ = {
         break;
       case 'glossaire':
         ct.innerHTML = zenjiHtml;
-        M6_GlossaireUI.render(ct);
+        M6_GlossaireUI.render(ct, 'forfait_jours');
         break;
     }
     } catch(e) {

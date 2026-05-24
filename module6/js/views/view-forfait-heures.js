@@ -99,7 +99,7 @@ const VFH = {
           break;
         case 'glossaire':
           ct.innerHTML = zenjiHtml;
-          if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct);
+          if (window.M6_GlossaireUI) M6_GlossaireUI.render(ct, 'forfait_heures');
           else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
           break;
       }
@@ -152,6 +152,7 @@ const VFH = {
       <div class="m6-stat-box"><div class="m6-stat-val">${a.semaines}</div><div class="m6-stat-label">Semaines saisies</div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux1}h</div><div class="m6-stat-label">HS à +${a.taux1}%</div></div>
       ${a.a3Paliers && a.taux_inter ? `<div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux_inter}h</div><div class="m6-stat-label">HS à +${a.taux_inter}%</div></div>` : ''}
+      <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux2}h</div><div class="m6-stat-label">HS à +${a.taux2}%</div></div>
       <div class="m6-stat-box" style="border-color:rgba(196,163,90,0.35)">
         <div class="m6-stat-val" style="color:var(--champagne-2)">${a.tauxHoraire>0?a.montantTotal.toFixed(0)+'€':'—'}</div>
         <div class="m6-stat-label">Montant brut HS</div>

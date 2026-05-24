@@ -154,7 +154,7 @@ const VCD = {
       case 'glossaire':
         ct.innerHTML = zenjiHtml;
         if (window.M6_GlossaireUI) {
-          M6_GlossaireUI.render(ct);
+          M6_GlossaireUI.render(ct, 'cadre_dirigeant');
         } else {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module glossaire non chargé.</div></div>';
         }
