@@ -230,4 +230,38 @@ global.M6_diag = function() {
   };
 };
 
+// ══════════════════════════════════════════════════════════════════
+//  FORCAGE MODE CLAIR — M6 ne supporte pas le dark mode
+// ══════════════════════════════════════════════════════════════════
+// Garantit que la classe `dark-mode` n'est jamais appliquée à <html>,
+// même si une préférence ancienne est encore stockée ou si un module
+// tente de l'ajouter. Nettoyage défensif au boot + observer DOM.
+(function _forceLightMode() {
+  try {
+    // Purger d'anciennes préférences éventuelles stockées
+    try { localStorage.removeItem('M6_DARK_MODE'); } catch(_) {}
+    try { localStorage.removeItem('M6_THEME'); } catch(_) {}
+    const _purge = () => {
+      try {
+        if (document.documentElement.classList.contains('dark-mode')) {
+          document.documentElement.classList.remove('dark-mode');
+        }
+        if (document.body && document.body.classList.contains('dark-mode')) {
+          document.body.classList.remove('dark-mode');
+        }
+      } catch(_) {}
+    };
+    _purge();
+    // Au DOMContentLoaded également
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', _purge);
+    }
+    // Observer pour annuler immédiatement si quelqu'un re-ajoute la classe
+    if (typeof MutationObserver !== 'undefined' && document.documentElement) {
+      const obs = new MutationObserver(_purge);
+      obs.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] });
+    }
+  } catch(_) { /* silencieux — best effort */ }
+})();
+
 })(window);
