@@ -66,6 +66,10 @@ const M6_Storage = {
   // ── Données mood tracking ─────────────────────────────────────
   getMoods(regime, year)   { return this._json(`${NS}_${regime}_${year}_MOODS`); },
   setMood(regime, year, dk, niveau) {
+    // Garde-fou : certains appelants passent l'OBJET mood entier {niveau:'eleve'} au lieu de la string.
+    // Sans ce déballage, on stocke {niveau:{niveau:'eleve'}, ts:...} → "[object Object]" partout.
+    if (niveau && typeof niveau === 'object') niveau = niveau.niveau || '';
+    if (!niveau) return; // ne rien stocker pour un mood vide
     const moods  = this.getMoods(regime, year);
     moods[dk]    = { niveau, ts: new Date().toISOString() };
     localStorage.setItem(`${NS}_${regime}_${year}_MOODS`, JSON.stringify(moods));
@@ -288,6 +292,30 @@ global.M6_PhaseAlert = M6_PhaseAlert;
       return { ok: true, regime, seen };
     } catch(e) { return { ok: false, error: e.message }; }
   };
+  // 5. Migration auto : réparer les moods stockés en double-wrap
+  //    {niveau:{niveau:'eleve'}, ts:...} → {niveau:'eleve', ts:...}
+  //    Bug introduit par un appelant qui passait l'objet entier au lieu de la string.
+  try {
+    for (let i=0; i<localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (!k || !k.endsWith('_MOODS')) continue;
+      let dirty = false;
+      let raw;
+      try { raw = JSON.parse(localStorage.getItem(k) || '{}'); } catch(_) { continue; }
+      if (!raw || typeof raw !== 'object') continue;
+      for (const dk of Object.keys(raw)) {
+        const m = raw[dk];
+        if (m && typeof m === 'object' && m.niveau && typeof m.niveau === 'object') {
+          // Décapsuler récursivement (au cas où il y aurait du triple-wrap)
+          let n = m.niveau;
+          while (n && typeof n === 'object' && n.niveau) n = n.niveau;
+          raw[dk] = { niveau: n || '', ts: m.ts || new Date().toISOString() };
+          dirty = true;
+        }
+      }
+      if (dirty) localStorage.setItem(k, JSON.stringify(raw));
+    }
+  } catch(_) { /* silencieux — la migration est best-effort */ }
 })();
 
 })(window);
