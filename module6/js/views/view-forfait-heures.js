@@ -76,7 +76,7 @@ const VFH = {
         case 'validite':
           ct.innerHTML = zenjiHtml + '<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">⚖ Validité juridique</div><div class="m6-ornement-line"></div></div><div id="vfh-validite-ct"></div>';
           if (window.M6_ValiditeFH) {
-            window.M6_ValiditeFH.render(ct.querySelector('#vfh-validite-ct'), this._contract, analysis);
+            window.M6_ValiditeFH.render(ct.querySelector('#vfh-validite-ct'), this._contract, analysis, this._year);
           } else {
             ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Validité non chargé.</div></div>';
           }

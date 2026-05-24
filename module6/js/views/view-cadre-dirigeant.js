@@ -146,7 +146,7 @@ const VCD = {
       case 'validite':
         ct.innerHTML = zenjiHtml + '<div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">⚖ Validité du statut Cadre Dirigeant</div><div class="m6-ornement-line"></div></div><div id="cd-validite-ct"></div>';
         if (window.M6_ValiditeCD) {
-          window.M6_ValiditeCD.render(ct.querySelector('#cd-validite-ct'), this._contract);
+          window.M6_ValiditeCD.render(ct.querySelector('#cd-validite-ct'), this._contract, this._year);
         } else {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module Validité non chargé.</div></div>';
         }
