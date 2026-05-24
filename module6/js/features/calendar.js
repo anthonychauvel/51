@@ -83,7 +83,16 @@ const M6_Calendar = {
 
   // ── Render ────────────────────────────────────────────────────
   _render() {
-    const plafond = this._contract?.plafond || 218;
+    // PRIORITÉ plafond identique au bilan : saisie manuelle > CCN > droit commun 218
+    const c = this._contract || {};
+    let plafond = c.plafondManuel || c.plafond || 218;
+    // Si le contrat n'a pas de plafond explicite mais une CCN reconnue, tenter la CCN
+    if ((!c.plafond || c.plafond === 218) && c.ccnIdcc && window.CCN_CADRES_API?.getFJ) {
+      try {
+        const ccnFJ = window.CCN_CADRES_API.getFJ(c.ccnIdcc);
+        if (ccnFJ?.plafond) plafond = c.plafondManuel || ccnFJ.plafond;
+      } catch(_) {}
+    }
     const travailles = this._countTravail();
     const pct = Math.min(100, Math.round(travailles / plafond * 100));
     const restants = Math.max(0, plafond - travailles);

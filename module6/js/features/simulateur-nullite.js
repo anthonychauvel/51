@@ -28,9 +28,12 @@ const M6_SimulateurNullite = {
    * @param {object} analysis — résultat M6_ForfaitJours.analyze()
    * @param {object} data     — données de saisie
    * @param {number} year
+   * @param {string} regime   — pour les ckKey des cases auto-attestées
    */
-  analyze(contract, analysis, data, year) {
+  analyze(contract, analysis, data, year, regime) {
     const conditions = [];
+    // Garde le régime accessible pour les ckKey (pas idéal mais évite de tout refactoriser)
+    contract = { ...(contract||{}), _regime: regime || contract?._regime || 'forfait_jours' };
 
     // ── Condition 1 : Accord de branche valide ─────────────────
     // Kivimäki / Cass. 2011 : le forfait doit reposer sur un accord collectif
@@ -178,6 +181,22 @@ const M6_SimulateurNullite = {
     });
 
     // ── Score global ───────────────────────────────────────────
+    // Lire les cases cochées par l'utilisateur (auto-attestation) — si une case
+    // warning/info est cochée, on la promeut à 'ok' pour l'affichage et le score.
+    const safeLS = (k) => { try { return localStorage.getItem(k); } catch(_) { return null; } };
+    for (const c of conditions) {
+      if (c.niveau !== 'ok' && c.niveau !== 'danger') {
+        const ckKey = `M6_VALID_CHECK_${contract._regime || 'forfait_jours'}_${year}_${c.id}`;
+        if (safeLS(ckKey) === '1') {
+          c.niveau = 'ok';
+          c.ok = true;
+          c.userValidated = true;
+        }
+      } else if (c.niveau === 'ok') {
+        // Si déjà ok mais l'utilisateur a décoché → laisser ok (l'analyse prime sur la décoche)
+      }
+    }
+
     const nbOk      = conditions.filter(c => c.ok).length;
     const nbDanger  = conditions.filter(c => c.niveau === 'danger').length;
     const nbWarning = conditions.filter(c => c.niveau === 'warning').length;
@@ -204,7 +223,7 @@ const M6_SimulateurNullite = {
   render(container, contract, analysis, data, year, regime) {
     regime = regime || 'forfait_jours';
     if (!container) return;
-    const res = this.analyze(contract, analysis, data, year);
+    const res = this.analyze(contract, analysis, data, year, regime);
 
     const niveauIcon = { ok:'✅', warning:'⚠️', danger:'❌', info:'ℹ️' };
     const niveauClass = { ok:'success', warning:'warning', danger:'danger', info:'info' };
@@ -265,15 +284,19 @@ const M6_SimulateurNullite = {
       <div>Cette analyse est indicative et ne constitue pas un avis juridique. En cas de doute, consultez un avocat spécialisé en droit social ou votre représentant syndical. Sources : Légifrance, Cour de cassation.</div>
     </div>`;
 
-    // ── Binding des cases à cocher (persistance localStorage) ──────
-    // Crucial : les checkboxes data-ck ne sauvegardent QUE si on attache le listener ici.
-    // (Avant : seul M6_ModePreuve.renderUI bindait, et il n'est pas appelé dans la section nullité.)
+    // ── Binding des cases à cocher (persistance localStorage + re-render) ──
+    // La case cochée par l'utilisateur = auto-attestation. À chaque change :
+    //  1. on persiste l'état dans localStorage
+    //  2. on re-render pour faire passer l'icône warning/info → ✅ et mettre à jour 5/6→6/6
     if (!container.__ckBound) {
       container.__ckBound = true;
       container.addEventListener('change', e => {
         const cb = e.target.closest('input[data-ck]');
         if (!cb) return;
         try { localStorage.setItem(cb.dataset.ck, cb.checked ? '1' : '0'); } catch(_) {}
+        // Re-render synchrone : analyse() relit les ckKey et promeut les conditions cochées
+        container.__ckBound = false; // permettre un nouveau bind après re-render
+        this.render(container, contract, analysis, data, year, regime);
       });
       // Empêcher le toggle <details> quand on coche la case dans le <summary>
       container.addEventListener('click', e => {
