@@ -235,11 +235,18 @@ const M6_Calendar = {
     const moods = Object.values(this._moods);
     if (!moods.length) return '';
     const mc = {};
-    moods.forEach(m => { mc[m.niveau]=(mc[m.niveau]||0)+1; });
+    moods.forEach(m => {
+      // Décapsuler récursivement si on tombe sur d'anciennes données mal stockées
+      let niv = m?.niveau;
+      while (niv && typeof niv === 'object') niv = niv.niveau;
+      if (!niv || typeof niv !== 'string') return; // ignorer les moods invalides
+      mc[niv] = (mc[niv] || 0) + 1;
+    });
+    if (!Object.keys(mc).length) return '';
     return `<div class="m6-card" style="margin-top:8px"><div class="m6-card-body">
       <div class="m6-card-label" style="margin-bottom:6px">Charge déclarée</div>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
-        ${Object.entries(mc).map(([niv,n])=>{const c=MOOD_COLORS[niv]||{};return `<div style="background:${c.bg};border:1px solid ${c.border};border-radius:8px;padding:5px 10px;font-size:0.7rem;color:${c.text}">${c.icon||''} <strong>${n}</strong> ${c.label||niv}</div>`;}).join('')}
+        ${Object.entries(mc).map(([niv,n])=>{const c=MOOD_COLORS[niv]||{};return `<div style="background:${c.bg||'#eee'};border:1px solid ${c.border||'#aaa'};border-radius:8px;padding:5px 10px;font-size:0.7rem;color:${c.text||'#333'}">${c.icon||''} <strong>${n}</strong> ${c.label||niv}</div>`;}).join('')}
       </div>
     </div></div>`;
   },
