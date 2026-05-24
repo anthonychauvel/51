@@ -49,10 +49,8 @@ const VFH = {
       showReset: true,
       showSwitch: true,
       onReset: () => {
-        if (!confirm('Reconfigurer le contrat FH ? Les données saisies sont conservées.')) return;
-        M6_Storage.setContract(this._regime, null);
-        this._contract = null;
-            if (window.M6_Router?._showWizard) M6_Router._showWizard(this._regime);
+        // NE PAS effacer le contrat — relancer le wizard pré-rempli pour modification
+        if (window.M6_Router?._showWizard) M6_Router._showWizard(this._regime);
         else location.reload();
       },
       yearPicker: yrPickerHtml2,
@@ -564,7 +562,7 @@ const VFH = {
     });
     const editBtn = this._c.querySelector('#fh-edit-contract');
     if (editBtn) editBtn.onclick = () => {
-      if (!confirm('Reconfigurer le contrat FH ? Les données saisies sont conservées.')) return;
+      // _editContract n'efface plus le contrat — pas besoin de confirmation
       this._editContract();
     };
     const yp = this._c.querySelector('#vfh-yr');
@@ -579,10 +577,8 @@ const VFH = {
     return m>0?`${e}h${String(m).padStart(2,'0')}`:`${e}h`;
   },
   _editContract() {
-    M6_Storage.setContract(this._regime, null);
-    this._contract = null;
+    // NE PAS effacer le contrat — le wizard est pré-rempli depuis le contrat existant
     this._section = 'bilan';
-    // Relancer le wizard de configuration via le router
     if (window.M6_Router?._showWizard) {
       M6_Router._showWizard(this._regime);
     } else if (window.M6_Router) {

@@ -100,9 +100,7 @@ const VCD = {
       showReset: true,
       showSwitch: true,
       onReset: () => {
-        if (!confirm('Reconfigurer le contrat ?')) return;
-        M6_Storage.setContract(REGIME, null);
-        this._contract = null;
+        // NE PAS effacer le contrat — ouvrir le wizard pré-rempli pour modification
         this._c.innerHTML = this._tplSetup();
         this._bindSetup();
       },
@@ -343,7 +341,11 @@ const VCD = {
     this._c.querySelector('#cd-saisir')?.addEventListener('click',()=>{this._section='calendrier';this.render();});
     this._c.querySelector('#cd-bio-card')?.addEventListener('click',()=>{this._section='sante';this.render();});
     this._c.querySelector('#cd-newyr')?.addEventListener('click',()=>{const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1);if(!y||isNaN(y))return;const yr=parseInt(y);M6_Storage.createYear(REGIME,yr);this._year=yr;M6_Storage.setActiveYear(yr);this._load();this.render();M6_toast(`Exercice ${yr} créé`);});
-    this._c.querySelector('#cd-reset')?.addEventListener('click',()=>{if(!confirm('Reconfigurer le contrat ? Les données de saisie sont conservées.'))return;M6_Storage.setContract(REGIME,null);this._contract=null;this._c.innerHTML=this._tplSetup();this._bindSetup();});
+    this._c.querySelector('#cd-reset')?.addEventListener('click',()=>{
+      // Ouvre le wizard pré-rempli — l'utilisateur modifie ce qu'il veut et enregistre, ou annule.
+      this._c.innerHTML=this._tplSetup();
+      this._bindSetup();
+    });
   },
 
   // ── CALENDRIER ─────────────────────────────────────────────────
@@ -749,29 +751,33 @@ const VCD = {
 
   // ── SETUP ──────────────────────────────────────────────────────
   _tplSetup() {
+    const c = this._contract || {};
+    const isEdit = !!(c.nom || c.fonction);
     return `<div style="padding:32px 16px;padding-top:calc(40px + env(safe-area-inset-top,0));min-height:100dvh;background:var(--ivoire)">
       <!-- Portrait Zenji -->
       <div style="text-align:center;margin-bottom:24px">
         <img src="../module6/images/Cadre.png" alt="Zenji" style="width:100px;height:100px;object-fit:cover;object-position:top center;border-radius:50%;border:3px solid var(--champagne);margin:0 auto 10px">
         <div style="font-family:var(--font-display);font-size:1.4rem;font-weight:600;color:var(--charbon)">Cadre Dirigeant</div>
-        <div style="font-size:0.7rem;color:var(--pierre);margin-top:4px">Art. L3111-2 — Configuration initiale</div>
+        <div style="font-size:0.7rem;color:var(--pierre);margin-top:4px">Art. L3111-2 — ${isEdit?'Modifier la configuration':'Configuration initiale'}</div>
       </div>
+      ${isEdit?`<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>✏️</span><div>Vos paramètres actuels sont pré-remplis. Modifiez ce qui change — vos données saisies (jours, CP, projets, entretiens) sont conservées.</div></div>`:''}
       <div class="m6-card"><div class="m6-card-body">
-        <div class="m6-field"><label>Votre nom complet</label><input type="text" id="s-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
-        <div class="m6-field"><label>Fonction</label><input type="text" id="s-fnc" placeholder="Directeur Général, DAF, DRH…" style="font-size:16px"></div>
-        <div class="m6-field"><label>Entreprise</label><input type="text" id="s-ent" placeholder="Nom de l'entreprise" style="font-size:16px"></div>
+        <div class="m6-field"><label>Votre nom complet</label><input type="text" id="s-nom" value="${(c.nom||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fonction</label><input type="text" id="s-fnc" value="${(c.fonction||'').replace(/"/g,'&quot;')}" placeholder="Directeur Général, DAF, DRH…" style="font-size:16px"></div>
+        <div class="m6-field"><label>Entreprise</label><input type="text" id="s-ent" value="${(c.entreprise||'').replace(/"/g,'&quot;')}" placeholder="Nom de l'entreprise" style="font-size:16px"></div>
         <div class="m6-field" style="position:relative">
           <label>CCN applicable — tapez pour chercher</label>
-          <input type="text" id="s-ccn" placeholder="ex : Syntec, 675, Banque AFB…" style="font-size:16px" autocomplete="off">
+          <input type="text" id="s-ccn" value="${(c.ccnLabel||'').replace(/"/g,'&quot;')}" placeholder="ex : Syntec, 675, Banque AFB…" style="font-size:16px" autocomplete="off">
           <div id="s-ccn-drop-cd" style="display:none;position:absolute;left:0;right:0;top:100%;background:#fff;border:1px solid var(--ivoire-3);border-radius:var(--radius);z-index:100;box-shadow:var(--shadow);max-height:180px;overflow-y:auto"></div>
           <div id="s-ccn-cd-info" style="display:none;margin-top:4px"></div>
           <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Affiche les critères L3111-2 et droits maintenus selon votre CCN.</div>
         </div>
         <div class="m6-field" style="display:none"><label>_old_ccn</label><input type="text" id="_s-ccn-hidden" placeholder="ex : Syntec, Banque AFB, Hôtellerie…" style="font-size:16px"></div>
-        <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="s-cp" value="25" min="25" max="50" style="font-size:16px"></div>
-        <div class="m6-field"><label>Date début exercice (si en cours d'année)</label><input type="date" id="s-debut" style="font-size:16px"></div>
-        <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="s-mgr" placeholder="Pour les PDF" style="font-size:16px"></div>
-        <button class="m6-btn m6-btn-gold" id="s-save">Commencer le suivi →</button>
+        <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="s-cp" value="${c.joursCPContrat||25}" min="25" max="50" style="font-size:16px"></div>
+        <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata uniquement si renseignée)</small></label><input type="date" id="s-debut" value="${c.dateArrivee||''}" style="font-size:16px"></div>
+        <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="s-mgr" value="${(c.nomManager||'').replace(/"/g,'&quot;')}" placeholder="Pour les PDF" style="font-size:16px"></div>
+        <button class="m6-btn m6-btn-gold" id="s-save">${isEdit?'💾 Enregistrer les modifications':'Commencer le suivi →'}</button>
+        ${isEdit?`<button class="m6-btn m6-btn-ghost" id="s-cancel" style="margin-top:8px;width:100%;font-size:0.8rem">Annuler</button>`:''}
       </div></div>
       <div class="m6-alert info" style="margin-top:12px;font-size:0.78rem">
         <span>⚖️</span><div>En tant que cadre dirigeant (L3111-2), vous n'êtes pas soumis à la durée légale. Ce module suit vos CP, vos journées de présence, vos missions et votre santé.</div>
@@ -805,23 +811,31 @@ const VCD = {
       );
     }
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
+      // Préserver les champs non touchés (projets snapshot, autres metadonnées)
+      const existing = this._contract || {};
       const c = {
-        nom:           this._c.querySelector('#s-nom')?.value.trim(),
-        fonction:      this._c.querySelector('#s-fnc')?.value.trim(),
-        entreprise:    this._c.querySelector('#s-ent')?.value.trim(),
-        ccnLabel:      this._c.querySelector('#s-ccn')?.value.trim(),
+        ...existing,
+        nom:           this._c.querySelector('#s-nom')?.value.trim() || existing.nom || '',
+        fonction:      this._c.querySelector('#s-fnc')?.value.trim() || existing.fonction || '',
+        entreprise:    this._c.querySelector('#s-ent')?.value.trim() || existing.entreprise || '',
+        ccnLabel:      this._c.querySelector('#s-ccn')?.value.trim() || existing.ccnLabel || '',
         joursCPContrat:parseInt(this._c.querySelector('#s-cp')?.value)||25,
-        dateArrivee:   this._c.querySelector('#s-debut')?.value||null,
-        nomManager:    this._c.querySelector('#s-mgr')?.value.trim(),
+        dateArrivee:   this._c.querySelector('#s-debut')?.value || null,
+        nomManager:    this._c.querySelector('#s-mgr')?.value.trim() || existing.nomManager || '',
       };
       M6_Storage.setContract(REGIME, c);
       M6_Storage.createYear(REGIME, this._year);
+      this._load(); this.render();
+      M6_toast?.('💾 Configuration enregistrée');
+    });
+    // Bouton Annuler (mode édition uniquement)
+    this._c.querySelector('#s-cancel')?.addEventListener('click', () => {
       this._load(); this.render();
     });
   }
 };
 
 global.VCD = VCD;
-global.VCD_editContract = () => { M6_Storage.setContract(REGIME,null); VCD._contract=null; VCD._c.innerHTML=VCD._tplSetup(); VCD._bindSetup(); };
+global.VCD_editContract = () => { VCD._c.innerHTML=VCD._tplSetup(); VCD._bindSetup(); };
 
 })(window);
