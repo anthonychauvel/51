@@ -50,38 +50,41 @@
   --dm-border:     rgba(196,163,90,0.20);
 }
 
-/* ── Dark mode — activé par classe sur <html> ─────────────────── */
+/* ── M6 EST FORCÉ EN MODE CLAIR ──────────────────────────────────
+   Les règles dark-mode ont été DÉSACTIVÉES intentionnellement.
+   Même si l'utilisateur règle son téléphone en mode sombre système,
+   l'app M6 reste en clair pour garantir la lisibilité des contenus
+   juridiques (codes couleur warning/danger/ok, PDF d'exports, etc.).
+   Si vous souhaitez réactiver le dark mode, restaurez les règles
+   ci-dessous depuis git ou le zip d'origine. */
+html, body {
+  color-scheme: light !important;
+}
+/* Annule la classe dark-mode si elle est ajoutée par un autre script ou module */
 html.dark-mode {
-  --ivoire:    #1E1C19;
-  --ivoire-2:  #2A2724;
-  --ivoire-3:  #363330;
-  --charbon:   #F0ECE6;
-  --charbon-2: #D8D0C6;
-  --charbon-3: #BEB5A8;
-  --pierre:    #9A9188;
-  --pierre-2:  #6A635C;
-  --champagne-3: #2E2A1A;
-  --succes-bg: #0D2318;
-  --alerte-bg: #2A0D0D;
-  --warning-bg:#2A2000;
-  --info-bg:   #12153A;
-  --shadow:    0 4px 16px rgba(0,0,0,0.4);
-  --shadow-lg: 0 8px 32px rgba(0,0,0,0.6);
-  --grey-line: 1px solid rgba(196,163,90,0.15);
-  color-scheme: dark;
+  --ivoire:    #FAF7F2;
+  --ivoire-2:  #F2EDE4;
+  --ivoire-3:  #E8E0D1;
+  --charbon:   #1A1714;
+  --charbon-2: #2C2823;
+  --charbon-3: #4A4540;
+  --pierre:    #8A847C;
+  --pierre-2:  #B5AFA6;
+  color-scheme: light !important;
 }
-
-html.dark-mode body { background: var(--ivoire); }
-html.dark-mode .m6-header { background: #0D0C0B; border-bottom: 1px solid rgba(196,163,90,0.25); }
-html.dark-mode .m6-daily-msg { background: #171512; }
-html.dark-mode .m6-bottom-nav { background: #0D0C0B; border-top: 1px solid rgba(196,163,90,0.20); }
-html.dark-mode .m6-overlay { background: rgba(0,0,0,0.85); }
-html.dark-mode .m6-sheet { background: #1A1816; border-top: 1px solid rgba(196,163,90,0.25); }
-html.dark-mode input, html.dark-mode select, html.dark-mode textarea {
-  background: #2A2724; color: #F0ECE6; border-color: #3D3936;
+html.dark-mode body,
+html.dark-mode .m6-header,
+html.dark-mode .m6-daily-msg,
+html.dark-mode .m6-bottom-nav,
+html.dark-mode .m6-overlay,
+html.dark-mode .m6-sheet,
+html.dark-mode input,
+html.dark-mode select,
+html.dark-mode textarea,
+html.dark-mode .m6-btn-ghost,
+html.dark-mode #zenji-sheet {
+  background: revert; color: revert; border-color: revert;
 }
-html.dark-mode .m6-btn-ghost { border-color: rgba(196,163,90,0.35); color: var(--champagne); }
-html.dark-mode #zenji-sheet { background: #1A1816; }
 
 /* ── Reset ───────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -1083,4 +1086,48 @@ input[type=range] {
   color: var(--pierre);
   font-size: 0.7rem;
   letter-spacing: 0.1em;
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   M6 FORCÉ EN PORTRAIT — verrouillage visuel orientation paysage
+   ═══════════════════════════════════════════════════════════════
+   Aucune API web ne peut techniquement empêcher la rotation côté
+   PWA mobile (l'OS décide). On affiche donc un overlay plein écran
+   qui masque tout le contenu et invite à tourner le téléphone.
+   Vérifie que body a min-width pour éviter les bugs de petits
+   écrans en portrait étroit. */
+@media screen and (orientation: landscape) and (max-height: 600px) {
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background: #1A1714;
+    z-index: 99998;
+  }
+  body::after {
+    content: '📱 Tournez votre téléphone\A\A M6 Cadres est optimisé pour une utilisation en portrait. Veuillez remettre votre appareil en position verticale pour continuer.';
+    white-space: pre-wrap;
+    position: fixed;
+    inset: 0;
+    z-index: 99999;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding: 40px 32px;
+    color: #FAF7F2;
+    background: #1A1714;
+    font-family: Georgia, serif;
+    font-size: 1.1rem;
+    line-height: 1.7;
+    letter-spacing: 0.02em;
+  }
+  /* Masquer tout le reste */
+  #m6-global-header,
+  #m6-app-root,
+  .m6-overlay,
+  zenji-daily-bar,
+  #zenji-daily-bar {
+    display: none !important;
+  }
 }
