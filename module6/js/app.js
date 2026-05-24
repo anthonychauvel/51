@@ -248,10 +248,12 @@ const M6_Router = {
         ` : step===1 ? `
           <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--charbon);margin-bottom:8px">Votre exercice</div>
           <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Définissez la période de suivi (peut chevaucher deux années civiles).</p>
+          ${(existing.dateDebutExercice||existing.nomCadre||existing.nom)?`<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>✏️</span><div>Vos paramètres actuels sont pré-remplis. Modifiez ce qui change.</div></div>`:''}
           <div class="m6-card"><div class="m6-card-body">
-            <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="wiz-debut" value="${new Date().getFullYear()}-01-01" style="font-size:16px"></div>
-            <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="wiz-fin" value="${new Date().getFullYear()}-12-31" style="font-size:16px"></div>
-            <div class="m6-field"><label>Votre nom (pour les exports PDF)</label><input type="text" id="wiz-nom" placeholder="Prénom NOM" style="font-size:16px"></div>
+            <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="wiz-debut" value="${existing.dateDebutExercice||`${new Date().getFullYear()}-01-01`}" style="font-size:16px"></div>
+            <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="wiz-fin" value="${existing.dateFinExercice||`${new Date().getFullYear()}-12-31`}" style="font-size:16px"></div>
+            <div class="m6-field"><label>Votre nom (pour les exports PDF)</label><input type="text" id="wiz-nom" value="${((existing.nomCadre||existing.nom)||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
+            <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata si renseignée)</small></label><input type="date" id="wiz-arrivee" value="${existing.dateArrivee||''}" style="font-size:16px"></div>
           </div></div>
           <button class="m6-btn m6-btn-gold" id="wiz-next" style="width:100%">Continuer →</button>
           <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
@@ -301,7 +303,12 @@ const M6_Router = {
           const debut    = this._root.querySelector('#wiz-debut')?.value;
           const fin      = this._root.querySelector('#wiz-fin')?.value;
           if (debut && fin && debut > fin) { M6_toast('La date de fin doit être après le début'); return; }
-          this._wizData = { ...this._wizData, debut, fin, nom: this._root.querySelector('#wiz-nom')?.value.trim() };
+          this._wizData = {
+            ...this._wizData,
+            debut, fin,
+            nom:     this._root.querySelector('#wiz-nom')?.value.trim(),
+            arrivee: this._root.querySelector('#wiz-arrivee')?.value || null,
+          };
         }
         step++; render();
       });
@@ -348,22 +355,41 @@ const M6_Router = {
       this._root.querySelector('#wiz-prev')?.addEventListener('click', () => { step--; render(); });
       this._root.querySelector('#wiz-back')?.addEventListener('click', () => { this._regime = null; localStorage.removeItem('M6_REGIME'); M6_Header.reset(); this._showSelector(); });
       this._root.querySelector('#wiz-finish')?.addEventListener('click', () => {
-        let contract = { nomCadre: this._wizData?.nom||'', emailManager: this._root.querySelector('#wiz-email-mgr')?.value.trim()||'', dateDebutExercice: this._wizData?.debut||null, dateFinExercice: this._wizData?.fin||null, dateArrivee: this._wizData?.arrivee||null };
+        // PRÉSERVATION : on garde tous les champs du contrat existant et on n'écrase
+        // que ce que l'utilisateur a explicitement saisi/modifié dans le wizard.
+        let contract = {
+          ...existing,
+          nomCadre:           this._wizData?.nom || existing.nomCadre || existing.nom || '',
+          emailManager:       this._root.querySelector('#wiz-email-mgr')?.value.trim() || existing.emailManager || '',
+          dateDebutExercice:  this._wizData?.debut || existing.dateDebutExercice || null,
+          dateFinExercice:    this._wizData?.fin   || existing.dateFinExercice   || null,
+          dateArrivee:        this._wizData?.arrivee || existing.dateArrivee || null,
+        };
         if (regime === 'forfait_jours') {
-          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond')?.value)||218, joursCPContrat: parseFloat(this._root.querySelector('#wiz-cp')?.value)||25, tauxJournalier: parseFloat(this._root.querySelector('#wiz-tj')?.value)||0, ccnLabel: this._root.querySelector('#wiz-ccn')?.value.trim()||'',
-                  ccnIdcc: parseInt(this._root.querySelector('#wiz-ccn')?.dataset.idcc||'0')||0,
-                  tauxMajorationRachat: 10 };
+          contract = { ...contract,
+            plafond:               parseInt(this._root.querySelector('#wiz-plafond')?.value) || existing.plafond || 218,
+            joursCPContrat:        parseFloat(this._root.querySelector('#wiz-cp')?.value) || existing.joursCPContrat || 25,
+            tauxJournalier:        parseFloat(this._root.querySelector('#wiz-tj')?.value) || existing.tauxJournalier || 0,
+            ccnLabel:              this._root.querySelector('#wiz-ccn')?.value.trim() || existing.ccnLabel || '',
+            ccnIdcc:               parseInt(this._root.querySelector('#wiz-ccn')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
+            tauxMajorationRachat:  existing.tauxMajorationRachat || 10,
+          };
         } else if (regime === 'forfait_heures') {
           contract = { ...contract,
-                  seuilHebdo:    parseFloat(this._root.querySelector('#wiz-seuil')?.value)||39,
-                  contingent:    parseInt(this._root.querySelector('#wiz-cont')?.value)||220,
-                  prorataContingent: !!(this._root.querySelector('#wiz-prorata-cont')?.checked),
-                  tauxHoraire:   parseFloat(this._root.querySelector('#wiz-tauxH')?.value)||0,
-                  ccnLabel:      this._root.querySelector('#wiz-ccn-fh')?.value.trim()||'',
-                  ccnIdcc:       parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc||'0')||0,
-                  taux1: 25, taux2: 50, palier1: 8 };
+            seuilHebdo:        parseFloat(this._root.querySelector('#wiz-seuil')?.value) || existing.seuilHebdo || 39,
+            contingent:        parseInt(this._root.querySelector('#wiz-cont')?.value) || existing.contingent || 220,
+            prorataContingent: !!(this._root.querySelector('#wiz-prorata-cont')?.checked),
+            tauxHoraire:       parseFloat(this._root.querySelector('#wiz-tauxH')?.value) || existing.tauxHoraire || 0,
+            ccnLabel:          this._root.querySelector('#wiz-ccn-fh')?.value.trim() || existing.ccnLabel || '',
+            ccnIdcc:           parseInt(this._root.querySelector('#wiz-ccn-fh')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
+            taux1:             existing.taux1 || 25,
+            taux2:             existing.taux2 || 50,
+            palier1:           existing.palier1 || 8,
+          };
         } else {
-          contract = { ...contract, plafond: parseInt(this._root.querySelector('#wiz-plafond-cd')?.value)||218 };
+          contract = { ...contract,
+            plafond: parseInt(this._root.querySelector('#wiz-plafond-cd')?.value) || existing.plafond || 218,
+          };
         }
         if (window.M6_Storage) {
           M6_Storage.setContract(regime, contract);
