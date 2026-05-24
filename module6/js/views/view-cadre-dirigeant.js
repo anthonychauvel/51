@@ -357,7 +357,7 @@ const VCD = {
           this._load();
           M6_Calendar.refresh?.(this._data,this._moods);
           M6_toast('Enregistré');
-        });
+        }, this._contract);
     } else {
       ct.innerHTML = '<div class="m6-alert info" style="margin:16px"><span>⚠️</span><div>Module calendrier non chargé.</div></div>';
     }

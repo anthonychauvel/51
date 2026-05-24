@@ -225,55 +225,27 @@ const VFJ = {
   },
 
   _tplNav() {
-    // Regroupement : 4 onglets principaux + sheet "Plus"
-    const suivreActif = ['bilan','bio','tendances'].includes(this._section);
-    const verifActif  = ['nullite','entretien'].includes(this._section);
-    const plusActif   = ['export','glossaire','rupture'].includes(this._section);
-    const mk = (sec, icon, label, isActive, dataMore) =>
-      `<button class="m6-nav-item ${isActive?'active':''}" data-sec="${sec}" ${dataMore?`data-more="${dataMore}"`:''}><span class="nav-icon">${icon}</span>${label}</button>`;
-    return `<nav class="m6-bottom-nav m6-nav-4">
-      ${mk('calendrier', '◻', 'Saisir',   this._section==='calendrier')}
-      ${mk('bilan',      '◈', 'Suivre',   suivreActif, 'suivre')}
-      ${mk('nullite',    '⚖', 'Vérifier', verifActif,  'verif')}
-      ${mk('__more',     '⋯', 'Plus',     plusActif,   'plus')}
+    // Nav uniforme avec FH/CD : tous les onglets visibles (ergonomie identique à l'app)
+    const mk = (id, icon, label) =>
+      `<button class="m6-nav-item ${this._section===id?'active':''}" data-sec="${id}">
+        <span class="nav-icon">${icon}</span>${label}
+      </button>`;
+    return `<nav class="m6-bottom-nav">
+      ${mk('bilan',      '◈', 'Bilan')}
+      ${mk('calendrier', '◻', 'Saisir')}
+      ${mk('bio',        '♡', 'Santé')}
+      ${mk('tendances',  '◗', 'Tendances')}
+      <div class="m6-nav-row-sep"></div>
+      ${mk('nullite',    '⚖', 'Validité')}
+      ${mk('entretien',  '◉', 'Entretien')}
+      ${mk('export',     '◆', 'Export')}
+      ${mk('glossaire',  '≡', 'Glossaire')}
     </nav>`;
   },
 
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b => {
       b.onclick = () => {
-        const more = b.dataset.more;
-        if (more === 'plus') {
-          window.M6_showMoreSheet([
-            { id: 'export',    icon: '◆', label: 'Export PDF' },
-            { id: 'rupture',   icon: '⚖', label: 'Rupture conventionnelle' },
-            { id: 'glossaire', icon: '≡', label: 'Glossaire' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
-        if (more === 'suivre') {
-          // Si pas déjà dans "suivre", on entre direct sur bilan
-          if (!['bilan','bio','tendances'].includes(this._section)) {
-            this._section = 'bilan'; this.render(); return;
-          }
-          // Sinon on ouvre le picker des sous-sections
-          window.M6_showMoreSheet([
-            { id: 'bilan',     icon: '◈', label: 'Bilan' },
-            { id: 'bio',       icon: '♡', label: 'Santé' },
-            { id: 'tendances', icon: '◗', label: 'Tendances' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
-        if (more === 'verif') {
-          if (!['nullite','entretien'].includes(this._section)) {
-            this._section = 'nullite'; this.render(); return;
-          }
-          window.M6_showMoreSheet([
-            { id: 'nullite',   icon: '⚖', label: 'Validité juridique' },
-            { id: 'entretien', icon: '◉', label: 'Entretien annuel' },
-          ], (id) => { this._section = id; this.render(); });
-          return;
-        }
         this._section = b.dataset.sec;
         this.render();
       };
@@ -388,7 +360,7 @@ const VFJ = {
 
   _renderCal(ct) {
     ct.innerHTML = '<div id="cal-root"></div>';
-    M6_Calendar.init(ct.querySelector('#cal-root'), this._regime, this._year, this._data, this._moods, (dk,v,m) => this._save(dk,v,m));
+    M6_Calendar.init(ct.querySelector('#cal-root'), this._regime, this._year, this._data, this._moods, (dk,v,m) => this._save(dk,v,m), this._contract);
   },
 
   // ── BIO ─────────────────────────────────────────────────────
