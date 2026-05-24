@@ -109,15 +109,21 @@ const VFH = {
     } finally {
       this._bindNav();
     }
-    // Coach contextuel// Détruire l'ancienne bulle avant réinitialisation
+    // Détruire l'ancienne bulle Zenji avant réinitialisation
     if (window.M6_ZenjiPopup) M6_ZenjiPopup.destroy();
     // Popup Zenji flottant
     if (window.M6_ZenjiPopup) {
       M6_ZenjiPopup.init(
-        { joursEffectifs:analysis.semaines, plafond:analysis.contingent,
+        { joursEffectifs: analysis.semaines, plafond: analysis.contingent,
+          // CRITIQUE : _selectPopup FH lit `a.semaines` pour détecter une saisie existante.
+          // Sans ce champ, Zenji affichait "Saisissez vos premières semaines" même avec données.
+          semaines:       analysis.semaines,
+          totalHS:        analysis.totalHS,
+          contingent:     analysis.contingent,
+          tauxRemplissage:analysis.tauxRemplissage,
           rttPris:0, rttSolde:0, rachetes:0, cpPris:0,
-          tauxRemplissage:analysis.tauxRemplissage, alertes:analysis.alertes,
-          rttTheoriques:0, joursRestants:analysis.contingent - analysis.totalHS },
+          alertes: analysis.alertes,
+          rttTheoriques:0, joursRestants: analysis.contingent - analysis.totalHS },
         bio, this._contract,
         (action) => {
           if(action.includes('Santé')||action.includes('santé')) { this._section='bio'; this.render(); }
@@ -127,7 +133,7 @@ const VFH = {
         'forfait_heures'
       );
     }
-    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, this._regime||'forfait_heures');
+    if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, 'forfait_heures');
     // Notification automatique si phase Épuisement (P4)
     if (bio?.hasData && bio?.phase?.code === 'P4' && window.Notification && Notification.permission === 'granted') {
       const lastP4 = localStorage.getItem('M6_FH_LAST_P4_NOTIF');
@@ -145,6 +151,7 @@ const VFH = {
       <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHS}h</div><div class="m6-stat-label">Total HS</div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.semaines}</div><div class="m6-stat-label">Semaines saisies</div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux1}h</div><div class="m6-stat-label">HS à +${a.taux1}%</div></div>
+      ${a.a3Paliers && a.taux_inter ? `<div class="m6-stat-box"><div class="m6-stat-val">${a.totalHSTaux_inter}h</div><div class="m6-stat-label">HS à +${a.taux_inter}%</div></div>` : ''}
       <div class="m6-stat-box" style="border-color:rgba(196,163,90,0.35)">
         <div class="m6-stat-val" style="color:var(--champagne-2)">${a.tauxHoraire>0?a.montantTotal.toFixed(0)+'€':'—'}</div>
         <div class="m6-stat-label">Montant brut HS</div>
@@ -203,7 +210,17 @@ const VFH = {
 
     ${entries.map(([wk,v])=>{
       const h=parseFloat(v.heures)||0, extra=Math.max(0,h-a.seuil);
-      const hs1=Math.min(extra,a.palier), hs2=Math.max(0,extra-a.palier);
+      // 3 paliers si CCN HCR/Restauration : palier1 + palier_inter + reste
+      let hs1, hs_inter, hs2;
+      if (a.taux_inter && a.palier_inter) {
+        hs1      = Math.min(extra, a.palier);
+        hs_inter = Math.min(Math.max(0, extra - a.palier), a.palier_inter);
+        hs2      = Math.max(0, extra - a.palier - a.palier_inter);
+      } else {
+        hs1      = Math.min(extra, a.palier);
+        hs_inter = 0;
+        hs2      = Math.max(0, extra - a.palier);
+      }
       const isCur=wk===curWk;
       const [,wn]=wk.split('-W');
       return `<div class="m6-card" style="margin-bottom:10px${isCur?';border-color:var(--champagne)':''}">
@@ -214,7 +231,7 @@ const VFH = {
               <div style="font-family:var(--font-display);font-size:1.3rem;font-weight:600">${this._formatH(h)}</div>
             </div>
             <div style="text-align:right">
-              ${extra>0?`<div style="font-size:0.78rem;color:var(--champagne-2);font-weight:500">+${this._formatH(extra)} HS</div><div style="font-size:0.68rem;color:var(--pierre)">${hs1>0?this._formatH(hs1)+' à +'+a.taux1+'%':''}${hs2>0?' · '+this._formatH(hs2)+' à +'+a.taux2+'%':''}</div>`:`<div style="font-size:0.78rem;color:var(--succes)">Conforme</div>`}
+              ${extra>0?`<div style="font-size:0.78rem;color:var(--champagne-2);font-weight:500">+${this._formatH(extra)} HS</div><div style="font-size:0.68rem;color:var(--pierre)">${hs1>0?this._formatH(hs1)+' à +'+a.taux1+'%':''}${hs_inter>0?' · '+this._formatH(hs_inter)+' à +'+a.taux_inter+'%':''}${hs2>0?' · '+this._formatH(hs2)+' à +'+a.taux2+'%':''}</div>`:`<div style="font-size:0.78rem;color:var(--succes)">Conforme</div>`}
             </div>
             <button data-del="${wk}" style="background:none;border:none;color:var(--pierre);font-size:1rem;cursor:pointer;padding:4px 8px;margin-left:4px">✕</button>
           </div>
