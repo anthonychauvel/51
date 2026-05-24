@@ -343,6 +343,12 @@ const M6_PDF = {
 
   // ── Export annuel ─────────────────────────────────────────────
   exportAnnuel(opts) {
+    // Dispatch par régime — chaque régime a son propre format de PDF annuel
+    if (opts && opts.regime === 'forfait_heures') return this._genAnnuelFH(opts);
+    if (opts && opts.regime === 'cadre_dirigeant') return this.exportDirigeant({
+      year: opts.year, contract: opts.contract, data: opts.data, moods: opts.moods,
+      analysis: opts.analysis, projets: opts.projets
+    });
     this._genAnnuel(opts);
   },
 
@@ -861,12 +867,18 @@ const M6_PDF = {
       doc.setFontSize(8); doc.setTextColor(138,132,124);
       doc.text('Aucune semaine saisie pour ce mois.', M+3, y); y+=10;
     } else {
+      // Détecter 3 paliers (CCN HCR, Restauration rapide…)
+      const has3 = !!(analysis?.a3Paliers && analysis?.taux_inter);
       rect(M,y-1,PW,6,[240,235,228]);
-      ['Semaine','Heures','HS palier 1','HS palier 2','Total HS','Montant brut'].forEach((h,i)=>{
-        txt(h, M+2+i*32, y+4, 7, [70,65,60], 'bold');
+      const headers = has3
+        ? ['Semaine','Heures','HS +'+(analysis?.taux1||10)+'%','HS +'+analysis.taux_inter+'%','HS +'+(analysis?.taux2||50)+'%','Total HS','Montant']
+        : ['Semaine','Heures','HS palier 1','HS palier 2','Total HS','Montant brut'];
+      const colStep = Math.floor(PW / headers.length);
+      headers.forEach((h,i)=>{
+        txt(h, M+2+i*colStep, y+4, 7, [70,65,60], 'bold');
       });
       y += 7;
-      let totalH=0, totalHS1=0, totalHS2=0, totalHSm=0, totalMnt=0;
+      let totalH=0, totalHS1=0, totalHSinter=0, totalHS2=0, totalHSm=0, totalMnt=0;
       semsOfMonth.forEach(([wk,v],i)=>{
         chk();
         const h  = parseFloat(v.heures)||0;
@@ -874,14 +886,30 @@ const M6_PDF = {
         const extra = Math.max(0,h-seuil);
         const t1    = analysis?.taux1||25, pal=analysis?.palier||8;
         const t2    = analysis?.taux2||50;
-        const hs1   = Math.min(extra,pal), hs2=Math.max(0,extra-pal);
         const tauxH = contract.tauxHoraire||0;
-        const mnt   = tauxH>0 ? Math.round((hs1*tauxH*(1+t1/100)+hs2*tauxH*(1+t2/100))*100)/100 : 0;
-        totalH+=h; totalHS1+=hs1; totalHS2+=hs2; totalHSm+=(hs1+hs2); totalMnt+=mnt;
+        let hs1, hs_inter, hs2, mnt;
+        if (has3) {
+          const palInter = analysis.palier_inter || 4;
+          const tInter = analysis.taux_inter;
+          hs1      = Math.min(extra, pal);
+          hs_inter = Math.min(Math.max(0, extra - pal), palInter);
+          hs2      = Math.max(0, extra - pal - palInter);
+          mnt = tauxH>0 ? Math.round((hs1*tauxH*(1+t1/100) + hs_inter*tauxH*(1+tInter/100) + hs2*tauxH*(1+t2/100))*100)/100 : 0;
+          totalHSinter += hs_inter;
+        } else {
+          hs1   = Math.min(extra,pal);
+          hs_inter = 0;
+          hs2   = Math.max(0,extra-pal);
+          mnt   = tauxH>0 ? Math.round((hs1*tauxH*(1+t1/100)+hs2*tauxH*(1+t2/100))*100)/100 : 0;
+        }
+        totalH+=h; totalHS1+=hs1; totalHS2+=hs2; totalHSm+=(hs1+hs_inter+hs2); totalMnt+=mnt;
         if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
-        [wk, h+'h', hs1>0?'+'+hs1+'h':'-', hs2>0?'+'+hs2+'h':'-', (hs1+hs2)>0?(hs1+hs2).toFixed(1)+'h':'-', mnt>0?mnt.toFixed(2)+'€':'-'].forEach((v,j)=>{
+        const cells = has3
+          ? [wk, h+'h', hs1>0?'+'+hs1+'h':'-', hs_inter>0?'+'+hs_inter+'h':'-', hs2>0?'+'+hs2+'h':'-', (hs1+hs_inter+hs2)>0?(hs1+hs_inter+hs2).toFixed(1)+'h':'-', mnt>0?mnt.toFixed(0)+'€':'-']
+          : [wk, h+'h', hs1>0?'+'+hs1+'h':'-', hs2>0?'+'+hs2+'h':'-', (hs1+hs2)>0?(hs1+hs2).toFixed(1)+'h':'-', mnt>0?mnt.toFixed(2)+'€':'-'];
+        cells.forEach((v,j)=>{
           const col = j>=2&&parseFloat(v)>0?[155,44,44]:[26,23,20];
-          txt(v, M+2+j*32, y+2.5, 7.5, col, j===0?'normal':'bold'); 
+          txt(v, M+2+j*colStep, y+2.5, 7.5, col, j===0?'normal':'bold'); 
         });
         y += 5.5; chk();
       });
@@ -901,7 +929,10 @@ const M6_PDF = {
         txt('RÉDUCTION COTISATIONS ET EXONÉRATION FISCALE (Loi TEPA)',M+3,y+5,8,[70,65,60],'bold');
         y += 10;
         const exoMois = Math.min(totalMnt, 7500/12);
-        [[`HS à +${analysis?.taux1||25}%`,`${totalHS1.toFixed(1)}h`],[`HS à +${analysis?.taux2||50}%`,`${totalHS2.toFixed(1)}h`],[`Montant brut mensuel`,`${totalMnt.toFixed(2)} €`],[`Exonération IR estimée (plaf. 625€/mois)`,`${exoMois.toFixed(2)} €`]].forEach(([l,v],i)=>{
+        const tepaRows = has3
+          ? [[`HS à +${analysis?.taux1||10}%`,`${totalHS1.toFixed(1)}h`],[`HS à +${analysis.taux_inter}%`,`${totalHSinter.toFixed(1)}h`],[`HS à +${analysis?.taux2||50}%`,`${totalHS2.toFixed(1)}h`],[`Montant brut mensuel`,`${totalMnt.toFixed(2)} €`],[`Exonération IR estimée (plaf. 625€/mois)`,`${exoMois.toFixed(2)} €`]]
+          : [[`HS à +${analysis?.taux1||25}%`,`${totalHS1.toFixed(1)}h`],[`HS à +${analysis?.taux2||50}%`,`${totalHS2.toFixed(1)}h`],[`Montant brut mensuel`,`${totalMnt.toFixed(2)} €`],[`Exonération IR estimée (plaf. 625€/mois)`,`${exoMois.toFixed(2)} €`]];
+        tepaRows.forEach(([l,v],i)=>{
           if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
           txt(l,M+2,y+2.5,8,[70,65,60]); txt(v,W-M-2,y+2.5,8,[26,23,20],'bold','right'); y+=5.5;
         });
@@ -931,6 +962,164 @@ const M6_PDF = {
     doc.text('Art. L3121-27 à L3121-46 Code du travail', W-M, 290, {align:'right'});
 
     _shareOrSave(doc, `Forfait_Heures_${mNom}_${year}.pdf`, `PDF mensuel FH ${mNom} ${year} généré`);
+  },
+
+  // ── PDF ANNUEL FORFAIT HEURES ─────────────────────────────────
+  _genAnnuelFH({ regime, year, contract, data, analysis }) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) { window.M6_toast?.('jsPDF non chargé'); return; }
+    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const W=210, M=15, PW=W-2*M;
+    let y=0;
+    const txt = (t,x,ry,size,color,style='normal',align='left') => {
+      doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
+      doc.setFont('helvetica',style);
+      const s = (t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t);
+      if (align==='right') doc.text(s,x,ry,{align:'right'});
+      else if (align==='center') doc.text(s,x,ry,{align:'center'});
+      else doc.text(s,x,ry);
+    };
+    const rect = (x,ry,w,h,fill) => {
+      if (fill) doc.setFillColor(...fill);
+      doc.rect(x,ry,w,h,fill?'F':'S');
+    };
+    const chk = () => { if(y>268){doc.addPage();y=15;} };
+
+    // ── Couverture ─────────────────────────────────────────────
+    rect(0,0,W,45,[26,23,20]);
+    doc.setDrawColor(196,163,90); doc.setLineWidth(0.5); doc.line(M,40,W-M,40);
+    txt('M6 CADRES',M,9,7.5,[196,163,90],'bold');
+    txt('BILAN ANNUEL — FORFAIT HEURES',M,17,14,[247,243,237],'bold');
+    txt(`Exercice ${year}`,M,25,9,[196,163,90],'normal');
+    const a = analysis || {};
+    const seuil = contract.seuilHebdo || a.seuil || 35;
+    const contingent = a.contingent || contract.contingent || 220;
+    txt(`${_pdfSanitize(contract.nomCadre||'Cadre')}  ·  ${_pdfSanitize(a.ccnNom||contract.ccnLabel||'Droit commun')}  ·  Seuil ${seuil}h/sem  ·  Contingent ${contingent}h`,M,33,8,[189,181,168]);
+    const hashStr = _localHash(`${regime}-FH-${year}-${contract.nomCadre||''}-${a.totalHS||0}`);
+    txt(`Réf. : ${hashStr}`,W-M,9,6,[150,140,130],'normal','right');
+    txt(`Généré le ${new Date().toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})}`,W-M,14,6.5,[150,140,130],'normal','right');
+    y = 52;
+
+    // ── Synthèse ─────────────────────────────────────────────
+    rect(M,y,PW,8,[240,235,228]);
+    txt('SYNTHÈSE ANNUELLE',M+3,y+5.5,8,[70,65,60],'bold');
+    y += 11;
+
+    const synthRows = [
+      ['Total heures travaillées',  `${a.totalHeures||0}h`],
+      ['Semaines saisies',          `${a.semaines||0}`],
+      ['Total heures supplémentaires',`${a.totalHS||0}h`, (a.totalHS||0)>contingent?[155,44,44]:[26,23,20]],
+      ['Contingent annuel',         `${contingent}h${a.contingentProrata?' (prorata)':''}`],
+      ['Consommation contingent',   `${a.tauxRemplissage||0}%`, (a.tauxRemplissage||0)>=100?[155,44,44]:(a.tauxRemplissage||0)>=90?[196,133,58]:[45,107,79]],
+    ];
+    synthRows.forEach(([l,v,col],i) => {
+      const ry = y + i*5.5;
+      if (i%2===0) { doc.setFillColor(248,245,241); doc.rect(M,ry-1.5,PW,5.5,'F'); }
+      txt(l, M+2, ry+2.5, 8, [70,65,60]);
+      txt(v, W-M-2, ry+2.5, 8, col||[26,23,20], 'bold', 'right');
+    });
+    y += synthRows.length*5.5 + 6;
+
+    // ── Détail par palier (2 ou 3 paliers selon CCN) ──────────
+    chk();
+    rect(M,y,PW,8,[240,235,228]);
+    txt('VENTILATION HEURES SUPPLÉMENTAIRES',M+3,y+5.5,8,[70,65,60],'bold');
+    y += 11;
+    const tauxH = contract.tauxHoraire || 0;
+    const palierRows = [];
+    if (a.a3Paliers && a.taux_inter) {
+      // HCR / Restauration rapide : 3 paliers (ex: +10% / +20% / +50%)
+      palierRows.push([`Palier 1 — HS à +${a.taux1||10}% (${a.palier||4}h hebdo)`, `${a.totalHSTaux1||0}h`, tauxH>0?`${(a.montantHS1||0).toFixed(0)}€`:'—']);
+      palierRows.push([`Palier 2 — HS à +${a.taux_inter}% (${a.palier_inter||4}h hebdo)`, `${a.totalHSTaux_inter||0}h`, tauxH>0?`${(a.montantHS_inter||0).toFixed(0)}€`:'—']);
+      palierRows.push([`Palier 3 — HS à +${a.taux2||50}% (au-delà)`, `${a.totalHSTaux2||0}h`, tauxH>0?`${(a.montantHS2||0).toFixed(0)}€`:'—']);
+    } else {
+      // Droit commun : 2 paliers (+25% / +50%)
+      palierRows.push([`Palier 1 — HS à +${a.taux1||25}% (${a.palier||8}h hebdo)`, `${a.totalHSTaux1||0}h`, tauxH>0?`${(a.montantHS1||0).toFixed(0)}€`:'—']);
+      palierRows.push([`Palier 2 — HS à +${a.taux2||50}% (au-delà)`, `${a.totalHSTaux2||0}h`, tauxH>0?`${(a.montantHS2||0).toFixed(0)}€`:'—']);
+    }
+    palierRows.forEach(([l,h,m],i) => {
+      const ry = y + i*5.5;
+      if (i%2===0) { doc.setFillColor(248,245,241); doc.rect(M,ry-1.5,PW,5.5,'F'); }
+      txt(l, M+2, ry+2.5, 7.5, [70,65,60]);
+      txt(h, W-M-30, ry+2.5, 8, [26,23,20], 'bold', 'right');
+      txt(m, W-M-2,  ry+2.5, 8, [139,105,20], 'bold', 'right');
+    });
+    y += palierRows.length*5.5 + 4;
+    if (tauxH > 0) {
+      txt(`Taux horaire de référence : ${tauxH}€/h`, M+2, y, 7, [120,114,106], 'italic');
+      y += 5;
+      txt(`Montant brut total HS : ${(a.montantTotal||0).toFixed(2)}€`, M+2, y, 9, [26,23,20], 'bold');
+      y += 6;
+      if (a.exoFiscale > 0) {
+        txt(`Exonération fiscale TEPA (plafond 7 500€) : ${(a.exoFiscale||0).toFixed(2)}€`, M+2, y, 7.5, [45,107,79], 'normal');
+        y += 6;
+      }
+    }
+    y += 4;
+
+    // ── Détail par semaine ───────────────────────────────────
+    chk();
+    rect(M,y,PW,8,[240,235,228]);
+    txt('DÉTAIL HEBDOMADAIRE',M+3,y+5.5,8,[70,65,60],'bold');
+    y += 11;
+    txt('Semaine', M+2,    y, 7, [120,114,106], 'bold');
+    txt('Heures',  M+50,   y, 7, [120,114,106], 'bold', 'right');
+    txt('HS',      M+80,   y, 7, [120,114,106], 'bold', 'right');
+    txt('Conformité', W-M-2, y, 7, [120,114,106], 'bold', 'right');
+    y += 4;
+    doc.setDrawColor(220,212,200); doc.line(M,y,W-M,y); y += 3;
+
+    const semaines = Object.entries(data||{}).sort();
+    semaines.forEach(([wk,v],i) => {
+      chk();
+      const h = parseFloat(v.heures)||0;
+      const extra = Math.max(0, h-seuil);
+      const conforme = h<=48;
+      if (i%2===0) { doc.setFillColor(248,245,241); doc.rect(M,y-1.5,PW,5.5,'F'); }
+      txt(wk, M+2, y+2.5, 7.5, [70,65,60]);
+      txt(`${h}h`, M+50, y+2.5, 7.5, [26,23,20], 'normal', 'right');
+      txt(extra>0?`+${extra}h`:'—', M+80, y+2.5, 7.5, extra>0?[196,133,58]:[120,114,106], 'normal', 'right');
+      txt(conforme?'✓':'⚠ >48h', W-M-2, y+2.5, 7.5, conforme?[45,107,79]:[155,44,44], 'bold', 'right');
+      y += 5.5;
+    });
+    y += 6;
+
+    // ── Alertes ──────────────────────────────────────────────
+    if (a.alertes && a.alertes.length) {
+      chk();
+      rect(M,y,PW,8,[252,245,235]);
+      txt('ALERTES & RECOMMANDATIONS',M+3,y+5.5,8,[155,44,44],'bold');
+      y += 11;
+      a.alertes.forEach((al) => {
+        chk();
+        txt(_pdfSanitize(al.titre||''), M+2, y, 8, [26,23,20], 'bold');
+        y += 4;
+        const lines = doc.splitTextToSize(_pdfSanitize(al.texte||''), PW-4);
+        lines.forEach(L => { txt(L, M+2, y, 7.5, [70,65,60]); y += 4; });
+        y += 2;
+      });
+    }
+
+    // ── Bloc certif + signature ──────────────────────────────
+    chk();
+    if (y>250) { doc.addPage(); y=15; }
+    rect(M,y,PW,26,[248,244,238]);
+    y += 4;
+    txt('CERTIFICATION', M+3, y, 8, [26,23,20], 'bold');
+    y += 4;
+    txt('Le soussigné certifie l\'exactitude des informations consignées ci-dessus.', M+3, y, 7.5, [70,65,60]);
+    y += 10;
+    doc.setDrawColor(180,175,165);
+    doc.line(M+3, y, M+80, y); doc.line(M+PW-80, y, W-M-3, y);
+    txt('Signature du cadre', M+3, y+4, 6.5, [120,114,106]);
+    txt('Date',                M+PW-80, y+4, 6.5, [120,114,106]);
+    y += 12;
+
+    // Pied de page
+    doc.setFontSize(7); doc.setTextColor(138,132,124); doc.setFont('helvetica','normal');
+    doc.text(`M6 Cadres — Forfait Heures ${year} — Art. L3121-27 à L3121-46 — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+
+    _shareOrSave(doc, `Forfait_Heures_Annuel_${year}.pdf`, `PDF annuel FH ${year} généré`);
   },
 
   // ── Export preuve renforcée (hash SHA-256 local) ────────────────

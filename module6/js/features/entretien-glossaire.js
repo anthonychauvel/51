@@ -179,11 +179,16 @@ const M6_Entretien = {
 // ══════════════════════════════════════════════════════════════════
 const M6_GlossaireUI = {
 
-  render(container) {
+  render(container, regime) {
+    this._regime = regime || null;
+    const regimeTitle = regime === 'cadre_dirigeant' ? ' — Cadre Dirigeant'
+                      : regime === 'forfait_heures'  ? ' — Forfait Heures'
+                      : regime === 'forfait_jours'   ? ' — Forfait Jours'
+                      : '';
     container.innerHTML = `
     <div class="m6-ornement">
       <div class="m6-ornement-line"></div>
-      <div class="m6-ornement-text">Glossaire Cadres & Forfait</div>
+      <div class="m6-ornement-text">Glossaire Cadres${regimeTitle}</div>
       <div class="m6-ornement-line"></div>
     </div>
 
@@ -192,7 +197,7 @@ const M6_GlossaireUI = {
     </div>
 
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:14px" id="gloss-tags">
-      ${this._buildTags()}
+      ${this._buildTags(regime)}
     </div>
 
     <div id="gloss-results"></div>
@@ -213,10 +218,20 @@ const M6_GlossaireUI = {
     this._search(container, '', null);
   },
 
-  _buildTags() {
-    const tags = new Set(['forfait','RTT','congés','santé','heures supplémentaires','CCN','télétravail']);
+  _buildTags(regime) {
+    // Tags par régime — on met en avant ceux pertinents pour le contexte
+    let tags;
+    if (regime === 'cadre_dirigeant') {
+      tags = ['dirigeant', 'L3111-2', 'autonomie', 'rémunération', 'requalification', 'mandat', 'rupture', 'CCN'];
+    } else if (regime === 'forfait_heures') {
+      tags = ['forfait heures', 'HS', 'TEPA', 'contingent', 'majoration', 'CCN', 'repos quotidien'];
+    } else if (regime === 'forfait_jours') {
+      tags = ['forfait', 'RTT', 'congés', 'santé', 'L3121-65', 'CCN', 'télétravail', 'rachat'];
+    } else {
+      tags = ['forfait', 'RTT', 'congés', 'santé', 'heures supplémentaires', 'CCN', 'télétravail'];
+    }
     return `<button class="gloss-tag active" data-tag="_all" style="font-size:0.7rem;border:1px solid var(--champagne);border-radius:99px;padding:3px 10px;background:var(--champagne-3);color:var(--champagne-2);cursor:pointer">Tous</button>` +
-      Array.from(tags).map(t =>
+      tags.map(t =>
         `<button class="gloss-tag" data-tag="${t}" style="font-size:0.7rem;border:1px solid var(--ivoire-3);border-radius:99px;padding:3px 10px;background:var(--ivoire);color:var(--pierre);cursor:pointer">${t}</button>`
       ).join('');
   },
