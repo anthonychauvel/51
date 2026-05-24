@@ -288,6 +288,7 @@ const M6_SimulateurNullite = {
     // La case cochée par l'utilisateur = auto-attestation. À chaque change :
     //  1. on persiste l'état dans localStorage
     //  2. on re-render pour faire passer l'icône warning/info → ✅ et mettre à jour 5/6→6/6
+    //  3. on rafraîchit la bulle Zenji du haut (qui lit `analysis.entretienDate`)
     if (!container.__ckBound) {
       container.__ckBound = true;
       container.addEventListener('change', e => {
@@ -297,6 +298,15 @@ const M6_SimulateurNullite = {
         // Re-render synchrone : analyse() relit les ckKey et promeut les conditions cochées
         container.__ckBound = false; // permettre un nouveau bind après re-render
         this.render(container, contract, analysis, data, year, regime);
+        // Rafraîchir la bulle Zenji avec les NOUVEAUX analysis + bio
+        // (l'entretien auto-attesté → plus de stress +15, plus de message « à planifier »)
+        try {
+          if (window.M6_Forfait && window.M6_BioEngine && window.M6_ZenjiPopup) {
+            const freshA = M6_Forfait.analyze(contract, data, year);
+            const freshB = M6_BioEngine.analyzeForfaitJours(contract, data, year);
+            M6_ZenjiPopup.refresh?.(freshA, freshB, contract, regime);
+          }
+        } catch(_) { /* silencieux */ }
       });
       // Empêcher le toggle <details> quand on coche la case dans le <summary>
       container.addEventListener('click', e => {

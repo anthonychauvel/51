@@ -52,7 +52,19 @@ async function _shareOrSave(doc, filename, toastMsg) {
 }
 
 function _pdfSanitize(str) {
-  if (!str) return '';
+  if (str === null || str === undefined || str === '') return '';
+  // Garde-fou : si on reçoit un objet/tableau par erreur, ne PAS afficher "[object Object]".
+  // Tenter une extraction raisonnable (niveau, label, value), sinon retourner vide.
+  if (typeof str === 'object') {
+    if (Array.isArray(str)) {
+      return _pdfSanitize(str.map(s => _pdfSanitize(s)).filter(Boolean).join(', '));
+    }
+    // Cas connus dans M6 : mood {niveau, ts}, entretien {date, manager…}, etc.
+    const probable = str.niveau ?? str.label ?? str.value ?? str.text ?? str.name ?? '';
+    if (probable) return _pdfSanitize(probable);
+    if (typeof console !== 'undefined') console.warn('[PDF] _pdfSanitize: object reçu, ignoré:', str);
+    return '';
+  }
   return String(str)
     .replace(/[\u{1F000}-\u{1FFFF}]/gu, '')
     .replace(/[\u{2600}-\u{26FF}]/gu, '')
@@ -92,7 +104,12 @@ const M6_PDF = {
       doc.setFontSize(size);
       doc.setTextColor(...(color||[26,23,20]));
       doc.setFont('helvetica',style);
-      doc.text(String(t),x,ry);
+      // Garde-fou : objets → texte vide ou propriété connue (jamais "[object Object]")
+      let s;
+      if (t === null || t === undefined) s = '';
+      else if (typeof t === 'object') s = String(t.niveau ?? t.label ?? t.value ?? '');
+      else s = String(t);
+      doc.text(s, x, ry);
     };
 
     // ── En-tête ──────────────────────────────────────────────
@@ -340,7 +357,7 @@ const M6_PDF = {
     const txt  = (t,x,ry,size,color,style='normal',align='left') => {
       doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
       doc.setFont('helvetica',style);
-      const str = String(t||'');
+      const str = (t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t);
       if (align==='right') doc.text(str,x,ry,{align:'right'});
       else if (align==='center') doc.text(str,x,ry,{align:'center'});
       else doc.text(str,x,ry);
@@ -519,7 +536,7 @@ const M6_PDF = {
     const W=210, M=20;
     let y=0;
 
-    const txt  = (t,x,ry,size,color,style='normal') => { doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20])); doc.setFont('helvetica',style); doc.text(String(t),x,ry); };
+    const txt  = (t,x,ry,size,color,style='normal') => { doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20])); doc.setFont('helvetica',style); doc.text((t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t),x,ry); };
     const rect = (x,ry,w,h,fill) => { if(fill){doc.setFillColor(...fill);doc.rect(x,ry,w,h,'F');}else{doc.rect(x,ry,w,h,'S');} };
     const ln   = (x1,y1,x2,y2) => { doc.setLineWidth(0.3); doc.line(x1,y1,x2,y2); };
 
@@ -634,7 +651,7 @@ const M6_PDF = {
     const W=210, M=20;
     let y=15;
 
-    const txt = (t,x,ry,size,color,style='normal') => { doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20])); doc.setFont('helvetica',style); doc.text(String(t),x,ry); };
+    const txt = (t,x,ry,size,color,style='normal') => { doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20])); doc.setFont('helvetica',style); doc.text((t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t),x,ry); };
     const rect = (x,ry,w,h,fill) => { doc.setFillColor(...fill); doc.rect(x,ry,w,h,'F'); };
     const ln = (x1,y1,x2,y2) => { doc.setLineWidth(0.3); doc.line(x1,y1,x2,y2); };
 
@@ -799,8 +816,9 @@ const M6_PDF = {
     const txt  = (t,x,ry,size,color,style='normal',align='left') => {
       doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
       doc.setFont('helvetica',style);
-      if (align==='right') doc.text(String(t||''),x,ry,{align:'right'});
-      else doc.text(String(t||''),x,ry);
+      const s2=(t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t);
+      if (align==='right') doc.text(s2,x,ry,{align:'right'});
+      else doc.text(s2,x,ry);
     };
     const rect = (x,ry,w,h,fill) => { doc.setFillColor(...fill); doc.rect(x,ry,w,h,'F'); };
     const chk  = () => { if(y>268){doc.addPage();y=15;} };

@@ -438,6 +438,17 @@ const M6_ZenjiPopup = {
     this._checkPhaseChange(bio);
   },
 
+  /** Rafraîchir intégralement la bulle Zenji après un changement d'état
+   *  (ex: case cochée dans Validité → analysis.entretienDate change) */
+  refresh(analysis, bio, contract, regime) {
+    if (analysis) this._analysis = analysis;
+    if (bio)      this._bio      = bio;
+    if (contract) this._prenom   = contract.nomCadre || contract.nom || this._prenom;
+    if (regime)   this._regime   = regime;
+    // Reconstruire le bandeau avec les nouvelles données
+    this._injectDailyMessage();
+  },
+
   /** Détruit les éléments Zenji (au changement de vue) */
   destroy() {
     document.getElementById('zenji-daily-bar')?.remove();
