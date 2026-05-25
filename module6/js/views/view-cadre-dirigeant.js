@@ -775,6 +775,11 @@ const VCD = {
         </div>
         <div class="m6-field" style="display:none"><label>_old_ccn</label><input type="text" id="_s-ccn-hidden" placeholder="ex : Syntec, Banque AFB, Hôtellerie…" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="s-cp" value="${c.joursCPContrat||25}" min="25" max="50" style="font-size:16px"></div>
+        <div class="m6-field">
+          <label>RTT par an <small style="color:var(--pierre);font-weight:400">— laissez vide si non concerné</small></label>
+          <input type="number" id="s-rtt" value="${c.rttManuel||''}" min="0" max="40" step="0.5" placeholder="auto / non concerné" style="font-size:16px">
+          <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Beaucoup de cadres dirigeants n'ont pas de RTT. Saisissez le nombre uniquement si votre contrat ou accord en prévoit.</div>
+        </div>
         <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata uniquement si renseignée)</small></label><input type="date" id="s-debut" value="${c.dateArrivee||''}" style="font-size:16px"></div>
         <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="s-mgr" value="${(c.nomManager||'').replace(/"/g,'&quot;')}" placeholder="Pour les PDF" style="font-size:16px"></div>
         <button class="m6-btn m6-btn-gold" id="s-save">${isEdit?'💾 Enregistrer les modifications':'Commencer le suivi →'}</button>
@@ -814,6 +819,10 @@ const VCD = {
     this._c.querySelector('#s-save')?.addEventListener('click',()=>{
       // Préserver les champs non touchés (projets snapshot, autres metadonnées)
       const existing = this._contract || {};
+      const _rttInput = this._c.querySelector('#s-rtt')?.value;
+      const _rttManuel = (_rttInput === undefined || _rttInput === '' || isNaN(parseFloat(_rttInput)))
+        ? null
+        : parseFloat(_rttInput);
       const c = {
         ...existing,
         nom:           this._c.querySelector('#s-nom')?.value.trim() || existing.nom || '',
@@ -821,6 +830,7 @@ const VCD = {
         entreprise:    this._c.querySelector('#s-ent')?.value.trim() || existing.entreprise || '',
         ccnLabel:      this._c.querySelector('#s-ccn')?.value.trim() || existing.ccnLabel || '',
         joursCPContrat:parseInt(this._c.querySelector('#s-cp')?.value)||25,
+        rttManuel:     _rttManuel,
         dateArrivee:   this._c.querySelector('#s-debut')?.value || null,
         nomManager:    this._c.querySelector('#s-mgr')?.value.trim() || existing.nomManager || '',
       };

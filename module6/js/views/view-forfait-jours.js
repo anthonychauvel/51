@@ -295,7 +295,7 @@ const VFJ = {
         <div class="m6-stat-val" style="color:${a.rttSolde<0?'var(--alerte)':'var(--champagne-2)'}">${a.rttSolde>=0?'+':''}${a.rttSolde}</div>
         <div class="m6-stat-label">Solde RTT</div>
       </div>
-      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT théoriques <span class="m6-tooltip-wrap" id="rtt-tip-wrap" style="cursor:pointer;font-size:0.6rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">Ce nombre fluctue : absences sans solde, maladie ou arrivée en cours d'année le réduisent proportionnellement. C'est normal.</span></span></div></div>
+      <div class="m6-stat-box"><div class="m6-stat-val">${a.rttTheoriques}</div><div class="m6-stat-label">RTT ${a.rttManuel?'<small style="color:var(--champagne-2);font-weight:500">saisis</small>':'théoriques'} <span class="m6-tooltip-wrap" id="rtt-tip-wrap" style="cursor:pointer;font-size:0.6rem;color:var(--pierre)">ⓘ<span class="m6-tooltip-bubble">${a.rttManuel?'Nombre de RTT saisi manuellement dans votre configuration. Modifiable dans la config.':'Ce nombre fluctue : absences sans solde, maladie ou arrivée en cours d\'année le réduisent proportionnellement. C\'est normal.'}</span></span></div></div>
       <div class="m6-stat-box"><div class="m6-stat-val">${a.rttPris}</div><div class="m6-stat-label">RTT pris</div></div>
     </div>
 
