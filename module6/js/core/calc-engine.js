@@ -93,6 +93,22 @@ const M6_ForfaitJours = {
     const exDeb = effectiveArrivee || contract.dateDebutExercice || null;
     const exFin = contract.dateFinExercice || contract.dateDepart || null;
     const recap=this.calcRTT(year,plafond,cpContrat,exDeb,exFin,contract.dateDebutExercice||null,contract.dateFinExercice||null);
+    // ── OVERRIDE MANUEL DES RTT ──
+    // Si l'utilisateur a saisi un nombre de RTT spécifique (contract.rttManuel),
+    // on remplace le calcul théorique. Utile pour les cas particuliers :
+    // CCN avec RTT fixés par accord, salariés à temps partiel, accord d'entreprise
+    // qui prévoit un nombre forfaitaire différent du calcul standard.
+    // Le prorata s'applique si l'utilisateur arrive en cours d'année.
+    if (contract.rttManuel !== undefined && contract.rttManuel !== null && contract.rttManuel !== '') {
+      const rttM = parseFloat(contract.rttManuel);
+      if (!isNaN(rttM) && rttM >= 0) {
+        // Appliquer le ratio de prorata si la période est partielle
+        recap.rttTheoriques = recap.isProrata
+          ? Math.round(rttM * (recap.ratio || 1))
+          : Math.round(rttM);
+        recap.rttManuel = true;
+      }
+    }
     const feries=M6_Feries.getSet(year);
     let travailles=0,rachetes=0,rttPris=0,cpPris=0,reposPris=0,demis=0,deplacements=0,demis_matin=0,demis_am=0;
     const alertes=[],entrees=[];
@@ -164,6 +180,7 @@ const M6_ForfaitJours = {
     return {
       joursEffectifs:travailles,rachetes,rttPris,cpPris,reposPris,demis,deplacements,demis_matin,demis_am,
       rttTheoriques:recap.rttTheoriques,rttSolde:recap.rttTheoriques-rttPris,
+      rttManuel: !!recap.rttManuel,
       plafond:recap.joursTravailMax,feriesOuvres:recap.feriesOuvres,
       isProrata:recap.isProrata,ratio:recap.ratio,
       plafondProrata:recap.joursTravailMax,
