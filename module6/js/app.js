@@ -264,6 +264,11 @@ const M6_Router = {
             ${regime==='forfait_jours'?`
               <div class="m6-field"><label>Plafond annuel (défaut : 218j)</label><input type="number" id="wiz-plafond" value="${existing.plafond||218}" min="100" max="366" style="font-size:16px"></div>
               <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5)</label><input type="number" id="wiz-cp" value="${existing.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
+              <div class="m6-field">
+                <label>RTT par an <small style="color:var(--pierre);font-weight:400">— laissez vide pour calcul auto</small></label>
+                <input type="number" id="wiz-rtt" value="${existing.rttManuel||''}" min="0" max="40" step="0.5" placeholder="auto" style="font-size:16px">
+                <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Si votre accord d'entreprise prévoit un nombre fixe de RTT (10, 12, 15…), saisissez-le ici. Sinon le calcul s'effectue automatiquement.</div>
+              </div>
               <div class="m6-field"><label>Taux journalier brut (€)</label><input type="number" id="wiz-tj" step="10" value="${existing.tauxJournalier||''}" placeholder="ex : 350" style="font-size:16px"></div>
               <div class="m6-field" style="position:relative">
                 <label>CCN applicable — tapez pour chercher</label>
@@ -298,6 +303,11 @@ const M6_Router = {
                 <div id="wiz-cd-ccn-info" style="margin-top:4px;font-size:0.72rem;color:var(--pierre)">Affiche les critères L3111-2 et droits maintenus selon votre CCN.</div>
               </div>
               <div class="m6-field"><label>Congés payés contractuels (jours ouvrables)</label><input type="number" id="wiz-cd-cp" value="${existing.joursCPContrat||25}" min="25" max="50" style="font-size:16px"></div>
+              <div class="m6-field">
+                <label>RTT par an <small style="color:var(--pierre);font-weight:400">— laissez vide si non applicable</small></label>
+                <input type="number" id="wiz-cd-rtt" value="${existing.rttManuel||''}" min="0" max="40" step="0.5" placeholder="auto / non concerné" style="font-size:16px">
+                <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Beaucoup de cadres dirigeants n'ont pas de RTT (forfait sans décompte). Saisissez le nombre uniquement si votre contrat en prévoit.</div>
+              </div>
               <div class="m6-field"><label>Taux journalier brut (€, optionnel)</label><input type="number" id="wiz-cd-tj" step="10" value="${existing.tauxJournalier||''}" placeholder="ex : 500" style="font-size:16px"></div>
               <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="wiz-cd-mgr" value="${(existing.nomManager||'').replace(/"/g,'&quot;')}" placeholder="Pour les PDF" style="font-size:16px"></div>
               <div class="m6-field"><label>Plafond jours à surveiller (défaut : 218)</label><input type="number" id="wiz-plafond-cd" value="${existing.plafond||218}" min="100" max="366" style="font-size:16px"></div>
@@ -389,9 +399,15 @@ const M6_Router = {
           dateArrivee:        this._wizData?.arrivee || existing.dateArrivee || null,
         };
         if (regime === 'forfait_jours') {
+          // RTT manuel : si le champ est vide → null (recalcul auto), sinon parseFloat
+          const _rttInput = this._root.querySelector('#wiz-rtt')?.value;
+          const _rttManuel = (_rttInput === undefined || _rttInput === '' || isNaN(parseFloat(_rttInput)))
+            ? null
+            : parseFloat(_rttInput);
           contract = { ...contract,
             plafond:               parseInt(this._root.querySelector('#wiz-plafond')?.value) || existing.plafond || 218,
             joursCPContrat:        parseFloat(this._root.querySelector('#wiz-cp')?.value) || existing.joursCPContrat || 25,
+            rttManuel:             _rttManuel,
             tauxJournalier:        parseFloat(this._root.querySelector('#wiz-tj')?.value) || existing.tauxJournalier || 0,
             ccnLabel:              this._root.querySelector('#wiz-ccn')?.value.trim() || existing.ccnLabel || '',
             ccnIdcc:               parseInt(this._root.querySelector('#wiz-ccn')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
@@ -429,6 +445,10 @@ const M6_Router = {
             ccnLabel:        this._root.querySelector('#wiz-cd-ccn')?.value.trim() || existing.ccnLabel || '',
             ccnIdcc:         parseInt(this._root.querySelector('#wiz-cd-ccn')?.dataset.idcc || '0') || existing.ccnIdcc || 0,
             joursCPContrat:  parseInt(this._root.querySelector('#wiz-cd-cp')?.value) || existing.joursCPContrat || 25,
+            rttManuel:       (() => {
+              const v = this._root.querySelector('#wiz-cd-rtt')?.value;
+              return (v === undefined || v === '' || isNaN(parseFloat(v))) ? null : parseFloat(v);
+            })(),
             tauxJournalier:  parseFloat(this._root.querySelector('#wiz-cd-tj')?.value) || existing.tauxJournalier || 0,
             nomManager:      this._root.querySelector('#wiz-cd-mgr')?.value.trim() || existing.nomManager || '',
             plafond:         parseInt(this._root.querySelector('#wiz-plafond-cd')?.value) || existing.plafond || 218,
