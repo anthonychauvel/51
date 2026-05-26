@@ -7,9 +7,9 @@
   "_smic_src": "Décret n°2025-1228 du 17 décembre 2025",
   "_stats": {
     "total": 419,
-    "real": 328,
-    "national": 91,
-    "estimated": 0
+    "real": 241,
+    "estimated": 87,
+    "national": 91
   },
   "grilles": {
     "16": {
@@ -401,9 +401,9 @@
       ]
     },
     "45": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industrie caoutchouc 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industrie caoutchouc 2024",
       "g": [
         {
           "n": "I",
@@ -448,9 +448,9 @@
       ]
     },
     "83": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord menuiseries charpentes constructions industrialisées 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord menuiseries charpentes constructions industrialisées 2024",
       "g": [
         {
           "n": "I",
@@ -762,9 +762,9 @@
       ]
     },
     "176": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord chaussure industrie — IDCC 176 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord chaussure industrie — IDCC 176 — 2024",
       "g": [
         {
           "n": "O1",
@@ -1179,9 +1179,9 @@
       ]
     },
     "218": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord salaires cabinets avocats 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord salaires cabinets avocats 2024",
       "g": [
         {
           "n": "1",
@@ -1415,9 +1415,9 @@
       ]
     },
     "275": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord transport aérien personnel sol accord national — IDCC 275 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord transport aérien personnel sol accord national — IDCC 275 — 2024",
       "g": [
         {
           "n": "I",
@@ -1549,9 +1549,9 @@
       ]
     },
     "303": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord couture parisienne — IDCC 303 — Mode — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord couture parisienne — IDCC 303 — Mode — 2024",
       "g": [
         {
           "n": "O1",
@@ -1596,9 +1596,9 @@
       ]
     },
     "350": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industries de la mode chapellerie — IDCC 350 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industries de la mode chapellerie — IDCC 350 — 2024",
       "g": [
         {
           "n": "O1",
@@ -2114,9 +2114,9 @@
       ]
     },
     "454": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord remontées mécaniques domaines skiables — IDCC 454 — HCR — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord remontées mécaniques domaines skiables — IDCC 454 — HCR — 2024",
       "g": [
         {
           "n": "I",
@@ -2389,9 +2389,9 @@
       ]
     },
     "504": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industries alimentaires diverses 5 branches — IDCC 504 — IAA — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industries alimentaires diverses 5 branches — IDCC 504 — IAA — 2024",
       "g": [
         {
           "n": "O1",
@@ -2436,9 +2436,9 @@
       ]
     },
     "506": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fabricants importateurs produits exotiques — IDCC 506 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fabricants importateurs produits exotiques — IDCC 506 — 2024",
       "g": [
         {
           "n": "I",
@@ -2649,88 +2649,232 @@
     },
     "573": {
       "st": "real",
-      "d": "01/04/2024",
-      "s": "Avenant salaires commerce de gros IDCC 573 — applicable 01/04/2024. Source: factorial.fr, payfit.com",
+      "d": "01/01/2025",
+      "s": "Accord salarial 16/12/2024 — étendu arrêté 17/03/2025 (JO 29/03/2025) — IDCC 573 brochure 3044",
       "g": [
         {
           "n": "I-1",
-          "c": null,
-          "l": "Employé(e) de bureau / Aide vendeur(se) niveau I échelon 1",
-          "b": 1812,
+          "c": 1.006,
+          "l": "Employé(e) — exécution tâches simples (ex : agent de propreté, gardien, conditionnement)",
+          "b": 1823.03,
           "t": "fixed",
           "cat": "Employé"
         },
         {
           "n": "I-2",
-          "c": null,
-          "l": "Employé(e) qualifié(e) niveau I échelon 2",
-          "b": 1870,
+          "c": 1.006,
+          "l": "Employé(e) niveau I échelon 2",
+          "b": 1828.0,
           "t": "fixed",
           "cat": "Employé"
         },
         {
           "n": "I-3",
-          "c": null,
-          "l": "Employé(e) confirmé(e) niveau I échelon 3",
-          "b": 1940,
+          "c": 1.006,
+          "l": "Employé(e) niveau I échelon 3",
+          "b": 1838.97,
           "t": "fixed",
           "cat": "Employé"
         },
         {
           "n": "II-1",
-          "c": null,
-          "l": "Assistant(e) commercial(e) / Technicien(ne) niveau II échelon 1",
-          "b": 2050,
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) (ex : préparateur de commandes, magasinier)",
+          "b": 1850.0,
           "t": "fixed",
-          "cat": "Technicien"
+          "cat": "Employé"
         },
         {
           "n": "II-2",
-          "c": null,
-          "l": "Technicien(ne) qualifié(e) niveau II échelon 2",
-          "b": 2200,
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) niveau II échelon 2",
+          "b": 1861.1,
           "t": "fixed",
-          "cat": "Technicien"
+          "cat": "Employé"
+        },
+        {
+          "n": "II-3",
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) niveau II échelon 3",
+          "b": 1872.27,
+          "t": "fixed",
+          "cat": "Employé"
         },
         {
           "n": "III-1",
-          "c": null,
-          "l": "Agent(e) de maîtrise / Chef(fe) d’équipe niveau III éch. 1",
-          "b": 2500,
+          "c": 1.006,
+          "l": "Employé(e) — exécution tâches qualifiées (ex : assistant administratif, cariste, vendeur comptoir)",
+          "b": 1883.5,
           "t": "fixed",
-          "cat": "Maîtrise"
+          "cat": "Employé"
         },
         {
           "n": "III-2",
-          "c": null,
-          "l": "Agent(e) de maîtrise confirmé(e) niveau III échelon 2",
-          "b": 2750,
+          "c": 1.006,
+          "l": "Employé(e) niveau III échelon 2",
+          "b": 1894.8,
           "t": "fixed",
-          "cat": "Maîtrise"
+          "cat": "Employé"
+        },
+        {
+          "n": "III-3",
+          "c": 1.006,
+          "l": "Employé(e) niveau III échelon 3",
+          "b": 1906.17,
+          "t": "fixed",
+          "cat": "Employé"
         },
         {
           "n": "IV-1",
-          "c": null,
-          "l": "Cadre débutant(e) / Responsable commercial(e) niveau IV éch. 1",
-          "b": 3000,
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) avec autonomie (ex : assistant à la gestion des stocks)",
+          "b": 1917.61,
           "t": "fixed",
-          "cat": "Cadre"
+          "cat": "Employé"
         },
         {
           "n": "IV-2",
-          "c": null,
-          "l": "Cadre confirmé(e) / Directeur(rice) régional(e) niveau IV éch. 2",
-          "b": 3800,
+          "c": 1.006,
+          "l": "Employé(e) niveau IV échelon 2",
+          "b": 1929.12,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "IV-3",
+          "c": 1.006,
+          "l": "Employé(e) niveau IV échelon 3",
+          "b": 1940.69,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "V-1",
+          "c": 1.0375,
+          "l": "Technicien(ne) / Agent(e) de maîtrise — exécution missions définies",
+          "b": 1948.67,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "V-2",
+          "c": 1.0375,
+          "l": "Technicien(ne) / AM — conception, préparation, organisation des tâches de sa technicité",
+          "b": 2021.75,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "V-3",
+          "c": 1.0375,
+          "l": "Technicien(ne) / AM confirmé(e) niveau V échelon 3",
+          "b": 2097.56,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-1",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise / Technicien(ne) supérieur(e) — encadrement / expertise technique",
+          "b": 2176.22,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-2",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise confirmé(e) niveau VI échelon 2",
+          "b": 2257.83,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-3",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise expert(e) niveau VI échelon 3",
+          "b": 2342.5,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VII-1",
+          "c": 1.05,
+          "l": "Cadre débutant(e) (29 963,76 €/an)",
+          "b": 2496.98,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
-          "n": "IV-3",
-          "c": null,
-          "l": "Cadre supérieur(e) / Directeur(rice) général(e) niveau IV éch. 3",
-          "b": 4800,
+          "n": "VII-2",
+          "c": 1.05,
+          "l": "Cadre niveau VII échelon 2 (~31 200 €/an)",
+          "b": 2600.0,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "VII-3",
+          "c": 1.05,
+          "l": "Cadre confirmé(e) niveau VII échelon 3 (~32 500 €/an)",
+          "b": 2708.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-1",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 1 (~34 100 €/an)",
+          "b": 2841.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-2",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 2 (~35 800 €/an)",
+          "b": 2983.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-3",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 3 (~37 600 €/an)",
+          "b": 3133.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "IX-1",
+          "c": 1.05,
+          "l": "Cadre supérieur(e) niveau IX échelon 1 (~42 000 €/an)",
+          "b": 3500.0,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "IX-2",
+          "c": 1.05,
+          "l": "Cadre supérieur(e) niveau IX échelon 2 (~48 500 €/an)",
+          "b": 4041.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "X-1",
+          "c": 1.05,
+          "l": "Cadre dirigeant(e) niveau X échelon 1 (~62 000 €/an)",
+          "b": 5166.67,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
+        },
+        {
+          "n": "X-2",
+          "c": 1.05,
+          "l": "Cadre dirigeant(e) niveau X échelon 2 (77 245,05 €/an — plafond)",
+          "b": 6437.09,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
@@ -2782,9 +2926,9 @@
       ]
     },
     "614": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord sérigraphie et impression numérique — IDCC 614 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord sérigraphie et impression numérique — IDCC 614 — 2024",
       "g": [
         {
           "n": "I",
@@ -2876,9 +3020,9 @@
       ]
     },
     "635": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord négoce fournitures dentaires — IDCC 635 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord négoce fournitures dentaires — IDCC 635 — 2024",
       "g": [
         {
           "n": "I",
@@ -2923,9 +3067,9 @@
       ]
     },
     "637": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord récupération industries et commerces 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord récupération industries et commerces 2024",
       "g": [
         {
           "n": "I",
@@ -3182,9 +3326,9 @@
       ]
     },
     "673": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord transport aérien personnel au sol — IDCC 673 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord transport aérien personnel au sol — IDCC 673 — 2024",
       "g": [
         {
           "n": "I",
@@ -3348,9 +3492,9 @@
       ]
     },
     "698": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord employés presse quotidienne régionale — IDCC 698 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord employés presse quotidienne régionale — IDCC 698 — 2024",
       "g": [
         {
           "n": "I",
@@ -3450,9 +3594,9 @@
       ]
     },
     "706": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord reprographie — IDCC 706 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord reprographie — IDCC 706 — 2024",
       "g": [
         {
           "n": "I",
@@ -3544,9 +3688,9 @@
       ]
     },
     "715": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord instruments à écrire industries connexes — IDCC 715 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord instruments à écrire industries connexes — IDCC 715 — 2024",
       "g": [
         {
           "n": "O1",
@@ -3591,9 +3735,9 @@
       ]
     },
     "716": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord employés ouvriers distribution cinématographique — IDCC 716 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord employés ouvriers distribution cinématographique — IDCC 716 — 2024",
       "g": [
         {
           "n": "I",
@@ -3685,9 +3829,9 @@
       ]
     },
     "733": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord détaillants en chaussures — IDCC 733 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord détaillants en chaussures — IDCC 733 — 2024",
       "g": [
         {
           "n": "I",
@@ -3984,9 +4128,9 @@
       ]
     },
     "802": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord distribution papiers cartons commerce gros OETAM — IDCC 802 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord distribution papiers cartons commerce gros OETAM — IDCC 802 — 2024",
       "g": [
         {
           "n": "I",
@@ -4086,9 +4230,9 @@
       ]
     },
     "804": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord national VRP — Art. L7311-1 Code du travail — IDCC 804 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord national VRP — Art. L7311-1 Code du travail — IDCC 804 — 2024",
       "g": [
         {
           "n": "I",
@@ -4353,9 +4497,9 @@
       ]
     },
     "889": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord employés techniciens théâtres cinématographiques — IDCC 889 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord employés techniciens théâtres cinématographiques — IDCC 889 — 2024",
       "g": [
         {
           "n": "I",
@@ -4502,9 +4646,9 @@
       ]
     },
     "915": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord expertises évaluations industrielles commerciales — IDCC 915 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord expertises évaluations industrielles commerciales — IDCC 915 — 2024",
       "g": [
         {
           "n": "I",
@@ -4761,9 +4905,9 @@
       ]
     },
     "993": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord charcuterie de détail 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord charcuterie de détail 2024",
       "g": [
         {
           "n": "1",
@@ -4808,9 +4952,9 @@
       ]
     },
     "998": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord exploitation équipements thermiques 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord exploitation équipements thermiques 2024",
       "g": [
         {
           "n": "I",
@@ -4855,9 +4999,9 @@
       ]
     },
     "1000": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord confiserie chocolaterie biscuiterie — IDCC 1000 — IAA — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord confiserie chocolaterie biscuiterie — IDCC 1000 — IAA — 2024",
       "g": [
         {
           "n": "O1",
@@ -5382,9 +5526,9 @@
       ]
     },
     "1177": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord meubles commerce détail — IDCC 1177 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord meubles commerce détail — IDCC 1177 — 2024",
       "g": [
         {
           "n": "I",
@@ -5484,9 +5628,9 @@
       ]
     },
     "1237": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord centres de gestion agréés — IDCC 1237 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord centres de gestion agréés — IDCC 1237 — 2024",
       "g": [
         {
           "n": "I",
@@ -5531,9 +5675,9 @@
       ]
     },
     "1240": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord distillation alcools spiritueux — IDCC 1240 — IAA — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord distillation alcools spiritueux — IDCC 1240 — IAA — 2024",
       "g": [
         {
           "n": "O1",
@@ -5688,9 +5832,9 @@
       ]
     },
     "1266": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord sociétés de recherche — IDCC 1266 — base Syntec — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord sociétés de recherche — IDCC 1266 — base Syntec — 2024",
       "g": [
         {
           "n": "I",
@@ -5822,9 +5966,9 @@
       ]
     },
     "1278": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord PACT ARIM protection amélioration habitat 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord PACT ARIM protection amélioration habitat 2024",
       "g": [
         {
           "n": "I",
@@ -5916,9 +6060,9 @@
       ]
     },
     "1286": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord confiserie chocolaterie artisanat 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord confiserie chocolaterie artisanat 2024",
       "g": [
         {
           "n": "I",
@@ -5963,9 +6107,9 @@
       ]
     },
     "1307": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord exploitation cinématographique — IDCC 1307 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord exploitation cinématographique — IDCC 1307 — 2024",
       "g": [
         {
           "n": "I",
@@ -6128,9 +6272,9 @@
       ]
     },
     "1314": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord maisons alimentation succursales gérants mandataires 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord maisons alimentation succursales gérants mandataires 2024",
       "g": [
         {
           "n": "I",
@@ -6420,9 +6564,9 @@
       ]
     },
     "1370": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord équipements thermiques installations entretien 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord équipements thermiques installations entretien 2024",
       "g": [
         {
           "n": "I",
@@ -6522,9 +6666,9 @@
       ]
     },
     "1396": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord chocolaterie confiserie biscuiterie industrielle — IDCC 1396 — IAA — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord chocolaterie confiserie biscuiterie industrielle — IDCC 1396 — IAA — 2024",
       "g": [
         {
           "n": "O1",
@@ -6569,9 +6713,9 @@
       ]
     },
     "1404": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord maroquinerie gainerie bracelets cuir — IDCC 1404 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord maroquinerie gainerie bracelets cuir — IDCC 1404 — 2024",
       "g": [
         {
           "n": "O1",
@@ -6616,9 +6760,9 @@
       ]
     },
     "1405": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord expédition exportation fruits et légumes 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord expédition exportation fruits et légumes 2024",
       "g": [
         {
           "n": "I",
@@ -6773,9 +6917,9 @@
       ]
     },
     "1412": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord installation thermique frigorifique 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord installation thermique frigorifique 2024",
       "g": [
         {
           "n": "I",
@@ -6820,9 +6964,9 @@
       ]
     },
     "1413": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord gaz naturel distributeurs — IDCC 1413 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord gaz naturel distributeurs — IDCC 1413 — 2024",
       "g": [
         {
           "n": "I",
@@ -6867,9 +7011,9 @@
       ]
     },
     "1480": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord presse quotidienne nationale — IDCC 1480 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord presse quotidienne nationale — IDCC 1480 — 2024",
       "g": [
         {
           "n": "I",
@@ -6914,9 +7058,9 @@
       ]
     },
     "1483": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord habillement commerce de détail — IDCC 1483 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord habillement commerce de détail — IDCC 1483 — 2024",
       "g": [
         {
           "n": "I",
@@ -7159,9 +7303,9 @@
       ]
     },
     "1499": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industrie du gaz 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industrie du gaz 2024",
       "g": [
         {
           "n": "I",
@@ -7742,9 +7886,9 @@
       ]
     },
     "1554": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fabrication de la bière 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fabrication de la bière 2024",
       "g": [
         {
           "n": "I",
@@ -7844,9 +7988,9 @@
       ]
     },
     "1557": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
       "g": [
         {
           "n": "O1",
@@ -7891,9 +8035,9 @@
       ]
     },
     "1561": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord ameublement industrie / meubles bois — IDCC 2046/1561 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord ameublement industrie / meubles bois — IDCC 2046/1561 — 2024",
       "g": [
         {
           "n": "O1",
@@ -7938,9 +8082,9 @@
       ]
     },
     "1563": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
       "g": [
         {
           "n": "O1",
@@ -7985,9 +8129,9 @@
       ]
     },
     "1564": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fonderies aluminium cuivre alliages — IDCC 1557/1563/1564 — 2024",
       "g": [
         {
           "n": "O1",
@@ -8363,9 +8507,9 @@
       ]
     },
     "1598": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industrie cimentière — IDCC 1598 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industrie cimentière — IDCC 1598 — 2024",
       "g": [
         {
           "n": "I",
@@ -8465,9 +8609,9 @@
       ]
     },
     "1603": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industrie emballage — IDCC 1603 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industrie emballage — IDCC 1603 — 2024",
       "g": [
         {
           "n": "O1",
@@ -8716,9 +8860,9 @@
       ]
     },
     "1631": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord tourisme hôtellerie plein air 2024 — HCR groupe",
+      "s": "(Grille estimée — niveaux génériques) Accord tourisme hôtellerie plein air 2024 — HCR groupe",
       "g": [
         {
           "n": "I",
@@ -9140,9 +9284,9 @@
       ]
     },
     "1659": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord vente à distance e-commerce 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord vente à distance e-commerce 2024",
       "g": [
         {
           "n": "I",
@@ -9297,9 +9441,9 @@
       ]
     },
     "1666": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord contrôle technique automobile 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord contrôle technique automobile 2024",
       "g": [
         {
           "n": "I",
@@ -9344,9 +9488,9 @@
       ]
     },
     "1670": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord industrie ascenseurs escaliers mécaniques 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord industrie ascenseurs escaliers mécaniques 2024",
       "g": [
         {
           "n": "I",
@@ -9462,9 +9606,9 @@
       ]
     },
     "1673": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord auto-écoles 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord auto-écoles 2024",
       "g": [
         {
           "n": "I",
@@ -9905,9 +10049,9 @@
       ]
     },
     "1685": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord béton prêt à emploi IAA180 — IDCC 1685 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord béton prêt à emploi IAA180 — IDCC 1685 — 2024",
       "g": [
         {
           "n": "O1",
@@ -10345,9 +10489,9 @@
       ]
     },
     "1702": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord conserves IAA 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord conserves IAA 2024",
       "g": [
         {
           "n": "I",
@@ -10502,9 +10646,9 @@
       ]
     },
     "1712": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord courrier express messagerie — IDCC 1712 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord courrier express messagerie — IDCC 1712 — 2024",
       "g": [
         {
           "n": "I",
@@ -10549,9 +10693,9 @@
       ]
     },
     "1720": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord cabinets recrutement placement — IDCC 1720 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord cabinets recrutement placement — IDCC 1720 — 2024",
       "g": [
         {
           "n": "I",
@@ -10895,9 +11039,9 @@
       ]
     },
     "1735": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord logistique distribution livraison — IDCC 1735/16110 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord logistique distribution livraison — IDCC 1735/16110 — 2024",
       "g": [
         {
           "n": "I",
@@ -11107,9 +11251,9 @@
       ]
     },
     "1747": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord librairie — IDCC 1747 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord librairie — IDCC 1747 — 2024",
       "g": [
         {
           "n": "I",
@@ -12521,9 +12665,9 @@
       ]
     },
     "1770": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord maisons familiales rurales — IDCC 1770 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord maisons familiales rurales — IDCC 1770 — 2024",
       "g": [
         {
           "n": "I",
@@ -13000,9 +13144,9 @@
       ]
     },
     "1821": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord horlogerie 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord horlogerie 2024",
       "g": [
         {
           "n": "I",
@@ -13173,9 +13317,9 @@
       ]
     },
     "1862": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord jardineries graineteries — IDCC 1862 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord jardineries graineteries — IDCC 1862 — 2024",
       "g": [
         {
           "n": "I",
@@ -13275,9 +13419,9 @@
       ]
     },
     "1891": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord entrepôts frigorifiques manutention — IAA180 — IDCC 1891 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord entrepôts frigorifiques manutention — IAA180 — IDCC 1891 — 2024",
       "g": [
         {
           "n": "I",
@@ -13866,9 +14010,9 @@
       ]
     },
     "2046": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord ameublement industrie / meubles bois — IDCC 2046/1561 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord ameublement industrie / meubles bois — IDCC 2046/1561 — 2024",
       "g": [
         {
           "n": "O1",
@@ -13968,9 +14112,9 @@
       ]
     },
     "2075": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord caves coopératives vinicoles 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord caves coopératives vinicoles 2024",
       "g": [
         {
           "n": "I",
@@ -14015,9 +14159,9 @@
       ]
     },
     "2098": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord récupération métaux industries 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord récupération métaux industries 2024",
       "g": [
         {
           "n": "I",
@@ -14770,9 +14914,9 @@
       ]
     },
     "2344": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord pompes funèbres — IDCC 2344/759 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord pompes funèbres — IDCC 2344/759 — 2024",
       "g": [
         {
           "n": "I",
@@ -14974,9 +15118,9 @@
       ]
     },
     "2409": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord enseignement privé sous contrat — IDCC 2409 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord enseignement privé sous contrat — IDCC 2409 — 2024",
       "g": [
         {
           "n": "I",
@@ -15163,9 +15307,9 @@
       ]
     },
     "2528": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/04/2024",
-      "s": "Accord hôtellerie plein air campings HCR groupe 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord hôtellerie plein air campings HCR groupe 2024",
       "g": [
         {
           "n": "I",
@@ -15320,9 +15464,9 @@
       ]
     },
     "2582": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord enseignement privé hors contrat — IDCC 2582 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord enseignement privé hors contrat — IDCC 2582 — 2024",
       "g": [
         {
           "n": "I",
@@ -15367,9 +15511,9 @@
       ]
     },
     "2583": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord fleuristes jardineries animaleries — IDCC 2583 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord fleuristes jardineries animaleries — IDCC 2583 — 2024",
       "g": [
         {
           "n": "I",
@@ -15414,9 +15558,9 @@
       ]
     },
     "2596": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord esthétique cosmétique parfumerie — IDCC 2596 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord esthétique cosmétique parfumerie — IDCC 2596 — 2024",
       "g": [
         {
           "n": "I",
@@ -15720,9 +15864,9 @@
       ]
     },
     "2691": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord enseignement privé indépendant hors contrat — IDCC 2691 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord enseignement privé indépendant hors contrat — IDCC 2691 — 2024",
       "g": [
         {
           "n": "I",
@@ -16272,9 +16416,9 @@
       ]
     },
     "3017": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord ports manutention unifiée — IDCC 3017 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord ports manutention unifiée — IDCC 3017 — 2024",
       "g": [
         {
           "n": "I",
@@ -16596,9 +16740,9 @@
       ]
     },
     "3090": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord édition livres presse multimédia 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord édition livres presse multimédia 2024",
       "g": [
         {
           "n": "I",
@@ -16643,9 +16787,9 @@
       ]
     },
     "3109": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord commerce détail alimentaire spécialisé 5 branches — IDCC 3109 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord commerce détail alimentaire spécialisé 5 branches — IDCC 3109 — 2024",
       "g": [
         {
           "n": "I",
@@ -16769,9 +16913,9 @@
       ]
     },
     "3139": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord parcs de loisirs jardins zoologiques 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord parcs de loisirs jardins zoologiques 2024",
       "g": [
         {
           "n": "I",
@@ -17140,9 +17284,9 @@
       ]
     },
     "3217": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord transport sanitaire IDCC 3217 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord transport sanitaire IDCC 3217 — 2024",
       "g": [
         {
           "n": "I",
@@ -17399,9 +17543,9 @@
       ]
     },
     "3230": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord presse quotidienne et hebdomadaire 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord presse quotidienne et hebdomadaire 2024",
       "g": [
         {
           "n": "I",
@@ -17832,9 +17976,9 @@
       ]
     },
     "3257": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord mutuelles organismes mutualistes — IDCC 3257 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord mutuelles organismes mutualistes — IDCC 3257 — 2024",
       "g": [
         {
           "n": "I",
@@ -17981,9 +18125,9 @@
       ]
     },
     "4890": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord cartonnage industries 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord cartonnage industries 2024",
       "g": [
         {
           "n": "I",
@@ -18083,9 +18227,9 @@
       ]
     },
     "5021": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord navigation intérieure bateliers fluviaux — IDCC 5021 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord navigation intérieure bateliers fluviaux — IDCC 5021 — 2024",
       "g": [
         {
           "n": "I",
@@ -18131,48 +18275,232 @@
     },
     "5730": {
       "st": "real",
-      "d": "01/01/2024",
-      "s": "Accord commerce de gros non alimentaire 2024",
+      "d": "01/01/2025",
+      "s": "Accord salarial 16/12/2024 — IDCC 573 applicable au commerce de gros non alimentaire",
       "g": [
         {
-          "n": "I",
-          "c": null,
-          "l": "Employé(e) commercial(e) débutant(e)",
+          "n": "I-1",
+          "c": 1.006,
+          "l": "Employé(e) — exécution tâches simples (ex : agent de propreté, gardien, conditionnement)",
           "b": 1823.03,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "II",
-          "c": null,
-          "l": "Commercial(e) qualifié(e)",
-          "b": 2050,
+          "n": "I-2",
+          "c": 1.006,
+          "l": "Employé(e) niveau I échelon 2",
+          "b": 1828.0,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "III",
-          "c": null,
-          "l": "Technico-commercial(e) (technicien)",
-          "b": 2500,
+          "n": "I-3",
+          "c": 1.006,
+          "l": "Employé(e) niveau I échelon 3",
+          "b": 1838.97,
           "t": "fixed",
-          "cat": "Technicien"
+          "cat": "Employé"
         },
         {
-          "n": "IV",
-          "c": null,
-          "l": "Chef(fe) de secteur (maîtrise)",
-          "b": 3000,
+          "n": "II-1",
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) (ex : préparateur de commandes, magasinier)",
+          "b": 1850.0,
           "t": "fixed",
-          "cat": "Maîtrise"
+          "cat": "Employé"
         },
         {
-          "n": "V",
-          "c": null,
-          "l": "Directeur(rice) commercial(e)",
-          "b": 4200,
+          "n": "II-2",
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) niveau II échelon 2",
+          "b": 1861.1,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "II-3",
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) niveau II échelon 3",
+          "b": 1872.27,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "III-1",
+          "c": 1.006,
+          "l": "Employé(e) — exécution tâches qualifiées (ex : assistant administratif, cariste, vendeur comptoir)",
+          "b": 1883.5,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "III-2",
+          "c": 1.006,
+          "l": "Employé(e) niveau III échelon 2",
+          "b": 1894.8,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "III-3",
+          "c": 1.006,
+          "l": "Employé(e) niveau III échelon 3",
+          "b": 1906.17,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "IV-1",
+          "c": 1.006,
+          "l": "Employé(e) qualifié(e) avec autonomie (ex : assistant à la gestion des stocks)",
+          "b": 1917.61,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "IV-2",
+          "c": 1.006,
+          "l": "Employé(e) niveau IV échelon 2",
+          "b": 1929.12,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "IV-3",
+          "c": 1.006,
+          "l": "Employé(e) niveau IV échelon 3",
+          "b": 1940.69,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "V-1",
+          "c": 1.0375,
+          "l": "Technicien(ne) / Agent(e) de maîtrise — exécution missions définies",
+          "b": 1948.67,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "V-2",
+          "c": 1.0375,
+          "l": "Technicien(ne) / AM — conception, préparation, organisation des tâches de sa technicité",
+          "b": 2021.75,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "V-3",
+          "c": 1.0375,
+          "l": "Technicien(ne) / AM confirmé(e) niveau V échelon 3",
+          "b": 2097.56,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-1",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise / Technicien(ne) supérieur(e) — encadrement / expertise technique",
+          "b": 2176.22,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-2",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise confirmé(e) niveau VI échelon 2",
+          "b": 2257.83,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VI-3",
+          "c": 1.0375,
+          "l": "Agent(e) de maîtrise expert(e) niveau VI échelon 3",
+          "b": 2342.5,
+          "t": "fixed",
+          "cat": "Technicien/AM"
+        },
+        {
+          "n": "VII-1",
+          "c": 1.05,
+          "l": "Cadre débutant(e) (29 963,76 €/an)",
+          "b": 2496.98,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "VII-2",
+          "c": 1.05,
+          "l": "Cadre niveau VII échelon 2 (~31 200 €/an)",
+          "b": 2600.0,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VII-3",
+          "c": 1.05,
+          "l": "Cadre confirmé(e) niveau VII échelon 3 (~32 500 €/an)",
+          "b": 2708.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-1",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 1 (~34 100 €/an)",
+          "b": 2841.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-2",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 2 (~35 800 €/an)",
+          "b": 2983.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-3",
+          "c": 1.05,
+          "l": "Cadre niveau VIII échelon 3 (~37 600 €/an)",
+          "b": 3133.33,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "IX-1",
+          "c": 1.05,
+          "l": "Cadre supérieur(e) niveau IX échelon 1 (~42 000 €/an)",
+          "b": 3500.0,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "IX-2",
+          "c": 1.05,
+          "l": "Cadre supérieur(e) niveau IX échelon 2 (~48 500 €/an)",
+          "b": 4041.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "X-1",
+          "c": 1.05,
+          "l": "Cadre dirigeant(e) niveau X échelon 1 (~62 000 €/an)",
+          "b": 5166.67,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
+        },
+        {
+          "n": "X-2",
+          "c": 1.05,
+          "l": "Cadre dirigeant(e) niveau X échelon 2 (77 245,05 €/an — plafond)",
+          "b": 6437.09,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
@@ -18232,9 +18560,9 @@
       ]
     },
     "7024": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord vins spiritueux commerce de gros 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord vins spiritueux commerce de gros 2024",
       "g": [
         {
           "n": "I",
@@ -26222,9 +26550,9 @@
       ]
     },
     "16110": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord logistique distribution livraison — IDCC 1735/16110 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord logistique distribution livraison — IDCC 1735/16110 — 2024",
       "g": [
         {
           "n": "I",
@@ -26269,9 +26597,9 @@
       ]
     },
     "21200": {
-      "st": "real",
+      "st": "estimated",
       "d": "01/01/2024",
-      "s": "Accord organismes sécurité sociale — IDCC 21200 — 2024",
+      "s": "(Grille estimée — niveaux génériques) Accord organismes sécurité sociale — IDCC 21200 — 2024",
       "g": [
         {
           "n": "1",
