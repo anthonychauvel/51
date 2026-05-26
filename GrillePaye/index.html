@@ -1617,21 +1617,6 @@ document.getElementById("adm-reset-all").addEventListener("click",()=>{
 
 // === INIT ===
 loadState();
-// Restaurer l'import conformité si existant
-(function(){
-  try{
-    const saved = JSON.parse(localStorage.getItem(LS.CONF));
-    if(saved && saved.raw && saved.raw.length){
-      CONF_RAW = saved.raw;
-      CONF_COLS = saved.cols || [];
-      CONF_MAP  = saved.map  || {};
-      processConfData();
-      const age = saved.ts ? Math.round((Date.now()-new Date(saved.ts).getTime())/60000) : null;
-      console.log('GrillePaye: import conformité restauré ('+(age?age+'min':'?')+', '+CONF_DATA.length+' profils)');
-    }
-  }catch(e){}
-})();
-updateSmicPill();
 renderGList();
 renderEmpList();
 (function(){
@@ -3104,7 +3089,7 @@ function resetRole() {
         +'Vos données d’import ont été conservées même après changement de rôle. '
         +'<button onclick="clearConfImport()" style="background:none;border:none;cursor:pointer;color:var(--ro);font-size:.65rem;font-weight:700;padding:0;margin-left:6px">Supprimer ✕</button></div>';
       const dz = document.getElementById('conf-drop-zone');
-      if(saveBtn&&saveBtn.parentElement){if(dz) dz.parentElement.insertBefore(notice, dz);}
+      if(dz&&dz.parentElement){dz.parentElement.insertBefore(notice, dz);}
     }
   }catch(e){}
 })();
@@ -3114,6 +3099,23 @@ function clearConfImport(){
   CONF_RAW=[];CONF_COLS=[];CONF_MAP={};CONF_DATA=[];
   location.reload();
 }
-</script>
+
+
+// === RESTAURATION DEFERRED (après déclarations) ===
+// Restaurer l'import conformité si existant
+(function(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(LS.CONF));
+    if(saved && saved.raw && saved.raw.length){
+      CONF_RAW = saved.raw;
+      CONF_COLS = saved.cols || [];
+      CONF_MAP  = saved.map  || {};
+      processConfData();
+      const age = saved.ts ? Math.round((Date.now()-new Date(saved.ts).getTime())/60000) : null;
+      console.log('GrillePaye: import conformité restauré ('+(age?age+'min':'?')+', '+CONF_DATA.length+' profils)');
+    }
+  }catch(e){}
+})();
+updateSmicPill();</script>
 </body>
 </html>
