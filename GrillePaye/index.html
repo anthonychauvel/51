@@ -1129,7 +1129,7 @@ document.querySelectorAll(".tab").forEach(t=>{
 });
 document.getElementById("smic-pill").addEventListener("click",()=>{
   document.querySelectorAll(".tab,.panel").forEach(x=>x.classList.remove("active"));
-  document.querySelector("[data-tab=admin]").classList.add("active");
+  document.querySelector('[data-tab="admin"]').classList.add("active");
   document.getElementById("panel-admin").classList.add("active");
   renderAdmin();setTimeout(()=>document.getElementById("adm-smic").focus(),200);
 });
@@ -2084,7 +2084,7 @@ renderProfList();
   scoreDiv.style.cssText = "font-size:.65rem;font-family:var(--fm);color:var(--or);text-align:right;margin-top:5px;font-weight:700;";
   scoreDiv.textContent = "Score de valeur du poste : 0/100";
   const saveBtn = document.getElementById("tp-save");
-  saveBtn.parentElement.insertBefore(scoreDiv, saveBtn.parentElement.firstChild);
+  saveBtn&&saveBtn.parentElement&&saveBtn.parentElement.insertBefore.bind(saveBtn.parentElement)(scoreDiv, saveBtn.parentElement.firstChild);
 })();
 
 
@@ -2179,7 +2179,7 @@ setTT = function(tab){
   const pol=document.getElementById("tt-politique");
   if(pol) pol.style.display = tab==="politique"?"block":"none";
   // Bouton politique
-  document.querySelectorAll("[data-tt=politique]").forEach(b=>{
+  document.querySelectorAll("[data-tt='politique']").forEach(b=>{
     b.className = tab==="politique"?"btn bp btn-sm":"btn bg btn-sm";
   });
   if(tab==="politique"){renderPolRules();renderPolGroups();}
@@ -2955,7 +2955,7 @@ GrillePaye — Outil d'aide à la décision · Données 100% locales`;
 // ── Bouton retour menu ──
 function goHome(){
   document.querySelectorAll('.tab,.panel').forEach(x=>x.classList.remove('active'));
-  document.querySelector('[data-tab=grilles]').classList.add('active');
+  document.querySelector('[data-tab="grilles"]').classList.add('active');
   document.getElementById('panel-grilles').classList.add('active');
   document.getElementById('btn-home').style.display='none';
   window.scrollTo({top:0,behavior:'smooth'});
@@ -3104,7 +3104,7 @@ function resetRole() {
         +'Vos données d’import ont été conservées même après changement de rôle. '
         +'<button onclick="clearConfImport()" style="background:none;border:none;cursor:pointer;color:var(--ro);font-size:.65rem;font-weight:700;padding:0;margin-left:6px">Supprimer ✕</button></div>';
       const dz = document.getElementById('conf-drop-zone');
-      if(dz) dz.parentElement.insertBefore(notice, dz);
+      if(saveBtn&&saveBtn.parentElement){if(dz) dz.parentElement.insertBefore(notice, dz);}
     }
   }catch(e){}
 })();
