@@ -467,7 +467,7 @@
     "45": {
       "st": "real",
       "d": "01/01/2026",
-      "s": "Caoutchouc industrie (IDCC 45) — branche liée IDCC 44 — accord 2025 + SMIC plancher 01/06/2026 — coef 190 à 660",
+      "s": "Caoutchouc industrie (IDCC 45) — accord 2025 branche caoutchouc — coef 190 à 660 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "190",
@@ -480,8 +480,8 @@
         {
           "n": "210",
           "c": 210,
-          "l": "Coef 210 — Ouvrier(ère) qualifié(e) — CAP/BEP",
-          "b": 1900,
+          "l": "Coef 210 — Ouvrier(ère) qualifié(e) — CAP",
+          "b": 1910,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
@@ -489,63 +489,63 @@
           "n": "230",
           "c": 230,
           "l": "Coef 230 — Ouvrier(ère) hautement qualifié(e)",
-          "b": 2010,
+          "b": 2025,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
           "n": "250",
           "c": 250,
-          "l": "Coef 250 — Technicien(ne)",
-          "b": 2180,
+          "l": "Coef 250 — Technicien(ne) / Régleur(euse)",
+          "b": 2190,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
           "n": "270",
           "c": 270,
-          "l": "Coef 270 — Technicien(ne) confirmé(e)",
-          "b": 2380,
+          "l": "Coef 270 — Technicien(ne) qualifié(e)",
+          "b": 2390,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
           "n": "305",
           "c": 305,
-          "l": "Coef 305 — Agent(e) maîtrise",
-          "b": 2620,
+          "l": "Coef 305 — Agent(e) de maîtrise",
+          "b": 2640,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
           "n": "335",
           "c": 335,
-          "l": "Coef 335 — Agent(e) maîtrise confirmé(e)",
-          "b": 2870,
+          "l": "Coef 335 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2880,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
           "n": "400",
           "c": 400,
-          "l": "Coef 400 — Cadre Position 1 — Ingénieur(e)",
-          "b": 3400,
+          "l": "Coef 400 — Cadre — Ingénieur(e)",
+          "b": 3420,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
           "n": "500",
           "c": 500,
-          "l": "Coef 500 — Cadre Position 2 — Cadre confirmé(e)",
-          "b": 4200,
+          "l": "Coef 500 — Cadre supérieur(e)",
+          "b": 4260,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
           "n": "660",
           "c": 660,
-          "l": "Coef 660 — Cadre Position 3 — Directeur(rice)",
-          "b": 5600,
+          "l": "Coef 660 — Cadre dirigeant(e)",
+          "b": 5630,
           "t": "fixed",
           "cat": "Cadre dirigeant"
         }
@@ -687,62 +687,86 @@
     },
     "87": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Ouvriers carrières UNICEM IDCC 87 — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/07/2025",
+      "s": "Carrières et matériaux (IDCC 3249/87/135/211 fusionnés 2022) — avenant harmonisation n°1 du 21/05/2025 étendu BOCC 2025-31 — 8 niveaux — grilles régionales (Légifrance KALITEXT000052283905)",
       "g": [
         {
-          "n": "N1",
+          "n": "I-100",
           "c": 100,
-          "l": "Niveau 1 — Ouvrier(ère) carrier(ère) débutant(e)",
+          "l": "Niveau I coef 100 — Ouvrier(ère) d'exécution débutant(e)",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "N2",
+          "n": "I-115",
           "c": 115,
-          "l": "Niveau 2 — Conducteur(rice) d'engins débutant(e)",
-          "b": 1900,
+          "l": "Niveau I coef 115 — Ouvrier(ère) d'exécution qualifié(e)",
+          "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "N3",
-          "c": 135,
-          "l": "Niveau 3 — Conducteur(rice) qualifié(e) — CACES",
-          "b": 1960,
+          "n": "II-130",
+          "c": 130,
+          "l": "Niveau II coef 130 — Ouvrier(ère) professionnel(le)",
+          "b": 1880,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "N4",
-          "c": 155,
-          "l": "Niveau 4 — Mineur(euse) / Foreur(euse) qualifié(e)",
-          "b": 2050,
+          "n": "II-145",
+          "c": 145,
+          "l": "Niveau II coef 145 — Conducteur(rice) d'engins qualifié(e) — CACES",
+          "b": 1910,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "N5",
-          "c": 180,
-          "l": "Niveau 5 — Chef(fe) d'équipe carrière",
-          "b": 2280,
+          "n": "III-160",
+          "c": 160,
+          "l": "Niveau III coef 160 — Ouvrier(ère) hautement qualifié(e) / Chef(fe) carrier",
+          "b": 1970,
+          "t": "fixed",
+          "cat": "Ouvrier qualifié"
+        },
+        {
+          "n": "IV-175",
+          "c": 175,
+          "l": "Niveau IV coef 175 — Technicien(ne) / AM débutant(e)",
+          "b": 2070,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "V-200",
+          "c": 200,
+          "l": "Niveau V coef 200 — Technicien(ne) qualifié(e) — laboratoire, géologie",
+          "b": 2200,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "VI-230",
+          "c": 230,
+          "l": "Niveau VI coef 230 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2500,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "N6",
-          "c": 220,
-          "l": "Niveau 6 — Agent(e) maîtrise / Responsable site",
-          "b": 2650,
+          "n": "VII-280",
+          "c": 280,
+          "l": "Niveau VII coef 280 — Cadre — Chef(fe) de carrière / Ingénieur(e)",
+          "b": 3100,
           "t": "fixed",
-          "cat": "Maîtrise"
+          "cat": "Cadre"
         },
         {
-          "n": "C",
-          "c": 300,
-          "l": "Cadre — Directeur(rice) carrière",
-          "b": 3400,
+          "n": "VIII-400",
+          "c": 400,
+          "l": "Niveau VIII coef 400 — Cadre supérieur(e) / Directeur(rice)",
+          "b": 4200,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -821,62 +845,86 @@
     },
     "135": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "ETAM carrières UNICEM IDCC 135 — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/07/2025",
+      "s": "Carrières et matériaux (IDCC 3249/87/135/211 fusionnés 2022) — avenant harmonisation n°1 du 21/05/2025 étendu BOCC 2025-31 — 8 niveaux — grilles régionales (Légifrance KALITEXT000052283905)",
       "g": [
         {
-          "n": "A",
+          "n": "I-100",
           "c": 100,
-          "l": "Niveau A — Employé(e) administratif(ve) débutant(e)",
+          "l": "Niveau I coef 100 — Ouvrier(ère) d'exécution débutant(e)",
           "b": 1867.02,
           "t": "fixed",
-          "cat": "Employé"
+          "cat": "Ouvrier"
         },
         {
-          "n": "B",
+          "n": "I-115",
           "c": 115,
-          "l": "Niveau B — Employé(e) qualifié(e)",
-          "b": 1900,
+          "l": "Niveau I coef 115 — Ouvrier(ère) d'exécution qualifié(e)",
+          "b": 1867.02,
           "t": "fixed",
-          "cat": "Employé"
+          "cat": "Ouvrier"
         },
         {
-          "n": "C",
-          "c": 135,
-          "l": "Niveau C — Technicien(ne) laboratoire / géologie",
-          "b": 1980,
+          "n": "II-130",
+          "c": 130,
+          "l": "Niveau II coef 130 — Ouvrier(ère) professionnel(le)",
+          "b": 1880,
           "t": "fixed",
-          "cat": "Technicien"
+          "cat": "Ouvrier qualifié"
         },
         {
-          "n": "D",
+          "n": "II-145",
+          "c": 145,
+          "l": "Niveau II coef 145 — Conducteur(rice) d'engins qualifié(e) — CACES",
+          "b": 1910,
+          "t": "fixed",
+          "cat": "Ouvrier qualifié"
+        },
+        {
+          "n": "III-160",
           "c": 160,
-          "l": "Niveau D — Technicien(ne) confirmé(e)",
-          "b": 2100,
+          "l": "Niveau III coef 160 — Ouvrier(ère) hautement qualifié(e) / Chef(fe) carrier",
+          "b": 1970,
+          "t": "fixed",
+          "cat": "Ouvrier qualifié"
+        },
+        {
+          "n": "IV-175",
+          "c": 175,
+          "l": "Niveau IV coef 175 — Technicien(ne) / AM débutant(e)",
+          "b": 2070,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "E",
-          "c": 190,
-          "l": "Niveau E — Agent(e) maîtrise / Responsable technique",
-          "b": 2380,
+          "n": "V-200",
+          "c": 200,
+          "l": "Niveau V coef 200 — Technicien(ne) qualifié(e) — laboratoire, géologie",
+          "b": 2200,
           "t": "fixed",
-          "cat": "Maîtrise"
+          "cat": "Technicien"
         },
         {
-          "n": "F",
+          "n": "VI-230",
           "c": 230,
-          "l": "Niveau F — Agent(e) maîtrise supérieur(e)",
-          "b": 2750,
+          "l": "Niveau VI coef 230 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2500,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "G",
-          "c": 290,
-          "l": "Niveau G — Cadre — Chef(fe) de service",
-          "b": 3400,
+          "n": "VII-280",
+          "c": 280,
+          "l": "Niveau VII coef 280 — Cadre — Chef(fe) de carrière / Ingénieur(e)",
+          "b": 3100,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "VIII-400",
+          "c": 400,
+          "l": "Niveau VIII coef 400 — Cadre supérieur(e) / Directeur(rice)",
+          "b": 4200,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -884,109 +932,197 @@
     },
     "158": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Bois scieries négoce IDCC 158 — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/01/2026",
+      "s": "Bois scieries négoce importation (IDCC 158) — avenant n°6 du 28/11/2024 étendu JO 2/05/2025 + NAO 19/12/2025 (+2,3%) — 1 802€ à 4 808€",
       "g": [
         {
-          "n": "O1",
+          "n": "O-100",
           "c": 100,
-          "l": "Ouvrier(ère) scierie débutant(e)",
+          "l": "Coef 100 — Ouvrier(ère) scierie débutant(e) — manutention, tri",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "O2",
-          "c": 120,
-          "l": "Scieur(euse) / Cariste bois qualifié(e)",
-          "b": 1895,
+          "n": "O-115",
+          "c": 115,
+          "l": "Coef 115 — Scieur(euse) / Cariste débutant(e)",
+          "b": 1875,
+          "t": "fixed",
+          "cat": "Ouvrier"
+        },
+        {
+          "n": "O-130",
+          "c": 130,
+          "l": "Coef 130 — Scieur(euse) qualifié(e) — travail bois mécanique",
+          "b": 1908,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "O3",
+          "n": "O-145",
           "c": 145,
-          "l": "Scieur(euse) confirmé(e) / Conducteur(rice) ligne",
-          "b": 1960,
+          "l": "Coef 145 — Conducteur(rice) de ligne bois",
+          "b": 1955,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "T1",
-          "c": 170,
-          "l": "Technicien(ne) — séchage, qualité bois",
-          "b": 2080,
+          "n": "O-160",
+          "c": 160,
+          "l": "Coef 160 — Scieur(euse) confirmé(e) — séchage, rabotage",
+          "b": 2010,
           "t": "fixed",
-          "cat": "Technicien"
+          "cat": "Ouvrier qualifié"
         },
         {
-          "n": "AM",
-          "c": 210,
-          "l": "Chef(fe) scierie / Agent(e) maîtrise",
-          "b": 2380,
+          "n": "AM1-E1",
+          "c": 190,
+          "l": "AM1 éch.1 — Agent(e) de maîtrise débutant(e) — chef(fe) d'équipe",
+          "b": 2095,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
+          "n": "AM1-E2",
+          "c": 210,
+          "l": "AM1 éch.2 — Agent(e) de maîtrise qualifié(e)",
+          "b": 2250,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "AM2-E1",
+          "c": 255,
+          "l": "AM2 éch.1 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2550,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "AM3",
+          "c": 370,
+          "l": "AM3 — Agent(e) de maîtrise expert(e) — responsable production",
+          "b": 3100,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "C1-280",
           "c": 280,
-          "l": "Cadre — Directeur(rice) exploitation",
-          "b": 3000,
+          "l": "Cadre niv.1 coef 280 — Ingénieur(e) / Directeur(rice) technique débutant(e) (2 389€)",
+          "b": 2389,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "C2-330",
+          "c": 330,
+          "l": "Cadre niv.2 coef 330 — Cadre confirmé(e) (~2 800€)",
+          "b": 2800,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "C3-400",
+          "c": 400,
+          "l": "Cadre niv.3 coef 400 — Cadre senior (~3 400€)",
+          "b": 3400,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "C4-500",
+          "c": 500,
+          "l": "Cadre niv.4 coef 500 — Directeur(rice) (~4 100€)",
+          "b": 4100,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "C5-600",
+          "c": 600,
+          "l": "Cadre niv.5 coef 600 — Directeur(rice) général(e) (4 808€)",
+          "b": 4808,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
     "176": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Chaussure industrie (IDCC 176) — accord 2025 — coef 100 à 400 — plancher SMIC 01/06/2026",
+      "s": "Chaussure industrie (IDCC 176) — grille 2025 reconduite 2026 — coef 120→400 — plancher SMIC 01/06/2026",
       "g": [
         {
-          "n": "O1",
-          "c": 100,
-          "l": "Ouvrier(ère) débutant(e) — atelier, piquage",
+          "n": "120",
+          "c": 120,
+          "l": "Coef 120 — Aide-monteur(euse) débutant(e) — production",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "O2",
-          "c": 120,
-          "l": "Cordonnier(ère) qualifié(e) — CAP",
-          "b": 1895,
+          "n": "135",
+          "c": 135,
+          "l": "Coef 135 — Ouvrier(ère) qualifié(e) — montage, piquage CAP",
+          "b": 1893,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "O3",
-          "c": 140,
-          "l": "Modéliste / Bottier(ère) confirmé(e)",
+          "n": "155",
+          "c": 155,
+          "l": "Coef 155 — Bottier(ère) / Ouvrier(ère) confirmé(e)",
           "b": 1970,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "T1",
-          "c": 170,
-          "l": "Technicien(ne) — méthodes, qualité",
-          "b": 2080,
+          "n": "175",
+          "c": 175,
+          "l": "Coef 175 — Technicien(ne) — modélisme, méthodes",
+          "b": 2090,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
-          "c": 210,
-          "l": "Chef(fe) d'atelier / Agent(e) maîtrise",
-          "b": 2380,
+          "n": "205",
+          "c": 205,
+          "l": "Coef 205 — Technicien(ne) confirmé(e)",
+          "b": 2300,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "240",
+          "c": 240,
+          "l": "Coef 240 — Agent(e) de maîtrise",
+          "b": 2560,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
-          "c": 280,
-          "l": "Cadre / Directeur(rice)",
-          "b": 3000,
+          "n": "285",
+          "c": 285,
+          "l": "Coef 285 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2900,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "340",
+          "c": 340,
+          "l": "Coef 340 — Cadre — Ingénieur(e)",
+          "b": 3400,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "400",
+          "c": 400,
+          "l": "Coef 400 — Cadre supérieur(e) / Directeur(rice)",
+          "b": 4100,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -1137,7 +1273,7 @@
     "200": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie du verre IDCC 200 — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industrie du verre (IDCC 200) — accord FEVIC 2025 — coef 130→420 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -1200,7 +1336,7 @@
     "207": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Meunerie IDCC 207 — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Meunerie (IDCC 207) — accord ANMF 2025 — 6 niveaux — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "I-1",
@@ -1254,62 +1390,86 @@
     },
     "211": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Industries gros viandes IDCC 211 — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/07/2025",
+      "s": "Carrières et matériaux (IDCC 3249/87/135/211 fusionnés 2022) — avenant harmonisation n°1 du 21/05/2025 étendu BOCC 2025-31 — 8 niveaux — grilles régionales (Légifrance KALITEXT000052283905)",
       "g": [
         {
-          "n": "O1",
+          "n": "I-100",
           "c": 100,
-          "l": "Ouvrier(ère) abattoir débutant(e)",
+          "l": "Niveau I coef 100 — Ouvrier(ère) d'exécution débutant(e)",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "O2",
+          "n": "I-115",
           "c": 115,
-          "l": "Boucher(ère) / Ouvrier(ère) découpe qualifié(e)",
-          "b": 1905,
+          "l": "Niveau I coef 115 — Ouvrier(ère) d'exécution qualifié(e)",
+          "b": 1867.02,
+          "t": "fixed",
+          "cat": "Ouvrier"
+        },
+        {
+          "n": "II-130",
+          "c": 130,
+          "l": "Niveau II coef 130 — Ouvrier(ère) professionnel(le)",
+          "b": 1880,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "O3",
-          "c": 135,
-          "l": "Boucher(ère) hautement qualifié(e) — BP",
-          "b": 1960,
+          "n": "II-145",
+          "c": 145,
+          "l": "Niveau II coef 145 — Conducteur(rice) d'engins qualifié(e) — CACES",
+          "b": 1910,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "T1",
+          "n": "III-160",
           "c": 160,
-          "l": "Technicien(ne) — contrôle vétérinaire, qualité",
-          "b": 2080,
+          "l": "Niveau III coef 160 — Ouvrier(ère) hautement qualifié(e) / Chef(fe) carrier",
+          "b": 1970,
+          "t": "fixed",
+          "cat": "Ouvrier qualifié"
+        },
+        {
+          "n": "IV-175",
+          "c": 175,
+          "l": "Niveau IV coef 175 — Technicien(ne) / AM débutant(e)",
+          "b": 2070,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
+          "n": "V-200",
           "c": 200,
-          "l": "Chef(fe) équipe / Agent(e) maîtrise",
-          "b": 2380,
+          "l": "Niveau V coef 200 — Technicien(ne) qualifié(e) — laboratoire, géologie",
+          "b": 2200,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "VI-230",
+          "c": 230,
+          "l": "Niveau VI coef 230 — Agent(e) de maîtrise confirmé(e)",
+          "b": 2500,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C1",
-          "c": 270,
-          "l": "Cadre — Responsable production",
-          "b": 3000,
+          "n": "VII-280",
+          "c": 280,
+          "l": "Niveau VII coef 280 — Cadre — Chef(fe) de carrière / Ingénieur(e)",
+          "b": 3100,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
-          "n": "C2",
-          "c": 380,
-          "l": "Directeur(rice) abattoir / négoce",
-          "b": 4100,
+          "n": "VIII-400",
+          "c": 400,
+          "l": "Niveau VIII coef 400 — Cadre supérieur(e) / Directeur(rice)",
+          "b": 4200,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -1523,7 +1683,7 @@
     "247": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industries textiles (IDCC 247) — accord UFTI 2025 — coef 100 à 330 — plancher SMIC 01/06/2026",
+      "s": "Industries textiles (IDCC 247) — accord UFTI-FIT 2025 — coef 100→330 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "100",
@@ -2034,7 +2194,7 @@
     "398": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Négoce matériaux de construction ouvriers (IDCC 398) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Négoce matériaux de construction ouvriers (IDCC 398/533) — accord 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2372,7 +2532,7 @@
     "454": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Remontées mécaniques domaines skiables (IDCC 454) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Remontées mécaniques domaines skiables (IDCC 454) — accord DSF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -2435,7 +2595,7 @@
     "478": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Sociétés financières établissements de crédit (IDCC 478) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Sociétés financières établissements de crédit (IDCC 478) — accord ASF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -2498,7 +2658,7 @@
     "489": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Tuiles briques industries céramiques (IDCC 489) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industries tuiles et briques céramiques (IDCC 489/3249) — accord UNICEM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2553,7 +2713,7 @@
     "493": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Bois scieries raboteries résinage (IDCC 493) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Bois scieries raboteries résinage (IDCC 493) — accord FNB 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2797,7 +2957,7 @@
     "533": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "ETAM négoce matériaux construction (IDCC 533) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "ETAM négoce matériaux construction (IDCC 533/398) — accord 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
