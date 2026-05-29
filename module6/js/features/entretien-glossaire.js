@@ -39,12 +39,12 @@ const M6_Entretien = {
           <div class="m6-card-label">Dernier entretien enregistré</div>
           <div class="m6-card-title">${new Date(dernierE.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})}</div>
         </div>
-        <button onclick="M6_PDF.exportEntretien({regime:'${regime}',year:${year},contract:${JSON.stringify(contract).replace(/'/g,'\\\'')},analysis:${JSON.stringify(analysis||{}).replace(/'/g,'\\\'')},entretien:${JSON.stringify(dernierE).replace(/'/g,'\\\'')}})" 
-          class="m6-btn m6-btn-ghost" style="font-size:0.75rem;padding:6px 10px">📄 PDF</button>
+        <button data-pdf-entretien="0" class="m6-btn m6-btn-ghost" style="font-size:0.75rem;padding:6px 10px">📄 PDF</button>
       </div>
       ${dernierE.charge ? `
       <div class="m6-card-body" style="padding:10px 14px">
         <div class="m6-row"><span class="m6-row-label">Charge évaluée</span><span class="m6-row-val">${dernierE.charge}/5</span></div>
+        ${dernierE.manager ? `<div class="m6-row"><span class="m6-row-label">Manager</span><span class="m6-row-val">${dernierE.manager}</span></div>` : ''}
         ${dernierE.actions ? `<div style="font-size:0.78rem;color:var(--pierre);margin-top:6px">${dernierE.actions}</div>` : ''}
       </div>` : ''}
     </div>` : ''}
@@ -52,12 +52,35 @@ const M6_Entretien = {
     ${entretiens.length > 1 ? `
     <div class="m6-card" style="margin-bottom:14px">
       <div class="m6-card-body">
-        <div class="m6-card-label" style="margin-bottom:8px">Historique des entretiens</div>
-        ${entretiens.slice(-5).reverse().map(e=>`
-          <div class="m6-row">
-            <span class="m6-row-label">${new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR')}</span>
-            <span class="m6-row-val">${e.charge?'Charge '+e.charge+'/5':''} ${e.manager?'· '+e.manager:''}</span>
-          </div>`).join('')}
+        <div class="m6-card-label" style="margin-bottom:8px">Historique complet — ${entretiens.length} entretien(s)</div>
+        ${entretiens.slice().reverse().map((e, idx) => {
+          const dateStr = new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR', {day:'numeric',month:'long',year:'numeric'});
+          const iDansListe = entretiens.length - 1 - idx; // index dans entretiens[] (le plus récent = dernier)
+          return `
+          <div style="border:1px solid var(--ivoire-3);border-radius:10px;padding:10px 12px;margin-bottom:8px;background:var(--ivoire)">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
+              <div>
+                <div style="font-size:0.86rem;font-weight:600;color:var(--charbon)">${dateStr}</div>
+                <div style="font-size:0.72rem;color:var(--pierre);margin-top:2px">
+                  ${e.charge?'Charge '+e.charge+'/5':''}${e.manager?' · '+e.manager:''}
+                </div>
+              </div>
+              <button data-pdf-entretien="${iDansListe}" class="m6-btn m6-btn-ghost" style="font-size:0.72rem;padding:5px 9px;flex-shrink:0">📄 PDF</button>
+            </div>
+            ${(e.organisation||e.equilibre||e.chargeRessentie||e.deconnexion||e.actions) ? `
+            <details style="margin-top:8px">
+              <summary style="font-size:0.72rem;color:var(--pierre);cursor:pointer">Voir le détail ›</summary>
+              <div style="margin-top:6px;font-size:0.76rem;color:var(--charbon-3);display:flex;flex-direction:column;gap:4px">
+                ${e.organisation?`<div><strong>Organisation :</strong> ${e.organisation}</div>`:''}
+                ${e.equilibre?`<div><strong>Équilibre vie pro/perso :</strong> ${e.equilibre}</div>`:''}
+                ${e.chargeRessentie?`<div><strong>Charge ressentie :</strong> ${e.chargeRessentie}</div>`:''}
+                ${e.deconnexion?`<div><strong>Droit à la déconnexion :</strong> ${e.deconnexion}</div>`:''}
+                ${e.remuneration?`<div><strong>Rémunération :</strong> ${e.remuneration}</div>`:''}
+                ${e.actions?`<div><strong>Points d'action :</strong> ${e.actions}</div>`:''}
+              </div>
+            </details>` : ''}
+          </div>`;
+        }).join('')}
       </div>
     </div>` : ''}
 
@@ -170,6 +193,30 @@ const M6_Entretien = {
       M6_Storage.setContract(regime, ctr);
       M6_toast('✅ Entretien enregistré');
       if (onSave) onSave(e);
+    });
+
+    // ── Boutons PDF par entretien ───────────────────────────────
+    // Chaque bouton data-pdf-entretien="i" correspond à entretiens[i]
+    // où 0 = le plus récent (dernier dans le tableau)
+    container.querySelectorAll('[data-pdf-entretien]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.pdfEntretien);
+        const allE = M6_Storage.getEntretiens(regime);
+        const targetE = allE[idx];
+        if (!targetE) { M6_toast('Entretien introuvable'); return; }
+        if (!window.M6_PDF?.exportEntretien) { M6_toast('Module PDF non chargé'); return; }
+        // Utiliser l'année de l'entretien si possible
+        const eYear = targetE.date ? parseInt(targetE.date.slice(0,4)) : year;
+        M6_PDF.exportEntretien({
+          regime,
+          year: eYear,
+          contract,
+          analysis: targetE.snapshotAnalysis
+            ? { ...analysis, ...targetE.snapshotAnalysis }
+            : analysis,
+          entretien: targetE
+        });
+      });
     });
   }
 };

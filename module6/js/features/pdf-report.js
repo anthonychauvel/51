@@ -171,9 +171,12 @@ const M6_PDF = {
       }
       txt(ampText, 145, y+3.5, 8);
 
+      // Décapsuler le niveau récursivement (bug double-wrap historique)
+      let _rawNiv = mood?.niveau;
+      while (_rawNiv && typeof _rawNiv === 'object') _rawNiv = _rawNiv.niveau;
       const moodMap = { faible:'Legere', ok:'Normale', eleve:'Soutenue', critique:'CRITIQUE' };
-      const moodStr = mood?.niveau ? moodMap[mood.niveau]||mood.niveau : '-';
-      const moodColor = mood?.niveau==='critique'?[155,44,44]:mood?.niveau==='eleve'?[138,90,26]:[70,112,95];
+      const moodStr = _rawNiv ? moodMap[_rawNiv]||_rawNiv : '-';
+      const moodColor = _rawNiv==='critique'?[155,44,44]:_rawNiv==='eleve'?[138,90,26]:[70,112,95];
       txt(moodStr, 175, y+3.5, 7, moodColor);
 
       if (type==='travail'||type==='rachat') joursT++;
@@ -670,12 +673,14 @@ const M6_PDF = {
     // Infos
     txt('INFORMATIONS GENERALES',M,y,9,[138,132,124],'bold'); y+=5;
     [
-      ['Cadre',           contract.nomCadre||'—'],
-      ['Manager',         contract.nomManager||'—'],
-      ['Date de l\'entretien', entretien?.date ? new Date(entretien.date).toLocaleDateString('fr-FR') : '—'],
-      ['CCN',             contract.ccnLabel||'Droit commun'],
-      ['Forfait',         `${contract.plafond||218} jours/an`],
-      ['Exercice',        String(year)],
+      ['Cadre',               contract.nomCadre||'—'],
+      ['Manager',             entretien?.manager || contract.nomManager||'—'],
+      ['Date de l\'entretien',entretien?.date ? new Date(entretien.date).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'}) : '—'],
+      ['CCN',                 contract.ccnLabel||'Droit commun'],
+      ['Forfait / Régime',    regime==='forfait_jours'?`${contract.plafond||218} jours/an`:regime==='forfait_heures'?`${contract.seuilHebdo||35}h/sem`:'Cadre dirigeant'],
+      ['Exercice',            String(year)],
+      ['Charge évaluée (1=difficile / 5=excellente)', entretien?.charge ? `${entretien.charge}/5` : '—'],
+      ['Demande d\'ajustement',entretien?.ajustement==='oui'?'Oui — demandé':'Non'],
     ].forEach(([l,v]) => {
       txt(l+' :',M,y,8,[138,132,124]); txt(v,80,y,8,[26,23,20],'bold'); y+=5;
     });
@@ -694,14 +699,14 @@ const M6_PDF = {
     });
     y += 4;
 
-    // Thematiques obligatoires
+    // Thématiques obligatoires — lire les champs réels sauvegardés
     const themes = [
-      ['2. ORGANISATION DU TEMPS DE TRAVAIL', entretien?.organisation||''],
-      ['3. EQUILIBRE VIE PROFESSIONNELLE / PERSONNELLE', entretien?.equilibre||''],
-      ['4. CHARGE DE TRAVAIL (niveau ressenti)', entretien?.chargeRessentie||''],
-      ['5. REMUNERATION', entretien?.remuneration||''],
-      ['6. DROIT A LA DECONNEXION', entretien?.deconnexion||''],
-      ['7. POINTS D\'ACTION', entretien?.actions||''],
+      ['2. ORGANISATION DU TEMPS DE TRAVAIL',         entretien?.organisation||''],
+      ['3. ÉQUILIBRE VIE PROFESSIONNELLE / PERSONNELLE', entretien?.equilibre||''],
+      ['4. CHARGE DE TRAVAIL (niveau ressenti)',       entretien?.chargeRessentie||''],
+      ['5. RÉMUNÉRATION',                              entretien?.remuneration||''],
+      ['6. DROIT À LA DÉCONNEXION',                   entretien?.deconnexion||''],
+      ['7. POINTS D\'ACTION / DÉCISIONS',             entretien?.actions||''],
     ];
     themes.forEach(([titre, contenu]) => {
       if (y > 240) { doc.addPage(); y = 15; }
@@ -1123,70 +1128,298 @@ const M6_PDF = {
   },
 
   // ── Export preuve renforcée (hash SHA-256 local) ────────────────
+  // ── PDF Feuille de route Projets (Cadre Dirigeant) ────────────
+  exportProjets({ year, contract, projets, stats }) {
+    const jsPDF = window.jspdf?.jsPDF;
+    if (!jsPDF) { window.M6_toast?.('jsPDF non chargé'); return; }
+    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const W=210, M=15, PW=W-2*M;
+    let y=0;
+    const txt = (t,x,ry,size,color,style='normal',align='left') => {
+      doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
+      doc.setFont('helvetica',style);
+      const s=(t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t);
+      if(align==='right') doc.text(s,x,ry,{align:'right'});
+      else doc.text(s,x,ry);
+    };
+    const rect = (x,ry,w,h,fill) => { doc.setFillColor(...fill); doc.rect(x,ry,w,h,'F'); };
+    const chk  = () => { if(y>270){doc.addPage();y=15;} };
+    const STATUTS = { a_faire:'À faire', en_cours:'En cours', en_pause:'En pause', termine:'Terminé' };
+
+    // ── Entête ─────────────────────────────────────────────────
+    rect(0,0,W,38,[26,23,20]);
+    doc.setDrawColor(196,163,90); doc.setLineWidth(0.4); doc.line(M,34,W-M,34);
+    txt('M6 CADRES — CADRE DIRIGEANT',M,9,8,[196,163,90],'bold');
+    txt('FEUILLE DE ROUTE — PROJETS ET MISSIONS',M,17,13,[247,243,237],'bold');
+    txt(`${_pdfSanitize(contract.nom||contract.nomCadre||'')} · ${_pdfSanitize(contract.fonction||'')} · ${year}`,M,25,8,[189,181,168]);
+    txt(`Généré le ${new Date().toLocaleDateString('fr-FR')}`,W-M,9,6.5,[189,181,168],'normal','right');
+    txt(`${projets.length} projet(s)`,W-M,14,7,[196,163,90],'bold','right');
+    y = 46;
+
+    // ── Synthèse globale ─────────────────────────────────────
+    const totalPrev  = projets.reduce((s,p)=>s+(p.heuresPrevu||0),0);
+    const totalReel  = Object.values(stats||{}).reduce((s,v)=>s+(v.heuresReelles||0),0);
+    const nActifs    = projets.filter(p=>p.statut!=='termine').length;
+    const nTermines  = projets.filter(p=>p.statut==='termine').length;
+    const pctGlob    = totalPrev>0 ? Math.min(100,Math.round(totalReel/totalPrev*100)) : 0;
+
+    rect(M,y,PW,7,[240,235,228]);
+    txt('SYNTHÈSE GLOBALE',M+3,y+5,8,[70,65,60],'bold');
+    y += 10;
+    [[`Projets actifs`,nActifs],[`Projets terminés`,nTermines],[`Heures imputées`,totalReel+'h'],[`Budget total`,totalPrev+'h'],[`Avancement global`,pctGlob+'%']].forEach(([l,v],i)=>{
+      if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+      txt(l+' :',M+2,y+2.5,8,[100,95,90]);
+      txt(String(v),M+55,y+2.5,8,[26,23,20],'bold');
+      y+=5.5;
+    });
+    y += 6;
+
+    // ── Détail par projet ────────────────────────────────────
+    const sorted = [...projets].sort((a,b)=>{
+      const p={'haute':0,'moyenne':1,'basse':2};
+      return (p[a.priorite]??1)-(p[b.priorite]??1);
+    });
+    sorted.forEach((p,pi) => {
+      const s    = (stats||{})[p.id] || { heuresReelles:0, jours:[] };
+      const hr   = Math.round(s.heuresReelles*10)/10;
+      const hp   = p.heuresPrevu||0;
+      const pct  = hp>0?Math.min(100,Math.round(hr/hp*100)):0;
+      const dep  = hp>0&&hr>hp;
+      chk(); if(y>245){doc.addPage();y=15;}
+
+      // Bandeau projet
+      rect(M,y,PW,8,[240,235,228]);
+      txt(String(pi+1)+'. '+_pdfSanitize(p.nom),M+3,y+5.5,9,[26,23,20],'bold');
+      txt(STATUTS[p.statut]||p.statut, W-M-3, y+5.5, 7.5, [70,65,60], 'normal', 'right');
+      y += 11;
+
+      // Infos projet
+      const rows = [
+        ['Catégorie',  p.categorie||'—'],
+        ['Priorité',   p.priorite||'—'],
+        ['Début',      p.dateDebut||'—'],
+        ['Fin prévue', p.dateFin||'—'],
+        ['Heures imputées', hr+'h'+(hp>0?' / '+hp+'h budget':'')],
+        ['Avancement', pct+'%'+(dep?' ⚠ DÉPASSEMENT':'')],
+      ];
+      rows.forEach(([l,v],i)=>{
+        if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW/2,5.5,'F');}
+        txt(l+' :',M+2,y+2.5,7.5,[100,95,90]);
+        txt(_pdfSanitize(String(v)),M+30,y+2.5,7.5,dep&&l==='Avancement'?[155,44,44]:[26,23,20],'bold');
+        y+=5.5;
+      });
+
+      // Jalons
+      if ((p.jalons||[]).length > 0) {
+        y += 2;
+        txt('Jalons :',M+2,y,7.5,[100,95,90],'bold'); y+=4;
+        p.jalons.forEach(j=>{
+          chk();
+          const done = j.fait;
+          txt((done?'✓ ':'○ ')+_pdfSanitize(j.titre||''),M+4,y,7.5,done?[45,107,79]:[70,65,60]);
+          if(j.date) txt(j.date,W-M-2,y,7,[150,140,130],'normal','right');
+          y+=4.5;
+        });
+      }
+
+      // Note
+      if (p.note) {
+        y += 2;
+        const noteLines = doc.splitTextToSize('Note : '+_pdfSanitize(p.note),PW-6);
+        doc.setFontSize(7.5); doc.setFont('helvetica','italic'); doc.setTextColor(100,95,90);
+        doc.text(noteLines,M+2,y); y+=noteLines.length*3.8;
+      }
+
+      // Derniers jours imputés
+      if (s.jours && s.jours.length > 0) {
+        y += 2;
+        txt('Dernières imputations :',M+2,y,7,[100,95,90]); y+=4;
+        s.jours.slice(-5).forEach(j=>{
+          chk();
+          txt(`${j.dk} — ${j.h}h${j.note?' — '+_pdfSanitize(j.note):''}`,M+4,y,7,[70,65,60]); y+=4;
+        });
+      }
+      y += 8;
+      doc.setDrawColor(220,212,200); doc.setLineWidth(0.2); doc.line(M,y-4,W-M,y-4);
+    });
+
+    // Signatures
+    chk(); if(y>250){doc.addPage();y=15;}
+    rect(M,y,PW,8,[232,245,238]);
+    txt('VALIDATION — CADRE DIRIGEANT',M+3,y+5.5,8,[30,90,60],'bold');
+    y+=11;
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(70,65,60);
+    doc.line(M+2,y+5,M+PW/2-10,y+5); txt('Signature',M+2,y+9,6.5,[120,114,106]);
+    doc.line(M+PW/2,y+5,W-M-2,y+5); txt('Date',M+PW/2,y+9,6.5,[120,114,106]);
+    y+=16;
+    doc.setFontSize(7); doc.setTextColor(138,132,124);
+    doc.text(`M6 Cadres — Feuille de route ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+
+    _shareOrSave(doc, `Projets_CD_${year}.pdf`, 'PDF feuille de route généré');
+  },
+
   exportPreuve({ regime, year, contract, data, analysis }) {
     const jsPDF = window.jspdf?.jsPDF;
     if (!jsPDF) { window.M6_toast?.('jsPDF non chargé'); return; }
 
-    const doc = new jsPDF({ format:'a4', unit:'mm' });
+    const doc  = new jsPDF({ format:'a4', unit:'mm' });
     const W=210, M=15, PW=W-2*M;
-    let y=15;
+    let y=0;
 
-    const ts    = new Date().toISOString();
-    const hash  = _localHash(`${regime}-${year}-${contract.nomCadre||''}-${JSON.stringify(Object.keys(data||{}).length)}-${ts}`);
-    const dataStr = JSON.stringify({regime,year,nomCadre:contract.nomCadre,joursEffectifs:analysis?.joursEffectifs,plafond:analysis?.plafond,rachetes:analysis?.rachetes,rttPris:analysis?.rttPris});
+    const txt = (t,x,ry,size,color,style='normal',align='left') => {
+      doc.setFontSize(size); doc.setTextColor(...(color||[26,23,20]));
+      doc.setFont('helvetica',style);
+      const s = (t===null||t===undefined)?'':typeof t==='object'?String(t.niveau??t.label??t.value??''):String(t);
+      if (align==='right') doc.text(s,x,ry,{align:'right'});
+      else doc.text(s,x,ry);
+    };
+    const rect  = (x,ry,w,h,fill) => { doc.setFillColor(...fill); doc.rect(x,ry,w,h,'F'); };
+    const line  = (x1,y1,x2,y2) => { doc.setDrawColor(196,163,90); doc.setLineWidth(0.4); doc.line(x1,y1,x2,y2); };
+    const chk   = () => { if(y>268){doc.addPage();y=15;} };
 
-    doc.setFillColor(26,23,20); doc.rect(0,0,W,30,'F');
-    doc.setFontSize(8); doc.setTextColor(196,163,90); doc.setFont('helvetica','bold');
-    doc.text('M6 CADRES — DOCUMENT DE PREUVE', M, 9);
-    doc.setFontSize(11); doc.setTextColor(247,243,237);
-    doc.text(`EMPREINTE NUMÉRIQUE DU FORFAIT ${year}`, M, 18);
-    doc.setFontSize(7); doc.setTextColor(189,181,168);
-    doc.text(`Généré le ${new Date().toLocaleString('fr-FR')}`, M, 25);
-    y = 38;
+    const ts   = new Date();
+    const hash = _localHash(`${regime}-${year}-${contract.nomCadre||''}-${Object.keys(data||{}).length}-${ts.toISOString()}`);
 
-    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
-    doc.text('IDENTIFICATION', M, y); y += 6;
-    [[`Cadre`, contract.nomCadre||'N/A'],[`Régime`, regime],[`Exercice`, String(year)],[`CCN`, contract.ccnLabel||'Droit commun']].forEach(([l,v])=>{
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(74,69,64);
-      doc.text(l+' :', M+2, y); doc.setFont('helvetica','bold'); doc.setTextColor(26,23,20);
-      doc.text(_pdfSanitize(v), M+40, y); y+=5;
+    // ── Entête ───────────────────────────────────────────────────
+    rect(0,0,W,38,[26,23,20]);
+    doc.setDrawColor(196,163,90); doc.setLineWidth(0.5); doc.line(M,34,W-M,34);
+    txt('M6 CADRES — DOCUMENT DE PREUVE OPPOSABLE',M,9,8,[196,163,90],'bold');
+    txt('RAPPORT DE CONFORMITÉ ' + (regime==='forfait_jours'?'FORFAIT JOURS':regime==='forfait_heures'?'FORFAIT HEURES':'CADRE DIRIGEANT'),M,17,13,[247,243,237],'bold');
+    txt(`Exercice ${year}`,M,25,9,[189,181,168],'normal');
+    txt(`Réf. #${hash}`,W-M,9,6.5,[196,163,90],'normal','right');
+    txt(`Généré le ${ts.toLocaleDateString('fr-FR',{day:'2-digit',month:'long',year:'numeric'})} à ${ts.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'})}`,W-M,14,6.5,[189,181,168],'normal','right');
+    y = 46;
+
+    // ── Identification ───────────────────────────────────────────
+    rect(M,y,PW,7,[240,235,228]);
+    txt('IDENTIFICATION',M+3,y+5,8,[70,65,60],'bold');
+    y += 10;
+    const idRows = [
+      ['Cadre',      contract.nomCadre||contract.nom||'N/A'],
+      ['Fonction',   contract.fonction||'N/A'],
+      ['Entreprise', contract.entreprise||'N/A'],
+      ['CCN',        contract.ccnLabel||'Droit commun'],
+      ['Plafond',    `${contract.plafond||218} jours`],
+      ['CP contrat', `${contract.joursCPContrat||25} jours`],
+    ];
+    idRows.forEach(([l,v],i) => {
+      if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+      txt(l+' :',M+2,y+2.5,8,[100,95,90]);
+      txt(_pdfSanitize(v),M+35,y+2.5,8,[26,23,20],'bold');
+      y += 5.5;
     });
     y += 6;
 
-    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
-    doc.text('EMPREINTE DU DOCUMENT (Hash djb2)', M, y); y+=6;
-    doc.setFontSize(9); doc.setTextColor(55,48,163); doc.setFont('helvetica','bold');
-    doc.text(hash, M+2, y); y+=7;
-    doc.setFontSize(7); doc.setTextColor(100); doc.setFont('helvetica','normal');
-    const dataLines = doc.splitTextToSize('Données hachées : '+dataStr, PW-4);
-    doc.text(dataLines, M+2, y); y+= dataLines.length*3.5 + 5;
-
-    doc.setFontSize(8); doc.setTextColor(26,23,20); doc.setFont('helvetica','bold');
-    doc.text('SYNTHÈSE CERTIFIÉE', M, y); y+=6;
-    [[`Jours travaillés`,`${analysis?.joursEffectifs||0} / ${analysis?.plafond||218}`],[`RTT pris`,`${analysis?.rttPris||0} / ${analysis?.rttTheoriques||0}`],[`Rachats`,`${analysis?.rachetes||0}`],[`Alertes`,`${analysis?.alertes?.length||0}`]].forEach(([l,v])=>{
-      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(74,69,64);
-      doc.text(l+' :', M+2, y); doc.setFont('helvetica','bold'); doc.setTextColor(26,23,20);
-      doc.text(_pdfSanitize(v), M+40, y); y+=5;
+    // ── Données forfait ──────────────────────────────────────────
+    chk();
+    rect(M,y,PW,7,[240,235,228]);
+    txt('DONNÉES FORFAIT '+year,M+3,y+5,8,[70,65,60],'bold');
+    y += 10;
+    const forfaitRows = regime==='forfait_jours'
+      ? [
+          ['Jours travaillés',   `${analysis?.joursEffectifs||0} / ${analysis?.plafond||218}`],
+          ['Jours rachetés',     `${analysis?.rachetes||0}`],
+          ['RTT théoriques',     `${analysis?.rttTheoriques||0}`],
+          ['RTT pris',           `${analysis?.rttPris||0}`],
+          ['Solde RTT',          `${analysis?.rttSolde>=0?'+':''}${analysis?.rttSolde??0}`],
+          ['CP pris',            `${analysis?.cpPris||0}`],
+          ['Fériés ouvrés',      `${analysis?.feriesOuvres||0}`],
+          ['Taux remplissage',   `${analysis?.tauxRemplissage||0}%`],
+        ]
+      : [
+          ['Total HS',           `${analysis?.totalHS||0}h`],
+          ['Semaines saisies',   `${analysis?.semaines||0}`],
+          ['Contingent',         `${analysis?.contingent||contract.contingent||220}h`],
+          ['Consommation',       `${analysis?.tauxRemplissage||0}%`],
+          ['CP pris',            `${analysis?.cpPris||0}`],
+        ];
+    forfaitRows.forEach(([l,v],i) => {
+      if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1.5,PW,5.5,'F');}
+      txt(l+' :',M+2,y+2.5,8,[100,95,90]);
+      txt(_pdfSanitize(v),M+55,y+2.5,8,[26,23,20],'bold');
+      y += 5.5;
     });
-    y += 8;
+    y += 6;
 
-    // Zone de signature
-    doc.setDrawColor(45,107,79); doc.setLineWidth(0.3); doc.rect(M,y,PW,28,'S');
-    doc.setFillColor(232,245,238); doc.rect(M,y,PW,7,'F');
-    doc.setFontSize(8); doc.setTextColor(30,90,60); doc.setFont('helvetica','bold');
-    doc.text('SIGNATURE ET CERTIFICATION', M+3, y+5); y+=10;
-    doc.setFont('helvetica','normal'); doc.setFontSize(7.5); doc.setTextColor(74,69,64);
-    const certL = doc.splitTextToSize(`Je soussigné(e) ${_pdfSanitize(contract.nomCadre||'___________')} certifie que ce document reflète fidèlement les données saisies dans l'application M6 Cadres pour l'exercice ${year}. Hash de référence : ${hash}`, PW-6);
-    doc.text(certL, M+3, y); y+=certL.length*3.5+4;
-    doc.setFontSize(8); doc.setTextColor(26,23,20);
-    doc.text('Signature :', M+3, y+4); doc.line(M+25,y+5,M+PW/2,y+5);
-    doc.text('Date :', M+PW/2+3, y+4); doc.line(M+PW/2+16,y+5,W-M-2,y+5);
+    // ── Entretiens annuels ───────────────────────────────────────
+    chk();
+    rect(M,y,PW,7,[240,235,228]);
+    txt('ENTRETIENS ANNUELS',M+3,y+5,8,[70,65,60],'bold');
+    y += 10;
+    const entretiens = window.M6_Storage?.getEntretiens?.(regime, year) || [];
+    const dernierDate = contract.entretienDate || null;
+    if (dernierDate) {
+      txt('Dernier entretien : '+_pdfSanitize(dernierDate),M+2,y+2.5,8,[26,23,20],'bold');
+      y += 6;
+    }
+    if (entretiens.length > 0) {
+      entretiens.forEach((e,i) => {
+        chk();
+        if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1,PW,5,'F');}
+        const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR') : 'Sans date';
+        txt(`${dateStr} — Charge ${e.charge||'?'}/5 — Manager : ${_pdfSanitize(e.manager||'—')}`,M+2,y+2.5,8,[70,65,60]);
+        y += 5;
+      });
+    } else {
+      txt('Aucun historique d\'entretien disponible.',M+2,y,8,[155,44,44]);
+      y += 6;
+    }
+    y += 5;
 
-    doc.setFontSize(7); doc.setTextColor(138,132,124);
-    doc.text('Document de preuve M6 Cadres — Usage interne et prud\'hommal', M, 290);
-    doc.text(hash, W-M, 290, {align:'right'});
+    // ── Alertes actives ──────────────────────────────────────────
+    chk();
+    const alertes = analysis?.alertes || [];
+    if (alertes.length > 0) {
+      rect(M,y,PW,7,[252,232,232]);
+      txt('ALERTES LÉGALES ACTIVES',M+3,y+5,8,[155,44,44],'bold');
+      y += 10;
+      alertes.forEach(al => {
+        chk();
+        txt('⚠ '+_pdfSanitize(al.titre||''),M+2,y,8,[155,44,44],'bold'); y+=4;
+        const aLines = doc.splitTextToSize(_pdfSanitize(al.texte||''),PW-6);
+        doc.setFontSize(7.5); doc.setFont('helvetica','normal'); doc.setTextColor(70,65,60);
+        doc.text(aLines,M+4,y); y+=aLines.length*3.8+2;
+      });
+      y += 4;
+    }
 
-    _shareOrSave(doc, `Preuve_Forfait_${year}_${hash}.pdf`, 'Document de preuve généré');
+    // ── Empreinte numérique ──────────────────────────────────────
+    chk();
+    rect(M,y,PW,7,[232,241,255]);
+    txt('EMPREINTE NUMÉRIQUE (hash djb2 — vérification d\'intégrité)',M+3,y+5,8,[30,60,140],'bold');
+    y += 11;
+    doc.setFontSize(10); doc.setFont('helvetica','bold'); doc.setTextColor(30,60,140);
+    doc.text('#'+hash, M+2, y); y+=6;
+    doc.setFontSize(6.5); doc.setFont('helvetica','normal'); doc.setTextColor(100,95,90);
+    const hashData = `Données : régime=${regime}, exercice=${year}, nomCadre=${contract.nomCadre||''}, nbJours=${analysis?.joursEffectifs||0}, plafond=${analysis?.plafond||0}, rachetes=${analysis?.rachetes||0}, rttPris=${analysis?.rttPris||0}`;
+    const hashLines = doc.splitTextToSize(hashData, PW-4);
+    doc.text(hashLines,M+2,y); y += hashLines.length*3.2+6;
+
+    // ── Bloc certification + signatures ──────────────────────────
+    chk(); if(y>235){doc.addPage();y=15;}
+    rect(M,y,PW,8,[232,245,238]);
+    txt('CERTIFICATION ET SIGNATURES',M+3,y+5.5,8,[30,90,60],'bold');
+    y += 11;
+    doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(70,65,60);
+    const certLines = doc.splitTextToSize(
+      `Je soussigné(e) ${_pdfSanitize(contract.nomCadre||contract.nom||'___________')} certifie que les données ci-dessus reflètent fidèlement mon suivi M6 Cadres pour l'exercice ${year}. En cas de contestation, le hash #${hash} permet de vérifier l'intégrité du document. Ce document peut être produit en cas de contrôle de l'inspection du travail ou de litige prud'homal.`,
+      PW-4);
+    doc.text(certLines,M+2,y); y+=certLines.length*4+8;
+
+    doc.setDrawColor(45,107,79); doc.setLineWidth(0.3);
+    txt('Cadre :', M, y+5, 8); doc.line(M+22,y+6,M+PW/2-5,y+6);
+    txt('Date :',M+PW/2,y+5,8); doc.line(M+PW/2+14,y+6,W-M-2,y+6);
+    y += 14;
+    txt('Manager :',M,y+5,8); doc.line(M+26,y+6,M+PW/2-5,y+6);
+    txt('Date :',M+PW/2,y+5,8); doc.line(M+PW/2+14,y+6,W-M-2,y+6);
+    y += 16;
+
+    // Pied de page
+    doc.setFontSize(7); doc.setTextColor(138,132,124); doc.setFont('helvetica','normal');
+    doc.text(`Document de preuve M6 Cadres — Usage interne et prud'hommal — ${year}`, M, 290);
+    doc.text('#'+hash, W-M, 290, {align:'right'});
+
+    _shareOrSave(doc, `Preuve_M6_${regime}_${year}_${hash}.pdf`, 'Document de preuve généré');
   },
 };
 
