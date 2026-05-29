@@ -478,6 +478,7 @@ const VCD = {
             ${Object.entries(STATUTS).map(([k,v])=>`<button data-statut-proj="${idx}" data-statut="${k}"
               style="font-size:0.62rem;padding:2px 7px;border-radius:99px;border:1px solid ${p.statut===k?SC[k]:'var(--ivoire-3)'};
                      background:${p.statut===k?SC[k]+'20':'transparent'};color:${p.statut===k?SC[k]:'var(--pierre)'};cursor:pointer">${v}</button>`).join('')}
+            <button data-pdf-proj="${idx}" style="font-size:0.62rem;padding:2px 9px;border-radius:99px;border:1px solid var(--champagne);background:transparent;color:var(--champagne-2);cursor:pointer;margin-left:auto">📄 PDF</button>
           </div>
         </div>
       </div>`;
@@ -492,11 +493,12 @@ const VCD = {
         <span class="m6-badge m6-badge-champagne">${pctGlob}%</span>
       </div>
       <div class="m6-progress-wrap"><div class="m6-progress-bar ${pctGlob>=100?'ok':''}" style="width:${pctGlob}%"></div></div>
-      <div style="display:flex;justify-content:space-between;font-size:0.68rem;color:var(--pierre);margin-top:4px">
-        <span><strong style="color:var(--charbon)">${totalReel}h</strong> imputees</span>
-        <span>Budget total : ${totalPrev}h</span>
-      </div>
-    </div></div>`:''}
+      <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Budget : ${totalPrev}h</div>
+    </div>
+    <div style="margin-top:8px;padding-top:8px;border-top:var(--grey-line);display:flex;gap:6px">
+      <button id="p-export-pdf" class="m6-btn m6-btn-ghost" style="font-size:0.74rem;flex:1">📄 PDF Feuille de route</button>
+    </div>
+  </div></div>`:''}
 
     ${actifs.map((p,i) => cardProjet(p, this._projets.indexOf(p))).join('')}
 
@@ -535,6 +537,23 @@ const VCD = {
   _bindProjets() {
     let tmpJalons = [];
     const jalList = this._c.querySelector('#p-jalons-list');
+
+    // PDF feuille de route complète
+    this._c.querySelector('#p-export-pdf')?.addEventListener('click', () => {
+      if (!window.M6_PDF?.exportProjets) { M6_toast?.('Module PDF non chargé'); return; }
+      M6_PDF.exportProjets({ year:this._year, contract:this._contract, projets:this._projets, stats:this._computeProjetStats() });
+    });
+
+    // PDF par projet (bouton 📄 PDF sur chaque carte)
+    this._c.querySelectorAll('[data-pdf-proj]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const idx = parseInt(btn.dataset.pdfProj);
+        const p = this._projets[idx];
+        if (!p) return;
+        if (!window.M6_PDF?.exportProjets) { M6_toast?.('Module PDF non chargé'); return; }
+        M6_PDF.exportProjets({ year:this._year, contract:this._contract, projets:[p], stats:this._computeProjetStats() });
+      });
+    });
 
     const renderJalList = () => {
       if (!jalList) return;

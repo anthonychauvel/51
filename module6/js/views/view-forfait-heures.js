@@ -83,7 +83,7 @@ const VFH = {
           break;
         case 'entretien':
           ct.innerHTML = zenjiHtml;
-          if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, {}, ()=>{this._load();this.render();});
+          if (window.M6_Entretien) M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();});
           else ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
           break;
         case 'tendances':

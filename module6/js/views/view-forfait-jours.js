@@ -120,23 +120,6 @@ const VFJ = {
         ct.innerHTML = zenjiHtml;
         if (window.M6_Entretien) {
           M6_Entretien.renderForm(ct, this._regime, this._year, this._contract, analysis, ()=>{this._load();this.render();});
-          // Historique de TOUS les entretiens — jamais écrasés
-          const _allEnt = [...(M6_Storage.getEntretiens(this._regime,null)||[])].sort((a,b)=>(b.date||'').localeCompare(a.date||''));
-          if (_allEnt.length > 0) {
-            const _hDiv = document.createElement('div');
-            _hDiv.style.cssText = 'padding:0 16px 32px';
-            _hDiv.innerHTML = '<div class="m6-ornement" style="margin-top:16px"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Historique (' + _allEnt.length + ')</div><div class="m6-ornement-line"></div></div>'
-              + _allEnt.map((e,i) => `<div style="background:var(--ivoire-2);border:1px solid var(--ivoire-3);border-radius:var(--radius-lg);padding:12px 14px;margin-bottom:10px">
-                <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
-                  <div style="font-family:var(--font-display);font-size:0.9rem;font-weight:600">${e.date ? new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR',{year:'numeric',month:'long',day:'numeric'}) : '—'}</div>
-                  <div style="font-size:0.65rem;color:var(--pierre)">${e.manager||''}</div>
-                </div>
-                ${e.charge ? '<div class="m6-row" style="font-size:0.78rem"><span class="m6-row-label">Charge</span><span class="m6-row-val">'+e.charge+'</span></div>' : ''}
-                ${e.ajustement ? '<div class="m6-row" style="font-size:0.78rem"><span class="m6-row-label">Ajustement</span><span class="m6-row-val '+(e.ajustement==='oui'?'gold':'')+'">'+( e.ajustement==='oui'?'⚠️ Demandé':'✅ Non demandé')+'</span></div>' : ''}
-                ${e.actions ? '<div style="font-size:0.72rem;color:var(--pierre);margin-top:4px;font-style:italic">'+(e.actions||'').slice(0,120)+(e.actions.length>120?'…':'')+'</div>' : ''}
-              </div>`).join('');
-            ct.appendChild(_hDiv);
-          }
         } else {
           ct.innerHTML += '<div class="m6-alert info" style="margin:16px"><span>ℹ️</span><div>Module entretien non chargé.</div></div>';
         }
