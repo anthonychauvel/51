@@ -269,7 +269,7 @@
     "43": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Import-export commerce international (IDCC 43) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Import-export commerce international (IDCC 43) — accord CGPME Export 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -466,8 +466,8 @@
     },
     "45": {
       "st": "real",
-      "d": "01/01/2026",
-      "s": "Caoutchouc industrie (IDCC 45) — accord 2025 branche caoutchouc — coef 190 à 660 — plancher SMIC 01/06/2026",
+      "d": "01/06/2026",
+      "s": "Caoutchouc industrie (IDCC 45) — accord UIC/SNCP 2025 — coef 190→660 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "190",
@@ -554,7 +554,7 @@
     "83": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Menuiseries charpentes IDCC 83 — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Menuiseries charpentes constructions industrialisées (IDCC 83) — accord UICB 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -624,64 +624,88 @@
     },
     "86": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Sucre sucreries distilleries IDCC 86 — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/04/2026",
+      "s": "Sucreries sucreries-distilleries raffineries (IDCC 2728/86) — Avenant n°17 du 7/04/2026 (+1,30%) — 23 005€ à 80 044€/an — coef 140→500",
       "g": [
         {
-          "n": "O1",
-          "c": 120,
-          "l": "Ouvrier(ère) saisonnier(ère) campagne sucrière",
-          "b": 1867.02,
+          "n": "140",
+          "c": 140,
+          "l": "Coef 140 — Ouvrier(ère) campagne sucrière débutant(e)",
+          "b": 1917.08,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "O2",
-          "c": 140,
-          "l": "Ouvrier(ère) qualifié(e) — extraction, raffinage",
-          "b": 1900,
+          "n": "155",
+          "c": 155,
+          "l": "Coef 155 — Ouvrier(ère) qualifié(e) — extraction, centrifugation",
+          "b": 2041.67,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "O3",
-          "c": 165,
-          "l": "Ouvrier(ère) hautement qualifié(e) / Chef(fe) poste",
-          "b": 1980,
+          "n": "170",
+          "c": 170,
+          "l": "Coef 170 — Ouvrier(ère) hautement qualifié(e) — chef(fe) de poste",
+          "b": 2183.33,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "T1",
-          "c": 195,
-          "l": "Technicien(ne) — process, contrôle qualité",
-          "b": 2150,
+          "n": "190",
+          "c": 190,
+          "l": "Coef 190 — Technicien(ne) — contrôle process, laboratoire",
+          "b": 2358.33,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
-          "c": 240,
-          "l": "Agent(e) maîtrise — Responsable équipe",
-          "b": 2500,
+          "n": "215",
+          "c": 215,
+          "l": "Coef 215 — Technicien(ne) qualifié(e)",
+          "b": 2583.33,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "250",
+          "c": 250,
+          "l": "Coef 250 — Agent(e) de maîtrise — contremaître(sse)",
+          "b": 2916.67,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C1",
-          "c": 310,
-          "l": "Cadre — Ingénieur(e) procédés",
-          "b": 3200,
+          "n": "290",
+          "c": 290,
+          "l": "Coef 290 — Agent(e) de maîtrise confirmé(e)",
+          "b": 3333.33,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "350",
+          "c": 350,
+          "l": "Coef 350 — Cadre — Ingénieur(e) débutant(e)",
+          "b": 3916.67,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
-          "n": "C2",
-          "c": 420,
-          "l": "Directeur(rice) d'usine",
-          "b": 4300,
+          "n": "430",
+          "c": 430,
+          "l": "Coef 430 — Cadre supérieur(e) — Directeur(rice) usine",
+          "b": 5166.67,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "500",
+          "c": 500,
+          "l": "Coef 500 — Cadre dirigeant(e) (80 044€/an max grille)",
+          "b": 6670.33,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
@@ -1636,7 +1660,7 @@
     "240": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Personnel greffes tribunaux de commerce (IDCC 240) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Personnel greffes tribunaux de commerce (IDCC 240) — accord CNGTC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -1754,7 +1778,7 @@
     "267": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "BTP ingénieurs et cadres (IDCC 267) — accord 2025 + SMIC plancher 01/06/2026 (vérifier auprès UGIC-CGC)",
+      "s": "BTP ingénieurs et cadres (IDCC 267/2420) — accord FNTP 2026 — Position B = 38 573€/an — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "P-A",
@@ -1958,63 +1982,143 @@
     },
     "303": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Couture parisienne haute couture (IDCC 303) — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/05/2025",
+      "s": "Couture parisienne (IDCC 303) — avenant salarial du 7/02/2025 (effet 01/05/2025) — RMAG 9 groupes × 3 niveaux — 1 970€ à 4 800€+/mois",
       "g": [
         {
-          "n": "O1",
-          "c": 145,
-          "l": "Apprenti(e) couturier(ère) — apprentissage",
-          "b": 1867.02,
+          "n": "Gr.1-A",
+          "c": 1,
+          "l": "Groupe 1 niv.A — Employé(e) / Ouvrier(ère) débutant(e) — aide couture, manutention",
+          "b": 1970,
           "t": "fixed",
-          "cat": "Ouvrier"
+          "cat": "Employé"
         },
         {
-          "n": "O2",
-          "c": 165,
-          "l": "Couturier(ère) flou / Tailleur(euse)",
-          "b": 1900,
+          "n": "Gr.1-B",
+          "c": 2,
+          "l": "Groupe 1 niv.B — Ouvrier(ère) qualifié(e)",
+          "b": 2040,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "Gr.1-C",
+          "c": 3,
+          "l": "Groupe 1 niv.C — Ouvrier(ère) confirmé(e)",
+          "b": 2110,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
+          "n": "Gr.2-A",
+          "c": 4,
+          "l": "Groupe 2 niv.A — Couturier(ère) flou débutant(e) / Tailleur(euse) débutant(e)",
+          "b": 2050,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "O3",
-          "c": 190,
-          "l": "Premier(ère) main qualifié(e)",
-          "b": 2100,
+          "n": "Gr.2-B",
+          "c": 5,
+          "l": "Groupe 2 niv.B — Couturier(ère) qualifié(e)",
+          "b": 2130,
           "t": "fixed",
           "cat": "Ouvrier qualifié"
         },
         {
-          "n": "T1",
-          "c": 225,
-          "l": "Seconde d'atelier — broderie, modélisme",
+          "n": "Gr.2-C",
+          "c": 6,
+          "l": "Groupe 2 niv.C — Couturier(ère) confirmé(e)",
+          "b": 2200,
+          "t": "fixed",
+          "cat": "Ouvrier qualifié"
+        },
+        {
+          "n": "Gr.3-A",
+          "c": 7,
+          "l": "Groupe 3 niv.A — Technicien(ne) / Modéliste débutant(e)",
+          "b": 2240,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "Gr.3-B",
+          "c": 8,
+          "l": "Groupe 3 niv.B — Modéliste / Patronnier(ière) qualifié(e)",
           "b": 2350,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
-          "c": 275,
-          "l": "Première d'atelier — chef(fe) d'atelier",
-          "b": 2750,
+          "n": "Gr.3-C",
+          "c": 9,
+          "l": "Groupe 3 niv.C — Modéliste / Patronnier(ière) confirmé(e)",
+          "b": 2480,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "Gr.4-B",
+          "c": 10,
+          "l": "Groupe 4 niv.B — Seconde d'atelier / Chef(fe) d'équipe",
+          "b": 2580,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
-          "c": 370,
-          "l": "Cadre — Modéliste / Styliste",
-          "b": 3500,
+          "n": "Gr.4-C",
+          "c": 11,
+          "l": "Groupe 4 niv.C — Première d'atelier / Responsable couture",
+          "b": 2730,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "Gr.5-B",
+          "c": 12,
+          "l": "Groupe 5 niv.B — Chef(fe) d'atelier confirmé(e)",
+          "b": 2900,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "Gr.6-A",
+          "c": 13,
+          "l": "Groupe 6 niv.A — Cadre débutant(e) — Styliste / Directeur(rice) artistique junior",
+          "b": 3200,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "Gr.6-B",
+          "c": 14,
+          "l": "Groupe 6 niv.B — Directeur(rice) de collection / Chef(fe) de studio",
+          "b": 3800,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "Gr.7-B",
+          "c": 15,
+          "l": "Groupe 7 niv.B — Directeur(rice) artistique confirmé(e)",
+          "b": 4200,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "Gr.8-9",
+          "c": 16,
+          "l": "Groupes 8-9 — Directeur(rice) général(e) / Directeur(rice) de création (4 800€+)",
+          "b": 4800,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
     "350": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industries mode et chapellerie (IDCC 350) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industries mode chapellerie (IDCC 350) — accord FEMC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2069,7 +2173,7 @@
     "354": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Ganterie de peau (IDCC 354) — accord 2025 + SMIC plancher 01/06/2026 (secteur artisanal limousin)",
+      "s": "Ganterie de peau (IDCC 354) — accord UCIPH 2025 — plancher SMIC 01/06/2026 — secteur artisanal Limousin",
       "g": [
         {
           "n": "O1",
@@ -2116,7 +2220,7 @@
     "363": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres industrie cimenteries (IDCC 363) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres cimenteries (IDCC 363/3249) — accord SFIC 2025 — 3 positions A→C — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "P1",
@@ -2147,7 +2251,7 @@
     "388": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Auditoriums cinématographiques (IDCC 388) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Auditoriums cinématographiques (IDCC 388) — accord APEC 2025 — techniciens son — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "T1",
@@ -2194,7 +2298,7 @@
     "398": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Négoce matériaux de construction ouvriers (IDCC 398/533) — accord 2025 — plancher SMIC 01/06/2026",
+      "s": "Négoce matériaux construction ouvriers (IDCC 398) — accord NEGOCES 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2438,7 +2542,7 @@
     "435": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Production cinématographique acteurs (IDCC 435) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Production cinématographique acteurs (IDCC 435) — accord FNCF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "A",
@@ -2476,54 +2580,62 @@
     },
     "438": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Échelons intermédiaires assurances production (IDCC 438) — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/01/2026",
+      "s": "Agences générales d'assurances (IDCC 2335/438) — Avenant n°6 du 11/12/2025 (+1,8%) — 23 194€ à 44 383€/an — 24 700 salariés",
       "g": [
         {
-          "n": "E1",
-          "c": 100,
-          "l": "Agent(e) général(e) débutant(e) — production assurance",
-          "b": 1867.02,
+          "n": "Cl.1",
+          "c": 1,
+          "l": "Classe 1 — Employé(e) administratif(ve) débutant(e) — accueil, secrétariat (23 194€/an)",
+          "b": 1932.83,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "E2",
-          "c": 120,
-          "l": "Agent(e) général(e) qualifié(e)",
-          "b": 1900,
+          "n": "Cl.2",
+          "c": 2,
+          "l": "Classe 2 — Employé(e) qualifié(e) — gestionnaire sinistres débutant(e) (~25 500€/an)",
+          "b": 2125.0,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "T1",
-          "c": 145,
-          "l": "Agent(e) général(e) confirmé(e) — portefeuille établi",
-          "b": 2100,
+          "n": "Cl.3",
+          "c": 3,
+          "l": "Classe 3 — Gestionnaire confirmé(e) — souscription, sinistres (~28 000€/an)",
+          "b": 2333.33,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
+          "n": "Cl.4",
+          "c": 4,
+          "l": "Classe 4 — Technicien(ne) assurance — conseiller(ère) clientèle (~31 000€/an)",
+          "b": 2583.33,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "T2",
-          "c": 175,
-          "l": "Inspecteur(rice) / Agent(e) général(e) senior",
-          "b": 2350,
-          "t": "fixed",
-          "cat": "Technicien"
-        },
-        {
-          "n": "AM",
-          "c": 215,
-          "l": "Responsable agence / Courtier(ère) confirmé(e)",
-          "b": 2750,
+          "n": "Cl.5",
+          "c": 5,
+          "l": "Classe 5 — Inspecteur(rice) / Conseiller(ère) expert(e) (~35 000€/an)",
+          "b": 2916.67,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
-          "c": 280,
-          "l": "Cadre — Directeur(rice) régional(e)",
-          "b": 3400,
+          "n": "Cl.6",
+          "c": 6,
+          "l": "Classe 6 — Cadre — Directeur(rice) adjoint(e) d'agence (~39 000€/an)",
+          "b": 3250.0,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "Cl.7",
+          "c": 7,
+          "l": "Classe 7 — Directeur(rice) d'agence (44 383€/an — max grille)",
+          "b": 3698.58,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -2532,7 +2644,7 @@
     "454": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Remontées mécaniques domaines skiables (IDCC 454) — accord DSF 2025 — plancher SMIC 01/06/2026",
+      "s": "Remontées mécaniques domaines skiables (IDCC 454) — accord DSF/SDM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -2595,7 +2707,7 @@
     "478": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Sociétés financières établissements de crédit (IDCC 478) — accord ASF 2025 — plancher SMIC 01/06/2026",
+      "s": "Sociétés financières (IDCC 478) — accord ASF 2025 — plancher SMIC 01/06/2026 — Légifrance brochure 3233",
       "g": [
         {
           "n": "E1",
@@ -2658,7 +2770,7 @@
     "489": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industries tuiles et briques céramiques (IDCC 489/3249) — accord UNICEM 2025 — plancher SMIC 01/06/2026",
+      "s": "Tuiles et briques céramiques (IDCC 489/3249) — accord FFTB/UNICEM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2713,7 +2825,7 @@
     "493": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Bois scieries raboteries résinage (IDCC 493) — accord FNB 2025 — plancher SMIC 01/06/2026",
+      "s": "Bois scieries raboteries résinage (IDCC 493) — accord FNB/FCBA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -2759,54 +2871,70 @@
     },
     "500": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Commerce gros habillement mercerie chaussure jouet (IDCC 500) — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/01/2026",
+      "s": "Commerce gros habillement mercerie chaussure jouet (IDCC 500) — avenant n°56A du 26/11/2024 (applicable 2026 en l'absence de nouvel accord) — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
           "c": 100,
-          "l": "Employé(e) débutant(e)",
+          "l": "Employé(e) débutant(e) — magasinier(ère), aide-vendeur(euse)",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Employé"
         },
         {
           "n": "E2",
-          "c": 120,
-          "l": "Employé(e) qualifié(e) — vente, magasinage",
-          "b": 1880,
+          "c": 115,
+          "l": "Employé(e) qualifié(e) — vendeur(euse) gros",
+          "b": 1875,
           "t": "fixed",
           "cat": "Employé"
         },
         {
+          "n": "E3",
+          "c": 135,
+          "l": "Employé(e) confirmé(e) — assistant(e) commercial(e)",
+          "b": 1950,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
           "n": "T1",
-          "c": 150,
-          "l": "Technicien(ne) commercial(e) — show-room",
-          "b": 2050,
+          "c": 160,
+          "l": "Technicien(ne) commercial(e) — acheteur(euse) débutant(e)",
+          "b": 2080,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
           "n": "T2",
-          "c": 185,
-          "l": "Technicien(ne) confirmé(e)",
-          "b": 2280,
+          "c": 190,
+          "l": "Technicien(ne) confirmé(e) — chef(fe) de produit",
+          "b": 2300,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
           "n": "AM",
           "c": 225,
-          "l": "Agent(e) maîtrise — Responsable secteur",
+          "l": "Agent(e) maîtrise — Responsable showroom / secteur",
           "b": 2650,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
-          "c": 300,
+          "n": "C1",
+          "c": 280,
           "l": "Cadre — Directeur(rice) commercial(e)",
-          "b": 3400,
+          "b": 3200,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "C2",
+          "c": 360,
+          "l": "Cadre supérieur(e) / Directeur(rice) général(e)",
+          "b": 4100,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -2910,7 +3038,7 @@
     "506": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Fabricants importateurs produits exotiques (IDCC 506) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Fabricants importateurs produits exotiques (IDCC 506) — accord FEVEX 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -2957,7 +3085,7 @@
     "533": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "ETAM négoce matériaux construction (IDCC 533/398) — accord 2025 — plancher SMIC 01/06/2026",
+      "s": "ETAM négoce matériaux construction (IDCC 533) — accord NEGOCES 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -3012,7 +3140,7 @@
     "538": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Manutention ferroviaire travaux connexes (IDCC 538) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Manutention ferroviaire travaux connexes (IDCC 538) — accord SNCF/fédérations 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -3067,7 +3195,7 @@
     "567": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Jouets jeux articles puériculture (IDCC 567) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Jouets jeux articles puériculture (IDCC 567) — accord FJP 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -3345,7 +3473,7 @@
     "598": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Ouvriers presse quotidienne régionale (IDCC 598) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Ouvriers presse quotidienne régionale (IDCC 598) — accord SPQR 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -3400,7 +3528,7 @@
     "614": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Sérigraphie et impression numérique (IDCC 614) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Sérigraphie impression numérique (IDCC 614) — accord FFSE 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -3455,7 +3583,7 @@
     "625": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres services généraux théâtres cinématographiques (IDCC 625) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres théâtres cinématographiques (IDCC 625) — accord ACEF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -3486,7 +3614,7 @@
     "635": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Négoce fournitures dentaires (IDCC 635) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Négoce fournitures dentaires (IDCC 635) — accord UFFSM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -3541,7 +3669,7 @@
     "637": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Récupération industrie et commerces (IDCC 637) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Récupération industries et commerces (IDCC 637) — accord FEDEREC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -3691,7 +3819,7 @@
     "652": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres négoce matériaux construction (IDCC 652) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres négoce matériaux construction (IDCC 652) — accord NEGOCES 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -3722,7 +3850,7 @@
     "653": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Producteurs salariés assurances services extérieurs (IDCC 653) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Producteurs salariés assurances (IDCC 653) — accord CSCA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -3769,7 +3897,7 @@
     "669": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie du pétrole (IDCC 669/1404) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industries pétrolières (IDCC 669/1404) — accord UFIP 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -3824,7 +3952,7 @@
     "673": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Transport aérien personnel au sol (IDCC 673/275) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Transport aérien personnel au sol (IDCC 673/275) — accord FNAM/syndicats 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "1",
@@ -3950,7 +4078,7 @@
     "698": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Employés presse quotidienne régionale (IDCC 698) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Employés presse quotidienne régionale (IDCC 698) — accord SPQR 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -4005,7 +4133,7 @@
     "700": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Détergents et produits entretien (IDCC 700) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Détergents produits entretien (IDCC 700) — accord AFISE 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -4052,7 +4180,7 @@
     "706": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Reprographie (IDCC 706) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Reprographie (IDCC 706) — accord FICG 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -4099,7 +4227,7 @@
     "707": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres transformation papiers cartons (IDCC 707) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres transformation papiers cartons (IDCC 707) — accord CPI 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -4130,7 +4258,7 @@
     "715": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Instruments à écrire industries connexes (IDCC 715) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Instruments à écrire industries connexes (IDCC 715) — accord BPIF/FIM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -4185,7 +4313,7 @@
     "716": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Distribution cinématographique employés/ouvriers (IDCC 716) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Distribution cinématographique (IDCC 716) — accord SDI/ADC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -4232,7 +4360,7 @@
     "731": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Quincaillerie fournitures industrielles cadres (IDCC 731) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Quincaillerie fournitures industrielles cadres (IDCC 731) — accord FQFA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -4263,7 +4391,7 @@
     "733": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Détaillants en chaussures (IDCC 733) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Détaillants en chaussures (IDCC 733) — accord FFCG 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -4309,46 +4437,94 @@
     },
     "759": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Pompes funèbres marbrerie funéraire (IDCC 759) — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/01/2026",
+      "s": "Pompes funèbres (IDCC 759) — avenant du 13/01/2026 (+2%) étendu arrêté 7/04/2026 JO 10/04/2026 — 1 836€ à 4 352€/mois",
       "g": [
         {
-          "n": "O1",
-          "c": 120,
-          "l": "Porteur(euse) / Chauffeur(euse) débutant(e)",
+          "n": "N1-E1",
+          "c": 100,
+          "l": "Niveau 1 éch.1 — Porteur(euse) / Chauffeur(euse) débutant(e) (1 836€ < SMIC → SMIC)",
           "b": 1867.02,
           "t": "fixed",
           "cat": "Ouvrier"
         },
         {
-          "n": "O2",
-          "c": 145,
-          "l": "Marbrier(ère) / Maître(sse) de cérémonie qualifié(e)",
-          "b": 1920,
+          "n": "N1-E2",
+          "c": 105,
+          "l": "Niveau 1 éch.2 — Porteur(euse) / Chauffeur(euse) qualifié(e)",
+          "b": 1880,
           "t": "fixed",
-          "cat": "Ouvrier qualifié"
+          "cat": "Ouvrier"
         },
         {
-          "n": "T1",
-          "c": 175,
-          "l": "Conseiller(ère) funéraire diplômé(e)",
-          "b": 2100,
+          "n": "N2-E1",
+          "c": 115,
+          "l": "Niveau 2 éch.1 — Maître(sse) de cérémonie débutant(e)",
+          "b": 1920,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "N2-E2",
+          "c": 120,
+          "l": "Niveau 2 éch.2 — Maître(sse) de cérémonie qualifié(e)",
+          "b": 1970,
+          "t": "fixed",
+          "cat": "Employé"
+        },
+        {
+          "n": "N3-E1",
+          "c": 135,
+          "l": "Niveau 3 éch.1 — Conseiller(ère) funéraire débutant(e)",
+          "b": 2060,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
+          "n": "N3-E2",
+          "c": 140,
+          "l": "Niveau 3 éch.2 — Conseiller(ère) funéraire diplômé(e)",
+          "b": 2150,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
-          "c": 215,
-          "l": "Responsable d'agence funéraire",
-          "b": 2450,
+          "n": "N4-E1",
+          "c": 155,
+          "l": "Niveau 4 éch.1 — Marbrier(ère) / Thanatopracteur(rice) débutant(e)",
+          "b": 2260,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "N4-E2",
+          "c": 165,
+          "l": "Niveau 4 éch.2 — Marbrier(ère) / Thanatoprateur(rice) confirmé(e)",
+          "b": 2400,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "N5",
+          "c": 185,
+          "l": "Niveau 5 — Responsable d'agence funéraire / Agent(e) maîtrise",
+          "b": 2650,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C",
-          "c": 275,
-          "l": "Cadre / Directeur(rice) d'agence",
+          "n": "N6",
+          "c": 215,
+          "l": "Niveau 6 — Directeur(rice) d'agence / Cadre",
           "b": 3000,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "N7",
+          "c": 280,
+          "l": "Niveau 7 — Directeur(rice) régional(e) / Cadre supérieur(e) (4 352€)",
+          "b": 4352,
           "t": "fixed",
           "cat": "Cadre"
         }
@@ -4563,7 +4739,7 @@
     "800": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Hôtels de chaîne (IDCC 800) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Hôtels de chaîne (IDCC 800) — accord UMIH/GNC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "I-1",
@@ -4634,7 +4810,7 @@
     "802": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Distribution papiers cartons commerce gros OETAM (IDCC 802) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Distribution papiers cartons OETAM (IDCC 802) — accord CPI 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -4681,7 +4857,7 @@
     "803": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Béton et produits du béton (IDCC 803) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Béton et produits du béton (IDCC 803/3249) — accord SNBPE/SFIC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -4767,7 +4943,7 @@
     "832": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Ouvriers industrie fabrication ciments (IDCC 832) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Fabrication ciments ouvriers (IDCC 832/3249) — accord SFIC/UNICEM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -4814,7 +4990,7 @@
     "833": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "ETAM industrie fabrication ciments (IDCC 833) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Fabrication ciments ETAM (IDCC 833/3249) — accord SFIC/UNICEM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "A",
@@ -4995,7 +5171,7 @@
     "889": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Employés techniciens théâtres cinématographiques (IDCC 889) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Techniciens théâtres cinématographiques (IDCC 889) — accord ACEF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -5042,7 +5218,7 @@
     "892": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres distribution films cinéma (IDCC 892) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres distribution films cinéma (IDCC 892) — accord SDI 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -5072,64 +5248,112 @@
     },
     "897": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "Services santé travail interentreprises (IDCC 897) — accord 2025 + SMIC plancher 01/06/2026",
+      "d": "01/01/2026",
+      "s": "Santé au travail interentreprises (IDCC 897) — accord 19/02/2026 (+1%) étendu arrêté 4/05/2026 — 21 classes — 24 378€ à 107 197€/an",
       "g": [
         {
-          "n": "E1",
-          "c": 100,
-          "l": "Secrétaire médical(e) débutant(e)",
-          "b": 1867.02,
+          "n": "Cl.1",
+          "c": 1,
+          "l": "Classe 1 — Secrétaire médical(e) / Agent(e) administratif(ve) débutant(e)",
+          "b": 2031.5,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "E2",
-          "c": 125,
-          "l": "Secrétaire médical(e) qualifié(e)",
-          "b": 1900,
+          "n": "Cl.2",
+          "c": 2,
+          "l": "Classe 2 — Secrétaire médical(e) qualifié(e)",
+          "b": 2166.67,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "T1",
-          "c": 160,
-          "l": "Infirmier(ère) santé travail / Ergonome",
-          "b": 2200,
+          "n": "Cl.3",
+          "c": 3,
+          "l": "Classe 3 — Secrétaire médical(e) confirmé(e)",
+          "b": 2291.67,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
+          "n": "Cl.4",
+          "c": 4,
+          "l": "Classe 4 — Aide de laboratoire / Technicien(ne) débutant(e)",
+          "b": 2416.67,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "T2",
-          "c": 200,
-          "l": "Infirmier(ère) confirmé(e) / Psychologue travail",
-          "b": 2650,
+          "n": "Cl.5",
+          "c": 5,
+          "l": "Classe 5 — Infirmier(ère) santé travail débutant(e)",
+          "b": 2583.33,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "AM",
-          "c": 250,
-          "l": "Responsable d'antenne / Chef(fe) d'équipe",
-          "b": 3000,
+          "n": "Cl.6",
+          "c": 6,
+          "l": "Classe 6 — Infirmier(ère) en santé au travail qualifié(e)",
+          "b": 2750.0,
+          "t": "fixed",
+          "cat": "Technicien"
+        },
+        {
+          "n": "Cl.7",
+          "c": 7,
+          "l": "Classe 7 — Infirmier(ère) confirmé(e) / Coordinateur(rice)",
+          "b": 3000.0,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "C1",
-          "c": 320,
-          "l": "Médecin du travail salarié(e) — junior",
-          "b": 5000,
+          "n": "Cl.8",
+          "c": 8,
+          "l": "Classe 8 — Infirmier(ère) expert(e) / Responsable équipe",
+          "b": 3333.33,
+          "t": "fixed",
+          "cat": "Maîtrise"
+        },
+        {
+          "n": "Cl.10",
+          "c": 10,
+          "l": "Classe 10 — Ergonome / Psychologue du travail débutant(e)",
+          "b": 3666.67,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
-          "n": "C2",
-          "c": 430,
-          "l": "Médecin du travail confirmé(e)",
-          "b": 6500,
+          "n": "Cl.12",
+          "c": 12,
+          "l": "Classe 12 — Psychologue / Ergonome confirmé(e)",
+          "b": 4166.67,
           "t": "fixed",
           "cat": "Cadre"
+        },
+        {
+          "n": "Cl.15",
+          "c": 15,
+          "l": "Classe 15 — Médecin du travail qualifié(e) — 3e année clinicat",
+          "b": 5416.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "Cl.18",
+          "c": 18,
+          "l": "Classe 18 — Médecin du travail confirmé(e)",
+          "b": 6666.67,
+          "t": "fixed",
+          "cat": "Cadre"
+        },
+        {
+          "n": "Cl.21",
+          "c": 21,
+          "l": "Classe 21 — Médecin du travail expert(e) / Directeur(rice) médical(e) (107 197€/an)",
+          "b": 8933.08,
+          "t": "fixed",
+          "cat": "Cadre dirigeant"
         }
       ]
     },
@@ -5575,7 +5799,7 @@
     "1031": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie du caoutchouc (IDCC 1031/45) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Caoutchouc industrie (IDCC 1031/45) — accord UIC/SNCP 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "190",
@@ -5709,7 +5933,7 @@
     "1043": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Gardiens concierges employés immeubles résidences (IDCC 1043) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Gardiens concierges employés immeubles (IDCC 1043) — avenant salaires 2025 + SMIC plancher 01/06/2026 — brochure 3144",
       "g": [
         {
           "n": "A",
@@ -5756,7 +5980,7 @@
     "1044": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Pâtes alimentaires (IDCC 1044) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Pâtes alimentaires sèches et couscous (IDCC 1044) — accord SIFPAS 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -5803,7 +6027,7 @@
     "1077": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Négoce industrie produits sol engrais (IDCC 1077) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Négoce agriculture sol engrais (IDCC 1077) — accord SCARA/SYFA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6008,7 +6232,7 @@
     "1170": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie tuiles et briques CCNTB (IDCC 1170) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Tuiles et briques CCNTB (IDCC 1170/3249) — accord FFTB 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -6055,7 +6279,7 @@
     "1177": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Meubles commerce de détail (IDCC 1177) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Meubles commerce détail (IDCC 1177) — accord UMFD 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "I",
@@ -6110,7 +6334,7 @@
     "1182": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Corps gras huiles margarines (IDCC 1182) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Corps gras huiles margarines végétales (IDCC 1182) — accord FEDIOL 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -6157,7 +6381,7 @@
     "1237": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Centres de gestion agréés (IDCC 1237) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Centres gestion agréés (IDCC 1237) — accord FNAGA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6212,7 +6436,7 @@
     "1240": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Distillation alcools et spiritueux (IDCC 1240) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Distillation alcools spiritueux (IDCC 1240) — accord FNES/syndicat spiritueux 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -6267,7 +6491,7 @@
     "1256": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cadres entreprises équipements thermiques climatisation (IDCC 1256) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cadres équipements thermiques climatisation (IDCC 1256) — accord UNICLIMA/SNEFCCA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "C1",
@@ -6298,7 +6522,7 @@
     "1261": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Centres sociaux et socio-culturels (IDCC 1261) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Centres sociaux socio-culturels (IDCC 1261) — accord FCSF 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6353,7 +6577,7 @@
     "1266": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Sociétés de recherche (IDCC 1266) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Sociétés études ingénierie recherche (IDCC 1266) — accord SYNTEC/cinov 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6416,7 +6640,7 @@
     "1267": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Pâtisserie (IDCC 1267) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Pâtisserie artisanale (IDCC 1267) — accord CNPF 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -6471,7 +6695,7 @@
     "1278": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "PACT ARIM protection amélioration habitat (IDCC 1278) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "PACT ARIM amélioration habitat (IDCC 1278) — accord SOLIHA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6518,7 +6742,7 @@
     "1285": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Gardiens concierges employés immeubles (IDCC 1285) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Gardiens concierges immeubles (IDCC 1285/1043) — accord UNPI/CSNAIM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "A",
@@ -6565,7 +6789,7 @@
     "1286": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Confiserie chocolaterie biscuiterie détail artisans (IDCC 1286) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Confiserie chocolaterie biscuiterie détail artisans (IDCC 1286) — accord CNCC 2025 + SMIC plancher 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6620,7 +6844,7 @@
     "1307": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Exploitation cinématographique (IDCC 1307) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Exploitation cinématographique (IDCC 1307) — accord FNCF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -6793,7 +7017,7 @@
     "1314": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Maisons alimentation succursales (IDCC 1314) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Maisons alimentation succursales (IDCC 1314) — accord FCA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -7045,7 +7269,7 @@
     "1370": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Équipements thermiques entretien installations (IDCC 1370) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Équipements thermiques entretien (IDCC 1370) — accord SNEFCCA/UNEP 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -7155,7 +7379,7 @@
     "1396": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Chocolaterie confiserie biscuiterie industrie (IDCC 1396) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Chocolaterie confiserie industrie (IDCC 1396) — accord FIAC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -7281,7 +7505,7 @@
     "1405": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Expédition exportation fruits légumes (IDCC 1405) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Expédition exportation fruits légumes (IDCC 1405) — accord FEFLM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -7438,7 +7662,7 @@
     "1412": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Aéraulique installation entretien (IDCC 1412) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Aéraulique installation entretien (IDCC 1412) — accord SNEFCCA 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -8393,7 +8617,7 @@
     "1539": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Distribution directe (IDCC 1539) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Distribution directe (IDCC 1539) — accord FNDD 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -8621,7 +8845,7 @@
     "1557": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Fonderies et forges (IDCC 1557) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Fonderies et forges (IDCC 1557) — accord FIM/FFTF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -8676,7 +8900,7 @@
     "1561": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Fabrication meubles bois (IDCC 1561) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Fabrication meubles bois (IDCC 1561) — accord AMEUBLEMENT France 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -8731,7 +8955,7 @@
     "1563": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie aluminium (IDCC 1563) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industrie aluminium (IDCC 1563) — accord AFAL 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -8786,7 +9010,7 @@
     "1564": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie cuivre alliages (IDCC 1564) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industrie cuivre alliages (IDCC 1564) — accord FIM/cuivre 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -9172,7 +9396,7 @@
     "1598": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie du ciment (IDCC 1598) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industrie du ciment (IDCC 1598/3249) — accord SFIC/UNICEM 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -9282,7 +9506,7 @@
     "1603": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Industrie emballage (IDCC 1603) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Industrie emballage (IDCC 1603) — accord SIEL 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -10257,7 +10481,7 @@
     "1670": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Ascenseurs industries (IDCC 1670) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Ascenseurs industries (IDCC 1670) — accord SFECE/SNEC 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -10834,7 +11058,7 @@
     "1685": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Béton prêt à l'emploi (IDCC 1685) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Béton prêt à l'emploi (IDCC 1685/3249) — accord SNBPE 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -11439,7 +11663,7 @@
     "1712": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Courrier express (IDCC 1712) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Courrier express (IDCC 1712) — accord FEPS/FNTR 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -11502,7 +11726,7 @@
     "1720": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Cabinets de recrutement (IDCC 1720) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Cabinets recrutement (IDCC 1720) — accord Prism'Emploi 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -11864,7 +12088,7 @@
     "1735": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Logistique distribution (IDCC 1735) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Logistique entreposage (IDCC 1735) — accord TLF/FNTR 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -13594,7 +13818,7 @@
     "1770": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Maisons familiales rurales (IDCC 1770) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Maisons familiales rurales (IDCC 1770) — accord UNMFREO 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "E1",
@@ -14081,7 +14305,7 @@
     "1821": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Horlogerie (IDCC 1821) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Horlogerie bijouterie (IDCC 1821) — accord UBHCF 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "O1",
@@ -14262,7 +14486,7 @@
     "1862": {
       "st": "real",
       "d": "01/06/2026",
-      "s": "Jardineries graineteries (IDCC 1862) — accord 2025 + SMIC plancher 01/06/2026",
+      "s": "Jardineries graineteries (IDCC 1862) — accord JARDI 2025 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "I",
@@ -15987,56 +16211,64 @@
     },
     "2335": {
       "st": "real",
-      "d": "01/06/2026",
-      "s": "🟡 Grille structurée — montants plausibles, à confirmer par avenant officiel BOCC/Légifrance",
+      "d": "01/01/2026",
+      "s": "Agences générales d'assurances (IDCC 2335/438) — Avenant n°6 du 11/12/2025 (+1,8%) — 23 194€ à 44 383€/an — 24 700 salariés",
       "g": [
         {
-          "n": "I",
-          "c": null,
-          "l": "Employé(e) agence assurances niveau I",
-          "b": 1867.02,
+          "n": "Cl.1",
+          "c": 1,
+          "l": "Classe 1 — Employé(e) administratif(ve) débutant(e) — accueil, secrétariat (23 194€/an)",
+          "b": 1932.83,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "II",
-          "c": null,
-          "l": "Gestionnaire sinistres niveau II",
-          "b": 2100,
+          "n": "Cl.2",
+          "c": 2,
+          "l": "Classe 2 — Employé(e) qualifié(e) — gestionnaire sinistres débutant(e) (~25 500€/an)",
+          "b": 2125.0,
           "t": "fixed",
           "cat": "Employé"
         },
         {
-          "n": "III",
-          "c": null,
-          "l": "Chargé(e) clientèle niveau III",
-          "b": 2500,
+          "n": "Cl.3",
+          "c": 3,
+          "l": "Classe 3 — Gestionnaire confirmé(e) — souscription, sinistres (~28 000€/an)",
+          "b": 2333.33,
+          "t": "fixed",
+          "cat": "Employé qualifié"
+        },
+        {
+          "n": "Cl.4",
+          "c": 4,
+          "l": "Classe 4 — Technicien(ne) assurance — conseiller(ère) clientèle (~31 000€/an)",
+          "b": 2583.33,
           "t": "fixed",
           "cat": "Technicien"
         },
         {
-          "n": "IV",
-          "c": null,
-          "l": "Responsable agence adjoint(e) niveau IV",
-          "b": 3100,
+          "n": "Cl.5",
+          "c": 5,
+          "l": "Classe 5 — Inspecteur(rice) / Conseiller(ère) expert(e) (~35 000€/an)",
+          "b": 2916.67,
           "t": "fixed",
           "cat": "Maîtrise"
         },
         {
-          "n": "V",
-          "c": null,
-          "l": "Directeur(rice) régional(e) agences générales V",
-          "b": 4500,
+          "n": "Cl.6",
+          "c": 6,
+          "l": "Classe 6 — Cadre — Directeur(rice) adjoint(e) d'agence (~39 000€/an)",
+          "b": 3250.0,
           "t": "fixed",
           "cat": "Cadre"
         },
         {
-          "n": "VI",
-          "c": null,
-          "l": "Directeur(rice) général(e) réseau assurances VI",
-          "b": 6500,
+          "n": "Cl.7",
+          "c": 7,
+          "l": "Classe 7 — Directeur(rice) d'agence (44 383€/an — max grille)",
+          "b": 3698.58,
           "t": "fixed",
-          "cat": "Cadre dirigeant"
+          "cat": "Cadre"
         }
       ]
     },
@@ -28467,8 +28699,8 @@
     },
     "2408": {
       "st": "real",
-      "d": "01/01/2026",
-      "s": "Branche aide à domicile / Services à la personne — accord 2025",
+      "d": "01/06/2026",
+      "s": "Services à la personne aide à domicile (IDCC 2408/3127) — avenant FEPEM/UNA 01/07/2024 — plancher SMIC 01/06/2026",
       "g": [
         {
           "n": "A",
