@@ -54,15 +54,15 @@ const M6_SimulateurNullite = {
       titre: 'Accord de branche ou d\'entreprise valide',
       loi: 'Art. L3121-64 + Cass. Soc. 29/06/2011',
       ok: accordOk,
-      // Si CCN saisie (nom ou IDCC) → OK : l'utilisateur a sélectionné sa CCN
-      // Seul "danger" si aucune CCN n'est renseignée du tout
-      niveau: accordOk ? 'ok' : 'danger',
+      // warning (pas danger) même sans CCN → l'utilisateur peut attester manuellement
+      // que sa CCN ou un accord d'entreprise couvre le forfait jours
+      niveau: accordOk ? 'ok' : 'warning',
       detail: ccnDansBase
         ? `CCN "${contract.ccnLabel}" (IDCC ${ccnIdcc}) reconnue — accord de branche confirmé.`
         : ccnNomConnue
-          ? `CCN "${contract.ccnLabel}" sélectionnée.`
-          : 'Aucune CCN renseignée. Sélectionnez votre CCN dans les paramètres du contrat.',
-      recommandation: 'Si votre CCN n\'est pas dans la liste, vérifiez sur légifrance.fr que l\'accord autorise le forfait jours.',
+          ? `CCN "${contract.ccnLabel}" sélectionnée — vérifiez que cet accord autorise explicitement le forfait jours.`
+          : 'Aucune CCN renseignée. L\'application ne peut pas vérifier automatiquement l\'existence d\'un accord collectif. Renseignez votre CCN dans les paramètres ou cochez ci-dessous si votre accord couvre bien le forfait jours.',
+      recommandation: 'Si votre CCN n\'est pas dans la liste, vérifiez sur légifrance.fr que l\'accord de branche ou d\'entreprise autorise le forfait jours et garantit le suivi de la charge.',
     });
 
     // ── Condition 2 : Clause explicite dans le contrat ─────────
@@ -567,74 +567,70 @@ const M6_ModePreuve = {
     const entretiens = M6_Storage?.getEntretiens?.(regime) || [];
 
     const lignes = [
-      `╔══════════════════════════════════════════════════════════════╗`,
-      `║     RAPPORT DE CONFORMITÉ FORFAIT JOURS — M6 CADRES         ║`,
-      `╚══════════════════════════════════════════════════════════════╝`,
+      `================================================================`,
+      `     RAPPORT DE CONFORMITE FORFAIT JOURS -- M6 CADRES`,
+      `================================================================`,
       ``,
-      `Généré le : ${dateStr}`,
+      `Genere le : ${dateStr}`,
       `Exercice  : ${year}`,
-      `Hash      : #${hash} (empreinte des données au moment de l'export)`,
+      `Hash      : #${hash} (empreinte des donnees au moment de l'export)`,
       ``,
-      `━━ IDENTIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `-- IDENTIFICATION -------------------------------------------`,
       `Nom       : ${contract.nomCadre || contract.nom || 'N/A'}`,
       `Fonction  : ${contract.fonction || 'N/A'}`,
       `Entreprise: ${contract.entreprise || 'N/A'}`,
-      `CCN       : ${contract.ccnLabel || 'Non renseignée'}`,
+      `CCN       : ${contract.ccnLabel || 'Non renseignee'}`,
       `Plafond   : ${contract.plafond || 218} jours`,
       `CP contrat: ${contract.joursCPContrat || 25} jours`,
       ``,
-      `━━ DONNÉES FORFAIT ${year} ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `Jours travaillés  : ${analysis.joursEffectifs || 0} / ${analysis.plafond || 218}`,
-      `Jours rachetés    : ${analysis.rachetes || 0}`,
-      `RTT théoriques    : ${analysis.rttTheoriques || 0}`,
+      `-- DONNEES FORFAIT ${year} -----------------------------------`,
+      `Jours travailles  : ${analysis.joursEffectifs || 0} / ${analysis.plafond || 218}`,
+      `Jours rachetes    : ${analysis.rachetes || 0}`,
+      `RTT theoriques    : ${analysis.rttTheoriques || 0}`,
       `RTT pris          : ${analysis.rttPris || 0}`,
       `Solde RTT         : ${analysis.rttSolde || 0}`,
       `CP pris           : ${analysis.cpPris || 0}`,
-      `Fériés ouvrés     : ${analysis.feriesOuvres || 0}`,
+      `Feries ouvres     : ${analysis.feriesOuvres || 0}`,
       `Taux remplissage  : ${analysis.tauxRemplissage || 0}%`,
       ``,
-      `━━ ENTRETIENS ANNUELS ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `-- ENTRETIENS ANNUELS ---------------------------------------`,
       contract.entretienDate
         ? `Dernier entretien : ${new Date(contract.entretienDate).toLocaleDateString('fr-FR')}`
-        : `ATTENTION : Aucun entretien enregistré pour ${year} (L3121-65)`,
+        : `ATTENTION : Aucun entretien enregistre pour ${year} (L3121-65)`,
       ...(entretiens.length > 0 ? entretiens.map(e =>
-        `  ${new Date(e.date||e.ts||0).toLocaleDateString('fr-FR')} — ${e.conclusion || e.resume || '—'}`
+        `  ${new Date(e.date||e.ts||0).toLocaleDateString('fr-FR')} -- charge ${e.charge||'?'}/5 -- ${e.manager||'---'}`
       ) : ['  Aucun historique d\'entretien disponible.']),
       ``,
-      `━━ VALIDATIONS MENSUELLES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `-- VALIDATIONS MENSUELLES -----------------------------------`,
       ...Object.entries(validations).length > 0
         ? Object.entries(validations).map(([m, v]) =>
-            `  ${['Janv.','Févr.','Mars','Avr.','Mai','Juin','Juil.','Août','Sep.','Oct.','Nov.','Déc.'][m]} — ${new Date(v.ts).toLocaleString('fr-FR')} par ${v.nom||'N/A'} · #${v.hash||'—'}`)
-        : ['  Aucune validation mensuelle enregistrée.'],
+            `  ${['Jan.','Feb.','Mars','Avr.','Mai','Juin','Juil.','Aout','Sep.','Oct.','Nov.','Dec.'][m]} -- ${new Date(v.ts).toLocaleString('fr-FR')} par ${v.nom||'N/A'} #${v.hash||'---'}`)
+        : ['  Aucune validation mensuelle enregistree.'],
       ``,
-      `━━ LOG DES MODIFICATIONS (${log.length} entrées) ━━━━━━━━━━━━━━━━━━`,
+      `-- LOG DES MODIFICATIONS (${log.length} entrees) ----------------------`,
       ...(log.slice(-20).map(l =>
-        `  ${new Date(l.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} — ${l.action} : ${l.detail}`
+        `  ${new Date(l.ts).toLocaleString('fr-FR',{day:'2-digit',month:'2-digit',hour:'2-digit',minute:'2-digit'})} -- ${l.action} : ${l.detail}`
       )),
       ``,
-      `━━ ALERTES ACTIVES ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
+      `-- ALERTES ACTIVES ------------------------------------------`,
       ...((analysis.alertes || []).length > 0
-        ? analysis.alertes.map(a => `  [${a.niveau?.toUpperCase()}] ${a.titre} — Art. ${a.loi}`)
-        : ['  Aucune alerte détectée.']),
+        ? analysis.alertes.map(a => `  [${(a.niveau||'').toUpperCase()}] ${a.titre} -- Art. ${a.loi}`)
+        : ['  Aucune alerte detectee.']),
       ``,
-      `━━ CERTIFICATION ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `Ce rapport a été généré automatiquement par l'application M6 Cadres`,
-      `(Simulateur Heures Sup France — simulateurheuressupfrance.pages.dev).`,
+      `-- CERTIFICATION --------------------------------------------`,
+      `Ce rapport a ete genere automatiquement par M6 Cadres.`,
       ``,
-      `Le soussigné certifie l'exactitude des informations saisies`,
-      `et le respect recommandé des temps de repos légaux.`,
+      `Signature cadre   : _________________________ Date : ________`,
+      `Signature manager : _________________________ Date : ________`,
       ``,
-      `Signature cadre : ________________________________ Date : ________`,
-      `Signature manager: ________________________________ Date : ________`,
+      `Hash de verification : #${hash}`,
+      `Ce hash permet de verifier que les donnees n'ont pas ete`,
+      `modifiees apres l'export.`,
       ``,
-      `Hash de vérification : #${hash}`,
-      `Ce hash permet de vérifier que les données n'ont pas été modifiées`,
-      `après l'export. Toute modification invalide l'empreinte.`,
-      ``,
-      `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━`,
-      `Sources légales : L3121-41 à L3121-65 Code du travail`,
-      `Jurisprudence   : Cass. Soc. 29/06/2011, 02/07/2014, 04/11/2015`,
-      `Médical (info)  : Ce rapport ne remplace pas un avis médical.`,
+      `================================================================`,
+      `Sources : L3121-41 a L3121-65 Code du travail`,
+      `Jurisprudence : Cass. Soc. 29/06/2011, 02/07/2014, 04/11/2015`,
+      `================================================================`,
     ];
 
     return { texte: lignes.join('\n'), hash, ts };

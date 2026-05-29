@@ -41,13 +41,14 @@ const M6_ValiditeFH = {
       titre: 'Accord collectif requis',
       loi: 'Art. L3121-39',
       ok: !isForfaitAnnuel || hasCCN,
-      niveau: !isForfaitAnnuel ? 'ok' : (hasCCN ? 'warning' : 'danger'),
+      // Jamais danger — toujours warning si absent → la case à cocher est disponible
+      niveau: (!isForfaitAnnuel || hasCCN) ? (hasCCN && !isForfaitAnnuel ? 'ok' : 'warning') : 'warning',
       detail: !isForfaitAnnuel
         ? 'Forfait hebdo/mensuel — l\'accord collectif n\'est pas obligatoire.'
         : (hasCCN
           ? `CCN "${contract.ccnLabel}" renseignée — vérifier qu\'elle autorise le forfait annuel en heures.`
-          : 'Forfait annuel détecté : un accord d\'entreprise ou de branche est obligatoire (L3121-63 par renvoi).'),
-      recommandation: 'Le forfait annuel en heures nécessite un accord collectif. Forfait hebdo/mensuel : l\'écrit dans le contrat suffit.',
+          : 'Aucune CCN renseignée. L\'application ne peut pas vérifier automatiquement l\'accord collectif. Cochez si votre entreprise dispose bien d\'un accord autorisant le forfait annuel en heures.'),
+      recommandation: 'Le forfait annuel en heures nécessite un accord collectif (L3121-63 par renvoi). Pour un forfait hebdo/mensuel, l\'écrit dans le contrat suffit.',
     });
 
     // ── 3. Contingent annuel HS respecté (L3121-30) ────────────
@@ -71,19 +72,31 @@ const M6_ValiditeFH = {
     });
 
     // ── 4. Majoration des HS appliquée (L3121-28) ──────────────
+    // Pour les CCN à 3 paliers (HCR: 10/20/50), le palier1 peut être < 25% légal.
+    // → C'est autorisé si une CCN le prévoit : on passe en warning (pas danger) pour
+    //   que l'utilisateur puisse attester que sa CCN couvre bien ce taux.
     const taux1 = contract.taux1 || 25;
     const taux2 = contract.taux2 || 50;
+    const hasCCN_for_taux = !!(contract.ccnLabel || contract.ccnIdcc);
+    const a3Paliers = !!(contract.taux_inter);
+    // Légal : taux1 >= 25 OR (3 paliers + CCN identifiée couvrant ce droit)
     const tauxOK = taux1 >= 25 && taux2 >= 50;
+    const tauxCCNOK = a3Paliers && hasCCN_for_taux && taux2 >= 50; // ex: HCR 10/20/50 avec CCN
     conditions.push({
       id: 'majoration_hs',
       titre: 'Majoration HS conforme',
       loi: 'Art. L3121-28',
-      ok: tauxOK,
-      niveau: tauxOK ? 'ok' : 'danger',
+      ok: tauxOK || tauxCCNOK,
+      // danger seulement si taux2 < 50% (vraie violation) ou si 2 paliers et taux1 < 25% sans CCN
+      niveau: (tauxOK || tauxCCNOK) ? 'ok'
+        : (taux2 < 50) ? 'danger'
+        : 'warning', // taux1 < 25% mais CCN non identifiée → warning, l'utilisateur peut attester
       detail: tauxOK
-        ? `Majorations : +${taux1}% (8 premières HS) puis +${taux2}% — conformes au minimum légal.`
-        : `Taux configurés (+${taux1}% / +${taux2}%) en dessous du minimum légal (+25% / +50%).`,
-      recommandation: 'Minimum légal : +25% sur les 8 premières HS hebdo, +50% au-delà. Une CCN peut prévoir des taux supérieurs.',
+        ? `Majorations : +${taux1}% (${contract.palier1||8} premières HS) puis +${taux2}% — conformes au minimum légal.`
+        : tauxCCNOK
+          ? `3 paliers CCN "${contract.ccnLabel}" : +${taux1}%(${contract.palier1||4}h) / +${contract.taux_inter}%(${contract.palier_inter||4}h) / +${taux2}% — conforme à la CCN.`
+          : `Taux configurés (+${taux1}% / +${taux2}%) en dessous du minimum légal (+25% / +50%).${hasCCN_for_taux?' Si votre CCN prévoit un taux inférieur, cochez ci-dessous.':''}`,
+      recommandation: 'Minimum légal : +25% sur les 8 premières HS hebdo, +50% au-delà. Une CCN (ex: HCR, Restauration) peut prévoir un premier palier à +10% si l\'accord le justifie.',
     });
 
     // ── 5. Repos quotidien (L3131-1) ───────────────────────────
