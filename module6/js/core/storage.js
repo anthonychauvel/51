@@ -78,8 +78,30 @@ const M6_Storage = {
 
   // ── Entretien annuel ──────────────────────────────────────────
   getEntretiens(regime, year) {
-    const key = year ? `${NS}_${regime}_${year}_ENTRETIENS` : `${NS}_${regime}_ENTRETIENS`;
-    return this._json(key, []);
+    // Si une année précise est demandée → lire uniquement cette clé
+    if (year) {
+      const key = `${NS}_${regime}_${year}_ENTRETIENS`;
+      return this._json(key, []);
+    }
+    // Sans year → agréger TOUTES les années disponibles dans localStorage
+    // pour construire l'historique complet (visible dans l'onglet Entretien)
+    const all = [];
+    try {
+      // Clé sans année (anciens entretiens pré-migration)
+      const old = this._json(`${NS}_${regime}_ENTRETIENS`, []);
+      all.push(...old);
+      // Clés par année M6_cadre_dirigeant_2024_ENTRETIENS etc.
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        if (k && k.startsWith(`${NS}_${regime}_`) && k.endsWith('_ENTRETIENS') && k !== `${NS}_${regime}_ENTRETIENS`) {
+          const items = this._json(k, []);
+          all.push(...items);
+        }
+      }
+    } catch(_) {}
+    // Trier par date croissante (le plus ancien en premier → le dernier du tableau = le plus récent)
+    all.sort((a,b) => (a.date||'').localeCompare(b.date||''));
+    return all;
   },
   addEntretien(regime, year, e) {
     const key = year ? `${NS}_${regime}_${year}_ENTRETIENS` : `${NS}_${regime}_ENTRETIENS`;
