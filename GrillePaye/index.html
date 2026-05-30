@@ -1660,9 +1660,9 @@ html, body {
         <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg>
         <span>Changer de rôle</span>
       </button>
-      <div class="smic-block">
+      <button onclick="openTuto()" aria-label="Guide Lumina" id="tuto-hdr-btn" style="background:rgba(168,208,255,.12);border:1px solid rgba(168,208,255,.25);border-radius:50%;width:34px;height:34px;min-width:34px;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;color:var(--shine);flex-shrink:0;">❓</button>
+        <div class="smic-block">
         <div class="smic-label">SMIC
-      <button onclick="openTuto()" aria-label="Guide Lumina" style="background:rgba(168,208,255,.12);border:1px solid rgba(168,208,255,.25);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;color:var(--shine);flex-shrink:0;margin-left:6px;">❓</button>
     </div>
         <div id="smic-tag" class="smic-value">1 867 €</div>
         <div class="smic-date">01/06/2026</div>
@@ -4406,8 +4406,7 @@ body.tuto-open { overflow: hidden; }
 }
 </style>
 
-<!-- Bouton fixe -->
-<button id="tuto-btn" onclick="openTuto()" aria-label="Tutoriel Lumina">❓</button>
+
 
 <!-- Popup tutoriel -->
 <div id="tuto-modal">
