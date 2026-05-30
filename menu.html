@@ -1381,5 +1381,190 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
 </script>
+
+<!-- ═══════════════════════════════════════════════════
+     POPUP ANNONCE LANCEMENT ZENJI & LUMINA
+     Affichage unique — disparu après clic ou 30 jours
+═══════════════════════════════════════════════════ -->
+<style>
+#annonce-overlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 3000;
+  background: rgba(5, 11, 26, 0.88);
+  backdrop-filter: blur(16px);
+  -webkit-backdrop-filter: blur(16px);
+  align-items: center;
+  justify-content: center;
+  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px;
+}
+#annonce-card {
+  background: linear-gradient(160deg, #0f1f3d, #1a3a6e);
+  border: 1px solid rgba(212,168,80,.35);
+  border-radius: 24px;
+  max-width: 420px;
+  width: 100%;
+  padding: 28px 20px 22px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.7), inset 0 1px 0 rgba(212,168,80,.15);
+  text-align: center;
+}
+.annonce-badge {
+  display: inline-block;
+  background: rgba(212,168,80,.15);
+  border: 1px solid rgba(212,168,80,.4);
+  color: #d4a850;
+  font-size: .72rem;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  border-radius: 99px;
+  padding: 4px 14px;
+  margin-bottom: 16px;
+}
+.annonce-titre {
+  font-size: 1.4rem;
+  font-weight: 700;
+  color: #a8d0ff;
+  margin-bottom: 6px;
+  line-height: 1.25;
+}
+.annonce-sous-titre {
+  font-size: .82rem;
+  color: rgba(168,208,255,.6);
+  margin-bottom: 20px;
+}
+.annonce-modules {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 20px;
+}
+.annonce-module {
+  flex: 1;
+  background: rgba(168,208,255,.05);
+  border: 1px solid rgba(168,208,255,.15);
+  border-radius: 16px;
+  padding: 14px 10px;
+}
+.annonce-module-ico {
+  font-size: 1.6rem;
+  margin-bottom: 6px;
+  display: block;
+}
+.annonce-module-nom {
+  font-size: .92rem;
+  font-weight: 700;
+  color: #d4a850;
+  margin-bottom: 4px;
+}
+.annonce-module-desc {
+  font-size: .72rem;
+  color: rgba(168,208,255,.55);
+  line-height: 1.4;
+}
+.annonce-divider {
+  height: 1px;
+  background: rgba(168,208,255,.1);
+  margin: 0 0 16px;
+}
+.annonce-texte {
+  font-size: .8rem;
+  color: rgba(168,208,255,.6);
+  line-height: 1.6;
+  margin-bottom: 20px;
+}
+#annonce-ok {
+  width: 100%;
+  padding: 14px;
+  border-radius: 14px;
+  background: linear-gradient(135deg, #d4a850, #b8902e);
+  color: #0a1428;
+  font-size: 1rem;
+  font-weight: 700;
+  border: none;
+  cursor: pointer;
+  letter-spacing: .01em;
+}
+#annonce-ok:active { opacity: .85; }
+.annonce-skip {
+  display: block;
+  margin-top: 12px;
+  font-size: .75rem;
+  color: rgba(168,208,255,.35);
+  cursor: pointer;
+  background: none;
+  border: none;
+  width: 100%;
+  text-align: center;
+}
+</style>
+
+<div id="annonce-overlay">
+  <div id="annonce-card">
+    <div class="annonce-badge">🎉 Nouveautés juin 2026</div>
+    <div class="annonce-titre">Deux nouveaux modules<br>sont disponibles !</div>
+    <div class="annonce-sous-titre">SimulHeures s'agrandit</div>
+
+    <div class="annonce-modules">
+      <div class="annonce-module">
+        <span class="annonce-module-ico">⚖️</span>
+        <div class="annonce-module-nom">Zenji</div>
+        <div class="annonce-module-desc">Cadres & forfaits jours — vérifiez vos droits</div>
+      </div>
+      <div class="annonce-module">
+        <span class="annonce-module-ico">📊</span>
+        <div class="annonce-module-nom">Lumina</div>
+        <div class="annonce-module-desc">428 grilles CCN 2026 — minima conventionnels</div>
+      </div>
+    </div>
+
+    <div class="annonce-divider"></div>
+
+    <div class="annonce-texte">
+      Retrouvez Zenji et Lumina dans le menu principal.<br>
+      Données locales · Zéro collecte · Conformité Directive EU 2023/970.
+    </div>
+
+    <button id="annonce-ok" onclick="fermerAnnonce()">✨ Découvrir</button>
+    <button class="annonce-skip" onclick="fermerAnnonce()">Ne plus afficher</button>
+  </div>
+</div>
+
+<script>
+(function(){
+  var KEY = 'annonce_zenji_lumina_v1';
+  var EXPIRY_DAYS = 30;
+
+  try {
+    var seen = localStorage.getItem(KEY);
+    if (seen) {
+      var seenDate = new Date(parseInt(seen));
+      var now = new Date();
+      var diffDays = (now - seenDate) / (1000 * 60 * 60 * 24);
+      if (diffDays < EXPIRY_DAYS) return; // déjà vu et pas expiré
+    }
+  } catch(e) {}
+
+  // Afficher le popup
+  var overlay = document.getElementById('annonce-overlay');
+  if (overlay) {
+    overlay.style.display = 'flex';
+    document.body.style.overflow = 'hidden';
+  }
+})();
+
+function fermerAnnonce() {
+  var overlay = document.getElementById('annonce-overlay');
+  if (overlay) overlay.style.display = 'none';
+  document.body.style.overflow = '';
+  try { localStorage.setItem('annonce_zenji_lumina_v1', Date.now().toString()); } catch(e) {}
+}
+
+// Fermer en cliquant sur l'overlay
+document.getElementById('annonce-overlay').addEventListener('click', function(e) {
+  if (e.target === this) fermerAnnonce();
+});
+</script>
+
 </body>
 </html>
