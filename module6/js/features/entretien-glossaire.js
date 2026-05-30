@@ -37,6 +37,8 @@ const M6_Entretien = {
             ? new Date(e.date+'T12:00:00').toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'})
             : '—';
           const isLatest = e === sorted[0];
+          // Identifiant stable : date + savedAt (unique même si même date)
+          const btnKey = encodeURIComponent(e.date || '') + '|' + encodeURIComponent(e.savedAt || realIdx);
           return `
           <div style="border:1px solid ${isLatest?'var(--champagne)':'var(--ivoire-3)'};border-radius:10px;padding:12px 14px;margin-bottom:8px;background:${isLatest?'rgba(196,163,90,0.06)':'var(--ivoire)'}">
             <div style="display:flex;align-items:center;justify-content:space-between;gap:8px">
@@ -49,7 +51,7 @@ const M6_Entretien = {
                   ${e.charge?'Charge '+e.charge+'/5':''}${e.manager?' · '+e.manager:''}${e.ajustement==='oui'?' · ⚠️ Ajustement demandé':''}
                 </div>
               </div>
-              <button data-pdf-entretien="${realIdx}" class="m6-btn m6-btn-ghost" style="font-size:0.72rem;padding:6px 11px;flex-shrink:0">📄 PDF</button>
+              <button data-pdf-entretien="${btnKey}" class="m6-btn m6-btn-ghost" style="font-size:0.72rem;padding:6px 11px;flex-shrink:0">📄 PDF</button>
             </div>
             ${(e.organisation||e.equilibre||e.chargeRessentie||e.deconnexion||e.remuneration||e.actions) ? `
             <details style="margin-top:8px">
@@ -211,11 +213,17 @@ const M6_Entretien = {
     // Boutons PDF — un par entretien historique
     container.querySelectorAll('[data-pdf-entretien]').forEach(btn => {
       btn.addEventListener('click', () => {
-        const idx = parseInt(btn.dataset.pdfEntretien);
+        const key = btn.dataset.pdfEntretien || '';
+        const [dateEnc, savedAtEnc] = key.split('|');
+        const targetDate   = decodeURIComponent(dateEnc);
+        const targetSavedAt = decodeURIComponent(savedAtEnc);
+        // Retrouver l'entretien par date + savedAt (identifiant stable indépendant de l'ordre)
         const allE = M6_Storage.getEntretiens(regime);
-        const targetE = allE[idx];
-        if (!targetE) { M6_toast('Entretien introuvable'); return; }
-        if (!window.M6_PDF?.exportEntretien) { M6_toast('Module PDF non chargé'); return; }
+        const targetE = allE.find(e =>
+          e.date === targetDate && (e.savedAt === targetSavedAt || !e.savedAt)
+        ) || allE.find(e => e.date === targetDate); // fallback : même date suffit
+        if (!targetE) { M6_toast?.('Entretien introuvable'); return; }
+        if (!window.M6_PDF?.exportEntretien) { M6_toast?.('Module PDF non chargé'); return; }
         const eYear = targetE.date ? parseInt(targetE.date.slice(0,4)) : year;
         M6_PDF.exportEntretien({
           regime, year: eYear, contract,
