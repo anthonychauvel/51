@@ -78,10 +78,10 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .tab{padding:9px 14px;font-size:.7rem;font-weight:600;color:var(--sa);border:none;background:none;cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:color var(--tr),border-color var(--tr);font-family:var(--fb)}
 .tab.active{color:var(--or);border-bottom-color:var(--or)}
 .tab:hover:not(.active){color:#d0ccc6}
-.main{max-width:960px;margin:0 auto;padding:18px 13px 100px}
+.main{max-width:960px;margin:0 auto;padding:12px 8px 100px}
 .panel{display:none}.panel.active{display:block;animation:fadeUp .2s ease}
 @keyframes fadeUp{from{opacity:0;transform:translateY(5px)}to{opacity:1;transform:none}}
-.card{background:var(--bl);border:1px solid rgba(26,23,20,.07);border-radius:var(--rxl);padding:15px;box-shadow:var(--sh);margin-bottom:11px}
+.card{background:var(--bl);border:1px solid rgba(26,23,20,.07);border-radius:var(--rxl);padding:12px 10px;box-shadow:var(--sh);margin-bottom:11px}
 .card-t{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--sa);margin-bottom:11px;display:flex;align-items:center;gap:7px}
 .card-t::after{content:'';flex:1;height:1px;background:var(--iv2)}
 .sw{position:relative;margin-bottom:11px}
@@ -132,9 +132,9 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .hsc{background:var(--bl);border-radius:var(--rsm);padding:7px 8px;text-align:center;border:1px solid rgba(26,23,20,.06)}
 .hsv{font-size:.9rem;font-weight:700;font-family:var(--fm)}
 .hsl{font-size:.56rem;color:var(--sa);margin-top:1px;text-transform:uppercase;letter-spacing:.05em}
-.fg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-bottom:11px}
+.fg{display:flex;flex-direction:column;gap:9px;margin-bottom:11px}
 @media(max-width:500px){.fg{grid-template-columns:1fr}}
-.fg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:9px;margin-bottom:11px}
+.fg3{display:flex;flex-direction:column;gap:9px;margin-bottom:11px}
 @media(max-width:580px){.fg3{grid-template-columns:1fr 1fr}}
 .fld{display:flex;flex-direction:column;gap:4px}
 .lbl{font-size:.65rem;font-weight:700;color:var(--pi);text-transform:uppercase;letter-spacing:.06em}
@@ -161,7 +161,7 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .at{color:var(--shine);font-weight:700;margin-bottom:2px}.aico{font-size:1rem;flex-shrink:0;margin-top:1px}
 .sr{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:13px}
 @media(max-width:480px){.sr{grid-template-columns:1fr 1fr}}
-.sb{background:var(--bl);border:1px solid rgba(26,23,20,.07);border-radius:var(--rlg);padding:11px;text-align:center}
+.sb{background:var(--bl);border:1px solid rgba(26,23,20,.07);border-radius:var(--rlg);padding:11px;text-align:centermin-width:0;overflow:hidden;}
 .sv2{font-size:1.45rem;font-weight:700;font-family:var(--fm);line-height:1}
 .sl2{font-size:.57rem;color:var(--sa);margin-top:3px;text-transform:uppercase;letter-spacing:.07em}
 .bw{margin:4px 0}.blb{display:flex;justify-content:space-between;font-size:.67rem;margin-bottom:2px;font-family:var(--fm)}
@@ -200,7 +200,7 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .disc{font-size:.59rem;color:var(--sa);border-top:1px solid var(--iv2);padding-top:7px;margin-top:11px;line-height:1.6;font-family:var(--fm)}
 .rc{font-size:.65rem;color:var(--sa);margin-bottom:7px;font-family:var(--fm);text-align:right}
 .as{margin-bottom:18px}
-.ast{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--ch);margin-bottom:9px;display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:2px solid var(--orb)}
+.ast{font-size:.73rem;font-weight:700;text-transform:uppercase;letter-spacing:.09em;color:var(--metal);margin-bottom:9px;display:flex;align-items:center;gap:7px;padding-bottom:6px;border-bottom:2px solid var(--orb)}
 .amod{font-size:.59rem;font-weight:600;color:var(--or);background:var(--orl);border:1px solid var(--orb);border-radius:99px;padding:1px 6px;margin-left:auto}
 .acr{display:flex;align-items:center;gap:7px;padding:7px 9px;border-radius:var(--rsm);margin-bottom:4px;background:var(--iv);transition:background var(--tr)}
 .acr:hover{background:var(--iv2)}
@@ -1285,6 +1285,259 @@ ul li, ol li { font-size: .95rem !important; line-height: 1.7; }
 /* Titre Lumina sur le role screen */
 .role-wrap .role-logo-text { font-size: 2.2rem !important; }
 
+
+/* === FIX "Lumi/na" — empêcher coupure du nom === */
+.role-logo {
+  white-space: nowrap !important;
+  display: block !important;
+  overflow: hidden !important;
+  text-overflow: clip !important;
+  font-size: 2.2rem !important;
+  line-height: 1.2 !important;
+  color: var(--or, #d4a850) !important;
+  letter-spacing: -.02em !important;
+}
+.role-logo strong {
+  white-space: nowrap !important;
+  display: inline !important;
+  font-weight: inherit !important;
+  color: inherit !important;
+}
+/* Nom complet dans le <title> du splash aussi */
+.role-logo-text, .brand-name {
+  white-space: nowrap !important;
+}
+
+/* === FIX cartes résultat — pas de débordement === */
+.res-kpi-row, .kpi-row, .tri-cards, [class*="res-row"] {
+  display: flex !important;
+  flex-wrap: nowrap !important;
+  gap: 6px !important;
+  width: 100% !important;
+  overflow: hidden !important;
+}
+/* Chaque card prend 1/3 sans dépasser */
+.res-kpi, .kpi-card, .tri-card {
+  flex: 1 1 0 !important;
+  min-width: 0 !important;
+  max-width: 33.33% !important;
+  padding: 10px 6px !important;
+  overflow: hidden !important;
+}
+/* Valeur dans la card — truncate si besoin */
+.kpi-val, .sv2, .res-val {
+  font-size: 1.1rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+/* Label sous la valeur */
+.kpi-lbl, .res-lbl, .sl2 {
+  font-size: .62rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+}
+/* Conteneur général du module Mon Salaire */
+#panel-salaire, #panel-ms {
+  padding: 12px !important;
+  overflow-x: hidden !important;
+}
+/* Barre de comparaison */
+.comp-bar, .bar-wrap {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden !important;
+}
+/* Résultat conteneur */
+.res-box, .result-box {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+  overflow: hidden !important;
+}
+
+
+/* === FIX Lumina coupé === */
+.role-logo {
+  white-space: nowrap !important;
+  font-size: clamp(1.4rem, 7vw, 2.4rem) !important;
+  width: 100% !important;
+  text-align: center !important;
+  display: block !important;
+}
+.role-logo strong {
+  white-space: nowrap !important;
+  display: inline !important;
+}
+.role-wrap {
+  width: 100% !important;
+  max-width: 560px !important;
+  overflow: hidden !important;
+}
+
+
+/* === FIX OVERFLOW RADICAL === */
+/* Tout le panel Mon Salaire */
+#panel-salaire, #panel-ms, #panel-grilles {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Le formulaire de comparaison */
+#c-form, #c-result {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Tout enfant direct des panels */
+#panel-salaire > *, #panel-ms > * {
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Les cards .sb — force absolue */
+.sb {
+  flex: 1 1 0% !important;
+  min-width: 0 !important;
+  max-width: 33.33% !important;
+  overflow: hidden !important;
+  padding: 8px 4px !important;
+  box-sizing: border-box !important;
+}
+/* Valeurs dans les cards */
+.sv2 {
+  font-size: .82rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+.sl2 {
+  font-size: .58rem !important;
+  white-space: nowrap !important;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  display: block !important;
+  max-width: 100% !important;
+}
+/* Barre de comparaison */
+.gtr, .gle, .gfi {
+  max-width: 100% !important;
+  overflow: hidden !important;
+  box-sizing: border-box !important;
+}
+/* Cards de grille CCN */
+.g-item, .gr-card, .gr-item {
+  overflow: hidden !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+/* Tabs container */
+.tabs {
+  overflow-x: auto !important;
+  overflow-y: hidden !important;
+}
+
+
+/* === FIX MOBILE PADDING === */
+@media (max-width: 430px) {
+  main {
+    padding: 10px 8px 100px !important;
+  }
+  .card {
+    padding: 10px 8px !important;
+  }
+  .panel {
+    padding: 0 !important;
+  }
+  /* cards résultat sur mobile */
+  .sb {
+    padding: 6px 3px !important;
+  }
+  .sv2 {
+    font-size: .75rem !important;
+  }
+  .sl2 {
+    font-size: .55rem !important;
+  }
+}
+/* Fix universel : empêcher tout débordement horizontal */
+html, body {
+  overflow-x: hidden !important;
+  max-width: 100vw !important;
+}
+* {
+  box-sizing: border-box !important;
+}
+
+
+/* === FIX ADMIN — titres lisibles + layout mobile === */
+
+/* Titres de sections admin (.ast) */
+.ast {
+  color: var(--metal, #5a8edb) !important;
+  font-size: .8rem !important;
+  font-weight: 700 !important;
+  text-transform: uppercase !important;
+  letter-spacing: .08em !important;
+  margin-bottom: 8px !important;
+}
+
+/* Labels dans admin */
+.lbl {
+  color: var(--metal, #5a8edb) !important;
+  font-size: .72rem !important;
+}
+
+/* Forcer flex colonne sur .fg et .fg3 sur tous les écrans mobiles */
+@media (max-width: 500px) {
+  .fg, .fg3 {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 8px !important;
+  }
+}
+
+/* Champs admin — pleine largeur */
+#panel-admin .inp, #panel-admin .sel {
+  width: 100% !important;
+  max-width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Boutons admin — stack vertical si trop larges */
+#panel-admin .btn-row {
+  display: flex !important;
+  flex-direction: column !important;
+  gap: 8px !important;
+  align-items: stretch !important;
+}
+#panel-admin .btn-row .btn {
+  width: 100% !important;
+  text-align: center !important;
+  justify-content: center !important;
+}
+
+/* Section .as — espacement */
+.as {
+  margin-bottom: 18px !important;
+}
+.as + .as {
+  padding-top: 12px !important;
+  border-top: 1px solid rgba(90,142,219,.15) !important;
+}
+
+/* Empêcher le débordement horizontal dans admin */
+#panel-admin {
+  overflow-x: hidden !important;
+  max-width: 100% !important;
+}
+#panel-admin .card {
+  overflow: hidden !important;
+  max-width: 100% !important;
+}
+
 </style>
 </head>
 <body>
@@ -1536,7 +1789,7 @@ ul li, ol li { font-size: .95rem !important; line-height: 1.7; }
 <div class="panel" id="panel-admin">
   <div class="al aor" style="margin-bottom:13px"><span class="aico">⚙️</span>
     <div><div class="at">Administration — Mise à jour autonome des données</div>
-    Modifiez le SMIC, les grilles et les règles HS. Tout est sauvegardé localement. Zéro donnée transmise.
+    Modifiez le SMIC et les grilles. Tout est sauvegardé localement. Zéro donnée transmise.
     <br><span style="font-size:.64rem">🟢 Vérifiée · 🔵 Nationale (agri.) · 🟠 Estimée % SMIC · ✏️ Personnalisée via Admin</span></div>
   </div>
 
@@ -1550,7 +1803,7 @@ ul li, ol li { font-size: .95rem !important; line-height: 1.7; }
       </div>
       <div class="btn-row">
         <button class="btn bp btn-sm" id="adm-smic-save">💾 Enregistrer</button>
-        <button class="btn bs btn-sm" id="adm-smic-2026">⚡ SMIC 2026 (1 823,03 €)</button>
+        <button class="btn bs btn-sm" id="adm-smic-2026">⚡ Charger SMIC 01/01/2026 (1 823,03 €)</button>
         <button class="btn bd btn-sm" id="adm-smic-reset">↺ Réinitialiser</button>
       </div>
       <div style="font-size:.66rem;color:var(--sa);margin-top:8px">
@@ -1611,24 +1864,7 @@ ul li, ol li { font-size: .95rem !important; line-height: 1.7; }
     </div>
   </div>
 
-  <div class="as">
-    <div class="ast">⏱ Règles Heures Supplémentaires</div>
-    <div class="card">
-      <div style="font-size:.76rem;color:var(--pi);margin-bottom:9px">Contingents annuels, taux et durée max par groupe CCN.</div>
-      <div style="overflow-x:auto">
-        <div class="hsr" style="padding:3px 0 6px;border-bottom:2px solid var(--iv2)">
-          <div class="hrh">Groupe</div><div class="hrh">Taux1%</div><div class="hrh">Palier1</div>
-          <div class="hrh">Taux2%</div><div class="hrh">Conting.</div><div class="hrh">MaxHebdo</div><div class="hrh">Inter.</div>
-        </div>
-        <div id="adm-hs-rows"></div>
-      </div>
-      <div class="btn-row" style="margin-top:9px">
-        <button class="btn bp btn-sm" id="adm-hs-save">💾 Enregistrer</button>
-        <button class="btn bd btn-sm" id="adm-hs-reset">↺ Réinitialiser</button>
-      </div>
-    </div>
-  </div>
-
+  
   <div class="as">
     <div class="ast">📦 Import / Export JSON</div>
     <div class="card">
@@ -2260,10 +2496,10 @@ document.getElementById("c-calc")?.addEventListener("click",()=>{
         <div class="gmk" style="left:${(mB/mx*100).toFixed(1)}%" data-label="Min CCN"></div></div>
       <div class="gle"><span>0 €</span><span>${fmt(mx)}</span></div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:10px">
-      <div class="sb"><div class="sv2" style="font-size:.9rem">${fmt(SMIC)}</div><div class="sl2">SMIC ${SDATE}</div></div>
-      <div class="sb"><div class="sv2" style="font-size:.9rem">${fmt(mB)}</div><div class="sl2">Min. CCN</div></div>
-      <div class="sb"><div class="sv2" style="font-size:.9rem;color:${isOk?"var(--ve)":"var(--ro)"}">${fmt(sal)}</div><div class="sl2">Salaire saisi</div></div>
+    <div style="display:flex;gap:4px;margin-bottom:10px;width:100%;box-sizing:border-box">
+      <div class="sb" style="flex:1;min-width:0;padding:8px 4px;overflow:hidden"><div class="sv2" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmt(SMIC)}</div><div class="sl2" style="font-size:.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">SMIC ${SDATE}</div></div>
+      <div class="sb" style="flex:1;min-width:0;padding:8px 4px;overflow:hidden"><div class="sv2" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${fmt(mB)}</div><div class="sl2" style="font-size:.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Min. CCN</div></div>
+      <div class="sb" style="flex:1;min-width:0;padding:8px 4px;overflow:hidden"><div class="sv2" style="font-size:.82rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:${isOk?"var(--ve)":"var(--ro)"}">${fmt(sal)}</div><div class="sl2" style="font-size:.58rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis">Salaire saisi</div></div>
     </div>
     ${!isOk?'<div class="al ae"><span class="aico">⚖️</span><div><div class="at">Risque juridique — Art. L2254-1</div>Rappel estimé : <strong>'+fmt(Math.abs(diff))+"/mois</strong>.</div></div>":""}
     <div class="disc-modal">Source : ${compCCN.gd.s} · SMIC ${fmt(SMIC)}</div>`;
