@@ -134,15 +134,8 @@ const VFH = {
       );
     }
     if(window.M6_AlertePhase && bio?.hasData) M6_AlertePhase.check(bio, 'forfait_heures');
-    // Notification automatique si phase Épuisement (P4)
-    if (bio?.hasData && bio?.phase?.code === 'P4' && window.Notification && Notification.permission === 'granted') {
-      const lastP4 = localStorage.getItem('M6_FH_LAST_P4_NOTIF');
-      const today = new Date().toISOString().slice(0,10);
-      if (lastP4 !== today) {
-        new Notification('⚠️ Zenji — Phase Épuisement', { body: 'Vos indicateurs atteignent le seuil critique INRS P4. Consultez votre médecin du travail (Art. R4624-10).', icon: 'images/Cadre.png' });
-        localStorage.setItem('M6_FH_LAST_P4_NOTIF', today);
-      }
-    }
+    // M6 n'envoie AUCUNE notification (conformité Play Store / RGPD).
+    // L'alerte phase P4 reste visible in-app via M6_AlertePhase ci-dessus.
   },
 
   _tplBilan(a, bio) {
