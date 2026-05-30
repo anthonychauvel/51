@@ -250,10 +250,10 @@ const M6_Router = {
           <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Définissez la période de suivi (peut chevaucher deux années civiles).</p>
           ${(existing.dateDebutExercice||existing.nomCadre||existing.nom)?`<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>✏️</span><div>Vos paramètres actuels sont pré-remplis. Modifiez ce qui change.</div></div>`:''}
           <div class="m6-card"><div class="m6-card-body">
-            <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="wiz-debut" value="${existing.dateDebutExercice||`${new Date().getFullYear()}-01-01`}" style="font-size:16px"></div>
-            <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="wiz-fin" value="${existing.dateFinExercice||`${new Date().getFullYear()}-12-31`}" style="font-size:16px"></div>
+            <div class="m6-field"><label>Début de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 1er janvier)</small></label><input type="date" id="wiz-debut" value="${existing.dateDebutExercice||''}" placeholder="${new Date().getFullYear()}-01-01" style="font-size:16px"></div>
+            <div class="m6-field"><label>Fin de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 31 décembre)</small></label><input type="date" id="wiz-fin" value="${existing.dateFinExercice||''}" placeholder="${new Date().getFullYear()}-12-31" style="font-size:16px"></div>
             <div class="m6-field"><label>Votre nom (pour les exports PDF)</label><input type="text" id="wiz-nom" value="${((existing.nomCadre||existing.nom)||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
-            <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata si renseignée)</small></label><input type="date" id="wiz-arrivee" value="${existing.dateArrivee||''}" style="font-size:16px"></div>
+            <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata si renseignée — sinon laisser vide)</small></label><input type="date" id="wiz-arrivee" value="${existing.dateArrivee||''}" style="font-size:16px"></div>
           </div></div>
           <button class="m6-btn m6-btn-gold" id="wiz-next" style="width:100%">Continuer →</button>
           <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
@@ -469,38 +469,8 @@ const M6_Router = {
 
 document.addEventListener('DOMContentLoaded', () => {
   M6_Router.init();
-
-  // ── Notifications vendredi — demande in-app (pas RGPD) ────────
-  const _notifKey = 'M6_NOTIF_ASKED';
-  if (!localStorage.getItem(_notifKey) && 'Notification' in window) {
-    // Attendre 30s après l'ouverture pour ne pas déranger
-    setTimeout(() => {
-      if (Notification.permission === 'default') {
-        // Bannière in-app d'invitation (pas de popup navigateur direct)
-        const banner = document.createElement('div');
-        banner.id = 'm6-notif-banner';
-        banner.style.cssText = 'position:fixed;bottom:calc(120px + env(safe-area-inset-bottom,0));left:12px;right:12px;background:var(--charbon);color:var(--ivoire);border-radius:12px;padding:14px 16px;z-index:400;box-shadow:var(--shadow-lg);display:flex;align-items:center;gap:12px;font-size:0.8rem;opacity:0;transition:opacity 0.25s ease';
-        banner.innerHTML = `
-          <span style="font-size:1.4rem;flex-shrink:0">🔔</span>
-          <div style="flex:1;line-height:1.4">Activer les rappels vendredi ?<br><span style="font-size:0.7rem;color:var(--pierre-2)">100% local — aucune donnée envoyée</span></div>
-          <button id="m6-notif-yes" style="background:var(--champagne);color:var(--charbon);border:none;border-radius:8px;padding:8px 14px;font-size:0.8rem;cursor:pointer;font-weight:600;white-space:nowrap">Oui</button>
-          <button id="m6-notif-no" style="background:none;border:1px solid rgba(196,163,90,0.3);color:var(--pierre-2);border-radius:8px;padding:8px 10px;font-size:0.75rem;cursor:pointer">Non</button>`;
-        document.body.appendChild(banner);
-        document.getElementById('m6-notif-yes')?.addEventListener('click', () => {
-          Notification.requestPermission().then(p => {
-            localStorage.setItem(_notifKey, '1');
-            banner.remove();
-            if (p === 'granted') M6_toast?.('🔔 Rappels vendredi activés !');
-          });
-        });
-        document.getElementById('m6-notif-no')?.addEventListener('click', () => {
-          localStorage.setItem(_notifKey, '0'); banner.remove();
-        });
-      } else {
-        localStorage.setItem(_notifKey, '1');
-      }
-    }, 30000);
-  }
+  // M6 ne demande PAS de notifications (conformité Play Store / RGPD).
+  // Aucune permission de notification n'est sollicitée par ce module.
 });
 window.M6_Router = M6_Router;
 
