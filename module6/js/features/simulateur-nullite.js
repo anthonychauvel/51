@@ -617,8 +617,9 @@ const M6_ModePreuve = {
         ? analysis.alertes.map(a => `  [${(a.niveau||'').toUpperCase()}] ${a.titre} -- Art. ${a.loi}`)
         : ['  Aucune alerte detectee.']),
       ``,
-      `-- CERTIFICATION --------------------------------------------`,
-      `Ce rapport a ete genere automatiquement par M6 Cadres.`,
+      `-- DECLARATION SUR L'HONNEUR --------------------------------`,
+      `Je soussigne(e) certifie l'exactitude des informations`,
+      `saisies dans ce rapport.`,
       ``,
       `Signature cadre   : _________________________ Date : ________`,
       `Signature manager : _________________________ Date : ________`,

@@ -27,8 +27,19 @@ function _localHash(str) {
 
 // ── Web Share API — partage natif ou téléchargement fallback ─────
 async function _shareOrSave(doc, filename, toastMsg) {
-  // Essayer Web Share API (iOS Safari 14+, Android Chrome 61+)
+  // Demander à l'utilisateur ce qu'il veut faire (ne PAS ouvrir le mail automatiquement)
+  let wantShare = false;
   if (navigator.canShare) {
+    try {
+      const pdfBlob0 = doc.output('blob');
+      const file0    = new File([pdfBlob0], filename, { type: 'application/pdf' });
+      if (navigator.canShare({ files: [file0] })) {
+        wantShare = window.confirm('PDF généré.\n\nVoulez-vous l\'envoyer (mail, manager, etc.) ?\n\n• OK = Partager / envoyer\n• Annuler = Enregistrer seulement');
+      }
+    } catch(_) {}
+  }
+
+  if (wantShare && navigator.canShare) {
     try {
       const pdfBlob = doc.output('blob');
       const file    = new File([pdfBlob], filename, { type: 'application/pdf' });
@@ -38,17 +49,13 @@ async function _shareOrSave(doc, filename, toastMsg) {
         return;
       }
     } catch(e) {
-      // AbortError = l'utilisateur a fermé la share sheet → fallback téléchargement
-      // On ne retourne pas silencieusement : on sauvegarde quand même le fichier
-      if (e.name !== 'AbortError') {
-        console.warn('[M6 PDF] share error:', e);
-      }
-      // fallthrough vers doc.save()
+      if (e.name !== 'AbortError') console.warn('[M6 PDF] share error:', e);
+      // L'utilisateur a annulé le partage → on enregistre quand même
     }
   }
-  // Fallback : téléchargement direct
+  // Téléchargement / enregistrement direct
   doc.save(filename);
-  window.M6_toast?.(toastMsg);
+  window.M6_toast?.(toastMsg + ' — enregistré');
 }
 
 function _pdfSanitize(str) {
@@ -202,7 +209,7 @@ const M6_PDF = {
     // Mention juridique repos
     rect(M-2,y-1,W-2*M+4,14,[232,245,238]);
     doc.setFontSize(7.5); doc.setTextColor(30,90,60); doc.setFont('helvetica','bold');
-    doc.text('CERTIFICATION LEGALE', M, y+4);
+    doc.text('DECLARATION DE L EXACTITUDE', M, y+4);
     doc.setFont('helvetica','normal');
     const certLines = doc.splitTextToSize(
       'Document de suivi indicatif de votre forfait. À conserver pour vos archives personnelles.',
@@ -515,7 +522,7 @@ const M6_PDF = {
     doc.setDrawColor(45,107,79); doc.setLineWidth(0.4);
     doc.rect(M,y,PW,30,'S');
     rect(M,y,PW,7,[232,245,238]);
-    txt('CERTIFICATION LÉGALE ANNUELLE',M+3,y+5,8,[30,90,60],'bold');
+    txt('DECLARATION DE L EXACTITUDE',M+3,y+5,8,[30,90,60],'bold');
     doc.setFontSize(7.5); doc.setTextColor(74,69,64); doc.setFont('helvetica','normal');
     const certText = doc.splitTextToSize(
       `Document généré le ${new Date().toLocaleDateString('fr-FR')} pour ${_pdfSanitize(contract.nomCadre||'_________________')} — Exercice ${year}. Réf. : ${hashStr}`,
@@ -623,7 +630,7 @@ const M6_PDF = {
     if (y > 230) { doc.addPage(); y = 15; }
     rect(M-2,y-1,W-2*M+4,20,[232,245,238]);
     doc.setFontSize(8); doc.setTextColor(30,90,60); doc.setFont('helvetica','bold');
-    doc.text('CERTIFICATION LEGALE ANNUELLE', M, y+5);
+    doc.text('DECLARATION DE L EXACTITUDE', M, y+5);
     doc.setFont('helvetica','normal'); doc.setFontSize(7.5);
     const certAnnuel = doc.splitTextToSize(
       `Document de suivi annuel pour ${contract.nomCadre||'_________________'} - Exercice ${year}.`,
@@ -1357,7 +1364,7 @@ const M6_PDF = {
         chk();
         if(i%2===0){doc.setFillColor(248,245,241);doc.rect(M,y-1,PW,5,'F');}
         const dateStr = e.date ? new Date(e.date).toLocaleDateString('fr-FR') : 'Sans date';
-        txt(`${dateStr} — Charge ${e.charge||'?'}/5 — Manager : ${_pdfSanitize(e.manager||'—')}`,M+2,y+2.5,8,[70,65,60]);
+        txt(`${dateStr}${e.charge?' — Charge '+e.charge+'/5':''} — Manager : ${_pdfSanitize(e.manager||'—')}`,M+2,y+2.5,8,[70,65,60]);
         y += 5;
       });
     } else {
@@ -1402,7 +1409,7 @@ const M6_PDF = {
     y += 11;
     doc.setFontSize(8); doc.setFont('helvetica','normal'); doc.setTextColor(70,65,60);
     const certLines = doc.splitTextToSize(
-      `Je soussigné(e) ${_pdfSanitize(contract.nomCadre||contract.nom||'___________')} certifie que les données ci-dessus reflètent fidèlement mon suivi M6 Cadres pour l'exercice ${year}. En cas de contestation, le hash #${hash} permet de vérifier l'intégrité du document. Ce document peut être produit en cas de contrôle de l'inspection du travail ou de litige prud'homal.`,
+      `Je soussigné(e) ${_pdfSanitize(contract.nomCadre||contract.nom||'___________')} certifie que les données ci-dessus reflètent fidèlement mon suivi pour l'exercice ${year}. En cas de contestation, le hash #${hash} permet de vérifier l'intégrité du document. Ce document peut être produit en cas de contrôle de l'inspection du travail ou de litige prud'homal.`,
       PW-4);
     doc.text(certLines,M+2,y); y+=certLines.length*4+8;
 
