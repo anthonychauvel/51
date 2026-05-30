@@ -311,7 +311,7 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .ve-section{border:1px solid var(--orb);border-radius:var(--r16);padding:13px;margin-bottom:10px;background:var(--orl)}
 .ve-title{font-size:.72rem;font-weight:700;color:var(--or2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 
-.role-screen{position:fixed;inset:0;background:var(--ch);z-index:600;display:flex;align-items:center;justify-content:center;padding:20px}
+.role-screen{position:fixed;inset:0;background:var(--ch);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
 .role-wrap{max-width:520px;width:100%;text-align:center}
 .role-logo{font-family:var(--fd);font-size:2rem;color:#ede9e0;margin-bottom:6px}
 .role-logo strong{color:var(--or);font-style:italic}
@@ -1538,6 +1538,38 @@ html, body {
   max-width: 100% !important;
 }
 
+
+/* === FIX role-screen coupé en bas === */
+.role-screen {
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  padding-bottom: max(24px, env(safe-area-inset-bottom, 24px)) !important;
+}
+.role-wrap {
+  padding-bottom: 24px !important;
+  min-height: min-content !important;
+}
+/* Réduire légèrement la taille des cards pour qu'elles tiennent */
+.role-card {
+  padding: 16px 12px !important;
+}
+.role-card-features li {
+  font-size: .8rem !important;
+  line-height: 1.45 !important;
+  margin-bottom: 3px !important;
+}
+.role-card-desc {
+  font-size: .82rem !important;
+  line-height: 1.4 !important;
+  margin-bottom: 8px !important;
+}
+/* Logo Lumina — police uniforme */
+.role-logo, .role-logo * {
+  font-family: var(--fd, Georgia, serif) !important;
+  font-style: normal !important;
+  font-weight: 400 !important;
+}
+
 </style>
 </head>
 <body>
@@ -1546,7 +1578,7 @@ html, body {
 <div id="role-screen" class="role-screen">
   <div class="role-wrap">
     <div class="role-logo-circle"><span class="role-logo-l">L</span></div>
-    <div class="role-logo">Lumi<strong>na</strong></div>
+    <div class="role-logo">Lumina</div>
     <div class="role-sub">Conventions Collectives · SMIC 1 867 € · 01/06/2026</div>
     <div class="role-cards">
 
@@ -4271,12 +4303,7 @@ function clearConfImport(){
 })();
 updateSmicPill();</script>
 
-<script>
-// Service Worker Lumina — isolation du SW parent SimulHeures
-if('serviceWorker' in navigator){
-  navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
-}
-</script>
+
 </body>
 <!--
 ╔══════════════════════════════════════════════════════════════════╗
