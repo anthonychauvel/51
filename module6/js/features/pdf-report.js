@@ -652,7 +652,7 @@ const M6_PDF = {
   },
 
   // ── Export entretien annuel ───────────────────────────────────
-  exportEntretien({ year, contract, entretien, analysis }) {
+  exportEntretien({ regime, year, contract, entretien, analysis }) {
     const jsPDF = window.jspdf?.jsPDF;
     if (!jsPDF) { alert('PDF non disponible.'); return; }
 
