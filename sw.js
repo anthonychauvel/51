@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v8.3.2"; // +Lumina CCN 2026
+const CACHE_NAME = "heuressup-cache-v8.5.0"; // Cache First + skip cross-origin (fix CORS fonts)
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -59,15 +59,12 @@ const FILES_TO_CACHE = [
   "./module6/css/main.css",
   "./module6/images/Cadre.png",
   "./module6/js/app.js",
-  // Core
   "./module6/js/core/bio-engine.js",
   "./module6/js/core/calc-engine.js",
   "./module6/js/core/safe-boot.js",
   "./module6/js/core/storage.js",
-  // Data
   "./module6/js/data/ccn-adapter.js",
   "./module6/js/data/glossaire-cadres.js",
-  // Features
   "./module6/js/features/calendar.js",
   "./module6/js/features/charts.js",
   "./module6/js/features/coach.js",
@@ -80,25 +77,19 @@ const FILES_TO_CACHE = [
   "./module6/js/features/validite-heures-cd.js",
   "./module6/js/features/zenji-popup.js",
   "./module6/js/features/zenji.js",
-  // Views
   "./module6/js/views/view-cadre-dirigeant.js",
   "./module6/js/views/view-forfait-heures.js",
   "./module6/js/views/view-forfait-jours.js",
-  // CCN
   "./module6/ccn/coefficients-grilles.js",
   "./module6/ccn/conventions-cadres.js",
-  // Image Mizuki (préchargée pour M5)
+  // Images
   "./images/Mizuki.PNG",
   "./images/renard-annuel.png.jpg", "./images/renard-mensuel.png.jpg",
   "./images/renard-central.png.jpg",
-
-  // Décors saisonniers Fox (dans images/)
   "./images/fox-bg.PNG",
   "./images/fox-bg-2.jpg",
   "./images/fox-bg-3.jpg",
   "./images/fox-bg-4.jpg",
-
-  // PNJ Fox (dans images/)
   "./images/foxplayer.PNG",
   "./images/foxplayer-2.PNG",
   "./images/foxplayer-3.PNG",
@@ -109,8 +100,6 @@ const FILES_TO_CACHE = [
   "./images/foxplayer-8.PNG",
   "./images/foxplayer-9.PNG",
   "./images/foxplayer-10.PNG",
-
-  // Images Fox (dans images/)
   "./images/foxpredit.jpg",
   // === Lumina — Grilles Salariales CCN 2026 ===
   "./GrillePaye/index.html",
@@ -119,16 +108,13 @@ const FILES_TO_CACHE = [
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────
 self.addEventListener("install", (event) => {
-  
   event.waitUntil(
     caches.open(CACHE_NAME).then(async (cache) => {
-      
       let ok = 0, fail = 0;
       for (const url of FILES_TO_CACHE) {
         try {
           const res = await fetch(url);
           if (res.ok) {
-            // Lire le body complet avant de mettre en cache (fix Cloudflare content-length:0)
             const body = await res.arrayBuffer();
             const headers = new Headers();
             res.headers.forEach((val, key) => {
@@ -136,9 +122,8 @@ self.addEventListener("install", (event) => {
                 headers.append(key, val);
               }
             });
-            // Forcer Content-Length avec la vraie taille du body décompressé
             headers.set('content-length', body.byteLength.toString());
-            headers.delete('content-encoding'); // supprimer gzip/br — body déjà décompressé
+            headers.delete('content-encoding');
             headers.delete('transfer-encoding');
             const cleanRes = new Response(body, { status: res.status, statusText: res.statusText, headers });
             await cache.put(url, cleanRes);
@@ -151,9 +136,6 @@ self.addEventListener("install", (event) => {
           console.error("  ❌ [CACHE FAIL]", url, "— erreur:", err.message);
         }
       }
-      
-      
-      // Lister le contenu du cache après installation
       const keys = await cache.keys();
     })
   );
@@ -162,7 +144,6 @@ self.addEventListener("install", (event) => {
 
 // ── ACTIVATE ──────────────────────────────────────────────────────────────────
 self.addEventListener("activate", (event) => {
-  
   event.waitUntil(
     caches.keys().then(async (keys) => {
       for (const key of keys) {
@@ -175,91 +156,77 @@ self.addEventListener("activate", (event) => {
   self.clients.claim();
 });
 
-// ── FETCH ─────────────────────────────────────────────────────────────────────
+// ── FETCH — CACHE FIRST (stale-while-revalidate) ──────────────────────────────
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
 
-  const url = event.request.url;
+  // Ne PAS intercepter les requêtes cross-origin (Google Fonts, CDN…)
+  // Sinon la réécriture des headers casse le CORS (erreur if-modified-since).
+  const reqUrl = new URL(event.request.url);
+  if (reqUrl.origin !== self.location.origin) return;
 
-  // === Stale-While-Revalidate + ETag pour TOUS les fichiers ===
-  // 1. Sert le cache immédiatement (zéro latence)
-  // 2. Revalide via ETag/304 en arrière-plan — re-télécharge SEULEMENT si modifié
-  // 3. Offline : cache intact
   event.respondWith(
-    caches.open(CACHE_NAME).then(async (cache) => {
-      const cached = await cache.match(event.request);
-
-      const revalidate = (async () => {
-        try {
-          // Requête conditionnelle avec ETag ou Last-Modified
-          const reqHeaders = new Headers(event.request.headers);
-          if (cached) {
-            const etag = cached.headers.get('etag');
-            const lastMod = cached.headers.get('last-modified');
-            if (etag) reqHeaders.set('if-none-match', etag);
-            else if (lastMod) reqHeaders.set('if-modified-since', lastMod);
-          }
-
-          const res = await fetch(new Request(event.request, { headers: reqHeaders }));
-
-          if (res.status === 304) {
-            // Pas de changement → cache valide, 0 octet téléchargé
-            return cached;
-          }
-
-          if (res.ok) {
-            // Contenu modifié → mettre en cache proprement
-            // Fix Cloudflare : reconstruire la réponse sans headers qui bloquent le cache
-            const body = await res.arrayBuffer();
-            const cleanHeaders = new Headers();
-            res.headers.forEach((val, key) => {
+    caches.match(event.request).then((cachedResponse) => {
+      // Cache disponible → retourner immédiatement + rafraîchir en arrière-plan
+      if (cachedResponse) {
+        fetch(event.request).then(async (networkResponse) => {
+          if (networkResponse && networkResponse.status === 200) {
+            const body = await networkResponse.arrayBuffer();
+            const headers = new Headers();
+            networkResponse.headers.forEach((val, key) => {
               if (!['cf-cache-status','cf-ray','age','x-cache','nel','report-to'].includes(key.toLowerCase())) {
-                cleanHeaders.append(key, val);
+                headers.append(key, val);
               }
             });
-            cleanHeaders.set('content-length', body.byteLength.toString());
-            cleanHeaders.delete('content-encoding');
-            cleanHeaders.delete('transfer-encoding');
-            const cleanRes = new Response(body, {
-              status: res.status,
-              statusText: res.statusText,
-              headers: cleanHeaders
+            headers.set('content-length', body.byteLength.toString());
+            headers.delete('content-encoding');
+            headers.delete('transfer-encoding');
+            const cleanResponse = new Response(body, {
+              status: networkResponse.status,
+              statusText: networkResponse.statusText,
+              headers
             });
-            await cache.put(event.request, cleanRes.clone());
-            return new Response(body, { status: res.status, statusText: res.statusText, headers: res.headers });
+            caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cleanResponse));
           }
-
-          return cached || res;
-        } catch {
-          // Offline ou erreur réseau → retourner le cache
-          return cached || caches.match(event.request).then(r => {
-            if (!r) {
-              const isNav = event.request.mode === "navigate" ||
-                event.request.headers.get("accept")?.includes("text/html");
-              if (isNav) return caches.match(OFFLINE_URL);
-            }
-            return r;
-          });
-        }
-      })();
-
-      // Cache dispo → servir immédiatement + revalider en arrière-plan
-      if (cached) {
-        revalidate.then(fresh => {
-          // Si contenu changé, le cache est déjà mis à jour — visible au prochain chargement
-        });
-        return cached;
+        }).catch(() => {});
+        return cachedResponse;
       }
 
-      // Pas de cache → attendre le réseau (premier chargement)
-      return revalidate;
+      // Pas en cache → réseau
+      return fetch(event.request).then(async (networkResponse) => {
+        if (networkResponse && networkResponse.status === 200) {
+          const body = await networkResponse.arrayBuffer();
+          const headers = new Headers();
+          networkResponse.headers.forEach((val, key) => {
+            if (!['cf-cache-status','cf-ray','age','x-cache','nel','report-to'].includes(key.toLowerCase())) {
+              headers.append(key, val);
+            }
+          });
+          headers.set('content-length', body.byteLength.toString());
+          headers.delete('content-encoding');
+          headers.delete('transfer-encoding');
+          const cleanResponse = new Response(body, {
+            status: networkResponse.status,
+            statusText: networkResponse.statusText,
+            headers
+          });
+          caches.open(CACHE_NAME).then((cache) => cache.put(event.request, cleanResponse));
+          return new Response(body, { status: networkResponse.status, statusText: networkResponse.statusText, headers: networkResponse.headers });
+        }
+        return networkResponse;
+      }).catch(() => {
+        // Offline + pas en cache → fallback HTML
+        const isNav = event.request.mode === "navigate" ||
+          event.request.headers.get("accept")?.includes("text/html");
+        if (isNav) return caches.match(OFFLINE_URL);
+        return new Response('', { status: 503 });
+      });
     })
   );
 });
 
 // ── SYNC ──────────────────────────────────────────────────────────────────────
-self.addEventListener("sync", (e) => {
-});
+self.addEventListener("sync", (e) => {});
 
 self.addEventListener("periodicsync", (e) => {
   if (e.tag === "update-cache") {
