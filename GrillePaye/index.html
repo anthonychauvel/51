@@ -4304,6 +4304,267 @@ function clearConfImport(){
 updateSmicPill();</script>
 
 
+
+<!-- ═══════════════════════════════════════════════════
+     BOUTON TUTORIEL FIXE + POPUP
+═══════════════════════════════════════════════════ -->
+<style>
+/* Bouton fixe tutoriel */
+#tuto-btn {
+  position: fixed;
+  bottom: 80px;
+  right: 16px;
+  z-index: 900;
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #1a3a6e, #0a1428);
+  border: 2px solid rgba(168,208,255,.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,.5);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 1.3rem;
+  transition: transform .15s, box-shadow .15s;
+  color: #a8d0ff;
+}
+#tuto-btn:active { transform: scale(.93); }
+
+/* Popup overlay */
+#tuto-modal {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 2100;
+  background: rgba(5,11,26,.9);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: 16px 12px max(24px, env(safe-area-inset-bottom)) 12px;
+}
+body.tuto-open { overflow: hidden; }
+
+/* Contenu popup */
+#tuto-inner {
+  background: linear-gradient(160deg, #0f1f3d, #1a3a6e);
+  border: 1px solid rgba(168,208,255,.2);
+  border-radius: 20px;
+  max-width: 480px;
+  margin: 0 auto;
+  padding: 20px 16px;
+  box-shadow: 0 24px 64px rgba(0,0,0,.7);
+}
+.tuto-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.tuto-title {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--shine, #a8d0ff);
+  letter-spacing: -.01em;
+}
+#tuto-close {
+  width: 36px; height: 36px;
+  border-radius: 50%;
+  background: rgba(168,208,255,.1);
+  border: 1px solid rgba(168,208,255,.2);
+  color: var(--shine, #a8d0ff);
+  font-size: 1.1rem;
+  cursor: pointer;
+  display: flex; align-items: center; justify-content: center;
+}
+
+/* Sections tutoriel */
+.tuto-section {
+  background: rgba(168,208,255,.04);
+  border: 1px solid rgba(168,208,255,.12);
+  border-radius: 14px;
+  padding: 14px;
+  margin-bottom: 10px;
+  cursor: pointer;
+  transition: background .15s;
+}
+.tuto-section:active { background: rgba(168,208,255,.1); }
+.tuto-section-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: .92rem;
+  font-weight: 700;
+  color: var(--or, #d4a850);
+}
+.tuto-section-head .ico { font-size: 1.1rem; margin-right: 8px; }
+.tuto-chevron { color: var(--metal, #5a8edb); font-size: .8rem; transition: transform .2s; }
+.tuto-section.open .tuto-chevron { transform: rotate(90deg); }
+.tuto-body {
+  display: none;
+  margin-top: 10px;
+  font-size: .85rem;
+  color: var(--pi, #8aabcf);
+  line-height: 1.65;
+}
+.tuto-section.open .tuto-body { display: block; }
+.tuto-body strong { color: var(--shine, #a8d0ff); }
+.tuto-body ul { padding-left: 16px; margin: 6px 0; }
+.tuto-body ul li { margin-bottom: 4px; }
+.tuto-tip {
+  background: rgba(212,168,80,.08);
+  border-left: 3px solid var(--or, #d4a850);
+  border-radius: 0 8px 8px 0;
+  padding: 8px 10px;
+  margin-top: 8px;
+  font-size: .8rem;
+  color: #d4c080;
+}
+</style>
+
+<!-- Bouton fixe -->
+<button id="tuto-btn" onclick="openTuto()" aria-label="Tutoriel Lumina">❓</button>
+
+<!-- Popup tutoriel -->
+<div id="tuto-modal">
+  <div id="tuto-inner">
+    <div class="tuto-header">
+      <div class="tuto-title">📖 Guide Lumina</div>
+      <button id="tuto-close" onclick="closeTuto()">✕</button>
+    </div>
+
+    <!-- Section 1 — Choisir sa CCN -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">🔍</span>Trouver ma Convention Collective</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        Votre convention collective (CCN) est l'accord de branche qui fixe vos <strong>minimums salariaux</strong>.<br><br>
+        <strong>Comment la trouver :</strong>
+        <ul>
+          <li>Tapez le <strong>nom de votre secteur</strong> (ex : "boulangerie", "transport")</li>
+          <li>Ou entrez directement votre <strong>numéro IDCC</strong> (visible sur votre fiche de paie)</li>
+          <li>Ou entrez le <strong>nom de votre entreprise</strong> — Lumina en déduit la branche</li>
+        </ul>
+        <div class="tuto-tip">💡 L'IDCC se trouve dans la rubrique "Conventions collectives" de votre bulletin de salaire.</div>
+      </div>
+    </div>
+
+    <!-- Section 2 — Lire la grille -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">📊</span>Lire la grille salariale</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        La grille affiche les <strong>minimums conventionnels bruts mensuels</strong> par niveau/coefficient.<br><br>
+        <strong>Les indicateurs :</strong>
+        <ul>
+          <li>🟢 <strong>Vérifiée</strong> — données issues d'un avenant officiel daté (Légifrance/BOCC)</li>
+          <li>🔵 <strong>Nationale (agri.)</strong> — grille agriculture par département</li>
+          <li>🟠 <strong>Estimée</strong> — montant calculé sur base SMIC en attente d'avenant</li>
+        </ul>
+        Trouvez votre niveau dans la liste et comparez avec votre salaire brut.
+        <div class="tuto-tip">💡 Si votre salaire est inférieur au minimum de votre niveau, l'employeur est en infraction (Art. L2254-1).</div>
+      </div>
+    </div>
+
+    <!-- Section 3 — Comparer son salaire -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">💶</span>Comparer mon salaire</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        Onglet <strong>Mon salaire</strong> → sélectionnez votre CCN, votre niveau et entrez votre salaire brut mensuel.<br><br>
+        Lumina calcule :
+        <ul>
+          <li><strong>Écart €</strong> — différence entre votre salaire et le minimum</li>
+          <li><strong>Risque juridique</strong> — rappel de salaire estimé (Art. L2254-1)</li>
+          <li><strong>Statut</strong> — conforme ✅ ou sous le minimum 🚨</li>
+        </ul>
+        <div class="tuto-tip">💡 Le SMIC est mis à jour automatiquement. Si votre minimum CCN est inférieur au SMIC, c'est le SMIC qui s'applique.</div>
+      </div>
+    </div>
+
+    <!-- Section 4 — Écart H/F -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">⚖️</span>Analyse des écarts H/F</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        Onglet <strong>Écart H/F</strong> — entrez les salaires de plusieurs collaborateurs (sexe, poste, salaire).<br><br>
+        Lumina calcule l'<strong>indice d'égalité salariale</strong> et détecte les écarts injustifiés entre hommes et femmes.<br><br>
+        <strong>Conforme à la Directive EU 2023/970</strong> — transposition obligatoire avant le 7 juin 2026.
+        <div class="tuto-tip">💡 Les données restent exclusivement dans votre navigateur. Rien n'est transmis.</div>
+      </div>
+    </div>
+
+    <!-- Section 5 — Directive EU -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">🇪🇺</span>Directive EU 2023/970</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        La directive européenne sur la <strong>transparence des rémunérations</strong> est applicable en France dès le <strong>7 juin 2026</strong>.<br><br>
+        <strong>Ce qu'elle impose :</strong>
+        <ul>
+          <li>Publier les fourchettes salariales dans les offres d'emploi</li>
+          <li>Communiquer les critères de rémunération aux salariés</li>
+          <li>Corriger les écarts H/F injustifiés sous 6 mois</li>
+        </ul>
+        L'onglet <strong>Directive EU</strong> vous guide sur vos obligations selon la taille de votre structure.
+      </div>
+    </div>
+
+    <!-- Section 6 — Admin -->
+    <div class="tuto-section" onclick="toggleTuto(this)">
+      <div class="tuto-section-head">
+        <span><span class="ico">⚙️</span>Administration</span>
+        <span class="tuto-chevron">▶</span>
+      </div>
+      <div class="tuto-body">
+        Réservé aux gestionnaires RH — onglet <strong>Admin</strong> (Mode avancé uniquement).<br><br>
+        <strong>Fonctions :</strong>
+        <ul>
+          <li><strong>SMIC de référence</strong> — mettre à jour le SMIC manuellement</li>
+          <li><strong>Synchronisation CCN</strong> — charger un fichier ccn-data.json depuis une URL externe pour des mises à jour sans réinstallation</li>
+          <li><strong>Grilles salariales</strong> — éditer les niveaux de votre CCN manuellement</li>
+          <li><strong>Import CSV</strong> — importer la liste de vos salariés pour l'analyse de conformité</li>
+        </ul>
+        <div class="tuto-tip">💡 Toutes les modifications sont sauvegardées localement dans votre navigateur.</div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<script>
+function openTuto(){
+  document.getElementById('tuto-modal').style.display='block';
+  document.body.classList.add('tuto-open');
+}
+function closeTuto(){
+  document.getElementById('tuto-modal').style.display='none';
+  document.body.classList.remove('tuto-open');
+}
+function toggleTuto(el){
+  // Fermer les autres
+  document.querySelectorAll('.tuto-section.open').forEach(s=>{
+    if(s!==el) s.classList.remove('open');
+  });
+  el.classList.toggle('open');
+}
+// Fermer en cliquant sur l'overlay
+document.getElementById('tuto-modal').addEventListener('click',function(e){
+  if(e.target===this) closeTuto();
+});
+</script>
+
 </body>
 <!--
 ╔══════════════════════════════════════════════════════════════════╗
