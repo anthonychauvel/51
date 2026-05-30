@@ -1,9 +1,9 @@
 /**
  * Service Worker — Simulateur Heures Sup & RPG Fox
- * Version : 7.9.4 — Cloudflare Pages (audit articles juridiques 5 modules)
+ * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v7.9.4";
+const CACHE_NAME = "heuressup-cache-v8.3.0"; // +Lumina CCN 2026
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -18,8 +18,10 @@ const FILES_TO_CACHE = [
   "./fox/js/badges.js", "./fox/js/milestones.js", "./fox/js/rpg-system.js",
   "./fox/js/quests.js", "./fox/js/combat.js", "./fox/js/skills.js",
   "./fox/js/inventory.js", "./fox/js/module-loader.js",
-  "./fox/js/scenarios-fox-data.js", "./fox/js/scenarios-ai.js",
+  "./fox/js/scenarios-fox-data.js", "./fox/js/scenarios-fox.js",
+  "./fox/js/scenarios-ai.js",
   "./fox/js/legal-engine.js", "./fox/js/module-reader.js",
+  "./fox/js/module3.js", "./fox/js/data-bridge.js", "./fox/js/storage.js",
   "./fox/js/snapshot-system.js", "./fox/js/export-rtf.js",
   "./fox/js/ai-integration.js", "./fox/js/main-rpg.js",
   "./fox/js/vue-pro.js", "./fox/js/articles-loi.js",
@@ -38,6 +40,8 @@ const FILES_TO_CACHE = [
   "./module4/css/main.css", "./module4/css/dashboard.css",
   "./module4/css/components.css", "./module4/css/charts.css",
   "./module4/css/twin-body.css",
+  "./module4/assets/favicon.svg", "./module4/assets/icon-192.svg",
+  "./module4/assets/logo-dte.svg",
   // === Module 5 — Temps partiel (Mizuki) ===
   "./module5/index.html",
   "./module5/css/main.css",
@@ -50,6 +54,39 @@ const FILES_TO_CACHE = [
   "./module5/js/features/pdf-report.js",
   "./module5/js/features/saisie.js",
   "./module5/js/features/wellbeing.js",
+  // === Module 6 — Cadres (Zenji) ===
+  "./module6/index.html",
+  "./module6/css/main.css",
+  "./module6/images/Cadre.png",
+  "./module6/js/app.js",
+  // Core
+  "./module6/js/core/bio-engine.js",
+  "./module6/js/core/calc-engine.js",
+  "./module6/js/core/safe-boot.js",
+  "./module6/js/core/storage.js",
+  // Data
+  "./module6/js/data/ccn-adapter.js",
+  "./module6/js/data/glossaire-cadres.js",
+  // Features
+  "./module6/js/features/calendar.js",
+  "./module6/js/features/charts.js",
+  "./module6/js/features/coach.js",
+  "./module6/js/features/entretien-glossaire.js",
+  "./module6/js/features/import-export.js",
+  "./module6/js/features/nullite-checker.js",
+  "./module6/js/features/pdf-report.js",
+  "./module6/js/features/rupture-calculateur.js",
+  "./module6/js/features/simulateur-nullite.js",
+  "./module6/js/features/validite-heures-cd.js",
+  "./module6/js/features/zenji-popup.js",
+  "./module6/js/features/zenji.js",
+  // Views
+  "./module6/js/views/view-cadre-dirigeant.js",
+  "./module6/js/views/view-forfait-heures.js",
+  "./module6/js/views/view-forfait-jours.js",
+  // CCN
+  "./module6/ccn/coefficients-grilles.js",
+  "./module6/ccn/conventions-cadres.js",
   // Image Mizuki (préchargée pour M5)
   "./images/Mizuki.PNG",
   "./images/renard-annuel.png.jpg", "./images/renard-mensuel.png.jpg",
@@ -74,7 +111,10 @@ const FILES_TO_CACHE = [
   "./images/foxplayer-10.PNG",
 
   // Images Fox (dans images/)
-  "./images/foxpredit.jpg"
+  "./images/foxpredit.jpg",
+  // === Lumina — Grilles Salariales CCN 2026 ===
+  "./GrillePaye/index.html",
+  "./GrillePaye/ccn-data.json"
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────
