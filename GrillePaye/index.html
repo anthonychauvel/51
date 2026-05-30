@@ -1661,7 +1661,9 @@ html, body {
         <span>Changer de rôle</span>
       </button>
       <div class="smic-block">
-        <div class="smic-label">SMIC</div>
+        <div class="smic-label">SMIC
+      <button onclick="openTuto()" aria-label="Guide Lumina" style="background:rgba(168,208,255,.12);border:1px solid rgba(168,208,255,.25);border-radius:50%;width:34px;height:34px;display:flex;align-items:center;justify-content:center;font-size:1rem;cursor:pointer;color:var(--shine);flex-shrink:0;margin-left:6px;">❓</button>
+    </div>
         <div id="smic-tag" class="smic-value">1 867 €</div>
         <div class="smic-date">01/06/2026</div>
       </div>
@@ -4309,26 +4311,7 @@ updateSmicPill();</script>
      BOUTON TUTORIEL FIXE + POPUP
 ═══════════════════════════════════════════════════ -->
 <style>
-/* Bouton fixe tutoriel */
-#tuto-btn {
-  position: fixed;
-  bottom: 80px;
-  right: 16px;
-  z-index: 900;
-  width: 48px;
-  height: 48px;
-  border-radius: 50%;
-  background: linear-gradient(135deg, #1a3a6e, #0a1428);
-  border: 2px solid rgba(168,208,255,.4);
-  box-shadow: 0 4px 20px rgba(0,0,0,.5);
-  cursor: pointer;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  font-size: 1.3rem;
-  transition: transform .15s, box-shadow .15s;
-  color: #a8d0ff;
-}
+
 #tuto-btn:active { transform: scale(.93); }
 
 /* Popup overlay */
@@ -4342,7 +4325,7 @@ updateSmicPill();</script>
   -webkit-backdrop-filter: blur(14px);
   overflow-y: auto;
   -webkit-overflow-scrolling: touch;
-  padding: 16px 12px max(24px, env(safe-area-inset-bottom)) 12px;
+  padding: max(60px, calc(env(safe-area-inset-top) + 16px)) 12px max(24px, env(safe-area-inset-bottom)) 12px;
 }
 body.tuto-open { overflow: hidden; }
 
