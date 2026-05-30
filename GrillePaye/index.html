@@ -1610,7 +1610,7 @@ html, body {
 <header class="hdr">
   <div class="hdr-inner">
     <div class="hdr-left">
-      <button id="btn-home-hdr" onclick="goHome()" class="hdr-home" aria-label="Accueil">
+      <button id="btn-home-hdr" onclick="window.location.href='../menu.html'" class="hdr-home" aria-label="Retour au menu SimulHeures">
         <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12L12 4l9 8"/><path d="M5 10v10h14V10"/></svg>
       </button>
       <div class="brand-circle">L</div>
@@ -4270,6 +4270,13 @@ function clearConfImport(){
   }catch(e){}
 })();
 updateSmicPill();</script>
+
+<script>
+// Service Worker Lumina — isolation du SW parent SimulHeures
+if('serviceWorker' in navigator){
+  navigator.serviceWorker.register('./sw.js', {scope:'./'}).catch(()=>{});
+}
+</script>
 </body>
 <!--
 ╔══════════════════════════════════════════════════════════════════╗
