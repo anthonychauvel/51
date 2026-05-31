@@ -274,7 +274,7 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
   <a href="../menu.html" class="back">← Menu</a>
   <div class="brand">
     <div class="ti">Nuit, Astreinte &amp; Primes</div>
-    <div class="su">Ton suivi, jour après jour</div>
+    <div class="su">Ton suivi, jour après jour · v8.7</div>
   </div>
   <button class="hbtn" id="resetBtn" title="Réglages">⚙</button>
   <button class="hbtn" id="helpBtn" title="Aide">?</button>
@@ -945,6 +945,9 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
 
   /* ===== INIT ===== */
   $('#sNStart').innerHTML=timeOpts(); $('#sNEnd').innerHTML=timeOpts();
+  // toujours resynchroniser quand on revient sur la page (evite tout total fige)
+  document.addEventListener('visibilitychange',function(){ if(!document.hidden){ try{ recalc(); renderDays(); }catch(e){} } });
+  window.addEventListener('pageshow',function(){ try{ recalc(); }catch(e){} });
   refreshMonthUI();
   if(!get(LS.WELCOME,0)){ openWizard(); }
 })();
