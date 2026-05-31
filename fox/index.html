@@ -3637,15 +3637,23 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
           } catch(_) {}
           return true;
         });
-        const _extraDaysH = _workedWithoutHS.length * (s.baseJour || 7);
-        const _totalReal  = s.baseHebdo + _wkOT + _extraDaysH;
-        if (_extraDaysH > 0) {
-          const _ot = Math.round((_totalReal - s.baseHebdo) * 10) / 10;
-          const _totalFmt = _fmtH(_totalReal);
-          const _otFmt    = _fmtH(_ot);
+        // Lundi férié travaillé = jour normalement repos → +7h vs semaine sans ce jour
+        // Total réel = base(35h) + HS saisies(M1/M2) + jours extra sans saisie × baseJour
+        // Ex: base35 + 4hSup + 1jourFérié×7h = 46h ? NON
+        // Le lundi férié est déjà UN JOUR OUVRÉ compté dans les 5j de base
+        // Donc si tu travailles ce lundi normalement : pas de HS mais la semaine est bien 5j×7h+4hSup=39h
+        // _extraDaysH ne s'additionne PAS à baseHebdo — il REMPLACE un jour "non travaillé présumé"
+        // La semaine de base (35h) présuppose que le férié = repos → tu aurais eu 4j×7h=28h
+        // Avec le lundi travaillé : 5j×7h+4hSup = 39h
+        // Donc : _totalSemaine = baseHebdo + _wkOT (le lundi est déjà dans les 5j de base)
+        const _totalSemaine = s.baseHebdo + _wkOT;
+        if (_workedWithoutHS.length > 0) {
+          const _ot = Math.round(_wkOT * 10) / 10;
+          const _totalFmt = _fmtH(_totalSemaine);
+          const _otFmt    = _ot > 0 ? _fmtH(_ot) : '0h';
           msg = {
-            titre: `Semaine à ${_totalFmt} — ${_workedDays.length} jours travaillés`,
-            message: `Check-in M4 : ${_workedDays.length} jours de travail cette semaine dont des jours normalement non travaillés (férié ou jour de repos). Total estimé : ${_totalFmt} (base ${_fmtH(s.baseHebdo)} + ${_otFmt} sup).`,
+            titre: `Semaine à ${_totalFmt} — dont 1 jour férié travaillé`,
+            message: `Tu as travaillé le lundi férié (journée normale, sans HS déclarée) + ${_otFmt} sup en milieu de semaine. Total estimé : ${_totalFmt} (base ${_fmtH(s.baseHebdo)} + ${_otFmt} sup). Le jour férié travaillé ouvre droit à majoration ou repos compensateur.`,
             actions: [
               `${_ot > 0 ? _otFmt + ' d\'heures supplémentaires à déclarer' : 'Aucune HS mais journée supplémentaire travaillée'}`,
               'Vérifier la majoration jour férié sur ta fiche de paie',
