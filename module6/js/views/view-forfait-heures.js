@@ -14,7 +14,7 @@ const VFH = {
 
   init(container) {
     this._c = container;
-    this._year = M6_Storage.getActiveYear();
+    this._year = M6_Storage.getActiveYear(this._regime);
     this._load(); this.render();
   },
 
@@ -195,7 +195,7 @@ const VFH = {
   _bindBilan(analysis) {
     this._c.querySelector('#fh-saisir')?.addEventListener('click', () => { this._section='semaines'; this.render(); setTimeout(()=>this._c.querySelector('#fh-add')?.click(),200); });
     this._c.querySelector('#fh-bio-card')?.addEventListener('click', () => { this._section='bio'; this.render(); });
-    this._c.querySelector('#fh-newyr')?.addEventListener('click', () => { const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1); if(!y||isNaN(y))return; const yr=parseInt(y); M6_Storage.createYear(this._regime,yr); this._year=yr; M6_Storage.setActiveYear(yr); this._load(); this.render(); M6_toast(`✓ Exercice ${yr} créé`); });
+    this._c.querySelector('#fh-newyr')?.addEventListener('click', () => { const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1); if(!y||isNaN(y))return; const yr=parseInt(y); M6_Storage.createYear(this._regime,yr); this._year=yr; M6_Storage.setActiveYear(this._regime, yr); this._load(); this.render(); M6_toast(`✓ Exercice ${yr} créé`); });
   },
 
   // ── SEMAINES ───────────────────────────────────────────────,
@@ -604,13 +604,13 @@ const VFH = {
       this._editContract();
     };
     const yp = this._c.querySelector('#vfh-yr');
-    if (yp) yp.onchange = () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); };
+    if (yp) yp.onchange = () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._regime, this._year); this._load(); this.render(); };
     const ypHdr2 = document.querySelector('#vfh-yr-hdr');
-    if (ypHdr2) ypHdr2.onchange = () => { this._year=parseInt(ypHdr2.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); };
+    if (ypHdr2) ypHdr2.onchange = () => { this._year=parseInt(ypHdr2.value); M6_Storage.setActiveYear(this._regime, this._year); this._load(); this.render(); };
     const _goYearFH = (yr) => {
       const exist = M6_Storage.getAllYears(this._regime);
       if (!exist.includes(yr)) M6_Storage.createYear(this._regime, yr);
-      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+      this._year = yr; M6_Storage.setActiveYear(this._regime, yr); this._load(); this.render();
     };
     const ypPrev = document.querySelector('#vfh-yr-prev');
     if (ypPrev) ypPrev.onclick = () => _goYearFH(this._year-1);

@@ -16,7 +16,7 @@ const VFJ = {
   init(container) {
     if (!container) { console.error('[VFJ] container null'); return; }
     this._c = container;
-    this._year = M6_Storage.getActiveYear();
+    this._year = M6_Storage.getActiveYear(this._regime);
     this._section = 'bilan'; // reset section à chaque init
     try { this._load(); } catch(e) { console.error('[VFJ._load]', e); }
     try { this.render(); } catch(e) {
@@ -237,13 +237,13 @@ const VFJ = {
       };
     });
     const yp = this._c.querySelector('#vfj-yr') || document.querySelector('#vfj-yr-hdr');
-    if (yp) yp.addEventListener('change', () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
+    if (yp) yp.addEventListener('change', () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._regime, this._year); this._load(); this.render(); });
     const ypHdr = document.querySelector('#vfj-yr-hdr');
-    if (ypHdr && ypHdr !== yp) ypHdr.addEventListener('change', () => { this._year=parseInt(ypHdr.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
+    if (ypHdr && ypHdr !== yp) ypHdr.addEventListener('change', () => { this._year=parseInt(ypHdr.value); M6_Storage.setActiveYear(this._regime, this._year); this._load(); this.render(); });
     const _goYearFJ = (yr) => {
       const exist = M6_Storage.getAllYears(this._regime);
       if (!exist.includes(yr)) M6_Storage.createYear(this._regime, yr);
-      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+      this._year = yr; M6_Storage.setActiveYear(this._regime, yr); this._load(); this.render();
     };
     const fjPrev = document.querySelector('#vfj-yr-prev');
     const fjNext = document.querySelector('#vfj-yr-next');
@@ -571,7 +571,7 @@ const VFJ = {
     if (!y||isNaN(y)) return;
     const yr = parseInt(y);
     M6_Storage.createYear(this._regime, yr);
-    this._year = yr; M6_Storage.setActiveYear(yr);
+    this._year = yr; M6_Storage.setActiveYear(this._regime, yr);
     this._load(); this.render(); M6_toast(`✓ Exercice ${yr} créé`);
   },
 

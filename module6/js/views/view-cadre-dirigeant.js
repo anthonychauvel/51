@@ -18,7 +18,7 @@ const VCD = {
 
   init(container) {
     this._c = container;
-    this._year = M6_Storage.getActiveYear();
+    this._year = M6_Storage.getActiveYear(REGIME);
     this._load(); this.render();
   },
 
@@ -86,7 +86,7 @@ const VCD = {
     const bio   = M6_BioEngine.analyzeForfaitJours(
       { plafond:218, joursCPContrat:this._contract.joursCPContrat||25,
         entretienDate:this._contract.entretienDate },
-      this._data, this._year
+      this._data, this._year, REGIME
     );
     if (bio?.hasData && window.M6_PhaseAlert) M6_PhaseAlert.showIfNeeded(REGIME, this._year, bio.phase?.code, bio.fatigue);
 
@@ -241,11 +241,11 @@ const VCD = {
   _bindNav() {
     this._c.querySelectorAll('[data-sec]').forEach(b => { b.onclick = () => { this._section = b.dataset.sec; this.render(); }; });
     const yp=this._c.querySelector('#cd-yr');
-    if(yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
+    if(yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(REGIME, this._year);this._load();this.render();});
     const _goYear = (yr) => {
       const exist = M6_Storage.getAllYears(REGIME);
       if (!exist.includes(yr)) M6_Storage.createYear(REGIME, yr);
-      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+      this._year = yr; M6_Storage.setActiveYear(REGIME, yr); this._load(); this.render();
     };
     this._c.querySelector('#cd-yr-prev')?.addEventListener('click',()=>_goYear(this._year-1));
     this._c.querySelector('#cd-yr-next')?.addEventListener('click',()=>_goYear(this._year+1));
@@ -355,7 +355,7 @@ const VCD = {
     });
     this._c.querySelector('#cd-saisir')?.addEventListener('click',()=>{this._section='calendrier';this.render();});
     this._c.querySelector('#cd-bio-card')?.addEventListener('click',()=>{this._section='sante';this.render();});
-    this._c.querySelector('#cd-newyr')?.addEventListener('click',()=>{const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1);if(!y||isNaN(y))return;const yr=parseInt(y);M6_Storage.createYear(REGIME,yr);this._year=yr;M6_Storage.setActiveYear(yr);this._load();this.render();M6_toast(`Exercice ${yr} créé`);});
+    this._c.querySelector('#cd-newyr')?.addEventListener('click',()=>{const y=prompt(`Exercice (ex: ${this._year+1})`,this._year+1);if(!y||isNaN(y))return;const yr=parseInt(y);M6_Storage.createYear(REGIME,yr);this._year=yr;M6_Storage.setActiveYear(REGIME, yr);this._load();this.render();M6_toast(`Exercice ${yr} créé`);});
     this._c.querySelector('#cd-reset')?.addEventListener('click',()=>{
       // Ouvre le wizard pré-rempli — l'utilisateur modifie ce qu'il veut et enregistre, ou annule.
       this._c.innerHTML=this._tplSetup();
@@ -813,6 +813,8 @@ const VCD = {
           <input type="number" id="s-rtt" value="${c.rttManuel||''}" min="0" max="40" step="0.5" placeholder="auto / non concerné" style="font-size:16px">
           <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Beaucoup de cadres dirigeants n'ont pas de RTT. Saisissez le nombre uniquement si votre contrat ou accord en prévoit.</div>
         </div>
+        <div class="m6-field"><label>Début de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 1er janvier)</small></label><input type="date" id="s-ex-debut" value="${c.dateDebutExercice||''}" placeholder="${this._year}-01-01" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fin de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 31 décembre)</small></label><input type="date" id="s-ex-fin" value="${c.dateFinExercice||''}" placeholder="${this._year}-12-31" style="font-size:16px"></div>
         <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata uniquement si renseignée)</small></label><input type="date" id="s-debut" value="${c.dateArrivee||''}" style="font-size:16px"></div>
         <div class="m6-field"><label>Nom du manager / Président du CA</label><input type="text" id="s-mgr" value="${(c.nomManager||'').replace(/"/g,'&quot;')}" placeholder="Pour les PDF" style="font-size:16px"></div>
         <button class="m6-btn m6-btn-gold" id="s-save">${isEdit?'💾 Enregistrer les modifications':'Commencer le suivi →'}</button>
@@ -858,14 +860,16 @@ const VCD = {
         : parseFloat(_rttInput);
       const c = {
         ...existing,
-        nom:           this._c.querySelector('#s-nom')?.value.trim() || existing.nom || '',
-        fonction:      this._c.querySelector('#s-fnc')?.value.trim() || existing.fonction || '',
-        entreprise:    this._c.querySelector('#s-ent')?.value.trim() || existing.entreprise || '',
-        ccnLabel:      this._c.querySelector('#s-ccn')?.value.trim() || existing.ccnLabel || '',
-        joursCPContrat:parseInt(this._c.querySelector('#s-cp')?.value)||25,
-        rttManuel:     _rttManuel,
-        dateArrivee:   this._c.querySelector('#s-debut')?.value || null,
-        nomManager:    this._c.querySelector('#s-mgr')?.value.trim() || existing.nomManager || '',
+        nom:                this._c.querySelector('#s-nom')?.value.trim() || existing.nom || '',
+        fonction:           this._c.querySelector('#s-fnc')?.value.trim() || existing.fonction || '',
+        entreprise:         this._c.querySelector('#s-ent')?.value.trim() || existing.entreprise || '',
+        ccnLabel:           this._c.querySelector('#s-ccn')?.value.trim() || existing.ccnLabel || '',
+        joursCPContrat:     parseInt(this._c.querySelector('#s-cp')?.value)||25,
+        rttManuel:          _rttManuel,
+        dateDebutExercice:  this._c.querySelector('#s-ex-debut')?.value || null,
+        dateFinExercice:    this._c.querySelector('#s-ex-fin')?.value || null,
+        dateArrivee:        this._c.querySelector('#s-debut')?.value || null,
+        nomManager:         this._c.querySelector('#s-mgr')?.value.trim() || existing.nomManager || '',
       };
       M6_Storage.setContract(REGIME, c);
       M6_Storage.createYear(REGIME, this._year);
