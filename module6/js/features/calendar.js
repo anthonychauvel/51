@@ -503,17 +503,23 @@ const M6_Calendar = {
     this._semaineRef = today.toISOString().slice(0,10);
     const lundi = new Date(today);
     lundi.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
-    const jours = [];
-    for (let i=0;i<5;i++) {
+
+    // Tous les 7 jours de la semaine (Lundi → Dimanche)
+    const tousjours = [];
+    for (let i=0;i<7;i++) {
       const d = new Date(lundi); d.setDate(lundi.getDate()+i);
       const dk = d.toISOString().slice(0,10);
-      if (!this._feries.has(dk)) jours.push(dk);
+      const isWE = (i>=5); // Samedi=5, Dimanche=6
+      const isFerie = this._feries.has(dk);
+      tousjours.push({ dk, isWE, isFerie, label: d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'}) });
     }
+    // Par défaut : jours cochés = lundi→vendredi non fériés
+    // L'utilisateur peut modifier individuellement
     const lundiStr = lundi.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
-    const finSem = new Date(lundi); finSem.setDate(lundi.getDate()+4);
-    const finStr = finSem.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
-    const sheet  = this._container.querySelector('#cal-sheet');
-    const overlay = this._overlay;
+    const dimanche = new Date(lundi); dimanche.setDate(lundi.getDate()+6);
+    const finStr   = dimanche.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
+    const sheet    = this._container.querySelector('#cal-sheet');
+    const overlay  = this._overlay;
 
     sheet.innerHTML = `
     <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin-bottom:12px">Valider une semaine</div>
@@ -531,11 +537,27 @@ const M6_Calendar = {
       <input type="date" id="sem-date-nav" value="${this._semaineRef}" style="font-size:16px">
     </div>
 
-    <div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
-      <span>i</span><div>${jours.length} jours ouvrés détectés. Vous pourrez modifier les exceptions jour par jour ensuite.</div>
+    <!-- Sélection des jours — tous les 7, cochables/décochables -->
+    <div style="font-size:0.7rem;text-transform:uppercase;letter-spacing:0.07em;color:var(--pierre);margin-bottom:8px">
+      Jours à valider <small style="font-size:0.6rem;text-transform:none;font-weight:400">(décochez les jours non travaillés)</small>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:14px" id="sem-jours-grid">
+      ${tousjours.map(({dk,isWE,isFerie,label})=>{
+        const defChecked = !isWE && !isFerie; // cochés par défaut : jours ouvrés
+        const bg = isWE ? 'rgba(90,80,70,0.08)' : isFerie ? 'rgba(196,133,58,0.08)' : 'rgba(45,107,79,0.08)';
+        const bdr = isWE ? '#B5AFA6' : isFerie ? '#C4853A' : '#2D6A4F';
+        return `<label style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;
+                              background:${bg};border:2px solid ${defChecked?bdr:'var(--ivoire-3)'};
+                              border-radius:8px;padding:6px 2px;font-size:0.62rem;text-align:center;
+                              color:${defChecked?'var(--charbon)':'var(--pierre)'};transition:all 0.15s"
+                      data-dk="${dk}">
+          <input type="checkbox" name="sem-jour" value="${dk}" ${defChecked?'checked':''} style="width:16px;height:16px;accent-color:#2D6A4F;margin:0">
+          <span>${label}${isFerie?' 🎉':''}${isWE&&!isFerie?' 🏖':''}</span>
+        </label>`;
+      }).join('')}
     </div>
 
-    <div class="m6-field"><label>Type par défaut</label>
+    <div class="m6-field"><label>Type pour les jours cochés</label>
       <select id="sem-type" style="font-size:14px">
         ${Object.entries(TYPE_CONFIG).map(([t,c])=>`<option value="${t}">${c.label}</option>`).join('')}
       </select></div>
@@ -555,19 +577,14 @@ const M6_Calendar = {
       <span>⚠️</span><div>Sélectionnez le niveau de charge.</div>
     </div>
 
-    <div style="margin-bottom:12px;font-size:0.75rem;color:var(--pierre)">
-      Jours : ${jours.map(dk=>new Date(dk+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})).join(' · ')}
-    </div>
-
     <!-- Modifier un jour spécifique -->
     <div style="margin-bottom:10px">
-      <div style="font-size:0.7rem;color:var(--pierre);margin-bottom:6px">Modifier un jour spécifique :</div>
+      <div style="font-size:0.7rem;color:var(--pierre);margin-bottom:6px">Modifier un jour individuellement :</div>
       <div style="display:flex;flex-wrap:wrap;gap:6px">
-        ${jours.map(dk=>`<button onclick="M6_Calendar._closePopup();setTimeout(()=>M6_Calendar._openPopup('${dk}'),200)"
+        ${tousjours.map(({dk,label})=>`<button onclick="M6_Calendar._closePopup();setTimeout(()=>M6_Calendar._openPopup('${dk}'),200)"
           style="font-size:0.7rem;background:var(--ivoire);border:1px solid var(--ivoire-3);border-radius:6px;padding:4px 10px;cursor:pointer">
-          ${new Date(dk+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})}
+          ${label}
         </button>`).join('')}
-      </div>
     </div>
 
     <button class="m6-btn m6-btn-primary" id="sem-save">Valider</button>
@@ -590,16 +607,18 @@ const M6_Calendar = {
 
     sheet.querySelector('#sem-save')?.addEventListener('click', () => {
       if (!selMood) { sheet.querySelector('#sem-mood-warn')?.style.setProperty('display','flex'); return; }
-      const type    = sheet.querySelector('#sem-type')?.value || 'travail';
-      // Anti-doublon : ne pas écraser les jours déjà saisis différemment
-      let écrasés = 0;
-      jours.forEach(dk => {
+      const type = sheet.querySelector('#sem-type')?.value || 'travail';
+      // Lire les jours cochés depuis la grille des 7 jours
+      const cochés = [...sheet.querySelectorAll('input[name="sem-jour"]:checked')].map(cb => cb.value);
+      if (!cochés.length) { M6_toast('Cochez au moins un jour'); return; }
+      let modifiés = 0;
+      cochés.forEach(dk => {
         const existing = this._data[dk];
-        if (existing && existing.type !== type) écrasés++;
+        if (existing && existing.type !== type) modifiés++;
         if (this._onSave) this._onSave(dk, { type }, { niveau: selMood });
       });
       this._closePopup();
-      M6_toast(`✓ ${jours.length} jours validés${écrasés?` (${écrasés} modifiés)`:''}`);
+      M6_toast(`✓ ${cochés.length} jour${cochés.length>1?'s':''} validé${cochés.length>1?'s':''}${modifiés?` (${modifiés} modifié${modifiés>1?'s':''})`:''}`);
     });
 
     sheet.querySelector('#sem-cancel')?.addEventListener('click', () => this._closePopup());
