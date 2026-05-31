@@ -258,13 +258,6 @@ document.addEventListener("DOMContentLoaded", function(){
       <label style="font-size:13px;margin-top:8px;margin-bottom:4px;display:block;">Date de cl&ocirc;ture annuelle</label>
       <input type="date" id="annualDateInput">
     </div>
-    <hr class="settings-divider">
-    <div class="settings-group">
-      <span class="settings-group-label">&#128197; Date d&apos;entr&eacute;e salarié (prorata contingent)</span>
-      <label style="font-size:12px;color:#9aa0a6;margin-bottom:4px;display:block;">Si vous &ecirc;tes arriv&eacute; en cours d&apos;ann&eacute;e, le contingent sera calcul&eacute; au prorata.<br>Laisser vide si entr&eacute;e au 1er janvier.</label>
-      <input type="date" id="entryDateM1Input">
-      <div id="entryDateM1Info" style="font-size:12px;color:#4FB3C2;margin-top:4px;display:none;"></div>
-    </div>
     <input type="number" step="0.5" id="baseHebdoInput" style="display:none;">
     <hr class="settings-divider">
     <div class="settings-group">
@@ -594,7 +587,6 @@ function loadExercise(suffix){
   STORAGE.annualDate="ANNUAL_DATE_"+suffix;
   STORAGE.specialDays="SPECIAL_DAYS_"+suffix;
   STORAGE.exerciseStart="EXERCISE_START_"+suffix;
-  STORAGE.entryDate="ENTRY_DATE_"+suffix;
   STORAGE.periodMeta="PERIOD_META_REPORT_"+suffix;
   data=JSON.parse(localStorage.getItem(STORAGE.data))||{};
   closures=JSON.parse(localStorage.getItem(STORAGE.closures))||[];
@@ -603,7 +595,6 @@ function loadExercise(suffix){
   annualRate=Number(localStorage.getItem("ANNUAL_RATE_"+suffix))||10;
   specialDays=JSON.parse(localStorage.getItem(STORAGE.specialDays))||{};
   exerciseStart=localStorage.getItem(STORAGE.exerciseStart)||"";
-  entryDateM1=localStorage.getItem(STORAGE.entryDate)||"";
   periodMeta=JSON.parse(localStorage.getItem(STORAGE.periodMeta))||{};
   BASE_HEBDO=Number(localStorage.getItem("BASE_HEBDO_"+suffix))||35;
   AUTO_FERIE=localStorage.getItem("AUTO_FERIE_"+suffix)==="true";
@@ -642,7 +633,7 @@ function calcFromWorked(){
   document.getElementById('manualExtra').value=extra;
 }
 function getExistingYears(){const s=new Set();for(let i=0;i<localStorage.length;i++){const k=localStorage.key(i);if(k.startsWith("DATA_REPORT_"))s.add(k.replace("DATA_REPORT_",""));}return Array.from(s).sort();}
-let STORAGE={data:"DATA_REPORT_"+currentSuffix,closures:"CLOSURES_REPORT_"+currentSuffix,reports:"REPORTS_REPORT_"+currentSuffix,annualDate:"ANNUAL_DATE_"+currentSuffix,specialDays:"SPECIAL_DAYS_"+currentSuffix,exerciseStart:"EXERCISE_START_"+currentSuffix,entryDate:"ENTRY_DATE_"+currentSuffix,periodMeta:"PERIOD_META_REPORT_"+currentSuffix};
+let STORAGE={data:"DATA_REPORT_"+currentSuffix,closures:"CLOSURES_REPORT_"+currentSuffix,reports:"REPORTS_REPORT_"+currentSuffix,annualDate:"ANNUAL_DATE_"+currentSuffix,specialDays:"SPECIAL_DAYS_"+currentSuffix,exerciseStart:"EXERCISE_START_"+currentSuffix,periodMeta:"PERIOD_META_REPORT_"+currentSuffix};
 let data=JSON.parse(localStorage.getItem(STORAGE.data))||{};
 let closures=JSON.parse(localStorage.getItem(STORAGE.closures))||[];
 let reports=JSON.parse(localStorage.getItem(STORAGE.reports))||{};
@@ -650,7 +641,6 @@ let annualDate=localStorage.getItem(STORAGE.annualDate)||"";
 let annualRate=Number(localStorage.getItem("ANNUAL_RATE_"+currentSuffix))||10;
 let specialDays=JSON.parse(localStorage.getItem(STORAGE.specialDays))||{};
 let exerciseStart=localStorage.getItem(STORAGE.exerciseStart)||"";
-let entryDateM1=localStorage.getItem('ENTRY_DATE_'+currentSuffix)||"";
 let periodMeta=JSON.parse(localStorage.getItem(STORAGE.periodMeta))||{};
 let BASE_HEBDO=Number(localStorage.getItem("BASE_HEBDO_"+currentSuffix))||35;
 let AUTO_FERIE=localStorage.getItem("AUTO_FERIE_"+currentSuffix)==="true";
@@ -1098,42 +1088,9 @@ async function importFeries(){const by=Number(currentSuffix),years=[by-1,by,by+1
    Droit français Art. L3121-30 : le contingent est constitué par les HS effectivement
    réalisées, indépendamment de leur mode de compensation (paiement ou récupération).
    La récupération ne réduit PAS le contingent. */
-/* Prorata contingent — Art. D3121-24 : si le salarié arrive en cours d'année civile,
-   le contingent est proratisé au nombre de jours restants / jours de l'année. */
-function _getContingentEffectif(fullLimit, entryDateStr, year){
-  if(!entryDateStr) return fullLimit;
-  const eDate=new Date(entryDateStr); if(isNaN(eDate.getTime())) return fullLimit;
-  if(eDate.getFullYear()!==parseInt(year)) return fullLimit;
-  const yearStart=new Date(parseInt(year),0,1);
-  const yearEnd=new Date(parseInt(year),11,31);
-  const yearDays=(yearEnd-yearStart)/86400000+1;
-  const remDays=(yearEnd-eDate)/86400000+1;
-  const factor=remDays/yearDays;
-  if(factor>=0.98) return fullLimit; // ~1er janvier → pas de prorata
-  return Math.max(1,Math.round(fullLimit*factor));
-}
-
-// Auto-détection rétroactive M1 : premier mois avec des heures saisies
-function _autoDetectM1EntryDate(year){
-  const d=data||{};
-  const dates=Object.keys(d).filter(k=>/^\d{4}-\d{2}-\d{2}$/.test(k)&&k.startsWith(String(year))&&
-    typeof d[k]==='object'&&((d[k].extra||0)+(d[k].recup||0))>0).sort();
-  if(dates.length>0) return dates[0].substring(0,7)+'-01';
-  return null;
-}
 function updateContingent(){
   const rules=getCCNRules();
-  const _curYear=parseInt(currentSuffix)||new Date().getFullYear();
-  // Priorité : champ entryDateM1 explicite > auto-détect rétroactif
-  // NB: exerciseStart = date comptable (clôture), ne jamais utiliser pour le prorata salarié
-  const _explicit=entryDateM1&&new Date(entryDateM1).getFullYear()===_curYear?entryDateM1:null;
-  const _auto=!_explicit?_autoDetectM1EntryDate(_curYear):null;
-  const _entryForProrata=_explicit||_auto||null;
-  const LIMIT=_entryForProrata
-    ? _getContingentEffectif(rules.contingent, _entryForProrata, _curYear)
-    : rules.contingent;
-  const _isProrata=LIMIT!==rules.contingent;
-  const _isAutoDetect=!_explicit&&_isProrata;
+  const LIMIT=rules.contingent;
   // Reconstruire via la même logique semaine que calculate()
   // sur l'ensemble de l'exercice (toutes les périodes)
   const weeks={},absences={};
@@ -1172,9 +1129,9 @@ function updateContingent(){
   if(!fill||!txt)return;
   fill.style.width=pct+"%";
   fill.style.background=pct<70?"#2ecc71":pct<90?"#f39c12":"#c0392b";
-  txt.textContent=fmtH(total)+" / "+LIMIT+"h"+(_isProrata?(_isAutoDetect?" (prorata auto)":" (prorata)"):"");
-  if(pct>=100&&!sessionStorage.getItem("cont_full")){sessionStorage.setItem("cont_full","1");toast("⚠️ Contingent"+(_isProrata?" proratisé":"")+" de "+LIMIT+"h atteint !","warn",5000);}
-  else if(pct>=90&&!sessionStorage.getItem("cont_warn")){sessionStorage.setItem("cont_warn","1");toast("⚠️ Contingent"+(_isProrata?" (prorata "+LIMIT+"h)":"")+` : ${Math.round(pct)}% atteint`,"warn",4000);}
+  txt.textContent=fmtH(total)+" / "+LIMIT+"h";
+  if(pct>=100&&!sessionStorage.getItem("cont_full")){sessionStorage.setItem("cont_full","1");toast("⚠️ Contingent annuel de "+LIMIT+"h atteint !","warn",5000);}
+  else if(pct>=90&&!sessionStorage.getItem("cont_warn")){sessionStorage.setItem("cont_warn","1");toast("⚠️ Contingent : "+Math.round(pct)+"% atteint","warn",4000);}
   // RCO — Art. L3121-33 : 50% au-delà du contingent (≤20 sal.) ou 100% (>20 sal.)
   const rcoWrap=document.getElementById("rcoWrap");
   const rcoText=document.getElementById("rcoText");
@@ -2025,7 +1982,7 @@ function protectFunctions(){
   </div>
 </div>
 <script>
-function openSettingsModal(){document.getElementById("exerciseStartInput").value=exerciseStart||"";document.getElementById("annualDateInput").value=annualDate||"";const _eim1=document.getElementById("entryDateM1Input");if(_eim1){_eim1.min=currentSuffix+"-01-01";_eim1.max=currentSuffix+"-12-31";_eim1.value=entryDateM1||"";const _info=document.getElementById("entryDateM1Info");if(_info&&entryDateM1){const _lim=_getContingentEffectif(getCCNRules().contingent,entryDateM1,parseInt(currentSuffix));_info.style.display="block";_info.textContent="→ Contingent proratisé : "+_lim+"h / "+getCCNRules().contingent+"h";}else if(_info){_info.style.display="none";}}_eim1&&(_eim1.onchange=()=>{const v=_eim1.value;if(v&&new Date(v).getFullYear()!==parseInt(currentSuffix)){toast("⚠️ La date doit être dans l'exercice "+currentSuffix,"warn");_eim1.value=entryDateM1||"";return;}entryDateM1=v;localStorage.setItem(STORAGE.entryDate,v);const _info=document.getElementById("entryDateM1Info");if(_info&&v){const _lim=_getContingentEffectif(getCCNRules().contingent,v,parseInt(currentSuffix));_info.style.display="block";_info.textContent="→ Contingent proratisé : "+_lim+"h / "+getCCNRules().contingent+"h";}else if(_info){_info.style.display="none";}updateContingent();});document.getElementById("baseHebdoInput").value=BASE_HEBDO;const aft=document.getElementById("autoFerieToggle");if(aft)aft.checked=AUTO_FERIE;document.getElementById("settingsModal").style.display="flex";lockBodyScroll();}
+function openSettingsModal(){document.getElementById("exerciseStartInput").value=exerciseStart||"";document.getElementById("annualDateInput").value=annualDate||"";document.getElementById("baseHebdoInput").value=BASE_HEBDO;const aft=document.getElementById("autoFerieToggle");if(aft)aft.checked=AUTO_FERIE;document.getElementById("settingsModal").style.display="flex";lockBodyScroll();}
 function closeSettingsModal(){document.getElementById("settingsModal").style.display="none";unlockBodyScroll();if(typeof update==="function")update();}
 document.getElementById("settingsModal").addEventListener("click",function(e){if(e.target===this)closeSettingsModal();});
 // Wizard obligatoire — pas de fermeture par click extérieur
