@@ -568,7 +568,7 @@ const M6_ModePreuve = {
 
     const lignes = [
       `================================================================`,
-      `     RAPPORT DE CONFORMITE FORFAIT JOURS -- M6 CADRES`,
+      `     RAPPORT DE CONFORMITE DU FORFAIT JOURS`,
       `================================================================`,
       ``,
       `Genere le : ${dateStr}`,

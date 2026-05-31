@@ -240,7 +240,7 @@ const M6_PDF = {
 
     // Pied de page
     doc.setFontSize(7); doc.setTextColor(180);
-    doc.text(`M6 Cadres - ${mNom} ${year} - Genere le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text(`Suivi — ${mNom} ${year} - Genere le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
     doc.text('Art. L3121-58 a L3121-65 Code du travail', W-M, 290, {align:'right'});
 
     _shareOrSave(doc, `Forfait_Jours_${mNom}_${year}.pdf`, 'PDF mensuel généré');
@@ -342,7 +342,7 @@ const M6_PDF = {
     doc.setFillColor(248,244,238); doc.rect(M,y,W,20,'F');
     doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(74,69,64);
     doc.text(_pdfSanitize('Certifie exact. Respect des temps de repos Art. L3131-1 et L3132-2.'), M+3, y+6);
-    doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleDateString('fr-FR') + ' - M6 Cadres'), M+3, y+12);
+    doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleDateString('fr-FR') + ''), M+3, y+12);
     doc.text(_pdfSanitize('Signature : __________________'), M+3, y+18);
     doc.setFontSize(7); doc.setTextColor(138,132,124);
     doc.text('Ce document ne remplace pas un avis juridique.', M, 292);
@@ -390,7 +390,7 @@ const M6_PDF = {
     // Ligne dorée
     doc.setDrawColor(196,163,90); doc.setLineWidth(0.5);
     doc.line(M,40,W-M,40);
-    txt('M6 CADRES',M,9,7.5,[196,163,90],'bold');
+    txt('SUIVI DU TEMPS DE TRAVAIL',M,9,7.5,[196,163,90],'bold');
     txt('BILAN ANNUEL — FORFAIT JOURS',M,17,14,[247,243,237],'bold');
     txt(`Exercice ${year}`,M,25,9,[196,163,90],'normal');
     txt(`${_pdfSanitize(contract.nomCadre||'Cadre')}  ·  ${_pdfSanitize(contract.ccnLabel||'Droit commun')}  ·  Plafond ${contract.plafond||218}j`,M,33,8,[189,181,168]);
@@ -539,7 +539,7 @@ const M6_PDF = {
 
     // Footer
     doc.setFontSize(6.5); doc.setTextColor(150);
-    doc.text(`M6 Cadres · Bilan ${year} · Généré le ${new Date().toLocaleString('fr-FR')} · Réf. ${hashStr}`, M, 290);
+    doc.text(`Bilan ${year} · Généré le ${new Date().toLocaleString('fr-FR')} · Réf. ${hashStr}`, M, 290);
     doc.text('Art. L3121-58 à L3121-65 Code du travail', W-M, 290, {align:'right'});
 
     const filename = `Forfait_Jours_Annuel_${year}_${(contract.nomCadre||'Cadre').replace(/\s/g,'_')}.pdf`;
@@ -558,7 +558,7 @@ const M6_PDF = {
 
     // Couverture
     rect(0,0,W,40,[26,23,20]);
-    txt('M6 CADRES - BILAN ANNUEL',M,12,10,[196,163,90],'bold');
+    txt('BILAN ANNUEL DU FORFAIT',M,12,10,[196,163,90],'bold');
     txt(`FORFAIT JOURS ${year}`,M,20,16,[247,243,237],'bold');
     txt(`${contract.nomCadre||'Cadre'} - ${contract.ccnLabel||'Droit commun'}`,M,28,9,[189,181,168]);
     txt(`Plafond : ${contract.plafond||218} jours`,M,34,8,[189,181,168]);
@@ -651,7 +651,7 @@ const M6_PDF = {
     doc.text('Note : Les indicateurs biologiques sont indicatifs et ne remplacent pas un avis medical professionnel.', M, y);
 
     doc.setFontSize(7); doc.setTextColor(180);
-    doc.text(`M6 Cadres - Bilan ${year} - Genere le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text(`Bilan ${year} - Genere le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
 
     doc.save(`Forfait_Jours_Annuel_${year}.pdf`);
     M6_toast?.('PDF annuel genere');
@@ -672,7 +672,7 @@ const M6_PDF = {
     const ln = (x1,y1,x2,y2) => { doc.setLineWidth(0.3); doc.line(x1,y1,x2,y2); };
 
     rect(0,0,W,22,[26,23,20]);
-    txt('M6 CADRES',M,8,8,[196,163,90],'bold');
+    txt('SUIVI DU TEMPS DE TRAVAIL',M,8,8,[196,163,90],'bold');
     txt('COMPTE-RENDU D\'ENTRETIEN ANNUEL - FORFAIT JOURS',M,14,10,[247,243,237],'bold');
     txt(`Art. L3121-65 Code du travail`,M,19,7,[189,181,168]);
     y = 28;
@@ -810,7 +810,7 @@ const M6_PDF = {
     doc.setFillColor(248,244,238); doc.rect(M,y,W,20,'F');
     doc.setFont('helvetica','italic'); doc.setFontSize(8); doc.setTextColor(74,69,64);
     doc.text(_pdfSanitize('Certification : Le soussigne certifie l exactitude des informations ci-dessus.'), M+3, y+6);
-    doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleDateString('fr-FR') + ' par M6 Cadres - Simulateur Heures Sup France'), M+3, y+11);
+    doc.text(_pdfSanitize('Genere le ' + new Date().toLocaleDateString('fr-FR') + ' par Suivi — Simulateur Heures Sup France'), M+3, y+11);
     doc.setTextColor(139,105,20);
     doc.text(_pdfSanitize('Signature : _________________________'), M+3, y+17);
     y+=28;
@@ -848,7 +848,7 @@ const M6_PDF = {
     // Couverture
     rect(0,0,W,40,[26,23,20]);
     doc.setDrawColor(196,163,90); doc.setLineWidth(0.4); doc.line(M,36,W-M,36);
-    txt('M6 CADRES — FORFAIT HEURES',M,9,7,[196,163,90],'bold');
+    txt('SUIVI DU FORFAIT HEURES',M,9,7,[196,163,90],'bold');
     txt(`RAPPORT MENSUEL — ${mNom.toUpperCase()} ${year}`,M,17,13,[247,243,237],'bold');
     txt(`${_pdfSanitize(contract.nomCadre||'Cadre')}  ·  ${_pdfSanitize(contract.ccnLabel||'Droit commun')}`,M,26,8,[189,181,168]);
     txt(`Réf. ${hashStr}`,W-M,9,6,[150,140,130],'normal','right');
@@ -970,7 +970,7 @@ const M6_PDF = {
     doc.text('Date :', M+PW/2+5, y+5); doc.line(M+PW/2+18,y+6,W-M-2,y+6);
 
     doc.setFontSize(7); doc.setTextColor(138,132,124);
-    doc.text(`M6 Cadres — Forfait Heures — ${mNom} ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text(`Suivi Forfait Heures — ${mNom} ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
     doc.text('Art. L3121-27 à L3121-46 Code du travail', W-M, 290, {align:'right'});
 
     _shareOrSave(doc, `Forfait_Heures_${mNom}_${year}.pdf`, `PDF mensuel FH ${mNom} ${year} généré`);
@@ -1000,7 +1000,7 @@ const M6_PDF = {
     // ── Couverture ─────────────────────────────────────────────
     rect(0,0,W,45,[26,23,20]);
     doc.setDrawColor(196,163,90); doc.setLineWidth(0.5); doc.line(M,40,W-M,40);
-    txt('M6 CADRES',M,9,7.5,[196,163,90],'bold');
+    txt('SUIVI DU TEMPS DE TRAVAIL',M,9,7.5,[196,163,90],'bold');
     txt('BILAN ANNUEL — FORFAIT HEURES',M,17,14,[247,243,237],'bold');
     txt(`Exercice ${year}`,M,25,9,[196,163,90],'normal');
     const a = analysis || {};
@@ -1129,7 +1129,7 @@ const M6_PDF = {
 
     // Pied de page
     doc.setFontSize(7); doc.setTextColor(138,132,124); doc.setFont('helvetica','normal');
-    doc.text(`M6 Cadres — Forfait Heures ${year} — Art. L3121-27 à L3121-46 — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text(`Suivi Forfait Heures ${year} — Art. L3121-27 à L3121-46 — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
 
     _shareOrSave(doc, `Forfait_Heures_Annuel_${year}.pdf`, `PDF annuel FH ${year} généré`);
   },
@@ -1156,7 +1156,7 @@ const M6_PDF = {
     // ── Entête ─────────────────────────────────────────────────
     rect(0,0,W,38,[26,23,20]);
     doc.setDrawColor(196,163,90); doc.setLineWidth(0.4); doc.line(M,34,W-M,34);
-    txt('M6 CADRES — CADRE DIRIGEANT',M,9,8,[196,163,90],'bold');
+    txt('SUIVI CADRE DIRIGEANT',M,9,8,[196,163,90],'bold');
     txt('FEUILLE DE ROUTE — PROJETS ET MISSIONS',M,17,13,[247,243,237],'bold');
     txt(`${_pdfSanitize(contract.nom||contract.nomCadre||'')} · ${_pdfSanitize(contract.fonction||'')} · ${year}`,M,25,8,[189,181,168]);
     txt(`Généré le ${new Date().toLocaleDateString('fr-FR')}`,W-M,9,6.5,[189,181,168],'normal','right');
@@ -1260,7 +1260,7 @@ const M6_PDF = {
     doc.line(M+PW/2,y+5,W-M-2,y+5); txt('Date',M+PW/2,y+9,6.5,[120,114,106]);
     y+=16;
     doc.setFontSize(7); doc.setTextColor(138,132,124);
-    doc.text(`M6 Cadres — Feuille de route ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
+    doc.text(`Feuille de route ${year} — Généré le ${new Date().toLocaleDateString('fr-FR')}`, M, 290);
 
     _shareOrSave(doc, `Projets_CD_${year}.pdf`, 'PDF feuille de route généré');
   },
@@ -1290,7 +1290,7 @@ const M6_PDF = {
     // ── Entête ───────────────────────────────────────────────────
     rect(0,0,W,38,[26,23,20]);
     doc.setDrawColor(196,163,90); doc.setLineWidth(0.5); doc.line(M,34,W-M,34);
-    txt('M6 CADRES — DOCUMENT DE PREUVE OPPOSABLE',M,9,8,[196,163,90],'bold');
+    txt('DOCUMENT DE CONFORMITE SOCIALE',M,9,8,[196,163,90],'bold');
     txt('RAPPORT DE CONFORMITÉ ' + (regime==='forfait_jours'?'FORFAIT JOURS':regime==='forfait_heures'?'FORFAIT HEURES':'CADRE DIRIGEANT'),M,17,13,[247,243,237],'bold');
     txt(`Exercice ${year}`,M,25,9,[189,181,168],'normal');
     txt(`Réf. #${hash}`,W-M,9,6.5,[196,163,90],'normal','right');
@@ -1423,7 +1423,7 @@ const M6_PDF = {
 
     // Pied de page
     doc.setFontSize(7); doc.setTextColor(138,132,124); doc.setFont('helvetica','normal');
-    doc.text(`Document de preuve M6 Cadres — Usage interne et prud'hommal — ${year}`, M, 290);
+    doc.text(`Document de suivi — Usage interne — ${year}`, M, 290);
     doc.text('#'+hash, W-M, 290, {align:'right'});
 
     _shareOrSave(doc, `Preuve_M6_${regime}_${year}_${hash}.pdf`, 'Document de preuve généré');

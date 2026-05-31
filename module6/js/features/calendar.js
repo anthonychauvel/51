@@ -487,9 +487,12 @@ const M6_Calendar = {
     this._container.querySelector('#cal-yr-overlay')?.classList.remove('open');
   },
 
-  // ── Validation rapide semaine ─────────────────────────────────
-  _openSemaineQuick() {
-    const today = new Date();
+  // ── Validation rapide semaine (n'importe quelle semaine) ──────
+  _openSemaineQuick(refDate) {
+    // refDate : date de référence (défaut = aujourd'hui). Permet de valider
+    // n'importe quelle semaine passée/future via les boutons ‹ ›.
+    const today = refDate ? new Date(refDate + 'T12:00:00') : new Date();
+    this._semaineRef = today.toISOString().slice(0,10);
     const lundi = new Date(today);
     lundi.setDate(today.getDate()-(today.getDay()===0?6:today.getDay()-1));
     const jours = [];
@@ -498,11 +501,28 @@ const M6_Calendar = {
       const dk = d.toISOString().slice(0,10);
       if (!this._feries.has(dk)) jours.push(dk);
     }
+    const lundiStr = lundi.toLocaleDateString('fr-FR',{day:'numeric',month:'long'});
+    const finSem = new Date(lundi); finSem.setDate(lundi.getDate()+4);
+    const finStr = finSem.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});
     const sheet  = this._container.querySelector('#cal-sheet');
     const overlay = this._overlay;
 
     sheet.innerHTML = `
-    <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin-bottom:12px">Valider la semaine</div>
+    <div style="font-family:var(--font-display);font-size:1.2rem;font-weight:600;margin-bottom:12px">Valider une semaine</div>
+
+    <!-- Navigation semaine -->
+    <div style="display:flex;align-items:center;gap:6px;margin-bottom:10px">
+      <button type="button" id="sem-prev" class="m6-btn m6-btn-ghost" style="padding:8px 12px;font-size:1rem;flex-shrink:0">‹</button>
+      <div style="flex:1;text-align:center;font-size:0.82rem;font-weight:600;color:var(--charbon)">
+        ${lundiStr} → ${finStr}
+      </div>
+      <button type="button" id="sem-next" class="m6-btn m6-btn-ghost" style="padding:8px 12px;font-size:1rem;flex-shrink:0">›</button>
+    </div>
+    <div class="m6-field" style="margin-bottom:12px">
+      <label style="font-size:0.7rem">Ou choisir une date dans la semaine voulue</label>
+      <input type="date" id="sem-date-nav" value="${this._semaineRef}" style="font-size:16px">
+    </div>
+
     <div class="m6-alert info" style="margin-bottom:14px;font-size:0.78rem">
       <span>i</span><div>${jours.length} jours ouvrés détectés. Vous pourrez modifier les exceptions jour par jour ensuite.</div>
     </div>
@@ -526,9 +546,6 @@ const M6_Calendar = {
     <div id="sem-mood-warn" style="display:none" class="m6-alert danger" style="margin-bottom:8px;font-size:0.78rem">
       <span>⚠️</span><div>Sélectionnez le niveau de charge.</div>
     </div>
-
-    <!-- Certification obligatoire -->
-    
 
     <div style="margin-bottom:12px;font-size:0.75rem;color:var(--pierre)">
       Jours : ${jours.map(dk=>new Date(dk+'T12:00:00').toLocaleDateString('fr-FR',{weekday:'short',day:'numeric'})).join(' · ')}
@@ -578,6 +595,20 @@ const M6_Calendar = {
     });
 
     sheet.querySelector('#sem-cancel')?.addEventListener('click', () => this._closePopup());
+
+    // Navigation semaine — réouvre le panneau sur une autre semaine
+    sheet.querySelector('#sem-prev')?.addEventListener('click', () => {
+      const d = new Date(this._semaineRef + 'T12:00:00'); d.setDate(d.getDate()-7);
+      this._openSemaineQuick(d.toISOString().slice(0,10));
+    });
+    sheet.querySelector('#sem-next')?.addEventListener('click', () => {
+      const d = new Date(this._semaineRef + 'T12:00:00'); d.setDate(d.getDate()+7);
+      this._openSemaineQuick(d.toISOString().slice(0,10));
+    });
+    sheet.querySelector('#sem-date-nav')?.addEventListener('change', e => {
+      if (e.target.value) this._openSemaineQuick(e.target.value);
+    });
+
     overlay?.addEventListener('click', e => { if(e.target===overlay) this._closePopup(); });
     requestAnimationFrame(() => overlay?.classList.add('open'));
   },
