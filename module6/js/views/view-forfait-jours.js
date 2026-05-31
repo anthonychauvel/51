@@ -584,8 +584,13 @@ const VFJ = {
       <div class="m6-card"><div class="m6-card-body">
         <div class="m6-field"><label>Plafond annuel (jours)</label><input type="number" id="s-p" value="${c.plafond||218}" min="100" max="366" style="font-size:16px"></div>
         <div class="m6-field"><label>Congés payés contractuels (ex: 25, 25.5, 27)</label><input type="number" id="s-cp" value="${c.joursCPContrat||25}" min="25" max="40" step="0.5" style="font-size:16px"></div>
-        <div class="m6-field"><label>Début de l'exercice</label><input type="date" id="s-debut" value="${c.dateDebutExercice||`${this._year}-01-01`}" style="font-size:16px"></div>
-        <div class="m6-field"><label>Fin de l'exercice</label><input type="date" id="s-fin" value="${c.dateFinExercice||`${this._year}-12-31`}" style="font-size:16px"></div>
+        <div class="m6-field">
+          <label>RTT par an <small style="color:var(--pierre);font-weight:400">— laissez vide pour calcul automatique</small></label>
+          <input type="number" id="s-rtt" value="${c.rttManuel!==undefined&&c.rttManuel!==null?c.rttManuel:''}" min="0" max="40" step="0.5" placeholder="auto" style="font-size:16px">
+          <div style="font-size:0.68rem;color:var(--pierre);margin-top:4px">Si votre accord prévoit un nombre fixe de RTT (ex: 12), saisissez-le. Sinon le calcul s'effectue automatiquement selon le plafond et les jours ouvrés.</div>
+        </div>
+        <div class="m6-field"><label>Début de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 1er janvier)</small></label><input type="date" id="s-debut" value="${c.dateDebutExercice||''}" placeholder="${this._year}-01-01" style="font-size:16px"></div>
+        <div class="m6-field"><label>Fin de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 31 décembre)</small></label><input type="date" id="s-fin" value="${c.dateFinExercice||''}" placeholder="${this._year}-12-31" style="font-size:16px"></div>
         <div class="m6-field" style="position:relative">
           <label>CCN applicable — tapez pour chercher</label>
           <input type="text" id="s-ccn" value="${(c.ccnLabel||'').replace(/"/g,'&quot;')}" placeholder="ex : Syntec, 787, Banque AFB…" style="font-size:16px" autocomplete="off">
@@ -661,18 +666,22 @@ const VFJ = {
       const $ = (id) => this._c.querySelector(id);
       const plafondManuel = parseInt($('#s-plafond-manuel')?.value) || null;
       const tauxRachatManuel = parseInt($('#s-taux-rachat-manuel')?.value) || null;
-      // Garder l'ancien contrat pour ne PAS effacer les champs non touchés (nomManager, emailManager…)
+      // RTT manuel : null si vide (calcul auto), sinon la valeur saisie
+      const _rttInput = $('#s-rtt')?.value;
+      const rttManuel = (_rttInput===undefined||_rttInput===''||isNaN(parseFloat(_rttInput)))
+        ? null : parseFloat(_rttInput);
       const existing = this._contract || {};
       const c = {
         ...existing,
         plafond: plafondManuel || parseInt($('#s-p')?.value) || 218,
-        plafondManuel,                    // sauvegardé pour pré-remplir au retour
+        plafondManuel,
         tauxRachatManuel,
         joursCPContrat: parseFloat($('#s-cp')?.value) || 25,
+        rttManuel,
         ccnLabel: $('#s-ccn')?.value.trim() || existing.ccnLabel || '',
         tauxJournalier: parseFloat($('#s-tj')?.value) || 0,
         nomCadre: $('#s-nom')?.value.trim() || existing.nomCadre || '',
-        dateArrivee: $('#s-arr')?.value || null,    // null si vide → pas de prorata
+        dateArrivee: $('#s-arr')?.value || null,
         tauxMajorationRachat: tauxRachatManuel || parseInt($('#s-maj')?.value) || 10,
         dateDebutExercice: $('#s-debut')?.value || null,
         dateFinExercice: $('#s-fin')?.value || null,
