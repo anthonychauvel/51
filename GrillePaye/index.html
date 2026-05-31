@@ -311,7 +311,7 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .ve-section{border:1px solid var(--orb);border-radius:var(--r16);padding:13px;margin-bottom:10px;background:var(--orl)}
 .ve-title{font-size:.72rem;font-weight:700;color:var(--or2);margin-bottom:8px;display:flex;align-items:center;gap:6px}
 
-.role-screen{position:fixed;inset:0;background:var(--ch);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:20px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.role-screen{position:fixed;inset:0;background:var(--ch);z-index:600;display:flex;align-items:flex-start;justify-content:center;padding:max(60px,calc(env(safe-area-inset-top) + 20px)) 16px max(24px,calc(env(safe-area-inset-bottom) + 16px));overflow-y:auto;-webkit-overflow-scrolling:touch}
 .role-wrap{max-width:520px;width:100%;text-align:center}
 .role-logo{font-family:var(--fd);font-size:2rem;color:#ede9e0;margin-bottom:6px}
 .role-logo strong{color:var(--or);font-style:italic}
