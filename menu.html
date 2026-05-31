@@ -2360,8 +2360,9 @@ document.addEventListener('DOMContentLoaded', function(){
 </div>
 
 <script>
+var ANNONCE_KEY = 'annonce_zenji_lumina_mimizuku_v2';
 (function(){
-  var KEY = 'annonce_zenji_lumina_mimizuku_v2';
+  var KEY = ANNONCE_KEY;
   var EXPIRY_DAYS = 30;
 
   try {
@@ -2386,7 +2387,7 @@ function fermerAnnonce() {
   var overlay = document.getElementById('annonce-overlay');
   if (overlay) overlay.style.display = 'none';
   document.body.style.overflow = '';
-  try { localStorage.setItem('annonce_zenji_lumina_v1', Date.now().toString()); } catch(e) {}
+  try { localStorage.setItem(ANNONCE_KEY, Date.now().toString()); } catch(e) {}
 }
 
 // Fermer en cliquant sur l'overlay
