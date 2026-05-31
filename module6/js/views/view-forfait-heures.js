@@ -254,7 +254,8 @@ const VFH = {
       let entry = this._data[wk]||{};
       // Mode saisie : 'global' (heures totales) ou 'jours' (par jour)
       let saisieMode = 'global';
-      const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
+      const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi','Samedi','Dimanche'];
+      const joursWE = [false,false,false,false,false,true,true]; // WE = Samedi + Dimanche
       const seuil = this._contract.seuilHebdo || 39;
       const hParJour = (seuil / 5).toFixed(2);
 
@@ -307,15 +308,16 @@ const VFH = {
               Saisissez les heures par jour — le total est calculé automatiquement.
             </div>
             ${jours.map((j,i) => {
-              const stored = entry.jours ? (entry.jours[i] ?? hParJour) : hParJour;
-              return `<div class="m6-field" style="margin-bottom:8px">
+              const isWE = joursWE[i];
+              const stored = entry.jours ? (entry.jours[i] ?? (isWE ? 0 : hParJour)) : (isWE ? 0 : hParJour);
+              return `<div class="m6-field" style="margin-bottom:8px;${isWE?'opacity:0.7':''}">
                 <label style="display:flex;justify-content:space-between">
-                  <span>${j}</span>
+                  <span>${j}${isWE?' <span style="font-size:0.65rem;color:var(--pierre)">(WE)</span>':''}</span>
                   <span id="fh-j${i}-val" style="color:var(--champagne-2)">${stored}h</span>
                 </label>
                 <input type="range" id="fh-j${i}" min="0" max="14" step="0.5" value="${stored}"
                   oninput="document.getElementById('fh-j${i}-val').textContent=this.value+'h';
-                           const t=[0,1,2,3,4].reduce((s,x)=>s+(parseFloat(document.getElementById('fh-j'+x)?.value)||0),0);
+                           const t=[0,1,2,3,4,5,6].reduce((s,x)=>s+(parseFloat(document.getElementById('fh-j'+x)?.value)||0),0);
                            document.getElementById('fh-total-jours').textContent=t.toFixed(1)+'h';">
               </div>`;
             }).join('')}
@@ -386,7 +388,7 @@ const VFH = {
           
           let heures, joursArr = null;
           if (saisieMode === 'jours') {
-            joursArr = [0,1,2,3,4].map(i => parseFloat(sh.querySelector('#fh-j'+i)?.value) || 0);
+            joursArr = [0,1,2,3,4,5,6].map(i => parseFloat(sh.querySelector('#fh-j'+i)?.value) || 0);
             heures = Math.round(joursArr.reduce((s,v)=>s+v,0) * 100) / 100;
           } else {
             heures = parseFloat(sh.querySelector('#fh-h')?.value);
