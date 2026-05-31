@@ -274,7 +274,7 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
   <a href="../menu.html" class="back">← Menu</a>
   <div class="brand">
     <div class="ti">Nuit, Astreinte &amp; Primes</div>
-    <div class="su">Ton suivi, jour après jour · v8.7</div>
+    <div class="su">Ton suivi, jour après jour · v8.8</div>
   </div>
   <button class="hbtn" id="resetBtn" title="Réglages">⚙</button>
   <button class="hbtn" id="helpBtn" title="Aide">?</button>
@@ -940,7 +940,17 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
       var disc='Document indicatif et personnel. Estimations en brut. Seul le bulletin de paie fait foi. Ne constitue pas un avis juridique ni comptable. Les heures supplementaires sont decomptees separement (module annuel / module mensuel).';
       doc.text(doc.splitTextToSize(disc,182),14,y);
       var dd=new Date(),stamp=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
-      doc.save('nuit-primes-'+curKey+'-'+stamp+'.pdf');toast('PDF généré 📄');
+      var uniq=String(dd.getHours()).padStart(2,'0')+String(dd.getMinutes()).padStart(2,'0')+String(dd.getSeconds()).padStart(2,'0');
+      var fname='nuit-primes-'+curKey+'-'+stamp+'-'+uniq+'.pdf';
+      // Telechargement via blob frais + object-URL (evite que Chrome Android reserve un ancien PDF)
+      try{
+        var blob=doc.output('blob');
+        var url=URL.createObjectURL(blob);
+        var a=document.createElement('a'); a.href=url; a.download=fname;
+        document.body.appendChild(a); a.click(); document.body.removeChild(a);
+        setTimeout(function(){ URL.revokeObjectURL(url); },2000);
+      }catch(e2){ doc.save(fname); }
+      toast('PDF généré 📄');
     }catch(e){alert('Erreur PDF : '+e.message);} });
 
   /* ===== INIT ===== */
