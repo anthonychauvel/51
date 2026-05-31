@@ -67,11 +67,14 @@ const VFJ = {
 
     // ── Header global : titre + year picker + boutons ──────────
     const yrs = M6_Storage.getAllYears(this._regime);
-    const yrPickerHtml = yrs.length > 1
-      ? `<select id="vfj-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none;cursor:pointer">
-           ${yrs.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}
-         </select>`
-      : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
+    const yrOpts = yrs.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('');
+    const yrPickerHtml = `<span style="display:inline-flex;align-items:center;gap:3px">
+      <button id="vfj-yr-prev" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.82rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">‹</button>
+      ${yrs.length>1
+        ? `<select id="vfj-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none;cursor:pointer">${yrOpts}</select>`
+        : `<span style="font-size:0.7rem;color:var(--champagne);min-width:32px;text-align:center;display:inline-block">${this._year}</span>`}
+      <button id="vfj-yr-next" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.82rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">›</button>
+    </span>`;
     const plafond = this._contract.plafond || 218;
     const restants = Math.max(0, plafond - analysis.joursEffectifs);
     M6_Header.set({
@@ -237,6 +240,15 @@ const VFJ = {
     if (yp) yp.addEventListener('change', () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
     const ypHdr = document.querySelector('#vfj-yr-hdr');
     if (ypHdr && ypHdr !== yp) ypHdr.addEventListener('change', () => { this._year=parseInt(ypHdr.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); });
+    const _goYearFJ = (yr) => {
+      const exist = M6_Storage.getAllYears(this._regime);
+      if (!exist.includes(yr)) M6_Storage.createYear(this._regime, yr);
+      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+    };
+    const fjPrev = document.querySelector('#vfj-yr-prev');
+    const fjNext = document.querySelector('#vfj-yr-next');
+    if (fjPrev) fjPrev.onclick = () => _goYearFJ(this._year-1);
+    if (fjNext) fjNext.onclick = () => _goYearFJ(this._year+1);
   },
 
   // ── BILAN ────────────────────────────────────────────────────
@@ -316,7 +328,7 @@ const VFJ = {
     <button class="m6-btn m6-btn-primary" id="vfj-saisir" style="margin-bottom:8px">＋ Saisir aujourd'hui</button>
     <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
       <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
-      <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
+      
     </div>
     <div style="font-size:0.7rem;color:var(--pierre);text-align:center;margin-top:6px">→ Onglet <strong>Exports</strong> pour PDF mensuel, période libre, validations et JSON</div>`;
   },
@@ -430,7 +442,7 @@ const VFJ = {
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="m6-btn m6-btn-ghost" id="pdf-m" style="flex:1;min-width:110px;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="pdf-a" style="flex:1;min-width:110px;font-size:0.78rem">📋 PDF Annuel</button>
-        <button class="m6-btn m6-btn-ghost" id="pdf-preuve" style="flex:1;min-width:110px;font-size:0.78rem">🔏 Preuve</button>
+        
       </div>
     </div></div>
 
@@ -456,8 +468,6 @@ const VFJ = {
       ${Object.entries(valid).length?`<div style="margin-top:10px">${Object.entries(valid).sort(([a],[b])=>a-b).map(([m,v])=>`<div class="m6-row"><span class="m6-row-label">${['Jan','Fév','Mar','Avr','Mai','Juin','Juil','Aoû','Sep','Oct','Nov','Déc'][m]}</span><span style="font-size:0.65rem;color:var(--pierre)">${new Date(v.ts).toLocaleString('fr-FR',{hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit'})} · #${v.hash}</span></div>`).join('')}</div>`:''}
     </div></div>
 
-    <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">Mode Preuve opposable</div><div class="m6-ornement-line"></div></div>
-    <div id="preuve-container"></div>
     <div class="m6-ornement"><div class="m6-ornement-line"></div><div class="m6-ornement-text">JSON — Exercices : ${yrs.join(', ')}</div><div class="m6-ornement-line"></div></div>
     <div class="m6-card" style="margin-bottom:14px"><div class="m6-card-body">
       <div style="display:flex;gap:8px;margin-bottom:8px">

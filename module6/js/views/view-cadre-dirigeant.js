@@ -209,8 +209,15 @@ const VCD = {
 
   _tplYrPicker() {
     const yrs = M6_Storage.getAllYears(REGIME);
-    if(yrs.length<=1) return `<span style="font-size:0.72rem;color:var(--pierre)">${this._year}</span>`;
-    return `<select id="cd-yr" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--ivoire);font-size:0.72rem;border-radius:6px;padding:3px 6px;-webkit-appearance:none">${M6_Storage.getAllYears(REGIME).map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`;
+    const opts = yrs.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('');
+    // Toujours afficher ‹ année › pour naviguer/créer N-1 et N+1 facilement
+    return `<span style="display:inline-flex;align-items:center;gap:3px">
+      <button id="cd-yr-prev" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--champagne);font-size:0.85rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">‹</button>
+      ${yrs.length>1
+        ? `<select id="cd-yr" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--ivoire);font-size:0.72rem;border-radius:6px;padding:3px 6px;-webkit-appearance:none">${opts}</select>`
+        : `<span style="font-size:0.72rem;color:var(--champagne);min-width:34px;text-align:center;display:inline-block">${this._year}</span>`}
+      <button id="cd-yr-next" style="background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.15);color:var(--champagne);font-size:0.85rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">›</button>
+    </span>`;
   },
 
   _tplNav() {
@@ -235,6 +242,13 @@ const VCD = {
     this._c.querySelectorAll('[data-sec]').forEach(b => { b.onclick = () => { this._section = b.dataset.sec; this.render(); }; });
     const yp=this._c.querySelector('#cd-yr');
     if(yp) yp.addEventListener('change',()=>{this._year=parseInt(yp.value);M6_Storage.setActiveYear(this._year);this._load();this.render();});
+    const _goYear = (yr) => {
+      const exist = M6_Storage.getAllYears(REGIME);
+      if (!exist.includes(yr)) M6_Storage.createYear(REGIME, yr);
+      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+    };
+    this._c.querySelector('#cd-yr-prev')?.addEventListener('click',()=>_goYear(this._year-1));
+    this._c.querySelector('#cd-yr-next')?.addEventListener('click',()=>_goYear(this._year+1));
   },
 
   // ── BILAN ──────────────────────────────────────────────────────

@@ -40,9 +40,14 @@ const VFH = {
     if (bio?.hasData && window.M6_PhaseAlert) M6_PhaseAlert.showIfNeeded(this._regime, this._year, bio.phase?.code, bio.fatigue);
 
     const yrs2 = M6_Storage.getAllYears(this._regime);
-    const yrPickerHtml2 = yrs2.length > 1
-      ? `<select id="vfh-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrs2.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('')}</select>`
-      : `<span style="font-size:0.7rem;color:var(--champagne)">${this._year}</span>`;
+    const yrOpts2 = yrs2.map(y=>`<option value="${y}" ${y==this._year?'selected':''}>${y}</option>`).join('');
+    const yrPickerHtml2 = `<span style="display:inline-flex;align-items:center;gap:3px">
+      <button id="vfh-yr-prev" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.82rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">‹</button>
+      ${yrs2.length>1
+        ? `<select id="vfh-yr-hdr" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.7rem;border-radius:6px;padding:2px 6px;-webkit-appearance:none">${yrOpts2}</select>`
+        : `<span style="font-size:0.7rem;color:var(--champagne);min-width:32px;text-align:center;display:inline-block">${this._year}</span>`}
+      <button id="vfh-yr-next" style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);color:var(--champagne);font-size:0.82rem;border-radius:6px;padding:1px 7px;cursor:pointer;line-height:1.2">›</button>
+    </span>`;
     window.M6_Header?.set({
       title: `Forfait Heures ${this._year}`,
       sub: `Seuil ${this._formatH(this._contract.seuilHebdo)} · Contingent ${this._contract.contingent||220}h · ${analysis.totalHS}h HS`,
@@ -245,8 +250,8 @@ const VFH = {
       const ov = this._c.querySelector('#fh-overlay');
       const sh = this._c.querySelector('#fh-sheet');
       if (!ov||!sh) return;
-      const wk = prefill || M6_ForfaitHeures.isoWeek(new Date());
-      const entry = this._data[wk]||{};
+      let wk = prefill || M6_ForfaitHeures.isoWeek(new Date());
+      let entry = this._data[wk]||{};
       // Mode saisie : 'global' (heures totales) ou 'jours' (par jour)
       let saisieMode = 'global';
       const jours = ['Lundi','Mardi','Mercredi','Jeudi','Vendredi'];
@@ -260,14 +265,18 @@ const VFH = {
 
           ${isDuplicate ? '<div class="m6-alert warning" style="margin-bottom:10px;font-size:0.78rem"><span>⚠️</span><div>Cette semaine est déjà saisie. Les données seront remplacées.</div></div>' : ''}
 
-          <!-- Sélecteur de semaine RÉTROACTIF — any week allowed -->
+          <!-- Sélecteur de semaine RÉTROACTIF — n'importe quelle semaine -->
           <div class="m6-field">
-            <label>Choisir n'importe quelle semaine (passée ou future)</label>
-            <input type="date" id="fh-date-nav" style="font-size:16px"
-              value="${(()=>{try{const yr=parseInt(wk);const wn=parseInt(wk.split('W')[1]);const d=new Date(yr,0,1+(wn-1)*7-(new Date(yr,0,1).getDay()||7)+1);return d.toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}})()}">
-            <div style="font-size:0.7rem;color:var(--pierre);margin-top:3px">
-              Semaine sélectionnée : <strong id="fh-wk-display">${wk}</strong>
-              <span style="font-size:0.65rem;color:var(--champagne-2);margin-left:4px">✅ saisie rétroactive autorisée</span>
+            <label>Semaine à saisir (passée, actuelle ou future)</label>
+            <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px">
+              <button type="button" id="fh-wk-prev" class="m6-btn m6-btn-ghost" style="padding:8px 12px;font-size:1rem;flex-shrink:0">‹</button>
+              <input type="date" id="fh-date-nav" style="font-size:16px;flex:1"
+                value="${(()=>{try{const yr=parseInt(wk);const wn=parseInt(wk.split('W')[1]);const d=new Date(yr,0,1+(wn-1)*7-(new Date(yr,0,1).getDay()||7)+1);return d.toISOString().slice(0,10);}catch(e){return new Date().toISOString().slice(0,10);}})()}">
+              <button type="button" id="fh-wk-next" class="m6-btn m6-btn-ghost" style="padding:8px 12px;font-size:1rem;flex-shrink:0">›</button>
+            </div>
+            <div style="font-size:0.7rem;color:var(--pierre)">
+              Semaine : <strong id="fh-wk-display">${wk}</strong>
+              <span id="fh-wk-status" style="font-size:0.65rem;margin-left:4px;color:var(--champagne-2)">${this._data[wk]?'⚠️ déjà saisie — sera mise à jour':'✅ nouvelle saisie'}</span>
             </div>
           </div>
 
@@ -331,12 +340,30 @@ const VFH = {
           <div style="height:8px"></div>
           <button class="m6-btn m6-btn-ghost" id="fh-cl" style="width:100%">Annuler</button>`;
 
-        // Bind navigation par date → week
+        // Navigation par date → recharge l'entrée de CETTE semaine et re-render
+        const navigateToWeek = (newWk) => {
+          wk = newWk;
+          entry = this._data[wk] || {};   // ← recharge les données de la semaine ciblée
+          renderSheet();                   // re-render complet avec les bonnes valeurs
+          bindRealtime();
+        };
         sh.querySelector('#fh-date-nav')?.addEventListener('change', e => {
           const d = new Date(e.target.value + 'T12:00:00');
-          const newWk = M6_ForfaitHeures.isoWeek(d);
-          wk = newWk;
-          sh.querySelector('#fh-wk-display').textContent = newWk;
+          navigateToWeek(M6_ForfaitHeures.isoWeek(d));
+        });
+        sh.querySelector('#fh-wk-prev')?.addEventListener('click', () => {
+          const cur = sh.querySelector('#fh-date-nav');
+          const d = new Date((cur?.value || new Date().toISOString().slice(0,10)) + 'T12:00:00');
+          d.setDate(d.getDate() - 7);
+          if (cur) cur.value = d.toISOString().slice(0,10);
+          navigateToWeek(M6_ForfaitHeures.isoWeek(d));
+        });
+        sh.querySelector('#fh-wk-next')?.addEventListener('click', () => {
+          const cur = sh.querySelector('#fh-date-nav');
+          const d = new Date((cur?.value || new Date().toISOString().slice(0,10)) + 'T12:00:00');
+          d.setDate(d.getDate() + 7);
+          if (cur) cur.value = d.toISOString().slice(0,10);
+          navigateToWeek(M6_ForfaitHeures.isoWeek(d));
         });
 
         // Bind mode toggle
@@ -443,7 +470,7 @@ const VFH = {
       <div style="display:flex;gap:8px;margin-bottom:8px;flex-wrap:wrap">
         <button class="m6-btn m6-btn-ghost" id="fh-pdf-m" style="flex:1;min-width:120px;font-size:0.78rem">📄 PDF Mensuel</button>
         <button class="m6-btn m6-btn-ghost" id="fh-pdf-a" style="flex:1;min-width:120px;font-size:0.78rem">📋 PDF Annuel</button>
-        <button class="m6-btn m6-btn-ghost" id="fh-pdf-preuve" style="flex:1;min-width:120px;font-size:0.78rem">🔏 Preuve</button>
+        
       </div>
       <div class="m6-field"><label>PDF Periode — date debut</label><input type="date" id="fh-per-d1" value="${this._year}-01-01" style="font-size:16px"></div>
       <div class="m6-field"><label>PDF Periode — date fin</label><input type="date" id="fh-per-d2" value="${new Date().toISOString().slice(0,10)}" style="font-size:16px"></div>
@@ -580,6 +607,15 @@ const VFH = {
     if (yp) yp.onchange = () => { this._year=parseInt(yp.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); };
     const ypHdr2 = document.querySelector('#vfh-yr-hdr');
     if (ypHdr2) ypHdr2.onchange = () => { this._year=parseInt(ypHdr2.value); M6_Storage.setActiveYear(this._year); this._load(); this.render(); };
+    const _goYearFH = (yr) => {
+      const exist = M6_Storage.getAllYears(this._regime);
+      if (!exist.includes(yr)) M6_Storage.createYear(this._regime, yr);
+      this._year = yr; M6_Storage.setActiveYear(yr); this._load(); this.render();
+    };
+    const ypPrev = document.querySelector('#vfh-yr-prev');
+    if (ypPrev) ypPrev.onclick = () => _goYearFH(this._year-1);
+    const ypNext = document.querySelector('#vfh-yr-next');
+    if (ypNext) ypNext.onclick = () => _goYearFH(this._year+1);
   },
 
   _formatH(h) {
