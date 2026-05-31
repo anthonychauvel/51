@@ -48,7 +48,10 @@ const TYPE_CONFIG = {
 
 const M6_Calendar = {
   _container:null, _regime:null, _year:null, _data:{}, _moods:{},
-  _feries:null, _onSave:null, _overlay:null, _currentMonth:null,
+  _feries:null, _onSave:null, _overlay:null,
+  _currentMonth:null,  // conservé pour compatibilité
+  _viewYear:null,      // année affichée (peut être year-1 pour exercice à cheval)
+  _viewMonth:null,     // mois affiché (0-11)
   _swipeStartX:0, _contract:null,
 
   init(container, regime, year, data, moods, onSave, contract) {
@@ -60,7 +63,10 @@ const M6_Calendar = {
     this._feries       = M6_Feries.getSet(year);
     this._onSave       = onSave;
     this._contract     = contract || {};
-    this._currentMonth = new Date().getMonth();
+    const now = new Date();
+    this._viewYear     = now.getFullYear();
+    this._viewMonth    = now.getMonth();
+    this._currentMonth = this._viewMonth; // compatibilité
     this._render();
     this._bindSwipe();
   },
@@ -121,7 +127,7 @@ const M6_Calendar = {
     <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px">
       <button id="cal-prev" style="background:none;border:1px solid var(--ivoire-3);border-radius:8px;padding:6px 14px;font-size:1.1rem;cursor:pointer;color:var(--charbon)">‹</button>
       <div style="font-family:var(--font-display);font-size:1.1rem;font-weight:600;color:var(--charbon)" id="cal-mlabel">
-        ${this._mName(this._currentMonth)} ${this._year}
+        ${this._mName(this._viewMonth)} ${this._viewYear}
       </div>
       <button id="cal-next" style="background:none;border:1px solid var(--ivoire-3);border-radius:8px;padding:6px 14px;font-size:1.1rem;cursor:pointer;color:var(--charbon)">›</button>
     </div>
@@ -138,7 +144,7 @@ const M6_Calendar = {
     </div>
 
     <!-- Calendrier courant -->
-    <div id="cal-cur">${this._buildMonth(this._currentMonth)}</div>
+    <div id="cal-cur">${this._buildMonth(this._viewMonth, this._viewYear)}</div>
 
     <!-- Stats mood -->
     <div id="cal-stats">${this._buildStats()}</div>
@@ -170,23 +176,23 @@ const M6_Calendar = {
     this._bindEvents();
   },
 
-  _buildMonth(mois) {
-    const mN  = this._mName(mois);
-    const premier = new Date(this._year, mois, 1);
+  _buildMonth(mois, displayYear) {
+    const yr   = (displayYear !== undefined && displayYear !== null) ? displayYear : this._year;
+    const premier = new Date(yr, mois, 1);
     let dow = premier.getDay(); dow = dow===0?6:dow-1;
-    const nbJ = new Date(this._year, mois+1, 0).getDate();
+    const nbJ = new Date(yr, mois+1, 0).getDate();
     const today = new Date().toISOString().slice(0,10);
     let cells = '';
     for (let i=0; i<dow; i++) cells += `<div></div>`;
 
     for (let j=1; j<=nbJ; j++) {
-      const dk  = `${this._year}-${String(mois+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
-      const d   = new Date(this._year, mois, j);
+      const dk  = `${yr}-${String(mois+1).padStart(2,'0')}-${String(j).padStart(2,'0')}`;
+      const d   = new Date(yr, mois, j);
       const dw  = d.getDay(), isWE = dw===0||dw===6;
       const isFerie = this._feries.has(dk);
       const entry   = this._data[dk];
       let type = entry?.type;
-      if (!type) { if(isFerie) type='ferie'; /* Week-end: ne pas cocher repos automatiquement — laisser vide */ }
+      if (!type) { if(isFerie) type='ferie'; }
       const isDep    = entry?.deplacement === true;
       const isToday  = dk === today;
       const mood     = this._moods[dk];
@@ -194,7 +200,6 @@ const M6_Calendar = {
       const moodDot  = mood ? `<div style="position:absolute;bottom:1px;right:1px;width:5px;height:5px;border-radius:50%;background:${MOOD_COLORS[mood.niveau]?.border||'#aaa'}"></div>` : '';
       const depBadge = isDep ? `<div style="position:absolute;top:1px;left:1px;font-size:0.45rem;line-height:1">T</div>` : '';
 
-      // Demi-journee → split visuel
       let cellBg = cfg ? cfg.bg : 'var(--ivoire-2)';
       if (type === 'demi') cellBg = 'linear-gradient(135deg,#1E3A5F 50%,#E2DAD0 50%)';
 
@@ -211,11 +216,14 @@ const M6_Calendar = {
       </div>`;
     }
 
+    const mPfx = `${yr}-${String(mois+1).padStart(2,'0')}`;
     const jTrav = Object.entries(this._data)
-      .filter(([k,v])=> k.startsWith(`${this._year}-${String(mois+1).padStart(2,'0')}`) && (v.type==='travail'||v.type==='rachat'))
+      .filter(([k,v])=> k.startsWith(mPfx) && (v.type==='travail'||v.type==='rachat'))
       .length + Object.entries(this._data)
-      .filter(([k,v])=> k.startsWith(`${this._year}-${String(mois+1).padStart(2,'0')}`) && v.type==='demi')
+      .filter(([k,v])=> k.startsWith(mPfx) && v.type==='demi')
       .length * 0.5;
+
+    const mN = this._mName(mois);
 
     return `<div class="m6-card" style="margin-bottom:10px">
       <div style="display:flex;align-items:center;justify-content:space-between;padding:8px 12px;border-bottom:var(--grey-line)">
@@ -617,8 +625,22 @@ const M6_Calendar = {
   _updateMonth() {
     const cur = this._container.querySelector('#cal-cur');
     const lb  = this._container.querySelector('#cal-mlabel');
-    if (cur) cur.innerHTML = this._buildMonth(this._currentMonth);
-    if (lb)  lb.textContent = `${this._mName(this._currentMonth)} ${this._year}`;
+    if (cur) cur.innerHTML = this._buildMonth(this._viewMonth, this._viewYear);
+    if (lb)  lb.textContent = `${this._mName(this._viewMonth)} ${this._viewYear}`;
+  },
+
+  _prevMonth() {
+    if (this._viewMonth > 0) { this._viewMonth--; }
+    else { this._viewMonth = 11; this._viewYear--; }
+    this._currentMonth = this._viewMonth;
+    this._updateMonth();
+  },
+
+  _nextMonth() {
+    if (this._viewMonth < 11) { this._viewMonth++; }
+    else { this._viewMonth = 0; this._viewYear++; }
+    this._currentMonth = this._viewMonth;
+    this._updateMonth();
   },
 
   _bindSwipe() {
@@ -628,19 +650,13 @@ const M6_Calendar = {
     el.addEventListener('touchend', e => {
       const dx = e.changedTouches[0].clientX - this._swipeStartX;
       if (Math.abs(dx) < 50) return;
-      if (dx < 0 && this._currentMonth < 11) this._currentMonth++;
-      else if (dx > 0 && this._currentMonth > 0) this._currentMonth--;
-      this._updateMonth();
+      if (dx < 0) this._nextMonth(); else this._prevMonth();
     }, {passive:true});
   },
 
   _bindEvents() {
-    this._container.querySelector('#cal-prev')?.addEventListener('click', () => {
-      if (this._currentMonth > 0) { this._currentMonth--; this._updateMonth(); }
-    });
-    this._container.querySelector('#cal-next')?.addEventListener('click', () => {
-      if (this._currentMonth < 11) { this._currentMonth++; this._updateMonth(); }
-    });
+    this._container.querySelector('#cal-prev')?.addEventListener('click', () => this._prevMonth());
+    this._container.querySelector('#cal-next')?.addEventListener('click', () => this._nextMonth());
     this._container.querySelector('#cal-btn-sem')?.addEventListener('click', () => this._openSemaineQuick());
     this._container.querySelector('#cal-btn-yr')?.addEventListener('click', () => {
       this._container.querySelector('#cal-yr-overlay')?.classList.add('open');
