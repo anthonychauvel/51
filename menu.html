@@ -1452,17 +1452,18 @@ function copyLink(url, btnId) {
   });
 }
 function nativeShare() {
-  const url = 'https://simulateurheuressupfrance.pages.dev/menu';
-  const text = '📲 Installe l\'application SimulHeures pour suivre tes heures supplémentaires !';
+  const urlIOS = 'https://simulateurheuressupfrance.pages.dev/menu';
+  const urlAndroid = 'https://play.google.com/store/apps/details?id=com.tonytonic.heuressup';
+  const text = '📲 Installe l\'application SimulHeures pour suivre tes heures supplémentaires !\n\n📱 iPhone / iPad :\n' + urlIOS + '\n\n🤖 Android :\n' + urlAndroid;
   if (navigator.share) {
-    navigator.share({ title: 'SimulHeures — Heures Sup France', text: text, url: url })
+    navigator.share({ title: 'SimulHeures — Heures Sup France', text: text })
       .catch(function(){});
   } else {
-    // Fallback : copier le lien + message
-    navigator.clipboard.writeText(url).then(function(){
-      alert('📋 Lien copié !\n\n' + url);
+    // Fallback : copier les deux liens + message
+    navigator.clipboard.writeText(text).then(function(){
+      alert('📋 Liens copiés !\n\n' + text);
     }).catch(function(){
-      prompt('Copie ce lien pour le partager :', url);
+      prompt('Copie ce message pour le partager :', text);
     });
   }
 }
