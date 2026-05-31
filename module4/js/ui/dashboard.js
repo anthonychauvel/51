@@ -138,7 +138,7 @@ class Dashboard {
             const suffix = isProj ? ' — projection historique' : '';
             return '+'+v.toFixed(1)+'h/jour ('+impact+')'+suffix;
         }},
-        { label:'Jours consécutifs avec HS', key:'_consecOT',  fmt: v => v > 10 ? v+'j (WE non comptés) ⚠️ surcharge prolongée' : v > 5 ? v+'j (WE non comptés) — vigilance' : v+'j ouvrés avec HS' },
+        // _consecOT : calculé en arrière-plan (bio) mais non affiché — évite confusion utilisateur
         { label:'Semaines de surcharge cumulées', key:'_cumulWeeks', fmt: v => {
             const vR = Math.round(v * 10) / 10;
             if (vR <= 0) return 'Aucun cumul (rythme normal)';
@@ -464,6 +464,10 @@ class Dashboard {
   _renderRisks(risks){
     const el=document.getElementById('risks-list');
     if(!el) return;
+    // FIX FLASH : ne réécrire que si contenu changé
+    const _rHash = risks.map(r=>r.titre+r.level).join('|');
+    if(el.dataset.riskHash === _rHash) return;
+    el.dataset.riskHash = _rHash;
     if(!risks.length){
       el.innerHTML=`<div class="risk-empty">✅ Aucun risque détecté</div>`; return;
     }
@@ -481,6 +485,10 @@ class Dashboard {
   _renderAdvice(advice){
     const el=document.getElementById('advice-list');
     if(!el) return;
+    // FIX FLASH : ne réécrire que si le contenu a changé
+    const _newHash = advice.map(a=>(a.titre||a.title||'')+(a.message||a.msg||'')).join('|');
+    if(el.dataset.adviceHash === _newHash) return;
+    el.dataset.adviceHash = _newHash;
     const borderCol = t => t==='danger'?'#c83040':t==='warning'?'#b88a18':t==='success'?'#00aa88':'#2090b8';
     el.innerHTML = advice.length ? advice.map(a=>`
       <div class="advice-item anim-fade" style="
