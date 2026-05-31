@@ -389,6 +389,9 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
           <div class="t" data-mode="repos">😴 Repos compensateur</div></div>
         <div class="field" id="deNMajoField"><label>Taux de majoration</label>
           <div class="inline"><input class="ip" id="deNRate" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div></div>
+        <div class="field" id="deNBaseField"><label>Ton taux horaire brut (pour l'estimation €)</label>
+          <div class="inline"><input class="ip" id="deNBase" type="number" inputmode="decimal" value="0"><span class="unit">€ / h</span></div>
+          <div class="hint">Saisi une fois, repris pour les jours suivants.</div></div>
         <div class="field" id="deNReposField" style="display:none;"><label>Taux de repos compensateur</label>
           <div class="inline"><input class="ip" id="deNReposRate" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div>
           <div class="hint">Affiché en temps, pas en euros.</div></div>
@@ -712,8 +715,8 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
 
   /* ===== DAY EDITOR ===== */
   var deDay=null, deNum=0;
-  function blankDay(){ return {nuit:{hours:0,mode:'majo',rate:settings.nRate||0,reposRate:0},
-    astr:{mode:'heure',hours:0,rate:settings.aRate||0,fAmt:0,inter:0,interRate:settings.aInterRate||0,night:false,sun:false,sunRate:0},
+  function blankDay(){ return {nuit:{hours:0,mode:'majo',rate:settings.nRate||0,reposRate:settings.nReposRate||0},
+    astr:{mode:'heure',hours:0,rate:settings.aRate||0,fAmt:0,inter:0,interRate:settings.aInterRate||0,night:false,sun:false,sunRate:settings.aSunRate||0},
     primes:{}, _nuitOn:false,_astrOn:false,_primesOn:false }; }
   function openDay(dnum){
     deNum=dnum; var m=curMonth();
@@ -729,6 +732,7 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
     $('#deCopyPrev').style.display = (dnum>1 && m.days[dnum-1]) ? 'block' : 'none';
     // fill nuit
     $('#deNHours').value=deDay.nuit.hours||0; $('#deNRate').value=deDay.nuit.rate||0; $('#deNReposRate').value=deDay.nuit.reposRate||0;
+    $('#deNBase').value=settings.baseRate||0;
     setDeNMode(deDay.nuit.mode||'majo');
     // fill astr
     setDeAMode(deDay.astr.mode||'heure');
@@ -761,8 +765,16 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
     deDay.nuit.hours=parseFloat($('#deNHours').value)||0; deDay.nuit.rate=parseFloat($('#deNRate').value)||0; deDay.nuit.reposRate=parseFloat($('#deNReposRate').value)||0;
     deDay.astr.hours=parseFloat($('#deAHours').value)||0; deDay.astr.rate=parseFloat($('#deARate').value)||0; deDay.astr.fAmt=parseFloat($('#deAForfaitAmt').value)||0;
     deDay.astr.inter=parseFloat($('#deAInter').value)||0; deDay.astr.interRate=parseFloat($('#deAInterRate').value)||0; deDay.astr.sunRate=parseFloat($('#deASunRate').value)||0;
+    // Report auto : un taux saisi devient le defaut, repris pour les jours suivants (jusqu'a nouveau changement)
+    if(deDay.nuit.rate>0) settings.nRate=deDay.nuit.rate;
+    if(deDay.astr.rate>0) settings.aRate=deDay.astr.rate;
+    if(deDay.astr.interRate>0) settings.aInterRate=deDay.astr.interRate;
+    if(deDay.astr.sunRate>0) settings.aSunRate=deDay.astr.sunRate;
+    if(deDay.nuit.reposRate>0) settings.nReposRate=deDay.nuit.reposRate;
+    var b=parseFloat($('#deNBase').value); if(!isNaN(b)&&b>0) settings.baseRate=b;
+    set(LS.SET,settings);
   }
-  ['deNHours','deNRate','deNReposRate','deAHours','deARate','deAForfaitAmt','deAInter','deAInterRate','deASunRate'].forEach(function(id){
+  ['deNHours','deNRate','deNBase','deNReposRate','deAHours','deARate','deAForfaitAmt','deAInter','deAInterRate','deASunRate'].forEach(function(id){
     $('#'+id).addEventListener('input',function(){ readDeInputs(); updateDeTotal(); });
   });
   function updateDeTotal(){ readDeInputs();
@@ -808,6 +820,7 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
   function openDayFromObj(){
     if(!deDay.nuit)deDay.nuit=blankDay().nuit; if(!deDay.astr)deDay.astr=blankDay().astr; if(!deDay.primes)deDay.primes={};
     $('#deNHours').value=deDay.nuit.hours||0; $('#deNRate').value=deDay.nuit.rate||0; $('#deNReposRate').value=deDay.nuit.reposRate||0; setDeNMode(deDay.nuit.mode||'majo');
+    $('#deNBase').value=settings.baseRate||0;
     setDeAMode(deDay.astr.mode||'heure'); $('#deAHours').value=deDay.astr.hours||0; $('#deARate').value=deDay.astr.rate||0; $('#deAForfaitAmt').value=deDay.astr.fAmt||0;
     $('#deAInter').value=deDay.astr.inter||0; $('#deAInterRate').value=deDay.astr.interRate||0; $('#deASunRate').value=deDay.astr.sunRate||0;
     setDeCheck('#deAInterNight',deDay.astr.night); setDeCheck('#deAInterSun',deDay.astr.sun); $('#deASunField').style.display=deDay.astr.sun?'block':'none';
