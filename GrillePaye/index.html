@@ -1570,9 +1570,14 @@ html, body {
   font-weight: 400 !important;
 }
 
+
+/* Barre safe-area-inset-top */
+body { padding-top: env(safe-area-inset-top) !important; }
+
 </style>
 </head>
 <body>
+<div id="safe-top-bar" style="position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--ch);z-index:9999;"></div>
 <div class="toast" id="toast"></div>
 
 <div id="role-screen" class="role-screen">
