@@ -60,7 +60,8 @@ body::before{
 .wrap{position:relative;z-index:1;max-width:480px;margin:0 auto;padding:0 16px 16px;}
 
 /* header */
-header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;padding:14px 16px 12px;
+header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:14px 16px 12px;padding-top:max(14px,env(safe-area-inset-top));
   background:linear-gradient(180deg, rgba(10,18,40,0.95), rgba(10,18,40,0.75) 80%, transparent);
   backdrop-filter:blur(8px);max-width:480px;margin:0 auto;}
 header .back{background:var(--card);border:1px solid var(--line);color:var(--txt);border-radius:12px;
@@ -220,6 +221,8 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
 </style>
 </head>
 <body>
+
+<div id="safe-top-bar" style="position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:var(--night);z-index:9999;"></div>
 
 <div id="lb"><div class="i">🌙</div><div class="t">Tourne ton téléphone</div><div style="color:var(--mut)">Cette appli s'utilise en portrait.</div></div>
 
