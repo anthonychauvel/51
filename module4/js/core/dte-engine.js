@@ -698,8 +698,10 @@ class DTEEngine {
               if (!mv || typeof mv !== 'object') continue;
               const newDays  = Object.keys(mv.days || {}).length;
               const prevDays = Object.keys((d[mk] || {}).days || {}).length;
-              if (newDays > prevDays) d[mk] = mv; // préférer le mois avec plus de données
-              else if (!d[mk]) d[mk] = mv;         // ou prendre si absent
+              // FIX : toujours écraser si plus de jours OU si même nombre mais source plus récente
+              // Avant : newDays <= prevDays → ignoré même si données modifiées
+              if (newDays >= prevDays) d[mk] = mv; // >= : prendre la version la plus récente
+              else if (!d[mk]) d[mk] = mv;
             }
             hasAny = true;
           } catch(_) {}
@@ -845,13 +847,13 @@ class DTEEngine {
       const dow = d.getDay();
       if (_isRestDowAt(dow, d)) continue; // FIX VERSIONING : config active à cette date historique
       const k = localDK(d);
-      if (specialDays[k] === 'ferie') continue;
       const e = days[k];
       if (e && e.absent > 0) continue;
-      // M1→M4 : recup ≥ 7h dans M1 = jour de repos complet → exclu des heures (comme absent)
       if (e && (e.recup >= 7)) continue;
-      // FIX : les jours de vacances comptent comme jours ouvrés à 0h HS
-      // (pas exclus du dénominateur — sinon la moyenne/jour gonfle artificiellement)
+      // FIX FÉRIÉ + M2 : si des heures sont saisies sur un jour férié → jour travaillé
+      // Le férié déclaré comme repos cède la priorité aux heures réelles saisies
+      const isFerieDay = specialDays[k] === 'ferie';
+      if (isFerieDay && !(e && e.extra > 0)) continue; // férié sans heures → exclu
       const isVacDay = !!vacances[k];
       sumExtra += isVacDay ? 0 : (e ? (e.extra || 0) : 0);
       countWorkDays28++;
@@ -1138,12 +1140,13 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        // M1→M4 : recup ≥ 7h = jour de repos → ne compte pas dans les heures de surcharge
         if (e && (e.recup >= 7)) continue;
-        // FIX VACANCES : jour vacances = 0h HS (même si M1/M2 a des entrées)
+        // FIX FÉRIÉ + M2 : heures saisies sur férié → jour travaillé (M2 prioritaire)
+        const isFerieDay2 = specialDays[k] === 'ferie';
+        if (isFerieDay2 && !(e && e.extra > 0)) continue; // férié sans heures → exclu
         const isVacDay = !!vacances[k];
-        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
-        hasAnyDay = true;
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
+        if (e) hasAnyDay = true;
         if (e && e.extra > 0 && !isVacDay) daysLogged++;
       }
       // FIX EXTRAPOLATION : semaine courante → weekH réel (HS faites + base jours restants)
@@ -1201,12 +1204,13 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        // M1→M4 : recup ≥ 7h = jour de repos → ne compte pas dans les heures de surcharge
         if (e && (e.recup >= 7)) continue;
-        // FIX VACANCES : jour vacances = 0h HS
+        // FIX FÉRIÉ + M2 passe 2 : heures saisies → jour travaillé
+        const isFerieDay3 = specialDays[k] === 'ferie';
+        if (isFerieDay3 && !(e && e.extra > 0)) continue;
         const isVacDay = !!vacances[k];
-        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0)); // FIX CCN : baseJourCCN
-        hasAnyDay = true;
+        weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
+        hasAnyDay = true; // Passe 2 : semaines vides = repos → décroissance cumulWeeks
       }
       // FIX : isM1RestWeekP2 requiert majorité des jours absents (même logique que Passe 1)
       // 1 jour absent seul (ex: lundi férié marqué absent) ne = pas semaine de vacances
@@ -1289,10 +1293,11 @@ class DTEEngine {
       // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, absence M1, ou recup M1
       // noWorkThisWeek ne s'applique QU'à la semaine courante (i=0..6)
       const isCurrentWeek  = i < 7;
-      // FIX BUG VACANCES : un jour marqué vacances dans M4 EST un jour de repos,
-      // même si M1/M2 a des entrées pour ce jour (déclaration vacances = prioritaire)
-      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac && !isM1FullRest;
-      const isRestDay = isWE || isVac || isFerie || isM1FullRest
+      // FIX FÉRIÉ + M2 : heures saisies sur un férié → jour travaillé (M2 prioritaire)
+      // vacances M4 reste prioritaire (déclaration volontaire), mais férié = automatique
+      const ferieWithHours = isFerie && e && e.extra > 0;
+      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac && !isM1FullRest && (!isFerie || ferieWithHours);
+      const isRestDay = isWE || isVac || (isFerie && !ferieWithHours) || isM1FullRest
                      || (isCurrentWeek && !isWE && !hasOverload && noWorkThisWeek);
 
       if (hasOverload) break; // HS réelles (hors vacances/repos) → stop définitif
@@ -1363,7 +1368,9 @@ class DTEEngine {
         const k = localDK(dt);
         const e = days[k];
         if (e && e.absent) continue;
-        if (specialDays[k] === 'ferie' || vacances[k]) continue;
+        // FIX FÉRIÉ + M2 : heures saisies → jour travaillé
+        if (vacances[k]) continue;
+        if (specialDays[k] === 'ferie' && !(e && e.extra > 0)) continue;
         // FIX BUG 7 : ne compter que les jours avec une vraie entrée M1/M2
         // Un jour sans entrée (e=undefined) = pas de donnée = possible vacances non déclarées
         if (e) {
@@ -1742,7 +1749,7 @@ class DTEEngine {
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
     // PATCH : couplage fatigue→stress renforcé (0.40 vs 0.30) — cohérence physiologique
-    const stressExtBase = fatigue * 0.40 + norm.extStress * 0.20 + norm.variab * 0.12;
+    const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12; // FIX 0.40→0.30 (anti double-comptage cortisol+fat)
     // stressExtDecay : demi-vie 10j (McEwen 1998) — PATCH : vacances ×1.1 (vs ×1.5 trop rapide)
     // Cortisol basal reste élevé plusieurs semaines après surcharge (Sluiter 2001)
     const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? Math.round(consecRest * 1.1) : consecRest);
@@ -1757,7 +1764,7 @@ class DTEEngine {
     // Pondération check-in subjectif : si l'utilisateur déclare "stress léger" en vacances,
     // c'est un signal biologique réel (Sonnentag 2003 : le détachement vécu atténue le cortisol)
     const checkinStressFactor = checkinBoost.stress < 0 ? 0.75 : 1.0;
-    const stress      = Math.max(0, Math.min(1, (cortisolS * 0.65 * nightFactor + stressExt) * _pf.strF * checkinStressFactor + checkinBoost.stress));
+    const stress      = Math.max(0, Math.min(1, (cortisolS * 0.55 * nightFactor + stressExt) /* FIX: 0.65→0.55 */ * _pf.strF * checkinStressFactor + checkinBoost.stress));
 
     // ── PERFORMANCE (Pencavel 2014, Stanford) ────────────────────
     // En semaine de vacances : la performance "travail" n'a pas de sens.
@@ -1766,7 +1773,7 @@ class DTEEngine {
     // Dégradation cognitive OEM 2025 (>52h)
     const cogDeg       = cogRisk(weeklyH, cumW);
     const perfMotiv    = norm.motiv * 0.12;
-    const perfFat      = fatigue * 0.65; // PATCH ×0.65 (vs 0.58) — lien fatigue→perf renforcé
+    const perfFat      = fatigue * 0.50; // FIX 0.65→0.50 : Pencavel 2014 — lien fatigue→perf moins punitif
     const perfStr      = stress  * 0.10;
     // En vacances : perf = capacité de repos (Pencavel 35h = 100%) sans drag cumulatif.
     // Hors vacances : formule normale avec fatigue/stress/cognitif.
@@ -1947,11 +1954,16 @@ class DTEEngine {
     // recCeiling ×0.32 : à 8 sem → plafond 68% (cible vacances : 60-70%)
     // Note : recCeiling s'applique APRÈS vacationFloor → l'écrase si nécessaire.
     // Combiné avec USURE (−12% à cumW=8) → récupération hors vacances ≈ 56% ✓
-    if (cumW >= 3) {
-      const inertia = Math.min(1, cumW / 8); // PATCH ÷8 : INRS P2/P3 réaliste
-      const fatFloor = inertia * 0.40; // PATCH ×0.40 : plancher dette (8 sem → 40%)
+    // FIX PLANCHERS PROGRESSIFS — dès cumW>=1 (anti-falaise cumW=2.9→3.0)
+    // Avant : rien à 2.9 sem, saut brutal à 3.0 sem. Après : progressif linéaire.
+    // fatInertia /8 (douce) | recInertia /4 (réactive dès P1)
+    if (cumW >= 1) {
+      const t = Math.min(1, (cumW - 1) / 7);
+      const fatInertia = Math.min(1, cumW / 8);
+      const fatFloor   = fatInertia * (0.15 + t * 0.25); // 0.15→0.40 sur 1→8 sem
       if (fatFinal < fatFloor) fatFinal = fatFloor;
-      const recCeiling = 1.0 - inertia * 0.32; // PATCH ×0.32 : plafond récup (8 sem → 68%)
+      const recInertia = Math.min(1, cumW / 4); // sature à P2 entry (4 sem)
+      const recCeiling = 1.0 - recInertia * (0.08 + t * 0.24); // 0.08→0.32
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
@@ -1962,9 +1974,11 @@ class DTEEngine {
     // → stress ne peut pas tomber à 0 dès la 1ère semaine de repos après P2/P3.
     // Plancher : 28% à 8 sem (cible post-surcharge : 25–40%).
     // Même logique que fatFloor dans l'inertia block — appliquer même pendant vacances.
-    if (cumW >= 3) {
+    // FIX plancher stress progressif dès cumW>=1 (McEwen 1998)
+    if (cumW >= 1) {
+      const t2 = Math.min(1, (cumW - 1) / 7);
       const stressInertia = Math.min(1, cumW / 8);
-      const stressFloor = stressInertia * 0.28; // 8 sem → 28%, 4 sem → 14%, 3 sem → 10%
+      const stressFloor = stressInertia * (0.08 + t2 * 0.20); // 0.08→0.28 sur 1→8 sem
       strFinal = Math.max(strFinal, stressFloor);
     }
 
@@ -2051,6 +2065,18 @@ class DTEEngine {
     const stressBoostCV  = strFinal * 0.15;   // stress 100% → +15 pts cvRisk
     const stressBoostCog = (strFinal > 0.6 && cumW > 4) ? (strFinal - 0.6) * 0.10 : 0;
 
+    // ── PLANCHERS / PLAFONDS BIOLOGIQUES FINAUX ──────────────────────────────
+    // Fatigue  : min 1% (Meijman 1998 — effort basal toujours présent)
+    // Stress   : min 1% (McEwen 1998 — cortisol basal circulant en permanence)
+    // Perf     : max 99% (Pencavel 2014 — performance parfaite impossible)
+    // Récup    : max 99% (Sonnentag 2003 — récupération complète = concept théorique)
+    // CvRisk   : min 1% (Kivimäki 2015 — risque cardio basal non nul)
+    // CogRisk  : min 1% (OEM 2025 — charge cognitive basale toujours présente)
+    fatFinal  = Math.max(0.01, fatFinal);
+    strFinal  = Math.max(0.01, strFinal);
+    perfFinal = Math.min(0.99, perfFinal);
+    recFinal  = Math.min(0.99, recFinal);
+
     return {
       fatigue:      Math.round(fatFinal * 100),
       stress:       Math.round(strFinal * 100),
@@ -2058,8 +2084,8 @@ class DTEEngine {
       recovery:     Math.round(recFinal * 100),
       errorRisk:    Math.round(errRisk * 100),
       overloadRisk: Math.round(overRisk * 100),
-      cvRisk:       Math.round(Math.min(Math.max(0, cvR + fatFinal * 0.10 + strFinal * 0.12 + stressBoostCV + (lifestyleBoost.cvRisk||0)), 1) * 100),
-      cogRisk:      Math.round(Math.min(cogR + fatFinal * 0.15 + stressBoostCog, 1) * 100),
+      cvRisk:       Math.round(Math.min(Math.max(0.01, cvR + fatFinal * 0.10 + strFinal * 0.12 + stressBoostCV + (lifestyleBoost.cvRisk||0)), 1) * 100),
+      cogRisk:      Math.round(Math.min(Math.max(0.01, cogR + fatFinal * 0.15 + stressBoostCog), 1) * 100),
       diabetesRisk: Math.round(diabR * 100),
       musculoRisk:  Math.round(muscR * 100),
       _f: fatFinal, _s: strFinal, _p: perfFinal, _r: recFinal,
