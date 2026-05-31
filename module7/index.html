@@ -1,0 +1,688 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>M7 — Nuit, Astreinte &amp; Variables</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#0c1a2e">
+<meta name="screen-orientation" content="portrait">
+<link rel="manifest" href="../manifest.json">
+<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="M7 Nuit & Variables">
+<meta name="mobile-web-app-capable" content="yes">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js" defer></script>
+<style>
+:root{
+  --bg:#0c1a2e; --bg2:#0a1424; --card:rgba(255,255,255,0.045); --line:rgba(255,255,255,0.09);
+  --accent:#5b8def; --accent2:#8e6fd6; --gold:#d4a850; --txt:#fff; --mut:rgba(255,255,255,0.52);
+  --ok:#5dade2; --info:#9ec3ff; --danger:#e57373;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{background:linear-gradient(180deg,var(--bg),var(--bg2));min-height:100%;}
+body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;color:var(--txt);
+  padding-bottom:50px;-webkit-text-size-adjust:100%;}
+@media screen and (orientation:landscape) and (max-device-width:1024px){
+  body>*:not(#lb){display:none!important;}
+  #lb{position:fixed;inset:0;z-index:99999;background:linear-gradient(135deg,#0f1729,#1a2340);
+    color:#fff;display:flex!important;flex-direction:column;align-items:center;justify-content:center;
+    text-align:center;padding:24px;}
+  #lb .i{font-size:60px;margin-bottom:20px;} #lb .t{font-size:21px;font-weight:700;color:var(--accent);margin-bottom:10px;}
+}
+@media screen and (orientation:portrait){#lb{display:none!important;}}
+
+header{position:sticky;top:0;z-index:50;display:flex;align-items:center;gap:8px;
+  padding:12px 14px;background:rgba(12,26,46,0.92);backdrop-filter:blur(10px);border-bottom:1px solid var(--line);}
+header .back{background:rgba(255,255,255,0.08);border:1px solid var(--line);color:#fff;border-radius:10px;
+  padding:8px 12px;font-size:13px;cursor:pointer;text-decoration:none;flex-shrink:0;}
+header .brand{flex:1;text-align:center;}
+header .brand .ti{font-size:14px;font-weight:800;line-height:1.1;}
+header .brand .su{font-size:10px;color:var(--mut);}
+header .hbtn{background:rgba(255,255,255,0.08);border:1px solid var(--line);color:#fff;border-radius:10px;
+  width:36px;height:36px;font-size:15px;cursor:pointer;flex-shrink:0;}
+
+.wrap{max-width:480px;margin:0 auto;padding:16px 14px;}
+
+.ov{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:16px;}
+.ov.show{display:flex;}
+.box{background:#13243d;border:1px solid var(--line);border-radius:20px;max-width:440px;width:100%;
+  max-height:90vh;overflow-y:auto;box-shadow:0 16px 56px rgba(0,0,0,0.5);}
+.box .hd{background:linear-gradient(135deg,var(--accent),var(--accent2));padding:20px;position:relative;}
+.box .hd .t{font-size:19px;font-weight:800;} .box .hd .s{font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;}
+.box .hd .x{position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;
+  width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;}
+.box .bd{padding:20px;}
+
+.btn{display:block;width:100%;padding:14px;border:none;border-radius:12px;font-size:15px;font-weight:700;cursor:pointer;text-align:center;}
+.btn-primary{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.btn-ghost{background:transparent;border:2px solid var(--accent);color:var(--info);}
+.btn-soft{background:rgba(255,255,255,0.08);border:1px solid var(--line);color:#fff;}
+.btn-danger{background:rgba(229,115,115,0.15);border:1px solid rgba(229,115,115,0.4);color:var(--danger);}
+
+.wstep{display:none;} .wstep.show{display:block;animation:fade .25s;}
+@keyframes fade{from{opacity:0;transform:translateY(8px);}to{opacity:1;transform:none;}}
+.dots{display:flex;gap:6px;justify-content:center;margin:16px 0;}
+.dots .d{width:8px;height:8px;border-radius:50%;background:rgba(255,255,255,0.2);}
+.dots .d.on{background:var(--accent);width:22px;border-radius:4px;}
+.mascot-big{text-align:center;font-size:54px;margin:6px 0 10px;}
+.wstep h2{font-size:20px;font-weight:800;text-align:center;margin-bottom:8px;}
+.wstep p{font-size:13px;color:rgba(255,255,255,0.78);line-height:1.6;text-align:center;margin-bottom:6px;}
+.feat{display:flex;gap:10px;align-items:flex-start;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:12px;margin-bottom:8px;text-align:left;}
+.feat .ic{font-size:22px;flex-shrink:0;} .feat .tx{font-size:12px;line-height:1.45;}
+.feat .tx b{display:block;font-size:13px;margin-bottom:2px;}
+
+.ccn-chip{display:flex;align-items:center;gap:8px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:9px 12px;font-size:11px;color:rgba(255,255,255,0.7);margin-bottom:12px;}
+.ccn-chip .ic{font-size:16px;} .ccn-chip b{color:var(--info);}
+
+.monthbar{display:flex;align-items:center;justify-content:space-between;background:var(--card);
+  border:1px solid var(--line);border-radius:12px;padding:8px 10px;margin-bottom:14px;}
+.monthbar button{background:rgba(255,255,255,0.06);border:1px solid var(--line);color:#fff;
+  border-radius:8px;width:34px;height:34px;font-size:16px;cursor:pointer;}
+.monthbar .lbl{font-size:14px;font-weight:700;text-transform:capitalize;text-align:center;}
+.monthbar .lbl small{display:block;font-size:9px;color:var(--mut);font-weight:400;}
+
+.total{background:linear-gradient(135deg,rgba(91,141,239,0.18),rgba(142,111,214,0.1));
+  border:1px solid rgba(91,141,239,0.3);border-radius:16px;padding:16px;text-align:center;margin-bottom:16px;}
+.total .lbl{font-size:11px;color:var(--mut);text-transform:uppercase;letter-spacing:.08em;}
+.total .big{font-size:30px;font-weight:800;margin:4px 0 2px;}
+.total .big small{font-size:14px;font-weight:500;color:var(--mut);}
+.total .split{display:flex;justify-content:center;gap:14px;margin-top:8px;font-size:11px;color:var(--mut);flex-wrap:wrap;}
+.total .split b{color:var(--info);font-weight:600;}
+
+.tabs{display:flex;gap:6px;margin-bottom:16px;background:var(--card);padding:5px;border-radius:13px;}
+.tab{flex:1;text-align:center;padding:10px 4px;border-radius:9px;font-size:15px;font-weight:700;
+  color:var(--mut);cursor:pointer;transition:.15s;}
+.tab.active{background:linear-gradient(135deg,var(--accent),var(--accent2));color:#fff;}
+.panel{display:none;} .panel.show{display:block;animation:fade .2s;}
+
+.sec-title{font-size:14px;font-weight:800;margin-bottom:12px;display:flex;align-items:center;gap:8px;}
+
+.field{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;}
+.field label{font-size:11px;color:var(--mut);display:block;margin-bottom:6px;font-weight:600;}
+.field .inline{display:flex;gap:8px;align-items:center;}
+.ip{background:rgba(0,0,0,0.28);border:1px solid var(--line);border-radius:8px;padding:10px 12px;color:#fff;font-size:15px;width:100%;}
+.ip:focus{outline:none;border-color:var(--accent);}
+select.ip{appearance:none;-webkit-appearance:none;}
+.unit{font-size:12px;color:var(--mut);white-space:nowrap;}
+.hint{font-size:10px;color:rgba(255,255,255,0.42);margin-top:5px;line-height:1.45;}
+
+.toggle{display:flex;gap:6px;margin-bottom:10px;}
+.toggle .t{flex:1;text-align:center;padding:9px;border-radius:9px;font-size:11px;font-weight:600;
+  background:var(--card);border:1px solid var(--line);color:var(--mut);cursor:pointer;}
+.toggle .t.on{background:rgba(91,141,239,0.2);border-color:var(--accent);color:var(--info);}
+
+.check-row{display:flex;align-items:center;gap:8px;margin-top:8px;font-size:12px;color:rgba(255,255,255,0.8);cursor:pointer;}
+.check-row .cb{width:20px;height:20px;border-radius:5px;border:2px solid var(--accent);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:12px;color:#fff;}
+.check-row.on .cb{background:var(--accent);}
+
+.res{background:rgba(91,141,239,0.1);border:1px solid rgba(91,141,239,0.25);border-radius:12px;
+  padding:13px 15px;margin-top:12px;display:flex;justify-content:space-between;align-items:center;}
+.res .l{font-size:12px;color:rgba(255,255,255,0.7);} .res .v{font-size:18px;font-weight:800;color:var(--info);}
+.subres{display:flex;justify-content:space-between;font-size:11px;color:var(--mut);padding:3px 4px;}
+.subres b{color:rgba(255,255,255,0.7);font-weight:600;}
+
+.legal{font-size:10px;color:rgba(255,255,255,0.42);background:rgba(255,255,255,0.03);
+  border-left:2px solid rgba(212,168,80,0.4);border-radius:0 8px 8px 0;padding:9px 11px;margin-top:10px;line-height:1.5;}
+
+.prime{display:flex;align-items:center;gap:10px;background:var(--card);border:1px solid var(--line);
+  border-radius:12px;padding:11px 13px;margin-bottom:8px;cursor:pointer;}
+.prime .chk{width:22px;height:22px;border-radius:6px;border:2px solid var(--accent);flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:13px;color:#fff;}
+.prime.on .chk{background:var(--accent);}
+.prime .nm{flex:1;font-size:13px;font-weight:600;} .prime .nm small{display:block;font-size:10px;color:var(--mut);font-weight:400;}
+.prime .amt{font-size:13px;font-weight:700;color:var(--info);text-align:right;}
+.prime.off{opacity:0.55;} .prime.off .amt{color:var(--mut);}
+.prime .del{background:none;border:none;color:rgba(229,115,115,0.8);font-size:15px;cursor:pointer;padding:0 2px;}
+
+.addprime{text-align:center;margin-top:10px;}
+.addprime button{background:none;border:1px dashed var(--accent);color:var(--info);border-radius:10px;
+  padding:9px 14px;font-size:12px;font-weight:600;cursor:pointer;width:100%;}
+
+.foot{text-align:center;font-size:10px;color:rgba(255,255,255,0.3);margin-top:20px;line-height:1.6;}
+.pe-row{margin-bottom:12px;} .pe-row label{font-size:11px;color:var(--mut);display:block;margin-bottom:5px;}
+.export-bar{margin-top:16px;display:flex;flex-direction:column;gap:8px;}
+.export-bar .twocol{display:flex;gap:8px;} .export-bar .twocol .btn{margin:0;}
+.history-empty{text-align:center;color:var(--mut);font-size:12px;padding:16px;}
+.hist-row{display:flex;justify-content:space-between;align-items:center;background:var(--card);
+  border:1px solid var(--line);border-radius:10px;padding:10px 12px;margin-bottom:6px;font-size:12px;cursor:pointer;}
+.hist-row .hm{font-weight:600;text-transform:capitalize;} .hist-row .hv{color:var(--info);font-weight:700;}
+</style>
+</head>
+<body>
+
+<div id="lb"><div class="i">📱</div><div class="t">Tourne ton téléphone</div><div>M7 s'utilise en mode portrait.</div></div>
+
+<header>
+  <a href="../menu.html" class="back">← Menu</a>
+  <div class="brand">
+    <div class="ti">M7 — Nuit, Astreinte &amp; Variables</div>
+    <div class="su">Suivi indicatif de la rémunération additionnelle</div>
+  </div>
+  <button class="hbtn" id="resetBtn" title="Reconfigurer">⚙</button>
+  <button class="hbtn" id="helpBtn" title="Aide">?</button>
+</header>
+
+<div class="ov" id="wizard">
+  <div class="box"><div class="bd">
+    <div class="wstep show" data-step="0">
+      <div class="mascot-big">🦉</div>
+      <h2>Bienvenue dans M7</h2>
+      <p>Je suis <b>Noctua</b>, ta chouette guide. Je t'aide à garder un œil sur tout ce qui s'ajoute à ton salaire de base : <b>heures de nuit, astreintes et primes</b>.</p>
+      <p style="color:var(--gold);font-size:12px;margin-top:10px;">Ce module est un outil de <b>suivi indicatif</b>. Il ne remplace ni ton bulletin de paie, ni un conseil juridique.</p>
+    </div>
+    <div class="wstep" data-step="1">
+      <div class="mascot-big">🌙</div>
+      <h2>Ce que fait M7</h2>
+      <div class="feat"><div class="ic">🌙</div><div class="tx"><b>Heures de nuit</b>Estime la majoration de nuit (ou le repos compensateur) selon le taux de ta convention.</div></div>
+      <div class="feat"><div class="ic">📟</div><div class="tx"><b>Astreinte</b>Indemnité (au forfait ou à l'heure) + temps d'intervention réel.</div></div>
+      <div class="feat"><div class="ic">🎁</div><div class="tx"><b>Primes &amp; variables</b>Panier, transport, dimanche, férié, équipe… et tes primes personnalisées.</div></div>
+    </div>
+    <div class="wstep" data-step="2">
+      <div class="mascot-big">✍️</div>
+      <h2>Tout en saisie manuelle</h2>
+      <p>Les taux de nuit, d'astreinte et de primes <b>varient selon chaque convention et chaque accord d'entreprise</b>. C'est donc toi qui saisis tes propres valeurs.</p>
+      <p>👉 Le plus fiable : recopie les taux et montants <b>indiqués sur ton bulletin de paie</b>.</p>
+    </div>
+    <div class="wstep" data-step="3">
+      <div class="mascot-big">📅</div>
+      <h2>Mois par mois</h2>
+      <p>M7 enregistre tes saisies <b>pour chaque mois</b>. Navigue entre les mois avec les flèches en haut, et retrouve ton historique dans l'onglet 📊.</p>
+      <p>Tu peux aussi <b>sauvegarder et restaurer</b> tes données M7 à tout moment.</p>
+    </div>
+    <div class="wstep" data-step="4">
+      <div class="mascot-big">⚠️</div>
+      <h2>Important</h2>
+      <p>M7 ne calcule <b>pas</b> tes heures supplémentaires — ça, c'est le rôle de M1 / M2.</p>
+      <p>Ici on estime seulement <b>ce qui s'ajoute par-dessus</b>.</p>
+      <div class="legal" style="margin-top:14px;">Estimations en <b>brut, à titre indicatif</b>. Seul ton bulletin de paie fait foi. M7 ne constitue pas un avis juridique ni comptable.</div>
+    </div>
+    <div class="dots" id="wdots"></div>
+    <button class="btn btn-primary" id="wNext">Continuer</button>
+    <button class="btn btn-soft" id="wSkip" style="margin-top:8px;">Passer l'introduction</button>
+  </div></div>
+</div>
+
+<div class="ov" id="help">
+  <div class="box"><div class="hd"><div class="t">🦉 Aide &amp; tutoriel</div><div class="s">Comment utiliser M7</div>
+    <button class="x" data-close="help">✕</button></div>
+  <div class="bd">
+    <div class="feat"><div class="ic">📅</div><div class="tx"><b>Choisir le mois</b>Les flèches en haut changent de mois. Chaque mois garde ses propres saisies.</div></div>
+    <div class="feat"><div class="ic">🌙</div><div class="tx"><b>Onglet Nuit</b>Plage de nuit, heures du mois, taux de majoration (% ou repos compensateur).</div></div>
+    <div class="feat"><div class="ic">📟</div><div class="tx"><b>Onglet Astreinte</b>Indemnité au forfait (jour/semaine) ou à l'heure, plus le temps d'intervention réel et ses majorations.</div></div>
+    <div class="feat"><div class="ic">🎁</div><div class="tx"><b>Onglet Primes</b>Active tes primes, saisis les montants, ajoute les tiennes avec « + ».</div></div>
+    <div class="feat"><div class="ic">📊</div><div class="tx"><b>Onglet Historique</b>Récapitulatif de tous les mois saisis.</div></div>
+    <div class="feat"><div class="ic">💾</div><div class="tx"><b>Sauvegarde</b>Exporte/restaure tes données M7. Tout reste sur ton appareil.</div></div>
+    <div class="feat"><div class="ic">⚙️</div><div class="tx"><b>Reconfigurer</b>L'engrenage en haut relance ce tutoriel et peut réinitialiser M7.</div></div>
+    <div class="legal">Rappel : M7 est indicatif. Pour les heures supplémentaires, utilise M1 / M2.</div>
+    <button class="btn btn-primary" style="margin-top:14px;" data-close="help">J'ai compris</button>
+  </div></div>
+</div>
+
+<div class="ov" id="resetOv">
+  <div class="box"><div class="hd" style="background:linear-gradient(135deg,#c0392b,#e57373);">
+    <div class="t">⚙ Reconfigurer M7</div><div class="s">Choisis une action</div>
+    <button class="x" data-close="resetOv">✕</button></div>
+  <div class="bd">
+    <button class="btn btn-soft" id="reReplay">📖 Revoir le tutoriel</button>
+    <button class="btn btn-danger" id="reClearMonth" style="margin-top:8px;">🗑 Effacer le mois affiché</button>
+    <button class="btn btn-danger" id="reClearAll" style="margin-top:8px;">🧨 Tout réinitialiser (tous les mois)</button>
+    <button class="btn btn-primary" style="margin-top:14px;" data-close="resetOv">Annuler</button>
+  </div></div>
+</div>
+
+<div class="ov" id="primeEdit">
+  <div class="box"><div class="hd"><div class="t" id="peTitle">Ajouter une prime</div><div class="s">Valeurs lues sur ton bulletin</div>
+    <button class="x" data-close="primeEdit">✕</button></div>
+  <div class="bd">
+    <div class="pe-row"><label>Nom de la prime</label><input class="ip" id="peName" placeholder="Ex. Prime de froid"></div>
+    <div class="pe-row"><label>Type / récurrence</label>
+      <select class="ip" id="peType">
+        <option value="mensuel">Montant mensuel (€)</option>
+        <option value="jour">Par jour travaillé (€)</option>
+        <option value="occurrence">Par occurrence (€)</option>
+        <option value="pourcent">Majoration en % (info)</option>
+      </select></div>
+    <div class="pe-row"><label id="peAmtLabel">Montant</label>
+      <div class="inline"><input class="ip" id="peAmount" type="number" inputmode="decimal" placeholder="0"><span class="unit" id="peUnitLabel">€</span></div></div>
+    <div class="pe-row" id="peQtyRow" style="display:none;"><label id="peQtyLabel">Nombre ce mois</label>
+      <input class="ip" id="peQty" type="number" inputmode="numeric" placeholder="0"></div>
+    <button class="btn btn-primary" id="peSave">Enregistrer</button>
+    <button class="btn btn-soft" style="margin-top:8px;" data-close="primeEdit">Annuler</button>
+  </div></div>
+</div>
+
+<div class="wrap" id="app">
+
+  <div class="ccn-chip" id="ccnChip" style="display:none;">
+    <span class="ic">⚖️</span><span>Convention active : <b id="ccnName">—</b></span>
+  </div>
+
+  <div class="monthbar">
+    <button id="prevM">‹</button>
+    <div class="lbl" id="monthLbl">—<small>période de saisie</small></div>
+    <button id="nextM">›</button>
+  </div>
+
+  <div class="total">
+    <div class="lbl">Estimation additionnelle · <span id="totMonth">ce mois</span></div>
+    <div class="big" id="totMain">+0 € <small>brut indicatif</small></div>
+    <div class="split">
+      <span>Nuit <b id="totNuit">+0 €</b></span>
+      <span>Astreinte <b id="totAstr">+0 €</b></span>
+      <span>Primes <b id="totPrime">+0 €</b></span>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-tab="nuit">🌙</div>
+    <div class="tab" data-tab="astreinte">📟</div>
+    <div class="tab" data-tab="primes">🎁</div>
+    <div class="tab" data-tab="hist">📊</div>
+  </div>
+
+  <div class="panel show" id="p-nuit">
+    <div class="sec-title">🌙 Heures de nuit</div>
+    <div class="field"><label>Plage de nuit (définie par ta convention)</label>
+      <div class="inline"><input class="ip" id="nStart" value="21:00" style="text-align:center;"><span class="unit">→</span><input class="ip" id="nEnd" value="06:00" style="text-align:center;"></div>
+      <div class="hint">Par défaut 21h–6h (réf. Art. L3122-2). Certaines CCN utilisent 22h–7h.</div></div>
+    <div class="field"><label>Heures de nuit travaillées ce mois</label>
+      <div class="inline"><input class="ip" id="nHours" type="number" inputmode="decimal" value="0"><span class="unit">heures</span></div></div>
+    <div class="toggle" id="nMode">
+      <div class="t on" data-mode="majo">Majoration en %</div>
+      <div class="t" data-mode="repos">Repos compensateur</div></div>
+    <div class="field" id="nMajoField"><label>Taux de majoration de nuit</label>
+      <div class="inline"><input class="ip" id="nRate" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div>
+      <div class="hint">Pas de taux légal national unique — fixé par ta CCN/accord. Couramment 10 % à 100 %.</div></div>
+    <div class="field" id="nReposField" style="display:none;"><label>Taux de repos compensateur</label>
+      <div class="inline"><input class="ip" id="nReposRate" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div>
+      <div class="hint">Ex. 10 % = 6 min de repos par heure de nuit. Affiché en temps, pas en €.</div></div>
+    <div class="field"><label>Ton taux horaire brut de base (pour l'estimation €)</label>
+      <div class="inline"><input class="ip" id="baseRate" type="number" inputmode="decimal" value="0"><span class="unit">€ / h</span></div>
+      <div class="hint">Optionnel — sert à convertir la majoration en euros.</div></div>
+    <div class="res"><div class="l" id="nResLabel">Estimation majoration nuit</div><div class="v" id="nRes">+0 €</div></div>
+    <div class="legal">À titre indicatif. Le statut de « travailleur de nuit » et ses contreparties dépendent de ta convention collective et de ton accord d'entreprise.</div>
+  </div>
+
+  <div class="panel" id="p-astreinte">
+    <div class="sec-title">📟 Astreinte</div>
+    <div class="toggle" id="aMode">
+      <div class="t on" data-mode="heure">Indemnité à l'heure</div>
+      <div class="t" data-mode="forfait">Indemnité au forfait</div></div>
+
+    <div id="aHeureBlock">
+      <div class="field"><label>Temps d'astreinte (joignable, sans intervention)</label>
+        <div class="inline"><input class="ip" id="aHours" type="number" inputmode="decimal" value="0"><span class="unit">heures</span></div>
+        <div class="hint">Période où tu es disponible sans travailler.</div></div>
+      <div class="field"><label>Indemnité d'astreinte</label>
+        <div class="inline"><input class="ip" id="aRate" type="number" inputmode="decimal" value="0"><span class="unit">€ / heure</span></div></div>
+    </div>
+
+    <div id="aForfaitBlock" style="display:none;">
+      <div class="field"><label>Nombre de forfaits ce mois</label>
+        <div class="inline"><input class="ip" id="aForfaitQty" type="number" inputmode="numeric" value="0"><span class="unit">forfaits</span></div>
+        <div class="hint">Ex. nombre de jours ou de semaines d'astreinte.</div></div>
+      <div class="field"><label>Montant d'un forfait</label>
+        <div class="inline"><input class="ip" id="aForfaitAmt" type="number" inputmode="decimal" value="0"><span class="unit">€ / forfait</span></div></div>
+    </div>
+
+    <div class="field"><label>Temps d'intervention réel (déplacement + travail)</label>
+      <div class="inline"><input class="ip" id="aInter" type="number" inputmode="decimal" value="0"><span class="unit">heures</span></div>
+      <div class="hint">L'intervention compte comme temps de travail effectif.</div></div>
+    <div class="field"><label>Taux horaire de l'intervention</label>
+      <div class="inline"><input class="ip" id="aInterRate" type="number" inputmode="decimal" value="0"><span class="unit">€ / h</span></div>
+      <div class="check-row" id="aInterNight"><div class="cb"></div><div>Intervention de nuit (applique aussi la majoration nuit)</div></div>
+      <div class="check-row" id="aInterSun"><div class="cb"></div><div>Intervention le dimanche / jour férié</div></div></div>
+    <div class="field" id="aSunField" style="display:none;"><label>Majoration dimanche / férié de l'intervention</label>
+      <div class="inline"><input class="ip" id="aSunRate" type="number" inputmode="decimal" value="0"><span class="unit">%</span></div></div>
+
+    <div class="subres"><span>Indemnité d'astreinte</span><b id="aSubIndem">+0 €</b></div>
+    <div class="subres"><span>Interventions valorisées</span><b id="aSubInter">+0 €</b></div>
+    <div class="res"><div class="l">Total astreinte ce mois</div><div class="v" id="aRes">+0 €</div></div>
+    <div class="legal">L'intervention pendant l'astreinte peut affecter ton repos quotidien de 11 h — le module M4 (bien-être) en tient compte si tu l'utilises.</div>
+  </div>
+
+  <div class="panel" id="p-primes">
+    <div class="sec-title">🎁 Primes &amp; variables</div>
+    <div class="hint" style="margin-bottom:10px;">Active les primes qui te concernent et saisis leur montant. Tu peux aussi ajouter tes propres primes.</div>
+    <div id="primeList"></div>
+    <div class="addprime"><button id="addPrimeBtn">＋ Ajouter une prime personnalisée</button></div>
+    <div class="subres" style="margin-top:8px;"><span>Primes actives</span><b id="pCount">0</b></div>
+    <div class="res"><div class="l">Total primes ce mois</div><div class="v" id="pRes">+0 €</div></div>
+    <div class="legal">Montants saisis par tes soins. Les indemnités (transport, panier…) peuvent être partiellement exonérées — l'estimation reste en brut indicatif.</div>
+  </div>
+
+  <div class="panel" id="p-hist">
+    <div class="sec-title">📊 Historique mensuel</div>
+    <div id="histList"></div>
+    <div class="legal">Récapitulatif des mois pour lesquels tu as saisi des données. Touche un mois pour l'ouvrir.</div>
+  </div>
+
+  <div class="export-bar">
+    <button class="btn btn-ghost" id="exportPdfBtn">📄 Exporter un récapitulatif (PDF)</button>
+    <div class="twocol">
+      <button class="btn btn-soft" id="exportJsonBtn">💾 Sauvegarder (M7)</button>
+      <button class="btn btn-soft" id="importJsonBtn">📥 Restaurer (M7)</button>
+    </div>
+    <input type="file" id="jsonInput" accept=".json,application/json" style="display:none;">
+  </div>
+
+  <div class="foot">
+    Estimations brutes à titre informatif et de suivi.<br>
+    Seul ton bulletin de paie fait foi. M7 ne constitue pas un avis juridique ni comptable.<br>
+    Données stockées uniquement sur ton appareil.
+  </div>
+</div>
+
+<script>
+(function(){
+  "use strict";
+  var LS={ MONTHS:'M7_MONTHS', SET:'M7_SETTINGS', WELCOME:'M7_WELCOMED' };
+  function get(k,d){ try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;} }
+  function set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+  function getRaw(k){ try{return localStorage.getItem(k);}catch(e){return null;} }
+  function eur(n){ n=Math.round((n||0)*100)/100; return (n>=0?'+':'')+n.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:2})+' €'; }
+  function $(s,r){ return (r||document).querySelector(s); }
+  function $all(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+  function monthKey(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); }
+  function monthLabel(key){ var p=key.split('-'); var dt=new Date(+p[0],+p[1]-1,1);
+    return dt.toLocaleDateString('fr-FR',{month:'long',year:'numeric'}); }
+
+  var DEFAULT_PRIMES=[
+    {id:'panier',name:'Prime panier',desc:'par jour travaillé',type:'jour',amount:0,qty:0,on:false},
+    {id:'transport',name:'Indemnité transport',desc:'mensuelle',type:'mensuel',amount:0,on:false},
+    {id:'dimanche',name:'Majoration dimanche',desc:'par dimanche travaillé',type:'occurrence',amount:0,qty:0,on:false},
+    {id:'ferie',name:'Jour férié travaillé',desc:'par jour férié',type:'occurrence',amount:0,qty:0,on:false},
+    {id:'equipe',name:'Prime d\'équipe / poste',desc:'par poste (3×8, 5×8…)',type:'occurrence',amount:0,qty:0,on:false},
+    {id:'repas',name:'Indemnité repas / déplacement',desc:'par jour ou occurrence',type:'occurrence',amount:0,qty:0,on:false},
+    {id:'coupure',name:'Indemnité de coupure / amplitude',desc:'par jour concerné',type:'occurrence',amount:0,qty:0,on:false},
+    {id:'salissure',name:'Prime de salissure',desc:'mensuelle',type:'mensuel',amount:0,on:false},
+    {id:'habillage',name:'Contrepartie habillage',desc:'mensuelle',type:'mensuel',amount:0,on:false},
+    {id:'anciennete',name:'Prime d\'ancienneté',desc:'mensuelle',type:'mensuel',amount:0,on:false}
+  ];
+  function freshMonth(){
+    return {
+      nuit:{start:'21:00',end:'06:00',hours:0,mode:'majo',rate:0,reposRate:0},
+      astr:{mode:'heure',hours:0,rate:0,fQty:0,fAmt:0,inter:0,interRate:0,night:false,sun:false,sunRate:0},
+      primes:JSON.parse(JSON.stringify(DEFAULT_PRIMES))
+    };
+  }
+
+  var settings=get(LS.SET,{baseRate:0});
+  var months=get(LS.MONTHS,{});
+  var curKey=monthKey(new Date());
+  function curMonth(){ if(!months[curKey]) months[curKey]=freshMonth(); return months[curKey]; }
+  function saveAll(){ set(LS.MONTHS,months); set(LS.SET,settings); }
+
+  (function(){
+    var nom=getRaw('CCN_NOM'), idcc=getRaw('CCN_IDCC');
+    function clean(s){ if(!s)return ''; s=String(s).trim(); if(s.charAt(0)==='"'){try{return JSON.parse(s);}catch(e){}} return s; }
+    nom=clean(nom); idcc=clean(idcc);
+    if(nom){ $('#ccnChip').style.display='flex'; $('#ccnName').textContent=nom+(idcc?(' · IDCC '+idcc):''); }
+  })();
+
+  var wizard=$('#wizard'),wStep=0,wMax=5;
+  function renderDots(){var c=$('#wdots');c.innerHTML='';for(var i=0;i<wMax;i++){var d=document.createElement('div');d.className='d'+(i===wStep?' on':'');c.appendChild(d);}}
+  function showStep(n){wStep=n;$all('.wstep').forEach(function(s){s.classList.toggle('show',+s.dataset.step===n);});renderDots();
+    $('#wNext').textContent=(n===wMax-1)?'Commencer':'Continuer';$('#wSkip').style.display=(n===wMax-1)?'none':'block';}
+  function openWizard(){wizard.classList.add('show');showStep(0);}
+  function closeWizard(){wizard.classList.remove('show');set(LS.WELCOME,1);}
+  $('#wNext').addEventListener('click',function(){if(wStep<wMax-1)showStep(wStep+1);else closeWizard();});
+  $('#wSkip').addEventListener('click',closeWizard);
+
+  $('#helpBtn').addEventListener('click',function(){$('#help').classList.add('show');});
+  $('#resetBtn').addEventListener('click',function(){$('#resetOv').classList.add('show');});
+  $all('[data-close]').forEach(function(b){b.addEventListener('click',function(){$('#'+b.dataset.close).classList.remove('show');});});
+  $('#reReplay').addEventListener('click',function(){$('#resetOv').classList.remove('show');openWizard();});
+  $('#reClearMonth').addEventListener('click',function(){
+    if(confirm('Effacer toutes les saisies du mois « '+monthLabel(curKey)+' » ?')){
+      delete months[curKey]; saveAll(); $('#resetOv').classList.remove('show'); bindAll(); recalc();
+    }});
+  $('#reClearAll').addEventListener('click',function(){
+    if(confirm('Réinitialiser TOUS les mois de M7 ? Cette action est définitive.')){
+      months={}; settings={baseRate:0}; saveAll(); $('#resetOv').classList.remove('show'); bindAll(); recalc();
+    }});
+
+  $all('.tab').forEach(function(t){t.addEventListener('click',function(){
+    $all('.tab').forEach(function(x){x.classList.remove('active');});
+    $all('.panel').forEach(function(x){x.classList.remove('show');});
+    t.classList.add('active'); $('#p-'+t.dataset.tab).classList.add('show');
+    if(t.dataset.tab==='hist') renderHistory();
+  });});
+
+  function shiftMonth(delta){ var p=curKey.split('-'); var d=new Date(+p[0],+p[1]-1+delta,1); curKey=monthKey(d); bindAll(); recalc(); }
+  $('#prevM').addEventListener('click',function(){shiftMonth(-1);});
+  $('#nextM').addEventListener('click',function(){shiftMonth(1);});
+
+  function bindAll(){
+    var m=curMonth();
+    $('#monthLbl').innerHTML=monthLabel(curKey)+'<small>période de saisie</small>';
+    $('#totMonth').textContent=monthLabel(curKey);
+    $('#nStart').value=m.nuit.start; $('#nEnd').value=m.nuit.end;
+    $('#nHours').value=m.nuit.hours||0; $('#nRate').value=m.nuit.rate||0; $('#nReposRate').value=m.nuit.reposRate||0;
+    $('#baseRate').value=settings.baseRate||0; setNightMode(m.nuit.mode||'majo');
+    setAstrMode(m.astr.mode||'heure');
+    $('#aHours').value=m.astr.hours||0; $('#aRate').value=m.astr.rate||0;
+    $('#aForfaitQty').value=m.astr.fQty||0; $('#aForfaitAmt').value=m.astr.fAmt||0;
+    $('#aInter').value=m.astr.inter||0; $('#aInterRate').value=m.astr.interRate||0; $('#aSunRate').value=m.astr.sunRate||0;
+    setCheck('#aInterNight',m.astr.night); setCheck('#aInterSun',m.astr.sun);
+    $('#aSunField').style.display=m.astr.sun?'block':'none';
+    renderPrimes();
+  }
+  function setNightMode(mode){
+    $all('#nMode .t').forEach(function(b){b.classList.toggle('on',b.dataset.mode===mode);});
+    $('#nMajoField').style.display=mode==='majo'?'block':'none';
+    $('#nReposField').style.display=mode==='repos'?'block':'none';
+  }
+  function setAstrMode(mode){
+    $all('#aMode .t').forEach(function(b){b.classList.toggle('on',b.dataset.mode===mode);});
+    $('#aHeureBlock').style.display=mode==='heure'?'block':'none';
+    $('#aForfaitBlock').style.display=mode==='forfait'?'block':'none';
+  }
+  function setCheck(sel,on){ $(sel).classList.toggle('on',!!on); $(sel+' .cb').textContent=on?'✓':''; }
+
+  function wireInputs(){
+    ['nStart','nEnd','nHours','nRate','nReposRate','baseRate'].forEach(function(id){
+      $('#'+id).addEventListener('input',function(){
+        var m=curMonth();
+        m.nuit.start=$('#nStart').value; m.nuit.end=$('#nEnd').value;
+        m.nuit.hours=parseFloat($('#nHours').value)||0;
+        m.nuit.rate=parseFloat($('#nRate').value)||0;
+        m.nuit.reposRate=parseFloat($('#nReposRate').value)||0;
+        settings.baseRate=parseFloat($('#baseRate').value)||0;
+        saveAll(); recalc();
+      });
+    });
+    $all('#nMode .t').forEach(function(b){b.addEventListener('click',function(){curMonth().nuit.mode=b.dataset.mode;setNightMode(b.dataset.mode);saveAll();recalc();});});
+    $all('#aMode .t').forEach(function(b){b.addEventListener('click',function(){curMonth().astr.mode=b.dataset.mode;setAstrMode(b.dataset.mode);saveAll();recalc();});});
+    ['aHours','aRate','aForfaitQty','aForfaitAmt','aInter','aInterRate','aSunRate'].forEach(function(id){
+      $('#'+id).addEventListener('input',function(){
+        var m=curMonth();
+        m.astr.hours=parseFloat($('#aHours').value)||0;
+        m.astr.rate=parseFloat($('#aRate').value)||0;
+        m.astr.fQty=parseFloat($('#aForfaitQty').value)||0;
+        m.astr.fAmt=parseFloat($('#aForfaitAmt').value)||0;
+        m.astr.inter=parseFloat($('#aInter').value)||0;
+        m.astr.interRate=parseFloat($('#aInterRate').value)||0;
+        m.astr.sunRate=parseFloat($('#aSunRate').value)||0;
+        saveAll(); recalc();
+      });
+    });
+    $('#aInterNight').addEventListener('click',function(){var m=curMonth();m.astr.night=!m.astr.night;setCheck('#aInterNight',m.astr.night);saveAll();recalc();});
+    $('#aInterSun').addEventListener('click',function(){var m=curMonth();m.astr.sun=!m.astr.sun;setCheck('#aInterSun',m.astr.sun);$('#aSunField').style.display=m.astr.sun?'block':'none';saveAll();recalc();});
+  }
+
+  function calcNuit(){
+    var m=curMonth(), h=m.nuit.hours||0, base=settings.baseRate||0;
+    if(m.nuit.mode==='repos'){
+      var minutes=h*(m.nuit.reposRate||0)/100*60;
+      $('#nResLabel').textContent='Repos compensateur estimé';
+      $('#nRes').textContent=Math.round(minutes).toLocaleString('fr-FR')+' min';
+      return 0;
+    }
+    $('#nResLabel').textContent='Estimation majoration nuit';
+    var v=h*base*(m.nuit.rate||0)/100; $('#nRes').textContent=eur(v); return v;
+  }
+  function calcAstr(){
+    var m=curMonth();
+    var indem = m.astr.mode==='forfait' ? (m.astr.fQty||0)*(m.astr.fAmt||0) : (m.astr.hours||0)*(m.astr.rate||0);
+    var interH=m.astr.inter||0, interRate=m.astr.interRate||0, interBase=interH*interRate, extra=0;
+    if(m.astr.night) extra += interH*(settings.baseRate||0)*(m.nuit.rate||0)/100;
+    if(m.astr.sun) extra += interBase*(m.astr.sunRate||0)/100;
+    var interTotal=interBase+extra;
+    $('#aSubIndem').textContent=eur(indem); $('#aSubInter').textContent=eur(interTotal);
+    var tot=indem+interTotal; $('#aRes').textContent=eur(tot); return tot;
+  }
+  function primeValue(p){
+    if(p.type==='mensuel') return p.amount||0;
+    if(p.type==='jour'||p.type==='occurrence') return (p.amount||0)*(p.qty||0);
+    return 0;
+  }
+  function calcPrimes(){
+    var m=curMonth(), v=0, count=0;
+    m.primes.forEach(function(p){ if(p.on){count++; if(p.type!=='pourcent') v+=primeValue(p);} });
+    $('#pRes').textContent=eur(v); $('#pCount').textContent=count; return v;
+  }
+  function recalc(){
+    var n=calcNuit(),a=calcAstr(),p=calcPrimes();
+    $('#totNuit').textContent=eur(n); $('#totAstr').textContent=eur(a); $('#totPrime').textContent=eur(p);
+    $('#totMain').innerHTML=eur(n+a+p)+' <small>brut indicatif</small>';
+  }
+  function monthTotal(key){
+    var m=months[key]; if(!m) return 0;
+    var base=settings.baseRate||0;
+    var n = m.nuit.mode==='repos' ? 0 : (m.nuit.hours||0)*base*(m.nuit.rate||0)/100;
+    var indem = m.astr.mode==='forfait' ? (m.astr.fQty||0)*(m.astr.fAmt||0) : (m.astr.hours||0)*(m.astr.rate||0);
+    var interH=m.astr.inter||0, interBase=interH*(m.astr.interRate||0), extra=0;
+    if(m.astr.night) extra+=interH*base*(m.nuit.rate||0)/100;
+    if(m.astr.sun) extra+=interBase*(m.astr.sunRate||0)/100;
+    var a=indem+interBase+extra;
+    var p=0; m.primes.forEach(function(pr){ if(pr.on&&pr.type!=='pourcent') p+=primeValue(pr); });
+    return n+a+p;
+  }
+
+  function renderPrimes(){
+    var m=curMonth(), c=$('#primeList'); c.innerHTML='';
+    m.primes.forEach(function(p,idx){
+      var row=document.createElement('div');
+      row.className='prime'+(p.on?' on':' off');
+      var custom=DEFAULT_PRIMES.findIndex(function(d){return d.id===p.id;})===-1;
+      var label = p.type==='pourcent' ? ('+'+(p.amount||0)+' %') : ((!p.on||(!p.amount&&!p.qty))?'—':eur(primeValue(p)));
+      row.innerHTML='<div class="chk">'+(p.on?'✓':'')+'</div><div class="nm">'+p.name+'<small>'+(p.desc||'')+'</small></div><div class="amt">'+label+'</div>'+(custom?'<button class="del">🗑</button>':'');
+      row.querySelector('.chk').addEventListener('click',function(e){e.stopPropagation();p.on=!p.on;if(p.on&&!p.amount){openPrimeEdit(idx);}else{saveAll();renderPrimes();recalc();}});
+      row.querySelector('.nm').addEventListener('click',function(){openPrimeEdit(idx);});
+      row.querySelector('.amt').addEventListener('click',function(){openPrimeEdit(idx);});
+      var del=row.querySelector('.del');
+      if(del)del.addEventListener('click',function(e){e.stopPropagation();if(confirm('Supprimer « '+p.name+' » ?')){m.primes.splice(idx,1);saveAll();renderPrimes();recalc();}});
+      c.appendChild(row);
+    });
+  }
+  var peIdx=-1;
+  function openPrimeEdit(idx){
+    peIdx=idx;
+    var p = idx>=0 ? curMonth().primes[idx] : {name:'',amount:0,type:'mensuel',qty:0};
+    $('#peTitle').textContent=idx>=0?'Modifier la prime':'Ajouter une prime';
+    $('#peName').value=p.name||''; $('#peAmount').value=p.amount||''; $('#peType').value=p.type||'mensuel'; $('#peQty').value=p.qty||'';
+    syncPeType(); $('#primeEdit').classList.add('show');
+  }
+  function syncPeType(){
+    var t=$('#peType').value, needQty=(t==='jour'||t==='occurrence');
+    $('#peQtyRow').style.display=needQty?'block':'none';
+    $('#peUnitLabel').textContent=(t==='pourcent')?'%':'€';
+    $('#peAmtLabel').textContent=(t==='pourcent')?'Taux (information)':'Montant';
+  }
+  $('#peType').addEventListener('change',syncPeType);
+  $('#peSave').addEventListener('click',function(){
+    var name=$('#peName').value.trim(); if(!name){alert('Donne un nom à la prime.');return;}
+    var m=curMonth();
+    var data={name:name,amount:parseFloat($('#peAmount').value)||0,type:$('#peType').value,qty:parseFloat($('#peQty').value)||0,on:true};
+    if(peIdx>=0){var ex=m.primes[peIdx];ex.name=data.name;ex.amount=data.amount;ex.type=data.type;ex.qty=data.qty;ex.on=true;if(!ex.desc)ex.desc='personnalisée';}
+    else{data.id='custom_'+Date.now();data.desc='personnalisée';m.primes.push(data);}
+    saveAll(); $('#primeEdit').classList.remove('show'); renderPrimes(); recalc();
+  });
+  $('#addPrimeBtn').addEventListener('click',function(){openPrimeEdit(-1);});
+
+  function renderHistory(){
+    var c=$('#histList'), keys=Object.keys(months).sort().reverse();
+    c.innerHTML='';
+    var shown=keys.filter(function(k){return monthTotal(k)>0;});
+    if(shown.length===0){ c.innerHTML='<div class="history-empty">Aucune saisie chiffrée pour le moment.<br>Renseigne tes données mois par mois.</div>'; return; }
+    shown.forEach(function(k){
+      var row=document.createElement('div'); row.className='hist-row';
+      row.innerHTML='<span class="hm">'+monthLabel(k)+'</span><span class="hv">'+eur(monthTotal(k))+'</span>';
+      row.addEventListener('click',function(){ curKey=k; bindAll(); recalc();
+        $all('.tab').forEach(function(x){x.classList.remove('active');});
+        $all('.panel').forEach(function(x){x.classList.remove('show');});
+        $('.tab[data-tab="nuit"]').classList.add('active'); $('#p-nuit').classList.add('show');
+        window.scrollTo({top:0,behavior:'smooth'});
+      });
+      c.appendChild(row);
+    });
+  }
+
+  $('#exportJsonBtn').addEventListener('click',function(){
+    try{
+      var payload={app:'SimulHeures',module:'M7',version:2,date:new Date().toISOString(),settings:settings,months:months};
+      var blob=new Blob([JSON.stringify(payload,null,2)],{type:'application/json'});
+      var url=URL.createObjectURL(blob), a=document.createElement('a');
+      var d=new Date(), stamp=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      a.href=url; a.download='M7-sauvegarde-'+stamp+'.json'; document.body.appendChild(a); a.click(); document.body.removeChild(a);
+      setTimeout(function(){URL.revokeObjectURL(url);},1000);
+    }catch(e){alert('Erreur export : '+e.message);}
+  });
+  $('#importJsonBtn').addEventListener('click',function(){$('#jsonInput').click();});
+  $('#jsonInput').addEventListener('change',function(ev){
+    var f=ev.target.files&&ev.target.files[0]; if(!f)return;
+    var r=new FileReader();
+    r.onload=function(e){
+      try{
+        var d=JSON.parse(e.target.result);
+        if(d.module!=='M7'||!d.months){alert('Fichier invalide : ce n\'est pas une sauvegarde M7.');ev.target.value='';return;}
+        if(!confirm('Restaurer cette sauvegarde M7 ?\nDate : '+(d.date?new Date(d.date).toLocaleDateString('fr-FR'):'?')+'\nMois : '+Object.keys(d.months).length+'\n\nTes données M7 actuelles seront remplacées.')){ev.target.value='';return;}
+        months=d.months||{}; settings=d.settings||{baseRate:0}; saveAll();
+        curKey=monthKey(new Date()); bindAll(); recalc(); alert('✅ Sauvegarde M7 restaurée.');
+      }catch(err){alert('Impossible de lire le fichier : '+err.message);}
+      ev.target.value='';
+    };
+    r.readAsText(f);
+  });
+
+  $('#exportPdfBtn').addEventListener('click',function(){
+    if(!window.jspdf){alert('Génération PDF indisponible. Réessaie dans un instant.');return;}
+    try{
+      var jsPDF=window.jspdf.jsPDF, doc=new jsPDF({unit:'mm',format:'a4'}), y=18, m=curMonth();
+      doc.setFontSize(16);doc.setTextColor(20,40,70);doc.text('M7 — Nuit, Astreinte & Variables',14,y);y+=6;
+      doc.setFontSize(9);doc.setTextColor(120);doc.text('Recapitulatif indicatif — '+monthLabel(curKey),14,y);y+=10;
+      var n=calcNuit(),a=calcAstr(),p=calcPrimes();
+      function line(l,v){doc.text(l,14,y);doc.text(v,196,y,{align:'right'});y+=7;}
+      doc.setFontSize(11);doc.setTextColor(30);doc.setFont(undefined,'bold');
+      line('Heures de nuit', m.nuit.mode==='repos'?$('#nRes').textContent:eur(n));doc.setFont(undefined,'normal');
+      doc.setFontSize(9);doc.setTextColor(120);line('  '+(m.nuit.hours||0)+' h · '+(m.nuit.mode==='repos'?(m.nuit.reposRate||0)+' % repos':(m.nuit.rate||0)+' %'),'');
+      doc.setFontSize(11);doc.setTextColor(30);doc.setFont(undefined,'bold');line('Astreinte + interventions',eur(a));doc.setFont(undefined,'normal');
+      doc.setFontSize(9);doc.setTextColor(120);
+      line('  Indemnite '+(m.astr.mode==='forfait'?(m.astr.fQty||0)+' forfait(s)':(m.astr.hours||0)+' h'),'');
+      line('  Intervention '+(m.astr.inter||0)+' h','');
+      doc.setFontSize(11);doc.setTextColor(30);doc.setFont(undefined,'bold');line('Primes & variables',eur(p));doc.setFont(undefined,'normal');
+      doc.setFontSize(9);doc.setTextColor(120);
+      m.primes.forEach(function(pr){if(pr.on&&pr.type!=='pourcent')line('  '+pr.name,eur(primeValue(pr)));});
+      y+=4;doc.setDrawColor(200);doc.line(14,y,196,y);y+=8;
+      doc.setFontSize(13);doc.setTextColor(20,40,70);doc.setFont(undefined,'bold');line('TOTAL additionnel estime',eur(n+a+p));doc.setFont(undefined,'normal');
+      y+=6;doc.setFontSize(7.5);doc.setTextColor(140);
+      var disc='Document indicatif et personnel. Estimations en brut. Seul le bulletin de paie fait foi. Ne constitue pas un avis juridique ni comptable. Les heures supplementaires sont decomptees separement (modules M1/M2).';
+      doc.text(doc.splitTextToSize(disc,182),14,y);
+      var dd=new Date(),stamp=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0')+'-'+String(dd.getDate()).padStart(2,'0');
+      doc.save('M7-'+curKey+'-'+stamp+'.pdf');
+    }catch(e){alert('Erreur PDF : '+e.message);}
+  });
+
+  wireInputs(); bindAll(); recalc();
+  if(!get(LS.WELCOME,0)){ openWizard(); }
+})();
+</script>
+</body>
+</html>
