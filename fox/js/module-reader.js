@@ -231,55 +231,6 @@ class ModuleReaderPro extends ModuleReader {
   }
 
   // \u2500\u2500 Chargement M1 pour une ann\u00E9e donn\u00E9e \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // ── Résolution date d'entrée pour prorata contingent (Art. D3121-24) ─────
-  // Priorité : M2 entryDate UI > M1 ENTRY_DATE_YYYY > auto-détect M1 > auto-détect M2
-  _resolveEntryDate(year) {
-    const y = parseInt(year);
-    try {
-      const s = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_SETTINGS') || '{}');
-      const d = s['entryDate_' + year];
-      if (d && new Date(d).getFullYear() === y) return d;
-    } catch(e) {}
-    try {
-      const d = localStorage.getItem('ENTRY_DATE_' + year);
-      if (d && new Date(d).getFullYear() === y) return d;
-    } catch(e) {}
-    try {
-      const m1 = JSON.parse(localStorage.getItem('DATA_REPORT_' + year) || '{}');
-      const dates = Object.keys(m1).filter(k =>
-        /^\d{4}-\d{2}-\d{2}$/.test(k) && k.startsWith(String(year)) &&
-        ((m1[k].extra || 0) + (m1[k].recup || 0)) > 0
-      ).sort();
-      if (dates.length) return dates[0].substring(0, 7) + '-01';
-    } catch(e) {}
-    try {
-      const m2 = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + year) || '{}');
-      const dates = [];
-      Object.entries(m2).forEach(([mk, mo]) => {
-        if (!/^\d{4}-\d{2}$/.test(mk) || !mk.startsWith(String(year))) return;
-        Object.entries(mo.days || {}).forEach(([d, h]) => {
-          if ((parseFloat(h) || 0) > 0) dates.push(mk + '-' + String(d).padStart(2, '0'));
-        });
-      });
-      dates.sort();
-      if (dates.length) return dates[0].substring(0, 7) + '-01';
-    } catch(e) {}
-    return null;
-  }
-
-  // ── Prorata contingent ───────────────────────────────────────────────────
-  _applyProrata(fullLimit, year, entryDateStr) {
-    if (!entryDateStr) return fullLimit;
-    const e = new Date(entryDateStr);
-    if (isNaN(e.getTime()) || e.getFullYear() !== parseInt(year)) return fullLimit;
-    const end  = new Date(parseInt(year), 11, 31);
-    const days = (end - new Date(parseInt(year), 0, 1)) / 86400000 + 1;
-    const rem  = (end - e) / 86400000 + 1;
-    const f    = rem / days;
-    if (f >= 0.98) return fullLimit;
-    return Math.max(1, Math.round(fullLimit * f));
-  }
-
   loadModule1ForYear(year) {
     try {
       const rawData    = JSON.parse(localStorage.getItem(`DATA_REPORT_${year}`)    || '{}');
@@ -468,8 +419,7 @@ class ModuleReaderPro extends ModuleReader {
       const prefix   = 'CA_HS_TRACKER_V1';
       const yearData = JSON.parse(localStorage.getItem(prefix + '_DATA_' + year) || '{}');
       const settings = JSON.parse(localStorage.getItem(prefix + '_SETTINGS') || '{}');
-      const _full = settings.contingentAnnuel || 220;
-      const contingentMax = this._applyProrata(_full, year, this._resolveEntryDate(year));
+      const contingentMax = settings.contingentAnnuel || 220;
 
       // Detecter le format : format reel M2 avec days:{} ou ancien format pre-calcule
       const hasDays = Object.values(yearData).some(
@@ -860,7 +810,7 @@ class ModuleReaderPro extends ModuleReader {
       netOvertime : totalExtra,
       weekCount,
       monthCount,
-      contingentMax         : this._applyProrata(rules.contingent, this.year, this._resolveEntryDate(this.year)),
+      contingentMax         : rules.contingent,
       contingentUsedCurrent : totalPlus25 + totalPlus10 + totalPlus50,
       perYear,
     };

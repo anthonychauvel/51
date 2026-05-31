@@ -752,11 +752,11 @@ function displayModule2() {
                 <strong>${(m2?.totalHours || 0).toFixed(1)}h</strong>
             </div>
             <div class="contingent-bar">
-                <div class="contingent-label">Contingent: ${(m2?.totalHours || 0).toFixed(1)}h / ${m2?.contingentMax || 220}h${m2?.contingentMax && m2.contingentMax !== 220 ? ' (prorata)' : ''}</div>
+                <div class="contingent-label">Contingent: ${(m2?.contingent?.used || 0).toFixed(1)}h / ${m2?.contingent?.total || 220}h</div>
                 <div class="progress-bar">
-                    <div class="progress-fill" style="width: ${m2?.contingentPercent || 0}%; background: ${(m2?.contingentPercent || 0) > 100 ? 'var(--danger)' : 'var(--primary)'}"></div>
+                    <div class="progress-fill" style="width: ${m2?.contingent?.percentage || 0}%; background: ${(m2?.contingent?.percentage || 0) > 100 ? 'var(--danger)' : 'var(--primary)'}"></div>
                 </div>
-                <div class="contingent-remaining">${Math.max(0, (m2?.contingentMax || 220) - (m2?.totalHours || 0)).toFixed(1)}h restantes</div>
+                <div class="contingent-remaining">${(m2.contingent?.remaining || 0).toFixed(1)}h restantes</div>
             </div>
             <div class="stat-row">
                 <span>Moyenne mensuelle:</span>

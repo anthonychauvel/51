@@ -65,20 +65,13 @@ const FOX_LEGAL_LIMITS = {
   DAILY_MAX_DERO        : 12,    // Dérogation accord collectif
   REST_DAILY_MIN        : 11,    // Art. L3131-1 : repos quotidien
   REST_WEEKLY_MIN       : 35,    // Art. L3132-2 : repos hebdomadaire
-  get CONTINGENT_ANNUEL() {      // Dynamique selon CCN active + prorata date d'entrée
-    let full = 220;
+  get CONTINGENT_ANNUEL() {      // Dynamique selon CCN active
     if (typeof CCN_API !== 'undefined') {
       const idcc = parseInt((typeof localStorage !== 'undefined' && localStorage.getItem('CCN_IDCC')) || '0');
       const r = CCN_API.getGroupeForCCN(idcc);
-      if (r) full = r.contingent;
+      if (r) return r.contingent;
     }
-    try {
-      if (typeof moduleReader !== 'undefined' && moduleReader._resolveEntryDate) {
-        const year = new Date().getFullYear();
-        return moduleReader._applyProrata(full, year, moduleReader._resolveEntryDate(year));
-      }
-    } catch(e) {}
-    return full;
+    return 220;
   },
   NIGHT_THRESHOLD_START : 21,    // Début travail de nuit (heure)
   NIGHT_THRESHOLD_END   : 6,     // Fin travail de nuit (heure)
