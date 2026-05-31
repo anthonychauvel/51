@@ -1147,6 +1147,173 @@
 
 <button class="info-btn" onclick="openSharePopup()" style="margin-top:-8px;">📲 Partager l'application</button>
 
+<button class="info-btn" onclick="openBackupPopup()" style="margin-top:-8px;">💾 Sauvegarde générale</button>
+
+<!-- ══ POPUP SAUVEGARDE / EXPORT-IMPORT ════════════════════════ -->
+<div id="backup-popup-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;"
+  onclick="closeBackupPopup()">
+  <div onclick="event.stopPropagation()" style="
+    background:#fff;border-radius:20px;max-width:440px;width:100%;
+    max-height:90vh;overflow-y:auto;box-shadow:0 16px 56px rgba(0,0,0,0.35);">
+
+    <div style="background:linear-gradient(135deg,#4FB3C2,#2196a6);padding:20px;position:relative;">
+      <div style="font-size:20px;font-weight:700;color:#fff;">💾 Sauvegarde générale</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;">Sauvegardez ou restaurez toutes vos données</div>
+      <button onclick="closeBackupPopup()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
+    </div>
+
+    <div style="padding:20px;">
+
+      <!-- Info -->
+      <div style="background:#f0f8ff;border-left:3px solid #4FB3C2;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#1a1a2e;line-height:1.5;">
+        Vos données restent <b>100 % sur votre appareil</b>. Cette sauvegarde crée un fichier que vous gardez vous-même — pratique pour changer de téléphone ou éviter toute perte. Aucune donnée n'est envoyée sur internet.
+      </div>
+
+      <!-- Stats données -->
+      <div id="backup-stats" style="text-align:center;font-size:12px;color:#666;margin-bottom:16px;"></div>
+
+      <!-- Export -->
+      <button onclick="exportAllData()" style="
+        width:100%;padding:14px;border:none;border-radius:12px;
+        background:linear-gradient(135deg,#4FB3C2,#2196a6);color:#fff;
+        font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
+        📤 Exporter toutes mes données
+      </button>
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:18px;">Télécharge un fichier <b>.json</b> contenant l'ensemble de vos modules</div>
+
+      <hr style="border:0;border-top:1px solid #eee;margin:0 0 18px;">
+
+      <!-- Import -->
+      <button onclick="document.getElementById('backup-import-input').click()" style="
+        width:100%;padding:14px;border:2px solid #4FB3C2;border-radius:12px;
+        background:#fff;color:#2196a6;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
+        📥 Restaurer une sauvegarde
+      </button>
+      <input type="file" id="backup-import-input" accept=".json,application/json" style="display:none;" onchange="importAllData(event)">
+      <div style="font-size:11px;color:#c0392b;text-align:center;margin-bottom:6px;">⚠️ La restauration remplace vos données actuelles par celles du fichier</div>
+
+      <div id="backup-message" style="display:none;margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;"></div>
+
+      <button onclick="closeBackupPopup()" style="
+        width:100%;padding:11px;border:1px solid #ddd;border-radius:12px;
+        background:#f5f5f5;color:#555;font-size:14px;font-weight:600;cursor:pointer;margin-top:16px;">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openBackupPopup() {
+  const o = document.getElementById('backup-popup-overlay');
+  if (!o) return;
+  // Compter les clés et la taille
+  try {
+    let count = 0, bytes = 0;
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      count++;
+      bytes += (k.length + (localStorage.getItem(k) || '').length);
+    }
+    const kb = (bytes / 1024).toFixed(1);
+    const el = document.getElementById('backup-stats');
+    if (el) el.innerHTML = '<b>' + count + '</b> entrées sauvegardées · environ <b>' + kb + ' Ko</b>';
+  } catch(e) {}
+  const msg = document.getElementById('backup-message');
+  if (msg) msg.style.display = 'none';
+  o.style.display = 'flex';
+  if (typeof lockScroll === 'function') lockScroll();
+  else document.body.style.overflow = 'hidden';
+}
+function closeBackupPopup() {
+  const o = document.getElementById('backup-popup-overlay');
+  if (!o) return;
+  o.style.display = 'none';
+  if (typeof unlockScroll === 'function') unlockScroll();
+  else document.body.style.overflow = '';
+}
+function backupShowMessage(text, ok) {
+  const m = document.getElementById('backup-message');
+  if (!m) return;
+  m.style.display = 'block';
+  m.style.background = ok ? '#e8f5e9' : '#fdecea';
+  m.style.color = ok ? '#2e7d32' : '#c0392b';
+  m.innerHTML = text;
+}
+function exportAllData() {
+  try {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      data[k] = localStorage.getItem(k);
+    }
+    const payload = {
+      app: 'SimulHeures',
+      type: 'backup-complet',
+      version: 1,
+      date: new Date().toISOString(),
+      nbCles: Object.keys(data).length,
+      data: data
+    };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    const d = new Date();
+    const stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+    a.href = url;
+    a.download = 'simulheures-sauvegarde-' + stamp + '.json';
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+    backupShowMessage('✅ Sauvegarde téléchargée (' + payload.nbCles + ' entrées). Conservez ce fichier en lieu sûr.', true);
+  } catch(e) {
+    backupShowMessage('❌ Erreur lors de l\'export : ' + e.message, false);
+  }
+}
+function importAllData(event) {
+  const file = event.target.files && event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = function(e) {
+    try {
+      const parsed = JSON.parse(e.target.result);
+      const data = parsed && parsed.data ? parsed.data : null;
+      if (!data || typeof data !== 'object') {
+        backupShowMessage('❌ Fichier invalide : ce n\'est pas une sauvegarde SimulHeures.', false);
+        event.target.value = '';
+        return;
+      }
+      const nb = Object.keys(data).length;
+      const dateTxt = parsed.date ? new Date(parsed.date).toLocaleDateString('fr-FR') : 'inconnue';
+      if (!confirm('Restaurer cette sauvegarde ?\n\nDate : ' + dateTxt + '\nEntrées : ' + nb + '\n\n⚠️ Vos données actuelles seront remplacées. L\'application va se recharger.')) {
+        event.target.value = '';
+        return;
+      }
+      localStorage.clear();
+      for (const k in data) {
+        if (Object.prototype.hasOwnProperty.call(data, k)) {
+          localStorage.setItem(k, data[k]);
+        }
+      }
+      backupShowMessage('✅ Sauvegarde restaurée. Rechargement…', true);
+      setTimeout(function(){ location.reload(); }, 1200);
+    } catch(err) {
+      backupShowMessage('❌ Impossible de lire le fichier : ' + err.message, false);
+      event.target.value = '';
+    }
+  };
+  reader.onerror = function() {
+    backupShowMessage('❌ Erreur de lecture du fichier.', false);
+    event.target.value = '';
+  };
+  reader.readAsText(file);
+}
+</script>
+
 <!-- ══ POPUP PARTAGE ══════════════════════════════════════════ -->
 <div id="share-popup-overlay" style="
   display:none;position:fixed;inset:0;z-index:9999;
