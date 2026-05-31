@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v8.5.0"; // Cache First + skip cross-origin (fix CORS fonts)
+const CACHE_NAME = "heuressup-cache-v8.6.0"; // + Module 7 (Mimizuku — nuit/astreinte/primes)
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -103,7 +103,11 @@ const FILES_TO_CACHE = [
   "./images/foxpredit.jpg",
   // === Lumina — Grilles Salariales CCN 2026 ===
   "./GrillePaye/index.html",
-  "./GrillePaye/ccn-data.json"
+  "./GrillePaye/ccn-data.json",
+  // === Module 7 — Nuit, Astreinte & Primes (Mimizuku) ===
+  "./module7/index.html",
+  "./module7/Mimizuku.png",
+  "./module7/mimizuku-menu.jpg"
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────
