@@ -642,9 +642,13 @@ select.ip{appearance:none;-webkit-appearance:none;background-image:url("data:ima
     return {nuit:n,astr:a,primesJour:p,primesFixe:pf,repos:reposMin,total:n+a+p+pf}; }
   function monthTotal(key){ return monthAgg(key).total; }
 
+  function fmtRepos(min){ min=Math.round(min||0); if(min<=0)return ''; var h=Math.floor(min/60),m=min%60;
+    if(h&&m)return h+'h'+String(m).padStart(2,'0'); if(h)return h+'h'; return m+' min'; }
   function recalc(){ var g=monthAgg(curKey);
-    $('#totNuit').textContent=eur(g.nuit); $('#totAstr').textContent=eur(g.astr); $('#totPrime').textContent=eur(g.primesJour+g.primesFixe);
-    $('#totMain').innerHTML=eur(g.total)+'<small> brut indicatif</small>'; popHero();
+    var repTxt=fmtRepos(g.repos);
+    $('#totNuit').innerHTML=eur(g.nuit)+(repTxt?('<div style="font-size:10px;color:var(--aurora);font-weight:600;margin-top:1px;">😴 '+repTxt+'</div>'):'');
+    $('#totAstr').textContent=eur(g.astr); $('#totPrime').textContent=eur(g.primesJour+g.primesFixe);
+    $('#totMain').innerHTML=eur(g.total)+'<small> brut indicatif</small>'+(repTxt?('<div style="font-family:\'Outfit\';font-size:12px;font-weight:600;color:var(--aurora);-webkit-text-fill-color:var(--aurora);margin-top:2px;">+ '+repTxt+' de repos compensateur</div>'):''); popHero();
     $('#pRes').textContent=eur(g.primesFixe); var cnt=0; fixes.forEach(function(f){if(f.on)cnt++;}); $('#pCount').textContent=cnt;
   }
 
