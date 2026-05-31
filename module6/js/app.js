@@ -248,12 +248,10 @@ const M6_Router = {
         ` : step===1 ? `
           <div style="font-family:var(--font-display);font-size:1.5rem;font-weight:600;color:var(--charbon);margin-bottom:8px">Votre exercice</div>
           <p style="font-size:0.82rem;color:var(--pierre);margin-bottom:20px">Définissez la période de suivi (peut chevaucher deux années civiles).</p>
-          ${(existing.dateDebutExercice||existing.nomCadre||existing.nom)?`<div class="m6-alert info" style="margin-bottom:12px;font-size:0.78rem"><span>✏️</span><div>Vos paramètres actuels sont pré-remplis. Modifiez ce qui change.</div></div>`:''}
           <div class="m6-card"><div class="m6-card-body">
             <div class="m6-field"><label>Début de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 1er janvier)</small></label><input type="date" id="wiz-debut" value="${existing.dateDebutExercice||''}" placeholder="${new Date().getFullYear()}-01-01" style="font-size:16px"></div>
             <div class="m6-field"><label>Fin de l'exercice <small style="color:var(--pierre);font-weight:400">(laisser vide = 31 décembre)</small></label><input type="date" id="wiz-fin" value="${existing.dateFinExercice||''}" placeholder="${new Date().getFullYear()}-12-31" style="font-size:16px"></div>
             <div class="m6-field"><label>Votre nom (pour les exports PDF)</label><input type="text" id="wiz-nom" value="${((existing.nomCadre||existing.nom)||'').replace(/"/g,'&quot;')}" placeholder="Prénom NOM" style="font-size:16px"></div>
-            <div class="m6-field"><label>Date d'arrivée si en cours d'année <small style="color:var(--pierre);font-weight:400">(prorata si renseignée — sinon laisser vide)</small></label><input type="date" id="wiz-arrivee" value="${existing.dateArrivee||''}" style="font-size:16px"></div>
           </div></div>
           <button class="m6-btn m6-btn-gold" id="wiz-next" style="width:100%">Continuer →</button>
           <button class="m6-btn m6-btn-ghost" id="wiz-prev" style="width:100%;margin-top:8px;font-size:0.78rem">← Précédent</button>
@@ -322,14 +320,14 @@ const M6_Router = {
 
       this._root.querySelector('#wiz-next')?.addEventListener('click', () => {
         if (step === 1) {
-          const debut    = this._root.querySelector('#wiz-debut')?.value;
-          const fin      = this._root.querySelector('#wiz-fin')?.value;
+          const debut = this._root.querySelector('#wiz-debut')?.value;
+          const fin   = this._root.querySelector('#wiz-fin')?.value;
           if (debut && fin && debut > fin) { M6_toast('La date de fin doit être après le début'); return; }
           this._wizData = {
             ...this._wizData,
             debut, fin,
-            nom:     this._root.querySelector('#wiz-nom')?.value.trim(),
-            arrivee: this._root.querySelector('#wiz-arrivee')?.value || null,
+            nom: this._root.querySelector('#wiz-nom')?.value.trim(),
+            // dateArrivee absente du wizard → à configurer dans ⚙️ si arrivée en cours d'année
           };
         }
         step++; render();
