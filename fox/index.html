@@ -3609,10 +3609,37 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
       // Jours "work" cette semaine selon check-in
       const _workedDays = _ciHist.filter(e => e.dayStatus === 'work' && e.date >= _monStr && e.date <= _sunStr);
       if (_workedDays.length > 0) {
-        // HS connues cette semaine (depuis weekArr de _analyzeLegalSituation)
-        const _wkOT = s.weekly && s.weekly.maxWeekMon === _monStr ? Math.max(0, s.weekly.maxWeekTotal - s.baseHebdo) : (s.daily && s.daily.todayExtra > 0 ? s.daily.todayExtra : 0);
-        const _totalReal = _workedDays.length * (s.baseJour || 7) + _wkOT;
-        if (_totalReal > s.baseHebdo) {
+        // HS réelles cette semaine — recalcul direct depuis M1+M2
+        let _wkOT = 0;
+        try {
+          const _yr2 = _monStr.slice(0,4);
+          const _rawM1ci = JSON.parse(localStorage.getItem('DATA_REPORT_' + _yr2) || '{}');
+          const _rawM2ci = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + _yr2) || '{}');
+          for (let _dd = 0; _dd < 7; _dd++) {
+            const _dt = new Date(_monCi); _dt.setDate(_monCi.getDate() + _dd);
+            const _dk = _fmtCi(_dt);
+            const _v1 = _rawM1ci[_dk];
+            if (_v1 && (_v1.extra||0) > 0) { _wkOT += Math.max(0, Number(_v1.extra||0) - Number(_v1.recup||0) - Number(_v1.absent||0)); continue; }
+            const _mk = _dk.slice(0,7);
+            const _mv = _rawM2ci[_mk];
+            if (_mv && _mv.days) { const _h = parseFloat(_mv.days[String(parseInt(_dk.slice(8)))]||0); if (_h > 0) _wkOT += _h; }
+          }
+        } catch(_e2) {}
+        // Jours check-in "work" sans aucune saisie M1/M2 = jours normaux non comptés (ex: férié travaillé)
+        const _workedWithoutHS = _workedDays.filter(e => {
+          try {
+            const _yr3 = e.date.slice(0,4);
+            const _v = (JSON.parse(localStorage.getItem('DATA_REPORT_'+_yr3)||'{}')||{})[e.date];
+            if (_v && (_v.extra||0) > 0) return false;
+            const _mk2 = e.date.slice(0,7);
+            const _mv2 = ((JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_'+_yr3)||'{}')||{})[_mk2]);
+            if (_mv2 && _mv2.days && parseFloat(_mv2.days[String(parseInt(e.date.slice(8)))]||0) > 0) return false;
+          } catch(_) {}
+          return true;
+        });
+        const _extraDaysH = _workedWithoutHS.length * (s.baseJour || 7);
+        const _totalReal  = s.baseHebdo + _wkOT + _extraDaysH;
+        if (_extraDaysH > 0) {
           const _ot = Math.round((_totalReal - s.baseHebdo) * 10) / 10;
           const _totalFmt = _fmtH(_totalReal);
           const _otFmt    = _fmtH(_ot);
