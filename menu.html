@@ -669,6 +669,161 @@
 
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
 
+<button class="info-btn" onclick="openSharePopup()" style="margin-top:-8px;">📲 Partager l'application</button>
+
+<!-- ══ POPUP PARTAGE ══════════════════════════════════════════ -->
+<div id="share-popup-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;"
+  onclick="closeSharePopup()">
+  <div onclick="event.stopPropagation()" style="
+    background:#fff;border-radius:20px;max-width:420px;width:100%;
+    box-shadow:0 16px 56px rgba(0,0,0,0.35);overflow:hidden;">
+
+    <!-- Header -->
+    <div style="background:linear-gradient(135deg,#4FB3C2,#2196a6);padding:20px 20px 16px;position:relative;">
+      <div style="font-size:22px;font-weight:700;color:#fff;margin-bottom:4px;">📲 Partager l'application</div>
+      <div style="font-size:13px;color:rgba(255,255,255,0.8);">Faites découvrir SimulHeures à vos contacts</div>
+      <button onclick="closeSharePopup()" style="
+        position:absolute;top:14px;right:16px;
+        background:rgba(255,255,255,0.2);border:none;border-radius:50%;
+        width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;
+        display:flex;align-items:center;justify-content:center;">✕</button>
+    </div>
+
+    <!-- Body -->
+    <div style="padding:20px;">
+
+      <!-- Bloc iPhone / PWA -->
+      <div style="
+        border:1px solid #e0f4f7;border-radius:14px;padding:16px;margin-bottom:12px;
+        background:#f8fdfe;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:26px;">📱</span>
+          <div>
+            <div style="font-weight:700;color:#1a1a2e;font-size:14px;">Sur iPhone (Safari)</div>
+            <div style="font-size:12px;color:#666;">Ouvrir le lien → icône partage → "Sur l'écran d'accueil"</div>
+          </div>
+        </div>
+        <div style="
+          background:#fff;border:1px solid #4FB3C2;border-radius:10px;
+          padding:11px 14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔗</span>
+          <span id="share-ios-link" style="font-size:13px;color:#2196a6;font-weight:600;flex:1;word-break:break-all;">
+            https://simulateurheuressupfrance.pages.dev/menu
+          </span>
+          <button onclick="copyLink('https://simulateurheuressupfrance.pages.dev/menu','share-ios-copy')" id="share-ios-copy" style="
+            background:linear-gradient(135deg,#4FB3C2,#2196a6);color:#fff;
+            border:none;border-radius:8px;padding:7px 12px;font-size:12px;
+            font-weight:600;cursor:pointer;white-space:nowrap;">Copier</button>
+        </div>
+      </div>
+
+      <!-- Bloc Android / Google Play -->
+      <div style="
+        border:1px solid #e8f5e9;border-radius:14px;padding:16px;margin-bottom:16px;
+        background:#f9fdf9;">
+        <div style="display:flex;align-items:center;gap:10px;margin-bottom:10px;">
+          <span style="font-size:26px;">🤖</span>
+          <div>
+            <div style="font-weight:700;color:#1a1a2e;font-size:14px;">Sur Android</div>
+            <div style="font-size:12px;color:#666;">Télécharger directement sur le Google Play Store</div>
+          </div>
+        </div>
+        <div style="
+          background:#fff;border:1px solid #43a047;border-radius:10px;
+          padding:11px 14px;display:flex;align-items:center;gap:10px;">
+          <span style="font-size:18px;">🔗</span>
+          <span style="font-size:13px;color:#2e7d32;font-weight:600;flex:1;word-break:break-all;">
+            https://play.google.com/store/apps/details?id=com.tonytonic.heuressup
+          </span>
+          <button onclick="copyLink('https://play.google.com/store/apps/details?id=com.tonytonic.heuressup','share-android-copy')" id="share-android-copy" style="
+            background:linear-gradient(135deg,#43a047,#1b5e20);color:#fff;
+            border:none;border-radius:8px;padding:7px 12px;font-size:12px;
+            font-weight:600;cursor:pointer;white-space:nowrap;">Copier</button>
+        </div>
+      </div>
+
+      <!-- Bouton natif partage -->
+      <button onclick="nativeShare()" style="
+        width:100%;padding:13px;border:none;border-radius:12px;
+        background:linear-gradient(135deg,#4FB3C2,#2196a6);color:#fff;
+        font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
+        📤 Partager via...
+      </button>
+
+      <button onclick="closeSharePopup()" style="
+        width:100%;padding:11px;border:1px solid #ddd;border-radius:12px;
+        background:#f5f5f5;color:#555;font-size:14px;font-weight:600;cursor:pointer;">
+        Fermer
+      </button>
+    </div>
+  </div>
+</div>
+
+<script>
+function openSharePopup() {
+  const o = document.getElementById('share-popup-overlay');
+  if (!o) return;
+  o.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+}
+function closeSharePopup() {
+  const o = document.getElementById('share-popup-overlay');
+  if (!o) return;
+  o.style.display = 'none';
+  document.body.style.overflow = '';
+}
+function copyLink(url, btnId) {
+  navigator.clipboard.writeText(url).then(function() {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    const prev = btn.textContent;
+    btn.textContent = '✅ Copié !';
+    btn.style.opacity = '0.7';
+    setTimeout(function() {
+      btn.textContent = prev;
+      btn.style.opacity = '1';
+    }, 2000);
+  }).catch(function() {
+    // Fallback
+    const ta = document.createElement('textarea');
+    ta.value = url;
+    ta.style.position = 'fixed';
+    ta.style.opacity = '0';
+    document.body.appendChild(ta);
+    ta.select();
+    try { document.execCommand('copy'); } catch(e) {}
+    document.body.removeChild(ta);
+    const btn = document.getElementById(btnId);
+    if (btn) { btn.textContent = '✅ Copié !'; setTimeout(function(){ btn.textContent = 'Copier'; }, 2000); }
+  });
+}
+function nativeShare() {
+  const url = 'https://simulateurheuressupfrance.pages.dev/menu';
+  const text = '📲 Installe l\'application SimulHeures pour suivre tes heures supplémentaires !';
+  if (navigator.share) {
+    navigator.share({ title: 'SimulHeures — Heures Sup France', text: text, url: url })
+      .catch(function(){});
+  } else {
+    // Fallback : copier le lien + message
+    navigator.clipboard.writeText(url).then(function(){
+      alert('📋 Lien copié !\n\n' + url);
+    }).catch(function(){
+      prompt('Copie ce lien pour le partager :', url);
+    });
+  }
+}
+// Fermer sur Échap
+document.addEventListener('keydown', function(e){
+  if (e.key === 'Escape') {
+    const o = document.getElementById('share-popup-overlay');
+    if (o && o.style.display === 'flex') closeSharePopup();
+  }
+});
+</script>
+
 <div id="ccnModal">
   <div class="ccn-box">
     <h2>⚖️ Convention collective applicable</h2>
@@ -1395,9 +1550,11 @@ document.addEventListener('DOMContentLoaded', function(){
   background: rgba(5, 11, 26, 0.88);
   backdrop-filter: blur(16px);
   -webkit-backdrop-filter: blur(16px);
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
-  padding: max(20px, env(safe-area-inset-top)) 16px max(20px, env(safe-area-inset-bottom)) 16px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
+  padding: max(60px, calc(env(safe-area-inset-top) + 24px)) 16px max(32px, calc(env(safe-area-inset-bottom) + 16px)) 16px;
 }
 #annonce-card {
   background: linear-gradient(160deg, #0f1f3d, #1a3a6e);
@@ -1405,6 +1562,7 @@ document.addEventListener('DOMContentLoaded', function(){
   border-radius: 24px;
   max-width: 420px;
   width: 100%;
+  margin: 0 auto;
   padding: 28px 20px 22px;
   box-shadow: 0 24px 64px rgba(0,0,0,.7), inset 0 1px 0 rgba(212,168,80,.15);
   text-align: center;
