@@ -264,7 +264,8 @@ const M6_BioEngine = {
    * @param {object} data     — { "YYYY-MM-DD": { type, debut?, fin?, amplitude? } }
    * @param {number} year
    */
-  analyzeForfaitJours(contract, data, year) {
+  analyzeForfaitJours(contract, data, year, regime) {
+    regime = regime || 'forfait_jours';
     const plafond = contract.plafond || 218;
     const today   = new Date().toISOString().slice(0,10);
 
@@ -288,7 +289,7 @@ const M6_BioEngine = {
     if (!entries.length) {
       // Pas de saisie dans cet exercice — mais on charge quand même la baseline si elle existe
       // pour préserver la continuité (B2)
-      const baseline = this._loadBaseline('forfait_jours');
+      const baseline = this._loadBaseline(regime);
       if (baseline && baseline.fatigue > 0) {
         return {
           hasData: true,
@@ -367,7 +368,7 @@ const M6_BioEngine = {
     // Si entrée rétroactive détectée (firstEntry a reculé depuis la dernière baseline),
     // on ignore la baseline car les vraies données historiques priment
     const _baselineValid = this._isBaselineValid('forfait_jours', _firstFJ);
-    const baseline = _baselineValid ? this._loadBaseline('forfait_jours') : null;
+    const baseline = _baselineValid ? this._loadBaseline(regime) : null;
     const baselineFat    = baseline?.fatigue || 0;
     const baselineStress = baseline?.stress  || 0;
 
@@ -467,7 +468,7 @@ const M6_BioEngine = {
     });
 
     // ── B2 CONTINUITÉ : persister l'état bio pour le prochain exercice ──
-    this._saveBaseline('forfait_jours', { fatigue, stress, recovery }, _firstFJ);
+    this._saveBaseline(regime, { fatigue, stress, recovery }, _firstFJ);
 
     return {
       fatigue, stress, recovery, performance: perfFinal,

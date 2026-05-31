@@ -13,8 +13,17 @@ const NS = 'M6';
 const M6_Storage = {
 
   // ── Années ────────────────────────────────────────────────────
-  getActiveYear()      { return parseInt(localStorage.getItem(`${NS}_ACTIVE_YEAR`) || new Date().getFullYear()); },
-  setActiveYear(y)     { localStorage.setItem(`${NS}_ACTIVE_YEAR`, y); },
+  getActiveYear(regime)    {
+    // Clé par régime pour que les 3 forfaits soient complètement indépendants
+    const key = regime ? `${NS}_${regime}_ACTIVE_YEAR` : `${NS}_ACTIVE_YEAR`;
+    return parseInt(localStorage.getItem(key) || new Date().getFullYear());
+  },
+  setActiveYear(regime, year) {
+    // Accepte setActiveYear(year) sans régime pour rétrocompatibilité
+    if (typeof regime === 'number') { year = regime; regime = null; }
+    const key = regime ? `${NS}_${regime}_ACTIVE_YEAR` : `${NS}_ACTIVE_YEAR`;
+    localStorage.setItem(key, year);
+  },
   getAllYears(regime) {
     const years = new Set();
     for (let i = 0; i < localStorage.length; i++) {
