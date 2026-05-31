@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v8.7.0"; // fix popup nouveautes (cle partagee) + repos compensateur recap
+const CACHE_NAME = "heuressup-cache-v8.8.0"; // fix PDF Android (blob frais + SW ignore blob/data) + nom unique
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -163,6 +163,10 @@ self.addEventListener("activate", (event) => {
 // ── FETCH — CACHE FIRST (stale-while-revalidate) ──────────────────────────────
 self.addEventListener("fetch", (event) => {
   if (event.request.method !== "GET") return;
+
+  // Ne PAS intercepter les blobs, data-URI ni schemes spéciaux (PDF généré, téléchargements…)
+  const scheme = event.request.url.split(':')[0];
+  if (scheme === 'blob' || scheme === 'data' || scheme === 'chrome-native' || scheme === 'chrome-extension') return;
 
   // Ne PAS intercepter les requêtes cross-origin (Google Fonts, CDN…)
   // Sinon la réécriture des headers casse le CORS (erreur if-modified-since).
