@@ -584,24 +584,500 @@
 </div>
 
 <div class="overlay" id="presentationPopup" style="display:none;" onclick="closePresentation()">
-  <div class="presentation-box" onclick="event.stopPropagation()">
-    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px;">
-      <h2 style="margin:0;">📦 Présentation du projet</h2>
-      <button onclick="closePresentation()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#333;padding:0;width:auto;margin:0;line-height:1;">✕</button>
+  <div class="presentation-box" onclick="event.stopPropagation()" style="max-width:600px;font-size:13px;">
+
+
+    <!-- En-tête -->
+    <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:10px;">
+      <div>
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:#4FB3C2;margin-bottom:3px;">LIVRE BLANC · CONFORMITÉ SOCIALE &amp; ANALYSE RH</div>
+        <div style="font-size:22px;font-weight:900;color:#0f1f3d;letter-spacing:-.5px;">SIMULHEURES</div>
+        <div style="font-size:12px;color:#555;margin-top:2px;font-weight:600;">La Suite RH pour le Droit du Travail Français</div>
+        <div style="font-size:11px;color:#888;margin-top:2px;">7 modules intégrés · 477+ conventions collectives · PWA offline · Analyse physiologique · Conformité légale · Gamification RPG</div>
+      </div>
+      <button onclick="closePresentation()" style="background:none;border:none;font-size:24px;cursor:pointer;color:#bbb;padding:0;margin:0;line-height:1;flex-shrink:0;">✕</button>
     </div>
-    <p><b>Simulateur d'heures supplémentaires</b><br>Écosystème PWA – Développé par <b>C. Anthony</b></p>
-    <hr>
-    <h3>🎯 Objectif général</h3>
-    <p>Outil personnel de simulation permettant de visualiser et organiser des heures supplémentaires à titre <b>strictement indicatif</b>.</p>
-    <hr>
-    <h3>📊 Compteur annuel</h3>
-    <p>Suivi sur un exercice complet. Idéal pour les modulations annuelles.</p>
-    <hr>
-    <h3>📅 Simulateur mensuel</h3>
-    <p>Clôture mensuelle avec report automatique.</p>
-    <hr>
-    <h3>💾 Données & fonctionnement</h3>
-    <p>Toutes les données sont stockées <b>localement</b> sur votre appareil. Aucun serveur, aucune transmission externe.</p>
+
+    <!-- Grille modules -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:6px;">
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M1<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">Compteur HS</div></div>
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M2<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">Clôture mensuelle</div></div>
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M3<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">FOX Engine</div></div>
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M4<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">Digital Twin</div></div>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:10px;">
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M5<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">Temps Partiel</div></div>
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">M6<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">Cadres</div></div>
+      <div style="border:1px solid #dde;border-radius:8px;padding:8px 4px;text-align:center;font-size:11px;font-weight:600;color:#0f1f3d;">GP<div style="font-size:9px;color:#888;font-weight:400;margin-top:1px;">GrillePaye</div></div>
+    </div>
+
+    <!-- Stats clés -->
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px;">
+      <div style="background:#0f1f3d;border-radius:8px;padding:10px 4px;text-align:center;"><div style="font-size:17px;font-weight:800;color:#fff;">477+</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;">Conventions CCN</div></div>
+      <div style="background:#0f1f3d;border-radius:8px;padding:10px 4px;text-align:center;"><div style="font-size:17px;font-weight:800;color:#fff;">600+</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;">Scénarios juridiques</div></div>
+      <div style="background:#0f1f3d;border-radius:8px;padding:10px 4px;text-align:center;"><div style="font-size:17px;font-weight:800;color:#fff;">4</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;">Phases bio DTE</div></div>
+      <div style="background:#0f1f3d;border-radius:8px;padding:10px 4px;text-align:center;"><div style="font-size:17px;font-weight:800;color:#fff;">100%</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:1px;">Offline / RGPD</div></div>
+    </div>
+
+    <p style="font-size:12px;color:#444;line-height:1.6;text-align:center;margin:0 0 12px;">Simulheures est une suite PWA dédiée à la conformité du droit du travail français. Gratuite, open-source et offline, elle donne aux salariés les mêmes outils d'analyse que les services RH des grandes entreprises : heures supplémentaires, clôture mensuelle, analyse juridique gamifiée, bien-être physiologique, temps partiels, cadres au forfait et grilles salariales CCN.</p>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 01 Contexte -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">01</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Contexte &amp; Genèse</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">D'un besoin personnel à une suite professionnelle</div>
+    </div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Une origine ancrée dans le réel</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Simulheures est né d'un constat simple mais universel : comment un salarié peut-il s'assurer que les heures qu'il travaille correspondent bien à celles figurant sur son bulletin de paie ? En France, le Code du Travail encadre strictement les heures supplémentaires — majorées à 25 % pour les 8 premières au-delà du seuil légal, puis à 50 % au-delà — mais peu de salariés disposent d'outils accessibles pour suivre, vérifier et défendre leurs droits face à des services RH équipés de logiciels sophistiqués.</p>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Le projet a démarré comme un fichier HTML mono-page, conçu pour un usage strictement personnel. Après plusieurs mois d'utilisation quotidienne en conditions réelles, l'outil s'est révélé fiable et cohérent. Lorsqu'un collègue l'a adopté à son tour, les premières contraintes multi-profils sont apparues — configurations CCN différentes, périodes de clôture variables, statuts salariaux distincts — et c'est là que la véritable suite a commencé à se structurer.</p>
+    <div style="background:#f0f8ff;border-left:3px solid #4FB3C2;border-radius:0 8px 8px 0;padding:10px 12px;margin-bottom:10px;font-size:12px;color:#1a1a2e;font-style:italic;">"Le meilleur outil est celui qu'on utilise vraiment, chaque semaine."</div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Le problème structurel du salarié français</h4>
+    <div style="font-size:12px;color:#333;line-height:1.6;margin-bottom:10px;">
+      <div style="margin-bottom:5px;">■ <b>Asymétrie d'outils :</b> les directions RH utilisent des logiciels spécialisés (SIRH, Sage, ADP) ; le salarié s'appuie souvent sur Excel ou sa mémoire pour défendre ses intérêts.</div>
+      <div style="margin-bottom:5px;">■ <b>Complexité juridique stratifiée :</b> le Code du Travail s'applique différemment selon la convention collective, l'accord d'entreprise, le statut (temps plein, temps partiel, cadre forfait) et le secteur d'activité parmi 477 branches professionnelles.</div>
+      <div style="margin-bottom:5px;">■ <b>Impact santé invisible :</b> les études épidémiologiques (OMS/OIT 2021, Lancet 2021) démontrent qu'au-delà de 48h/semaine, le risque d'AVC augmente de 33 % et le risque de cardiopathie ischémique de 17 % — des données rarement intégrées dans les outils RH grand public.</div>
+      <div style="margin-bottom:5px;">■ <b>Productivité paradoxale :</b> Stanford (Pencavel, 2014) démontre que les heures travaillées au-delà de 55h/semaine produisent un output net nul. Les heures supplémentaires excessives coûtent à l'entreprise sans bénéfice productif, en plus de dégrader la santé du salarié.</div>
+      <div>■ <b>RGPD et souveraineté des données :</b> les salariés hésitent souvent à utiliser des outils en ligne par peur de la transmission de leurs données sensibles. Simulheures résout ce problème de facto en stockant tout localement.</div>
+    </div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 02 Vision -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">02</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Vision &amp; Philosophie Produit</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">Local · Libre · Léger · Légal</div>
+    </div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 8px;">Trois principes fondateurs non négociables</h4>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:10px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:7px 10px;font-weight:700;color:#fff;font-size:10px;">
+        <div>Principe</div><div>Description détaillée</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;background:#f8f9fa;">
+        <div style="font-weight:600;color:#0f1f3d;">Données 100 % locales</div>
+        <div style="color:#444;">Aucune donnée ne quitte l'appareil. Pas de compte utilisateur, pas de serveur backend, pas d'envoi réseau. La conformité RGPD est assurée de facto — aucun traitement de données tiers n'a lieu.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;">
+        <div style="font-weight:600;color:#0f1f3d;">Fonctionnement hors-ligne</div>
+        <div style="color:#444;">PWA optimisée mobile, installable sur iOS et Android. Après installation, aucune connexion internet n'est requise. Le Service Worker assure le cache complet. Idéal pour usages terrain, mobiles, ou zone blanche.</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:8px 10px;">
+        <div style="font-weight:600;color:#0f1f3d;">Zéro friction à l'adoption</div>
+        <div style="color:#444;">Accessible immédiatement via URL, sans téléchargement ni compte obligatoire. Un wizard de premier lancement guide l'utilisateur en moins d'une minute.</div>
+      </div>
+    </div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Une philosophie open source au service du bien commun</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 12px;">Simulheures est disponible sur <b>Google Play Store</b> (TWA), sur <b>iOS Safari</b> (ajout à l'écran d'accueil), et sur mobile (iOS &amp; Android). Le code source est intégralement disponible. L'objectif de la suite n'est pas commercial : il s'agit de rééquilibrer un rapport de force informationnel en donnant aux salariés français un accès gratuit à des outils d'analyse aussi rigoureux que ceux utilisés par les services RH professionnels.</p>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 03 Les 7 Modules -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">03</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Les 7 Modules — Description Complète</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">Une suite couvrant tout le spectre du droit du travail</div>
+    </div>
+
+    <!-- M1 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 1 — Compteur Annuel d'Heures Supplémentaires</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">Module fondateur de la suite, M1 permet la <b>saisie quotidienne des heures travaillées</b> et calcule automatiquement les majorations légales applicables. Le seuil de déclenchement (35h ou 39h) est paramétré en fonction de la convention collective choisie. Deux modes de saisie coexistent : saisie directe du delta d'heures supplémentaires (Mode A), ou saisie du total d'heures travaillées avec calcul automatique du delta (Mode B). Un calendrier annuel complet offre une visualisation mois par mois, avec navigation pluri-annuelle et gestion des jours fériés, RTT et absences.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Fonctionnalité</div><div>Détail légal et technique</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Majorations auto</div><div style="color:#444;">25 % H1 à H8 · 50 % H9+ — Art. L3121-22 CT</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Seuil CCN dynamique</div><div style="color:#444;">35h ou 39h selon CCN — recalcul instantané</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Contingent annuel</div><div style="color:#444;">Suivi du contingent légal (Art. D3121-24 — 220h par défaut)</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Export PDF</div><div style="color:#444;">Récapitulatif mensuel complet — heures, majorations, estimations financières</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Modes de saisie</div><div style="color:#444;">Mode A : delta direct · Mode B : total heures avec calcul automatique</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Calendrier annuel</div><div style="color:#444;">Navigation pluri-annuelle, gestion RTT/absences/récupérations intégrée</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;background:#f8f9fa;"><div style="font-weight:600;">Persistance versionnée</div><div style="color:#444;">Chaque semaine archivée est immuable — recalculs non rétroactifs garantis</div></div>
+    </div>
+
+    <!-- M2 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 2 — Compteur d'Heures à Clôture Mensuelle</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">Conçu spécifiquement pour les salariés dont la paie suit une <b>logique de clôture mensuelle</b> calée sur la date de fin de période de l'employeur, M2 est entièrement indépendant de M1. La date de clôture est <b>entièrement configurable</b> : fin de mois automatique, date fixe du mois, ou définition manuelle mois par mois.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Fonctionnalité</div><div>Détail</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Clôture configurable</div><div style="color:#444;">Auto (fin de mois) · Date fixe du mois · Manuelle mois par mois</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Report automatique</div><div style="color:#444;">Les heures non payées à la clôture sont reportées à la période suivante</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Zone €protégée</div><div style="color:#444;">Code PIN optionnel pour la section taux/coefficients/estimation nette</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;"><div style="font-weight:600;">Indicateurs de synthèse</div><div style="color:#444;">Total période · Heures payées · Reliquat reporté · Estimation brute</div></div>
+    </div>
+
+    <!-- M3 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 3 — FOX Engine : Analyse Juridique Gamifiée</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">FOX Engine combine un <b>moteur d'analyse juridique multi-dimensionnelle</b> basé sur plus de 600 scénarios réels du droit du travail français avec une couche de <b>gamification RPG complète</b>. L'analyse repose sur une <b>fenêtre glissante de 12 semaines</b> : le moteur détecte les violations combinées (dépassement contingent + non-respect repos + durées maximales), calcule un score de risque global, et génère des scénarios personnalisés adaptés au profil CCN de l'utilisateur.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Composant</div><div>Description technique</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Legal Engine</div><div style="color:#444;">Analyse 12 semaines glissantes · détection violations combinées · score de risque</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">600+ scénarios</div><div style="color:#444;">24 catégories · difficulté débutant/intermédiaire/avancé/expert · XP variable</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Conseils IA</div><div style="color:#444;">Intégration intelligence artificielle pour conseil personnalisé en temps réel</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Système RPG</div><div style="color:#444;">XP · niveaux · 40+ badges · ligues · quêtes · missions quotidiennes · inventaire</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Kitsune</div><div style="color:#444;">Mascotte-guide IA bienveillante accompagnant l'utilisateur pas à pas</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;"><div style="font-weight:600;">Heatmap</div><div style="color:#444;">Visualisation hebdomadaire de la charge sur l'année avec niveaux de couleur</div></div>
+    </div>
+
+    <!-- M4 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 4 — Digital Twin Employee : Santé Prédictive</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">Innovation unique dans l'écosystème RH français grand public : M4 est un <b>jumeau numérique physiologique du salarié</b>. Il modélise en temps réel l'état de fatigue, le niveau de stress chronique et la capacité de récupération, en s'appuyant sur des algorithmes directement inspirés de la littérature épidémiologique internationale.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:6px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:.6fr 1fr 1fr 1.4fr;background:#0f1f3d;padding:6px 8px;font-weight:700;color:#fff;font-size:10px;"><div>Phase</div><div>État</div><div>Seuil indicatif</div><div>Signal</div></div>
+      <div style="display:grid;grid-template-columns:.6fr 1fr 1fr 1.4fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;font-size:11px;"><div style="font-weight:600;">P1</div><div>Adaptation normale</div><div>≤ 40 h/sem</div><div style="color:#444;">Aucune alerte</div></div>
+      <div style="display:grid;grid-template-columns:.6fr 1fr 1fr 1.4fr;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;"><div style="font-weight:600;">P2</div><div>Fatigue chronique</div><div>40 – 52 h/sem</div><div style="color:#f9a825;">Vigilance</div></div>
+      <div style="display:grid;grid-template-columns:.6fr 1fr 1fr 1.4fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;font-size:11px;"><div style="font-weight:600;">P3</div><div>Surmenage</div><div>52 – 55 h/sem</div><div style="color:#e65100;">Signal préventif</div></div>
+      <div style="display:grid;grid-template-columns:.6fr 1fr 1fr 1.4fr;padding:6px 8px;font-size:11px;"><div style="font-weight:600;">P4</div><div>Charge très élevée</div><div>&gt; 55 h/sem</div><div style="color:#c0392b;">Signal d'alerte</div></div>
+    </div>
+    <p style="font-size:11px;color:#666;line-height:1.5;margin:0 0 12px;">L'intégration M1-M4 permet de nourrir automatiquement le jumeau numérique depuis les données de présence saisies dans M1.</p>
+
+    <!-- M5 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 5 — Temps Partiel (Mizuki) : Droits des Salariés à Temps Réduit</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">M5 surveille les heures complémentaires, détecte automatiquement les dépassements systématiques et génère des alertes légales personnalisées. Le module gère trois paliers d'heures complémentaires. La <b>règle des 12 semaines consécutives</b> (Art. L3123-20) est vérifiée automatiquement : si un salarié dépasse systématiquement ses heures sur 12 semaines consécutives, il peut solliciter un avenant à temps plein.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Fonctionnalité</div><div>Détail légal</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Palier 10 %</div><div style="color:#444;">Heures compl. dans limite 10 % — taux normal — Art. L3123-20 CT</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Palier sectoriel</div><div style="color:#444;">10 % à 33 % selon CCN (HCR, aide domicile, commerce alim.) — majoration min. 10 %</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Au-delà du plafond</div><div style="color:#444;">Majoration 25 % obligatoire — Art. L3123-20 al. 3 CT</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;"><div style="font-weight:600;">Règle 12 semaines</div><div style="color:#444;">Dépassement systématique → droit potentiel à solliciter un avenant (à confirmer avec un conseiller)</div></div>
+    </div>
+
+    <!-- M6 -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module 6 — Cadres : Forfait Jours, Forfait Heures &amp; Cadres Dirigeants</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">M6 couvre les trois statuts principaux : le <b>forfait annuel en jours</b> (Art. L3121-58 à L3121-64), le <b>forfait annuel en heures</b>, et le régime des <b>cadres dirigeants</b>. Le <b>nullité-checker</b> vérifie si la convention individuelle de forfait signée par le salarié remplit les conditions d'opposabilité légale. Zenji, l'IA coach du module, accompagne ces analyses.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Régime</div><div>Couverture détaillée</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Forfait Jours</div><div style="color:#444;">Plafond légal 218j/an · suivi jours travaillés · RTT au prorata · entretien annuel obligatoire (Art. L3121-65)</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Forfait Heures</div><div style="color:#444;">Suivi hebdo/mensuel/annuel · majoration selon CCN cadres · comparaison avec régime standard</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Cadre Dirigeant</div><div style="color:#444;">Vérification 3 critères cumulatifs : niveau responsabilités, pouvoirs de décision, indépendance gestion emploi du temps</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Nullité-checker</div><div style="color:#444;">Vérification opposabilité convention individuelle : accord collectif, clause de suivi charge, entretien annuel, modalités contrôle</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;background:#f8f9fa;"><div style="font-weight:600;">Zenji IA</div><div style="color:#444;">Coach IA spécialisé cadres : alertes préventives, préparation entretiens, scénarios de négociation</div></div>
+    </div>
+
+    <!-- GP -->
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Module GrillePaye (Lumina) — Simulation des Grilles Salariales CCN</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 6px;">GrillePaye, rebaptisé <b>Lumina</b>, permet à tout salarié de <b>positionner son salaire dans la grille de sa convention collective</b>. La base de données intègre les grilles réelles de plus de <b>200 conventions collectives</b>. Le SMIC 2026 (1 823,03 € depuis le 01/01/2026 — Décret n°2025-1228) est intégré comme plancher légal.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Fonctionnalité</div><div>Description</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Positionnement grille</div><div style="color:#444;">Saisie coefficient/niveau → affichage du minimum conventionnel applicable</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">200+ CCN réelles</div><div style="color:#444;">Grilles détaillées : agricole, BTP, transport, banque, HCR, industrie, services, santé, commerce, etc.</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">SMIC dynamique</div><div style="color:#444;">Plancher SMIC 2026 (1 823,03 €) intégré · grilles en % SMIC recalculées auto</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Comparaison salariale</div><div style="color:#444;">Directive EU 2023/970 · positionnement vs. médiane de la catégorie</div></div>
+      <div style="display:grid;grid-template-columns:1fr 2fr;padding:6px 10px;background:#f8f9fa;"><div style="font-weight:600;">Sources</div><div style="color:#444;">Légifrance, BOCC, avenants de branche — données arrêtées à juin 2026</div></div>
+    </div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 04 Architecture -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">04</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Architecture Technique</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">Vanilla JS · PWA · Offline-first · Zéro backend</div>
+    </div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Stack technologique volontairement sobre et durable</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Simulheures est entièrement construit en <b>JavaScript vanilla</b> (ES6+), HTML5 et CSS3, sans framework front-end (React, Vue, Angular). Ce choix garantit des performances maximales, une dépendance zéro aux librairies tierces critiques, et une durabilité à long terme. Un seul mainteneur peut comprendre, auditer et faire évoluer l'ensemble du codebase.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;background:#0f1f3d;padding:6px 8px;font-weight:700;color:#fff;font-size:10px;"><div>Couche</div><div>Technologie</div><div>Rôle</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Frontend</div><div>HTML5/CSS3/JS ES6+</div><div style="color:#444;">Interface sans framework</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Stockage</div><div>localStorage versionné</div><div style="color:#444;">Persistance locale, clés namespaced (SH_*, DTE_*, CCN_*)</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">PWA</div><div>Service Worker</div><div style="color:#444;">Cache offline complet, installation app, gestion mises à jour</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;"><div style="font-weight:600;">PDF export</div><div>jsPDF (CDN cloudflare)</div><div style="color:#444;">Export bulletins — aucun serveur impliqué</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">IA conseil</div><div>API IA</div><div style="color:#444;">Conseils M3 (Kitsune) et M6 (Zenji) en temps réel</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Android</div><div>TWA</div><div style="color:#444;">Application native installable depuis Google Play Store</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 1fr 2fr;padding:6px 8px;background:#f8f9fa;"><div style="font-weight:600;">iOS</div><div>Safari Add to HS</div><div style="color:#444;">Installation native sans App Store — manifeste PWA complet</div></div>
+    </div>
+    <p style="font-size:11px;color:#555;line-height:1.5;margin:0 0 12px;background:#f8f9fa;border-radius:8px;padding:10px 12px;"><b>RGPD by design :</b> La philosophie « données locales seulement » résout de facto la majorité des obligations RGPD — aucun traitement côté serveur, aucune transmission aux tiers, aucun cookie de tracking, aucun compte utilisateur. Les sauvegardes restent sous l'entière responsabilité de l'utilisateur via export JSON/PDF intégré dans chaque module.</p>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 05 Base Scientifique -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">05</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Base Scientifique — Digital Twin Employee</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">Épidémiologie &amp; médecine du travail intégrées dans l'algorithme</div>
+    </div>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Le module 4 est le seul outil RH grand public français à intégrer directement des références épidémiologiques validées dans son moteur de calcul. Chaque paramètre algorithmique cite sa source scientifique dans le code source.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:8px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;background:#0f1f3d;padding:6px 8px;font-weight:700;color:#fff;font-size:10px;"><div>Source</div><div>Cohorte &amp; méthode</div><div>Résultats clés intégrés dans DTE</div></div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;font-size:11px;"><div style="font-weight:600;">WHO/ILO 2021<br><span style="font-weight:400;color:#888;">Pega F. et al.</span></div><div>Meta-analyse mondiale<br>745 194 décès · Env. Int.</div><div style="color:#444;">RR=1,35 AVC (≥55h/sem) · RR=1,17 cardiopathie · Relation dose-réponse confirmée</div></div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;"><div style="font-weight:600;">Lancet Reg. Health 2021<br><span style="font-weight:400;color:#888;">Ervasti J. et al.</span></div><div>59 599 personnes · 4 pays EU · 50 pathologies</div><div style="color:#444;">HR=1,68 mort cardiovasc. &lt;65 ans · HR=1,37 infections · HR=1,18 diabète type 2</div></div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;font-size:11px;"><div style="font-weight:600;">Stanford 2014<br><span style="font-weight:400;color:#888;">Pencavel J.</span></div><div>Analyse longitudinale · Productivité 1900-1920</div><div style="color:#444;">Falaise productive à 55h/sem · Output identique à 70h vs 55h — net nul au-delà</div></div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;padding:6px 8px;border-bottom:1px solid #eee;font-size:11px;"><div style="font-weight:600;">Frontiers Neurosci. 2022<br><span style="font-weight:400;color:#888;">Thompson K.I.</span></div><div>Neurosciences comport. · Cortisol (μg/dL) · Axe HPA</div><div style="color:#444;">Privation 24h : cortisol +14% (8,4→9,6 μg/dL) · Axe HPA perturbé dès la 1re nuit</div></div>
+      <div style="display:grid;grid-template-columns:1.2fr 1fr 1.8fr;padding:6px 8px;background:#f8f9fa;font-size:11px;"><div style="font-weight:600;">Lancet 2015<br><span style="font-weight:400;color:#888;">Kivimäki M. et al.</span></div><div>Méta-analyse IPD · 603 838 individus · 27 cohortes</div><div style="color:#444;">RR=1,33 AVC (pooled 95% CI) · RR=1,13 coronarien · Relation dose-réponse AVC</div></div>
+    </div>
+    <div style="background:#fff8e1;border-radius:8px;padding:10px 12px;font-size:11px;color:#666;margin-bottom:12px;"><b>Avertissement médical :</b> Ces données ne constituent pas un diagnostic médical. Simulheures est un outil de sensibilisation et de prévention. Toute situation classifiée Phase P3 ou P4 doit faire l'objet d'une consultation auprès du médecin du travail ou du médecin traitant.</div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 06 CCN -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">06</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Conformité CCN</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">477 conventions collectives — base la plus complète du marché grand public</div>
+    </div>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Le moteur CCN de Simulheures intègre 477 entrées de conventions collectives nationales avec leurs IDCC, leurs seuils horaires spécifiques (35h ou 39h), leurs taux de majoration, leurs contingents annuels d'heures supplémentaires et leurs règles de jours de référence. C'est la clé de voûte de toute la suite : l'utilisateur sélectionne sa CCN une fois, et l'ensemble des calculs — seuil déclencheur, contingent — se recalcule instantanément.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;background:#0f1f3d;padding:6px 8px;font-weight:700;color:#fff;font-size:10px;"><div>Secteur (exemples)</div><div>IDCC</div><div>Seuil</div><div>Contingent HS annuel</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div>Convention générale (défaut)</div><div>0000</div><div>35 h</div><div>220 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;"><div>Commerce de détail non alimentaire</div><div>1517</div><div>35 h</div><div>220 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div>Transport routier marchandises</div><div>16</div><div>35 h</div><div>195 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;"><div>BTP — Ouvriers</div><div>1597</div><div>35 h</div><div>180 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div>Hôtellerie-Cafés-Restaurants (HCR)</div><div>1979</div><div>39 h</div><div>220 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;"><div>Banque AFB</div><div>675</div><div>35 h</div><div>115 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;background:#f8f9fa;"><div>Métallurgie (Accord National Unique 2023)</div><div>3248</div><div>35 h</div><div>220 h</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;border-bottom:1px solid #eee;"><div>Syntec / IT &amp; Ingénierie-Conseil</div><div>1486</div><div>35 h</div><div>130 h (ETAM) / 219j (cadres)</div></div>
+      <div style="display:grid;grid-template-columns:2fr .8fr .6fr 1fr;padding:6px 8px;background:#f8f9fa;"><div>Aide à domicile (BASS)</div><div>2941</div><div>35 h</div><div>220 h</div></div>
+    </div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 07 Cas d'usage -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">07</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Cas d'Usage Concrets</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">Des scénarios réels, pour des salariés réels</div>
+    </div>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:.9fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Profil</div><div>Scénario d'utilisation concret</div></div>
+      <div style="display:grid;grid-template-columns:.9fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Technicien surcharge chronique</div><div style="color:#444;">Effectue 48h/semaine depuis 14 semaines consécutives (CCN Transport). M4 détecte l'entrée en Phase P3. FOX Engine signale le dépassement du contingent annuel de 195h et génère un scénario de risque juridique niveau Expert.</div></div>
+      <div style="display:grid;grid-template-columns:.9fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Cadre au forfait jours (IT)</div><div style="color:#444;">En forfait 218 jours, vérifie dans M6 que son employeur a bien réalisé l'entretien annuel obligatoire (Art. L3121-65). Le nullité-checker détecte que l'accord collectif applicable ne prévoit pas de mécanisme de suivi de la charge — la convention de forfait peut être nulle. Zenji IA prépare les questions à poser lors du prochain entretien.</div></div>
+      <div style="display:grid;grid-template-columns:.9fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Aide à domicile temps partiel 24h</div><div style="color:#444;">Effectue régulièrement 28h/semaine depuis 3 mois (4h complémentaires hebdo). M5 Mizuki calcule les majorations dues et détecte à la 12e semaine consécutive l'obligation légale pour l'employeur de proposer un avenant à temps plein (Art. L3123-20).</div></div>
+      <div style="display:grid;grid-template-columns:.9fr 2fr;padding:8px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Employé commerce positionnement salarial</div><div style="color:#444;">Utilise GrillePaye (Lumina) pour vérifier que son salaire brut de 1 920 € correspond bien au minimum de son coefficient dans la CCN Commerce de Détail Non Alimentaire (IDCC 1517). Le module indique que le minimum conventionnel est 1 967 € après l'avenant du 6/02/2026.</div></div>
+      <div style="display:grid;grid-template-columns:.9fr 2fr;padding:8px 10px;background:#f8f9fa;"><div style="font-weight:600;">Manager objectiver la charge</div><div style="color:#444;">Utilise les exports PDF de M1 et M2 pour produire un récapitulatif mensuel chiffré et horodaté, présentant les heures réelles vs. contractuelles sur 6 mois. Ce document sert de pièce de dialogue lors d'une NAO ou d'un entretien RH. M4 produit un rapport de phase physiologique sur la même période.</div></div>
+    </div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 08 Roadmap -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">08</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">Roadmap</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">État actuel et perspectives</div>
+    </div>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:.7fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Statut</div><div>Module / Fonctionnalité</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M1 — Compteur Annuel Heures Supplémentaires</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M2 — Compteur à Clôture Mensuelle</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M3 — FOX Engine avec analyse IA</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M4 — Digital Twin Employee (santé prédictive)</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M5 — Temps Partiel Mizuki</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;border-bottom:1px solid #eee;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>M6 — Cadres Forfait Jours &amp; Heures (Zenji)</div></div>
+      <div style="display:grid;grid-template-columns:.7fr 2fr;padding:7px 10px;background:#f0fdf4;"><div style="color:#16a34a;font-weight:700;">✅ Disponible</div><div>GrillePaye Lumina — Simulation grilles salariales CCN</div></div>
+    </div>
+
+    <hr style="border:0;border-top:2px solid #eee;margin:0 0 12px;">
+
+    <!-- 09 À Propos -->
+    <div style="background:#0f1f3d;border-radius:10px;padding:10px 14px;margin-bottom:10px;">
+      <div style="font-size:10px;color:rgba(255,255,255,0.5);letter-spacing:.08em;text-transform:uppercase;">09</div>
+      <div style="font-size:14px;font-weight:700;color:#fff;">À Propos</div>
+      <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:1px;">L'auteur, la philosophie, l'accès</div>
+    </div>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Développé par un praticien, pour tous les salariés</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Simulheures est développé par <b>C. Anthony</b>, sans équipe dédiée, sans budget marketing, guidé uniquement par un besoin réel et une conviction profonde : les salariés méritent les mêmes outils d'analyse que les services RH des grandes entreprises, accessibles gratuitement et sans dépendre d'un tiers de confiance.</p>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 8px;">Le développement a débuté par un fichier HTML mono-page pour un usage strictement personnel. La rigueur des calculs, validée en conditions réelles semaine après semaine, a conduit à une montée en puissance progressive : intégration des 477 CCN, construction du moteur de scénarios juridiques, algorithme de jumeau physiologique, support des cadres et temps partiels, et enfin les grilles salariales. Chaque module est né d'un besoin concret, pas d'une feuille de route artificielle.</p>
+    <h4 style="color:#4FB3C2;font-size:12px;margin:0 0 5px;">Open source, gratuit, sans publicité, sans monétisation</h4>
+    <p style="font-size:12px;color:#333;line-height:1.6;margin:0 0 10px;">L'application est gratuite, sans publicité, sans abonnement, sans monétisation des données. L'objectif n'est pas commercial — c'est de fournir un bien commun durable à l'ensemble des salariés français. Le code source est ouvert à la contribution et à l'audit.</p>
+    <div style="border:1px solid #e0e8f0;border-radius:8px;overflow:hidden;margin-bottom:12px;font-size:11px;">
+      <div style="display:grid;grid-template-columns:.8fr 2fr;background:#0f1f3d;padding:6px 10px;font-weight:700;color:#fff;font-size:10px;"><div>Accès</div><div>Description</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Application web</div><div style="color:#444;">iOS &amp; Android — Google Play : « Heures Supplémentaires France »</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Google Play</div><div style="color:#444;">Application Android installable — rechercher « Heures Supplémentaires France »</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;background:#f8f9fa;"><div style="font-weight:600;">Code source</div><div style="color:#444;">Disponible publiquement pour audit et contribution</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 2fr;padding:6px 10px;border-bottom:1px solid #eee;"><div style="font-weight:600;">Licence</div><div style="color:#444;">Usage personnel &amp; indicatif — voir conditions d'utilisation</div></div>
+      <div style="display:grid;grid-template-columns:.8fr 2fr;padding:6px 10px;background:#f8f9fa;"><div style="font-weight:600;">Contact</div><div style="color:#444;">Via l'application — formulaire de retour intégré dans chaque module</div></div>
+    </div>
+
+    <!-- Footer légal livre blanc -->
+    <div style="text-align:center;font-size:10px;color:#aaa;line-height:1.5;margin-bottom:16px;padding-top:8px;border-top:1px solid #eee;">
+      Simulheures — Suite RH pour le Droit du Travail Français · C. Anthony · 2026<br>
+      Ce document est un livre blanc à usage informatif. Les calculs de Simulheures sont indicatifs et ne constituent pas un avis juridique ou médical. En cas de litige, seuls les documents officiels de l'employeur font foi. Pour toute situation complexe, consultez un avocat en droit du travail ou votre médecin du travail.
+    </div>
+
+    <!-- ══════════════════════════════════════════
+         DOSSIER DE PRESSE 2026
+    ══════════════════════════════════════════ -->
+    <div style="background:#0a1628;border-radius:16px;overflow:hidden;margin-bottom:12px;">
+
+      <!-- Slide 1 — Couverture -->
+      <div style="background:linear-gradient(160deg,#0a1628,#0f2340);padding:24px 20px 20px;text-align:center;border-bottom:1px solid rgba(212,168,80,0.3);">
+        <div style="display:inline-block;background:#4FB3C2;color:#0a1628;font-size:10px;font-weight:800;letter-spacing:.1em;padding:4px 12px;border-radius:4px;margin-bottom:16px;">DOSSIER DE PRESSE 2026</div>
+        <div style="font-size:32px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:4px;">HEURES<br>SUPPLÉ-<br><span style="color:#4FB3C2;">MENTAIRES</span><br><span style="color:#d4a850;">FRANCE</span></div>
+        <div style="width:60%;height:2px;background:linear-gradient(90deg,transparent,#d4a850,transparent);margin:14px auto;"></div>
+        <div style="font-size:13px;color:rgba(255,255,255,0.7);margin-bottom:4px;">La suite RH mobile pour</div>
+        <div style="font-size:15px;font-weight:700;color:#fff;margin-bottom:16px;">les salariés français</div>
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:16px;">
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;text-align:center;"><div style="font-size:20px;font-weight:800;color:#4FB3C2;">7</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:2px;">Modules</div></div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;text-align:center;"><div style="font-size:20px;font-weight:800;color:#4FB3C2;">477+</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:2px;">CCN</div></div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;text-align:center;"><div style="font-size:20px;font-weight:800;color:#4FB3C2;">600+</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:2px;">Scénarios</div></div>
+          <div style="background:rgba(255,255,255,0.08);border-radius:10px;padding:10px 4px;text-align:center;"><div style="font-size:20px;font-weight:800;color:#4FB3C2;">100%</div><div style="font-size:9px;color:rgba(255,255,255,0.6);margin-top:2px;">Offline</div></div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);line-height:1.7;">Gratuit · Offline · Sans compte · RGPD by design<br>Google Play : « Heures Supplémentaires France »<br>iOS &amp; Android</div>
+        <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,80,0.4),transparent);margin-top:16px;"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.3);margin-top:10px;">Heures Supplémentaires France · C. Anthony 2026</div>
+      </div>
+
+      <!-- Slide 2 — Les 7 modules -->
+      <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#d4a850;text-transform:uppercase;margin-bottom:4px;">LES 7 MODULES</div>
+        <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:14px;">Une suite complète</div>
+        <div style="display:flex;flex-direction:column;gap:8px;">
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #4FB3C2;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#2a4a6e;color:#4FB3C2;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M1</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">Compteur HS Annuel</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Majorations 25%/50% · calendrier · export PDF</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #4FB3C2;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#2a4a6e;color:#4FB3C2;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M2</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">Clôture Mensuelle</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Calé sur date employeur · report reliquats</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #2ecc71;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#1a4a2e;color:#2ecc71;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M3</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">FOX Engine</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">600+ scénarios juridiques · IA · gamification</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #2ecc71;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#1a4a2e;color:#2ecc71;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M4</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">Digital Twin</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Jumeau physiologique · 4 phases · +90 jours</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #9b59b6;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#2e1a4a;color:#9b59b6;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M5</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">Temps Partiel</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Heures complémentaires · règle 12 semaines</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #d4a850;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#3a2a0a;color:#d4a850;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">M6</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">Cadres (Zenji)</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Forfait jours/heures · coach IA · opposabilité</div></div>
+          </div>
+          <div style="background:rgba(255,255,255,0.05);border-left:3px solid #e67e22;border-radius:0 8px 8px 0;padding:10px 12px;display:flex;align-items:center;gap:10px;">
+            <div style="background:#3a1a0a;color:#e67e22;border-radius:6px;padding:4px 8px;font-size:11px;font-weight:700;min-width:28px;text-align:center;">GP</div>
+            <div><div style="font-size:13px;font-weight:700;color:#fff;">GrillePaye Lumina</div><div style="font-size:10px;color:rgba(255,255,255,0.5);">Grille CCN · 200+ conventions · SMIC 2026</div></div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;margin-top:12px;">Heures Supplémentaires France · Dossier de Presse 2026</div>
+      </div>
+
+      <!-- Slide 3 — Science -->
+      <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#d4a850;text-transform:uppercase;margin-bottom:4px;">CE QUE DIT LA SCIENCE</div>
+        <div style="font-size:20px;font-weight:800;color:#fff;line-height:1.2;margin-bottom:14px;">Des données<br><span style="color:#4FB3C2;">qui parlent</span></div>
+        <div style="text-align:center;margin-bottom:16px;">
+          <div style="font-size:42px;font-weight:900;color:#4FB3C2;line-height:1;">745 194</div>
+          <div style="font-size:13px;font-weight:700;color:#fff;margin-top:2px;">décès par an dans le monde</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);">liés aux longues heures de travail</div>
+          <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:2px;">OMS / OIT 2021 — Pega F. et al.</div>
+        </div>
+        <div style="width:100%;height:1px;background:rgba(255,255,255,0.1);margin-bottom:12px;"></div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+          <div style="border:1px solid rgba(78,179,194,0.3);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#4FB3C2;">+33%</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;line-height:1.4;">risque d'AVC à ≥55h/sem</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:6px;">Lancet 2015</div>
+          </div>
+          <div style="border:1px solid rgba(78,179,194,0.3);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#4FB3C2;">+14%</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;line-height:1.4;">cortisol après 24h sans sommeil</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:6px;">Frontiers 2022</div>
+          </div>
+          <div style="border:1px solid rgba(212,168,80,0.3);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:20px;font-weight:800;color:#d4a850;">Nul</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.6);margin-top:4px;line-height:1.4;">gain productif au-delà de 55h/sem</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.3);margin-top:6px;">Stanford 2014</div>
+          </div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.35);text-align:center;margin-bottom:10px;">Données présentées à titre de sensibilisation<br>non substitut à un avis médical</div>
+        <div style="background:rgba(78,179,194,0.1);border:1px solid rgba(78,179,194,0.2);border-radius:10px;padding:12px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#fff;">L'application intègre ces données</div>
+          <div style="font-size:13px;font-weight:700;color:#4FB3C2;">dans son moteur de prévention</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.5);margin-top:4px;">pour alerter — pas pour diagnostiquer.</div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;margin-top:12px;">Heures Supplémentaires France · Dossier de Presse 2026</div>
+      </div>
+
+      <!-- Slide 4 — 477 CCN -->
+      <div style="padding:20px;border-bottom:1px solid rgba(255,255,255,0.07);">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#d4a850;text-transform:uppercase;margin-bottom:4px;">CONFORMITÉ</div>
+        <div style="font-size:28px;font-weight:900;color:#fff;line-height:1.1;margin-bottom:14px;">477 Conventions<br><span style="color:#4FB3C2;">Collectives</span></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px;">
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Transport routier</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 16 · 35h · 195h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Hôtellerie-Restaurants</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 1979 · 39h · 220h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Commerce de détail</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 1517 · 35h · 220h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">BTP — Ouvriers</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 1597 · 35h · 180h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Banque AFB</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 675 · 35h · 115h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Métallurgie (ANU)</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 3248 · 35h · 220h</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Syntec / IT</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 1486 · 35h · 130h ETAM</div>
+          </div>
+          <div style="border-left:3px solid #4FB3C2;padding:8px 10px;background:rgba(255,255,255,0.04);border-radius:0 8px 8px 0;">
+            <div style="font-size:12px;font-weight:700;color:#fff;">Aide à domicile</div>
+            <div style="font-size:10px;color:rgba(255,255,255,0.45);margin-top:2px;">IDCC 2941 · 35h · 220h</div>
+          </div>
+        </div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.5);text-align:center;margin-bottom:8px;">Recalcul instantané selon la convention choisie<br>+ 469 autres conventions disponibles</div>
+        <div style="background:rgba(78,179,194,0.1);border:1px solid rgba(78,179,194,0.2);border-radius:10px;padding:10px;text-align:center;">
+          <div style="font-size:13px;font-weight:700;color:#d4a850;">Base CCN la plus complète</div>
+          <div style="font-size:11px;color:rgba(255,255,255,0.6);">du marché grand public français</div>
+          <div style="font-size:10px;color:#4FB3C2;margin-top:4px;">Seuils · Contingents · IDCC · Règles sectorielles</div>
+        </div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;margin-top:12px;">Heures Supplémentaires France · Dossier de Presse 2026</div>
+      </div>
+
+      <!-- Slide 5 — Philosophie -->
+      <div style="padding:20px;">
+        <div style="font-size:10px;font-weight:700;letter-spacing:.12em;color:#4FB3C2;text-transform:uppercase;margin-bottom:4px;">PHILOSOPHIE</div>
+        <div style="font-size:24px;font-weight:900;color:#fff;line-height:1.2;margin-bottom:4px;">Pourquoi<br><span style="color:#d4a850;">cette appli ?</span></div>
+        <div style="width:40px;height:2px;background:#d4a850;margin-bottom:16px;"></div>
+        <div style="background:rgba(78,179,194,0.08);border-left:3px solid #4FB3C2;border-radius:0 10px 10px 0;padding:14px;margin-bottom:16px;">
+          <div style="font-size:18px;color:#4FB3C2;font-weight:700;margin-bottom:6px;">"</div>
+          <div style="font-size:12px;color:rgba(255,255,255,0.8);line-height:1.6;">Les salariés devraient pouvoir accéder aux mêmes informations sociales que les services RH — gratuitement, sans intermédiaire, sans transmettre leurs données.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:14px;">
+          <div style="border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">📱</div>
+            <div style="font-size:10px;font-weight:700;color:#fff;">DONNÉES LOCALES</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:4px;">Aucune donnée ne quitte l'appareil</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">⚡</div>
+            <div style="font-size:10px;font-weight:700;color:#fff;">100% OFFLINE</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:4px;">Sans connexion après installation</div>
+          </div>
+          <div style="border:1px solid rgba(255,255,255,0.1);border-radius:10px;padding:12px 8px;text-align:center;">
+            <div style="font-size:18px;margin-bottom:6px;">🆓</div>
+            <div style="font-size:10px;font-weight:700;color:#fff;">ENTIÈREMENT GRATUIT</div>
+            <div style="font-size:9px;color:rgba(255,255,255,0.4);margin-top:4px;">Sans pub · sans abo · sans monétisation</div>
+          </div>
+        </div>
+        <div style="background:rgba(78,179,194,0.08);border:1px solid rgba(78,179,194,0.15);border-radius:10px;padding:10px 14px;margin-bottom:14px;font-size:12px;color:rgba(255,255,255,0.7);display:flex;gap:12px;flex-wrap:wrap;justify-content:center;">
+          <span><b style="color:#fff;">7 modules</b></span>
+          <span style="color:rgba(255,255,255,0.3);">|</span>
+          <span><b style="color:#fff;">477 CCN</b></span>
+          <span style="color:rgba(255,255,255,0.3);">|</span>
+          <span><b style="color:#fff;">600+ scénarios</b></span>
+          <span style="color:rgba(255,255,255,0.3);">|</span>
+          <span><b style="color:#fff;">100% offline</b></span>
+        </div>
+        <div style="text-align:center;font-size:11px;color:rgba(255,255,255,0.4);line-height:1.7;">Disponible sur<br><span style="color:rgba(255,255,255,0.7);font-weight:600;">Google Play : « Heures Supplémentaires France »</span><br>iOS · Android · Sans compte requis</div>
+        <div style="width:100%;height:1px;background:linear-gradient(90deg,transparent,rgba(212,168,80,0.4),transparent);margin:14px 0;"></div>
+        <div style="font-size:10px;color:rgba(255,255,255,0.25);text-align:center;">Heures Supplémentaires France · Dossier de Presse 2026</div>
+      </div>
+
+    </div><!-- fin dossier presse -->
+
     <button class="close-btn" onclick="closePresentation()">Fermer</button>
   </div>
 </div>
