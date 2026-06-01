@@ -66,35 +66,9 @@ class Checkin {
     if(this._close) this._close.addEventListener('click', () => this.close());
     if(this._modal) this._modal.querySelector('.modal-overlay')?.addEventListener('click', () => this.close());
     this._scheduleMidnightReset();
-    this._purgeCorruptedN1Entries();
   }
 
-  // Purge les entrées DATA_REPORT_ créées par bug (anciennes versions de _saveN1Confirmed
-  // qui écrivaient extra:N sur le lundi de la semaine précédente → case rouge heatmap).
-  // Une entrée est corrompue si elle a _n1confirmed:true dans DATA_REPORT_.
-  // Les données M2 réelles n'ont jamais ce flag (elles viennent de CA_HS_TRACKER).
-  _purgeCorruptedN1Entries(){
-    try {
-      const currentYear = new Date().getFullYear();
-      for(const yr of [currentYear, currentYear - 1]) {
-        const raw = localStorage.getItem('DATA_REPORT_'+yr);
-        if(!raw || raw === '{}') continue;
-        const d = JSON.parse(raw);
-        const days = d.days || d.jours || {};
-        let changed = false;
-        for(const [k, v] of Object.entries(days)) {
-          if(v && v._n1confirmed === true) {
-            delete days[k];
-            changed = true;
-          }
-        }
-        if(changed) {
-          d.days = days;
-          localStorage.setItem('DATA_REPORT_'+yr, JSON.stringify(d));
-        }
-      }
-    } catch(_) {}
-  }
+
 
   _scheduleMidnightReset(){
     const now = new Date();
