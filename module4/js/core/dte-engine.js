@@ -1546,6 +1546,7 @@ class DTEEngine {
       _avgH7:         avgH7,
       _weeklyH7:      weeklyH7Effective,
       _recentWeeklyH: recentWeeklyH,
+      _weeklyHSource: hasAnyEntryThisWeek ? 'live' : (countWorkDays28 >= 5 ? 'avg' : 'seuil'),
       _isVacationWeek: isCurrentWeekVacation,
       _consec:        consec,
       _consecOT:      consecOT,
