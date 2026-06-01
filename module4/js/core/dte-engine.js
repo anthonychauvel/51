@@ -272,8 +272,9 @@ function musculoRisk(weeklyH, cumulMonths, consec) {
  *   - À 10 sem : saturation HPA → factor 2.50 (cortisol fixe même WE)
  *   - Pente : (2.50-1) / 10 = 0.15/semaine → min(2.5, 1 + cumW×0.15)
  */
-function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays, consecNonOTDays) {
-  const loadF    = Math.max(0, (weeklyH - D.H_OPTIMAL) / (D.H_CV - D.H_OPTIMAL));
+function cortisolModel(weeklyH, variabSigma, cumulWeeks, consecRestDays, consecNonOTDays, hOptimal) {
+  const _hOptimal = hOptimal || D.H_OPTIMAL;
+  const loadF    = Math.max(0, (weeklyH - _hOptimal) / (D.H_CV - _hOptimal));
   // FIX SIGMA BUG : variabF réduit pour éviter explosion stress à mi-semaine
   // Avant : sigma/8 × 0.45 → sigma=7.8h → variabF=0.97 → stress=80 (irréaliste pour 42h/sem)
   // Après : sigma/12 × 0.25 → sigma=7.8h → variabF=0.65 → contribution 0.16 max
@@ -926,30 +927,23 @@ class DTEEngine {
     //   Avant : countWorkDays28 >= 5 → 28j écrasait la semaine courante →
     //   progression lun→ven invisible (weeklyExtra constant = moyenne historique).
     let weeklyExtra;
-    // Calculer la semaine précédente complète — prioritaire le lundi matin
-    let prevExtra = 0, prevCount = 0;
-    for (let dd = 0; dd < workDaysPerWeek; dd++) {
-      const dt = new Date(weekMondayA); dt.setDate(weekMondayA.getDate() - 7 + dd);
-      const k = localDK(dt);
-      const e = days[k];
-      if (e && !e.absent) { prevExtra += e.extra || 0; prevCount++; }
-    }
-    // FIX MODE HEBDOMADAIRE : M1 en mode "total semaine" stocke UNE seule entrée
-    // sous la date du lundi de la semaine. prevCount = 1 → la condition >=3 échouait
-    // → prevWeekFull = null → fallback lundi ignoré → rolling 28j × dayRatio = valeur amortie
-    // Détection : si 1 seule entrée ET elle est sur le lundi de la semaine précédente
-    const prevMondayKey = localDK(new Date(weekMondayA.getTime() - 7*86400000));
-    const isWeeklyMode  = prevCount === 1 && !!days[prevMondayKey] && !days[prevMondayKey]?.absent;
-    const prevWeekFull  = isWeeklyMode ? prevExtra : (prevCount >= 3 ? prevExtra : null);
+    // Semaine précédente : plus utilisée pour weeklyExtra (lundi repart à seuil CCN).
+    // La fatigue cumulée rolling 28j conserve la mémoire des semaines précédentes.
 
     if (count7 >= 1 || sumExtra7 > 0) {
       // Des HS saisies cette semaine → utiliser les HS réelles (progression jour par jour)
       weeklyExtra = sumExtra7;
-    } else if (todayDowA === 1 && prevWeekFull !== null) {
-      // Lundi matin sans saisie → semaine précédente complète (mémoire biologique)
-      // Sonnentag 2003 : l'effet d'une semaine chargée persiste le lundi suivant
-      // Mode hebdomadaire : une seule entrée Monday = la semaine entière → traité comme semaine complète
-      weeklyExtra = prevWeekFull;
+    } else if (todayDowA === 1 && countWorkDays28 >= 5) {
+      // Lundi matin sans saisie → utiliser la moyenne rolling 28j comme point de départ.
+      // Sonnentag 2003 : la charge biologique de la semaine précédente persiste le lundi.
+      // On utilise weeklyExtra28 (lissé sur 4 semaines) plutôt que la semaine brute N-1 :
+      // - pas de dépendance à M2 brut (qui sommait les jours individuels → valeur gonflée)
+      // - transition douce dimanche→lundi sans saut artificiel dans le score
+      // - représente la charge "habituelle" de fond, scientifiquement défendable
+      weeklyExtra = weeklyExtra28;
+    } else if (todayDowA === 1) {
+      // Lundi matin, pas encore assez d'historique → seuil CCN direct
+      weeklyExtra = 0;
     } else if (countWorkDays28 >= 5) {
       // FIX no-entry mid-week : estimation PROPORTIONNELLE au jour de semaine
       // Avant : weeklyExtra28 plein → score chute de 72→54 en milieu de semaine sans saisie
@@ -960,7 +954,7 @@ class DTEEngine {
       weeklyExtra = weeklyExtra28 * _dayRatio;
     } else {
       // Fallback démarrage
-      weeklyExtra = prevWeekFull !== null ? prevWeekFull * Math.min(1, todayDowA / Math.max(1, workDaysPerWeek)) : 0;
+      weeklyExtra = 0; // fallback démarrage : pas de données → seuil CCN direct
     }
     // FIX BUG 2 : avgExtra7 normalisé sur workDaysPerWeek STANDARD (5j)
     // Avant : avgExtra7 = weeklyExtra / workDaysPerWeek → avec 3j ouvrés configurés,
@@ -1559,6 +1553,10 @@ class DTEEngine {
       _avgH7:         avgH7,
       _weeklyH7:      weeklyH7Effective,
       _recentWeeklyH: recentWeeklyH,
+      // Source de weeklyH pour l'UX : 'live' = données saisies cette semaine,
+      // 'avg' = moyenne rolling 28j (lundi sans saisie), 'seuil' = pas d'historique
+      _weeklyHSource: hasAnyEntryThisWeek ? 'live'
+        : (countWorkDays28 >= 5 ? 'avg' : 'seuil'),
       _isVacationWeek: isCurrentWeekVacation,
       _consec:        consec,
       _consecOT:      consecOT,
@@ -1732,7 +1730,7 @@ class DTEEngine {
     // FIX BUG 8 : le stress amplifie la fatigue (INRS + OMS + Sonnentag)
     // Référence architecture : facteur_stress = 1 + stress * 0.5
     // On utilise cortisolModel (indépendant de fatigue, pas de dépendance circulaire)
-    const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
+    const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT, _ccnR.seuil);
     const stressFatigueMult = 1 + prelimStress * 0.15; // INRS: stress amplifie fatigue (modéré — 0.15 évite surréaction)
     const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
     const fatigue = Math.max(0, Math.min(1, fat_raw));
@@ -1743,7 +1741,7 @@ class DTEEngine {
     //   Nuit partielle : ×1.20 (mélatonine partiellement supprimée, INRS)
     //   Décalé tard    : ×1.10 (dette sommeil mécanique, ANACT)
     const nightFactor = norm._nightFactor || 1.0;
-    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
+    const cortisolS   = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT, _ccnR.seuil);
 
     // stressExt : composante chronique (fatigue × variabilité) — décroit avec TOUTE absence de HS
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
