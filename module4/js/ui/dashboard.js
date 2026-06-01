@@ -175,7 +175,13 @@ class Dashboard {
       desc: 'Niveau de tension nerveuse et de cortisol estimé. Thompson 2022 : le cortisol monte +14% dès la 1ère nuit courte.',
       source: 'Thompson 2022 (Frontiers) · ANACT/INRS · ANI 2008',
       facteurs_heures: [
-        { label:'Heures hebdo vs optimal', key:'_recentWeeklyH', fmt: v => v.toFixed(0)+'h/sem (optimal : 35h)' },
+        { label:'Heures hebdo vs optimal', key:'_recentWeeklyH', fmt: (v, n) => {
+            const src = n('_weeklyHSource');
+            const badge = src === 'live' ? ' <span style="font-size:8px;color:#00ccaa;">● LIVE</span>'
+                        : src === 'avg'  ? ' <span style="font-size:8px;color:#c89a18;">◐ MOY. 28J</span>'
+                        :                  ' <span style="font-size:8px;color:rgba(255,255,255,0.3);">— SEUIL</span>';
+            return v.toFixed(0)+'h/sem (optimal : 35h)'+badge;
+          } },
         { label:'Variabilité des horaires', key:'_sigma',         fmt: v => v===0?'Faible — rythme régulier':v>6?'Élevée ('+v.toFixed(1)+'h écart-type — ANACT)':v>3?'Modérée ('+v.toFixed(1)+'h écart-type)':'Faible ('+v.toFixed(1)+'h écart-type)' },
         { label:'Durée d\'exposition',     key:'_cumulWeeks',   fmt: v => {
             const vR = Math.round(v * 10) / 10;
