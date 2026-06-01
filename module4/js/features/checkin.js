@@ -66,6 +66,34 @@ class Checkin {
     if(this._close) this._close.addEventListener('click', () => this.close());
     if(this._modal) this._modal.querySelector('.modal-overlay')?.addEventListener('click', () => this.close());
     this._scheduleMidnightReset();
+    this._purgeCorruptedN1Entries();
+  }
+
+  // Purge les entrées DATA_REPORT_ créées par bug (anciennes versions de _saveN1Confirmed
+  // qui écrivaient extra:N sur le lundi de la semaine précédente → case rouge heatmap).
+  // Une entrée est corrompue si elle a _n1confirmed:true dans DATA_REPORT_.
+  // Les données M2 réelles n'ont jamais ce flag (elles viennent de CA_HS_TRACKER).
+  _purgeCorruptedN1Entries(){
+    try {
+      const currentYear = new Date().getFullYear();
+      for(const yr of [currentYear, currentYear - 1]) {
+        const raw = localStorage.getItem('DATA_REPORT_'+yr);
+        if(!raw || raw === '{}') continue;
+        const d = JSON.parse(raw);
+        const days = d.days || d.jours || {};
+        let changed = false;
+        for(const [k, v] of Object.entries(days)) {
+          if(v && v._n1confirmed === true) {
+            delete days[k];
+            changed = true;
+          }
+        }
+        if(changed) {
+          d.days = days;
+          localStorage.setItem('DATA_REPORT_'+yr, JSON.stringify(d));
+        }
+      }
+    } catch(_) {}
   }
 
   _scheduleMidnightReset(){
@@ -137,387 +165,17 @@ class Checkin {
 
   _buildSequence(){
     const s = this._answers.dayStatus;
-    // Injecter la question de confirmation N-1 si lundi matin et pas encore confirmé
-    const mondayQ = this._mondayN1Question();
-    const mondayArr = mondayQ ? [mondayQ] : [];
-    if(!s) this._questions = [...mondayArr, Q_STATUS, ...QUESTIONS_WELLBEING];
-    else if(s === 'work') this._questions = [...mondayArr, Q_STATUS, Q_SLOT, ...QUESTIONS_WELLBEING];
-    else this._questions = [...mondayArr, Q_STATUS, ...QUESTIONS_WELLBEING];
+    // Question N-1 supprimée : le lundi repart sur le seuil CCN (0 HS).
+    // La fatigue cumulée rolling 28j conserve la mémoire des semaines précédentes.
+    if(!s) this._questions = [Q_STATUS, ...QUESTIONS_WELLBEING];
+    else if(s === 'work') this._questions = [Q_STATUS, Q_SLOT, ...QUESTIONS_WELLBEING];
+    else this._questions = [Q_STATUS, ...QUESTIONS_WELLBEING];
   }
 
-  _mondayN1Question(){
-    // Helper : date locale YYYY-MM-DD (évite le bug UTC en France)
-    const localDK = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 
-    // Lire le début de semaine dynamique depuis la CCN ou DTE_SETTINGS
-    // debutSemaine : 1=lun, 2=mar, 3=mer, 4=jeu, 5=ven, 6=sam, 7=dim
-    // getDay() JS : 0=dim, 1=lun, 2=mar... → conversion nécessaire
-    const _getWeekStartDow = () => {
-      try {
-        // Priorité : CCN_API si disponible
-        if(typeof CCN_API !== 'undefined') {
-          const idcc = parseInt(localStorage.getItem('CCN_IDCC') || '0');
-          const rules = CCN_API.getGroupeForCCN(idcc) || CCN_API.getGroupeForCCN(0);
-          if(rules && rules.debutSemaine) {
-            // debutSemaine CCN : 1=lun...7=dim → JS getDay : 0=dim,1=lun...6=sam
-            const ds = rules.debutSemaine;
-            return ds === 7 ? 0 : ds; // 7(dim)→0, 1(lun)→1, 2(mar)→2...
-          }
-        }
-        // Fallback : DTE_SETTINGS
-        const s = JSON.parse(localStorage.getItem('DTE_SETTINGS') || '{}');
-        if(s.debutSemaine) {
-          const ds = s.debutSemaine;
-          return ds === 7 ? 0 : ds;
-        }
-      } catch(_) {}
-      return 1; // défaut : lundi
-    };
-    const weekStartDow = _getWeekStartDow(); // jour JS de début de semaine (0=dim,1=lun...)
-
-    // Afficher le premier jour de la semaine de travail, pas forcément le lundi civil
-    const today = new Date();
-    const todayDow = today.getDay();
-    if(todayDow !== weekStartDow) return null; // pas le premier jour de semaine
-    const todayKey = localDK(today);
-    if(_safeLS.get('DTE_N1_CONFIRMED') === todayKey) return null; // déjà confirmé aujourd'hui
-
-    // Lire la semaine précédente depuis M1 (DATA_REPORT)
-    try {
-      const yr = today.getFullYear();
-      // Début de la semaine précédente = aujourd'hui - 7 jours (même jour de semaine)
-      const prevWeekStart = new Date(today); prevWeekStart.setDate(today.getDate() - 7);
-      const prevMondayKey = localDK(prevWeekStart); // clé locale ✓
-
-      // Chercher dans DATA_REPORT_yr et DATA_REPORT_(yr-1)
-      let prevExtra = null;
-      for(const y of [yr, yr-1]) {
-        const raw = localStorage.getItem('DATA_REPORT_'+y);
-        if(!raw || raw === '{}') continue;
-        const d = JSON.parse(raw);
-        let days = d.days || d.jours || {};
-        // Détecter si la racine contient directement des clés dates
-        if(!Object.keys(days).length) {
-          const fk = Object.keys(d).find(k => /^\d{4}-\d{2}-\d{2}$/.test(k));
-          if(fk) days = d;
-        }
-        // Mode hebdomadaire : entrée sur le lundi de la semaine précédente
-        if(days[prevMondayKey]) {
-          prevExtra = parseFloat(days[prevMondayKey].extra || days[prevMondayKey].hs || 0);
-          break;
-        }
-        // Mode journalier : sommer les jours de la semaine précédente
-        let sum = 0, found = false;
-        for(let dd = 0; dd < 7; dd++) {
-          const dt = new Date(prevWeekStart); dt.setDate(prevWeekStart.getDate() + dd);
-          if(dt >= today) break; // ne pas dépasser aujourd'hui
-          const k = localDK(dt); // clé locale ✓
-          if(days[k]) { sum += parseFloat(days[k].extra || 0); found = true; }
-        }
-        if(found) { prevExtra = sum; break; }
-      }
-
-      const seuil = (() => {
-        try {
-          const s = JSON.parse(localStorage.getItem('DTE_SETTINGS') || '{}');
-          return s.seuil || 35;
-        } catch(_){ return 35; }
-      })();
-
-      // Pas de données M1 → question ouverte (saisie libre)
-      // Si pas trouvé dans M1 → chercher dans M2 (CA_HS_TRACKER_V1_DATA)
-      // M2 structure : { "2026-03": { days: {"14": 2.5, "15": 1}, closing: 28 } }
-      if(prevExtra === null) {
-        try {
-          for(const y of [yr, yr-1]) {
-            const m2raw = localStorage.getItem('CA_HS_TRACKER_V1_DATA_'+y);
-            if(!m2raw || m2raw === '{}') continue;
-            const m2d = JSON.parse(m2raw);
-            let sum = 0, found = false;
-            // Parcourir les jours de la semaine précédente dans M2
-            for(let dd = 0; dd < 7; dd++) {
-              const dt = new Date(prevWeekStart); dt.setDate(prevWeekStart.getDate() + dd);
-              if(dt >= today) break;
-              const mk = localDK(dt).slice(0,7); // "2026-04"
-              const dayNum = String(dt.getDate()); // "13"
-              const monthData = m2d[mk];
-              if(monthData && monthData.days && monthData.days[dayNum] !== undefined) {
-                sum += parseFloat(monthData.days[dayNum] || 0);
-                found = true;
-              }
-            }
-            if(found) { prevExtra = sum; break; }
-          }
-        } catch(_) {}
-      }
-
-      if(prevExtra === null) {
-        return {
-          id: 'n1confirm',
-          text: 'Combien d\'heures avez-vous travaillé la semaine passée ?',
-          emoji: '📋',
-          _prevExtra: null,
-          _prevMondayKey: prevMondayKey,
-          _seuil: seuil,
-          _freeInput: true, // mode saisie libre
-          opts: [
-            {v: 'seuil',   e: '✅', l: `${seuil}h — semaine normale`},
-            {v: 'seuil1',  e: '🔵', l: `${seuil+1}h`},
-            {v: 'seuil2',  e: '🟡', l: `${seuil+2}h`},
-            {v: 'seuil3',  e: '🟠', l: `${seuil+3}h`},
-            {v: 'seuil5',  e: '🔴', l: `${seuil+5}h ou plus`},
-            {v: 'skip',    e: '⏭️', l: 'Passer'},
-          ]
-        };
-      }
-
-      const totalH = seuil + prevExtra;
-      const heuresLabel = prevExtra === 0
-        ? `${totalH}h (aucune heure sup)`
-        : `${totalH}h (+${prevExtra}h sup)`;
-
-      return {
-        id: 'n1confirm',
-        text: `Semaine passée : ${heuresLabel}. C'est exact ?`,
-        emoji: '📋',
-        _prevExtra: prevExtra,
-        _prevMondayKey: prevMondayKey,
-        _seuil: seuil,
-        opts: [
-          {v: 'ok',    e: '✅', l: `Oui, ${heuresLabel}`},
-          {v: 'moins', e: '⬇️', l: "Moins — j'ai travaillé moins"},
-          {v: 'plus',  e: '⬆️', l: "Plus — j'ai travaillé plus"},
-          {v: 'skip',  e: '⏭️', l: 'Passer'},
-        ]
-      };
-    } catch(_) { return null; }
-  }
-
-  _render(){
-    const q = this._questions[this._step];
-    const n = this._questions.length;
-    const pct = Math.round((this._step/n)*100);
-
-    this._content.innerHTML = `
-      <div style="padding:0 4px;">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;">
-          <span style="font-size:10px;color:rgba(255,255,255,0.4);font-family:var(--font-mono);">${this._step+1} / ${n}</span>
-          <div style="flex:1;height:3px;background:rgba(255,255,255,0.1);margin:0 10px;">
-            <div style="height:100%;width:${pct}%;background:var(--sync);transition:width .3s;"></div>
-          </div>
-          ${this._step>0?`<button id="ci-prev" style="font-size:11px;color:rgba(255,255,255,0.4);background:none;border:none;cursor:pointer;padding:2px 6px;">← Retour</button>`:'<span></span>'}
-        </div>
-        <div style="text-align:center;font-size:36px;margin-bottom:10px;">${q.emoji}</div>
-        <div style="font-size:15px;font-weight:600;color:#fff;text-align:center;margin-bottom:18px;line-height:1.4;">${q.text}</div>
-        <div style="display:flex;flex-direction:column;gap:8px;">
-          ${q.opts.map(o=>`
-            <button data-val="${o.v}" style="display:flex;align-items:center;gap:12px;padding:12px 16px;background:rgba(0,10,25,.85);border:1px solid ${this._answers[q.id]===o.v?'rgba(0,255,204,0.6)':'rgba(255,255,255,0.12)'};cursor:pointer;transition:all .15s;text-align:left;width:100%;${this._answers[q.id]===o.v?'background:rgba(0,255,204,0.1);':''}">
-              <span style="font-size:22px;flex-shrink:0;">${o.e}</span>
-              <span style="font-size:13px;color:#fff;">${o.l}</span>
-            </button>`).join('')}
-        </div>
-      </div>`;
-
-    this._content.querySelectorAll('button[data-val]').forEach(el => {
-      el.addEventListener('click', () => {
-        const val = el.dataset.val;
-        this._answers[q.id] = isNaN(val) ? val : parseInt(val);
-        if(q.id === 'dayStatus') this._buildSequence();
-
-        // Traitement spécial pour la confirmation N-1
-        if(q.id === 'n1confirm') {
-          const _ldkN1 = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-          _safeLS.set('DTE_N1_CONFIRMED', _ldkN1(new Date()));
-          if(val === 'ok') {
-            this._saveN1Confirmed(q._prevMondayKey, q._prevExtra || 0, q._seuil);
-          } else if(val === 'moins' || val === 'plus') {
-            this._renderN1Edit(q._prevMondayKey, q._prevExtra || 0, q._seuil, val);
-            return;
-          } else if(val && val.startsWith('seuil')) {
-            // Mode saisie libre (pas de données M1)
-            const extras = {'seuil':0,'seuil1':1,'seuil2':2,'seuil3':3,'seuil5':5};
-            const extra = extras[val] !== undefined ? extras[val] : 0;
-            if(val === 'seuil5') {
-              this._renderN1Edit(q._prevMondayKey, q._seuil + 5, q._seuil, 'plus');
-              return;
-            }
-            this._saveN1Confirmed(q._prevMondayKey, extra, q._seuil);
-          }
-          // skip → continuer sans sauvegarder
-          // FIX : après rebuild, le tableau a perdu n1confirm (déjà confirmé),
-          // donc questions[0] = Q_STATUS. Si on ne remet pas _step à -1,
-          // le step++ suivant saute Q_STATUS et atterrit sur wellbeing[0].
-          this._buildSequence();
-          this._step = -1; // sera incrémenté à 0 → Q_STATUS affiché correctement
-        }
-
-        setTimeout(() => {
-          if(this._step < this._questions.length-1){ this._step++; this._render(); }
-          else { this._submit(); }
-        }, 220);
-      });
-    });
-
-    const prev = document.getElementById('ci-prev');
-    if(prev) prev.addEventListener('click', () => { this._step = Math.max(0,this._step-1); this._render(); });
-  }
-
-  _submit(){
-    const _ldk2 = (d) => d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-    const today = _ldk2(new Date()); // date locale ✓
-    _safeLS.set('DTE_CHECKIN_DATE', today);
-
-    // Écrire DTE_VACANCES_ si repos/congé/maladie
-    // Si correction vers "work" : supprimer la date des vacances si elle y était
-    const status = this._answers.dayStatus;
-    const yr = today.slice(0,4);
-    try {
-      const vac = JSON.parse(localStorage.getItem('DTE_VACANCES_'+yr)||'{}');
-      if(status === 'holiday' || status === 'sick' || status === 'rest'){
-        vac[today] = true;
-      } else {
-        // Statut travail → retirer du registre vacances si erreur précédente
-        delete vac[today];
-      }
-      localStorage.setItem('DTE_VACANCES_'+yr, JSON.stringify(vac));
-    } catch(_){}
-
-    // Appliquer créneau horaire → DTE_SETTINGS (clé lue par dte-engine.js)
-    const slot = this._answers.timeSlot;
-    if(slot && SLOT_REGIME[slot]){
-      const r = SLOT_REGIME[slot];
-      try {
-        const settings = JSON.parse(localStorage.getItem('DTE_SETTINGS')||'{}');
-        settings.startH = r.startH; settings.endH = r.endH; settings.regimeType = r.regimeType;
-        localStorage.setItem('DTE_SETTINGS', JSON.stringify(settings));
-      } catch(_){}
-    }
-
-    // Historique
-    const history = _safeLS.json('DTE_CHECKIN_HISTORY', []);
-    const idx = history.findIndex(h => h.date === today);
-    const entry = {date:today, ...this._answers};
-    if(idx>=0) history[idx]=entry; else history.push(entry);
-    if(history.length>90) history.shift();
-    _safeLS.set('DTE_CHECKIN_HISTORY', JSON.stringify(history));
-
-    document.getElementById('checkin-edit-badge')?.remove();
-
-    if(window.DTE&&window.DTE.learning&&window.DTE.engine){
-      const st = window.DTE.engine.getState();
-      if(st){
-        window.DTE.learning.adaptFromCheckin(this._answers, st.scores);
-        const newNorm = window.DTE.learning.applyCheckin(this._answers, st.norm);
-        document.dispatchEvent(new CustomEvent('dte:checkin', {detail:{data:this._answers,norm:newNorm}}));
-      }
-    }
-
-    const statusMsg = {
-      work:'💼 Journée de travail enregistrée.',
-      rest:'🏠 Jour de repos enregistré.',
-      holiday:'🌴 Congé enregistré — vos scores sont ajustés.',
-      sick:'🤒 Arrêt maladie enregistré — prenez soin de vous.',
-    }[status]||'Données intégrées dans l\'analyse.';
-
-    this._content.innerHTML = `
-      <div style="text-align:center;padding:var(--gap-xl);">
-        <div style="font-size:48px;">🦊</div>
-        <div style="font-family:var(--font-h);font-size:20px;font-weight:700;margin:var(--gap) 0;">Check-in enregistré !</div>
-        <div style="color:var(--text-dim);font-size:13px;line-height:1.6;">${statusMsg}<br>Précision du modèle améliorée.</div>
-        <div style="display:flex;justify-content:center;gap:var(--gap);margin-top:var(--gap-l);flex-wrap:wrap;">
-          ${Object.entries(this._answers).filter(([k])=>k!=='dayStatus'&&k!=='timeSlot').map(([k,v])=>{
-            const q=QUESTIONS_WELLBEING.find(q=>q.id===k); const o=q?q.opts.find(o=>o.v===v):null;
-            return q?`<span style="background:var(--surface2);border:1px solid var(--border);border-radius:var(--r);padding:4px 10px;font-family:var(--font-mono);font-size:10px;">${q.emoji} ${o?o.e:''}</span>`:'';
-          }).join('')}
-        </div>
-        <button class="btn btn--cyan" style="margin-top:var(--gap-l);" id="ci-done">Fermer</button>
-      </div>`;
-
-    document.getElementById('ci-done').addEventListener('click', ()=>this.close());
-    if(window._fullSync) window._fullSync();
-    else if(window._forcSync) window._forcSync();
-    window.DTE?.notifications?.show('Check-in enregistré','ok','🦊',statusMsg);
-  }
-
-  _saveN1Confirmed(mondayKey, extraH, seuil){
-    // Écrire la semaine confirmée dans DATA_REPORT si elle n'y est pas déjà
-    // ou si on veut consolider une saisie hebdomadaire
-    try {
-      const yr = parseInt(mondayKey.slice(0,4));
-      const raw = localStorage.getItem('DATA_REPORT_'+yr);
-      const d = raw && raw !== '{}' ? JSON.parse(raw) : {};
-      const days = d.days || d.jours || {};
-      // Écrire uniquement si l'entrée n'existe pas déjà (ne pas écraser une saisie manuelle)
-      if(!days[mondayKey]) {
-        days[mondayKey] = { extra: extraH, recup: 0, absent: 0 };
-        d.days = days;
-        localStorage.setItem('DATA_REPORT_'+yr, JSON.stringify(d));
-      }
-    } catch(_) {}
-  }
-
-  _renderN1Edit(mondayKey, prevExtra, seuil, direction){
-    // Interface de correction rapide du total semaine précédente
-    const totalH = seuil + prevExtra;
-    const hint = direction === 'moins'
-      ? `Entre ${Math.max(seuil-10,0)} et ${totalH-0.5}h`
-      : `Entre ${totalH+0.5} et ${seuil+20}h`;
-
-    this._content.innerHTML = `
-      <div style="padding:0 4px;">
-        <div style="text-align:center;font-size:36px;margin-bottom:10px;">✏️</div>
-        <div style="font-size:15px;font-weight:600;color:#fff;text-align:center;margin-bottom:6px;line-height:1.4;">
-          Combien d'heures avez-vous travaillé la semaine passée ?
-        </div>
-        <div style="font-size:12px;color:rgba(255,255,255,0.45);text-align:center;margin-bottom:18px;">${hint}</div>
-        <div style="display:flex;align-items:center;justify-content:center;gap:12px;margin-bottom:20px;">
-          <button id="n1-minus" style="width:44px;height:44px;font-size:22px;background:rgba(0,255,204,0.1);border:1px solid rgba(0,255,204,0.3);color:#fff;cursor:pointer;">−</button>
-          <div style="text-align:center;">
-            <div id="n1-val" style="font-size:42px;font-weight:700;color:var(--sync,#00ffcc);">${totalH}</div>
-            <div style="font-size:11px;color:rgba(255,255,255,0.4);">heures / semaine</div>
-          </div>
-          <button id="n1-plus" style="width:44px;height:44px;font-size:22px;background:rgba(0,255,204,0.1);border:1px solid rgba(0,255,204,0.3);color:#fff;cursor:pointer;">+</button>
-        </div>
-        <button id="n1-confirm" style="width:100%;padding:14px;background:rgba(0,255,204,0.15);border:1px solid rgba(0,255,204,0.4);color:#fff;font-size:14px;font-weight:600;cursor:pointer;">
-          ✅ Confirmer
-        </button>
-        <button id="n1-skip" style="width:100%;margin-top:8px;padding:10px;background:transparent;border:1px solid rgba(255,255,255,0.1);color:rgba(255,255,255,0.4);font-size:12px;cursor:pointer;">
-          Passer sans modifier
-        </button>
-      </div>`;
-
-    let current = totalH;
-    const valEl = document.getElementById('n1-val');
-    document.getElementById('n1-minus').addEventListener('click', () => {
-      current = Math.max(0, Math.round((current - 0.5) * 2) / 2);
-      valEl.textContent = current;
-    });
-    document.getElementById('n1-plus').addEventListener('click', () => {
-      current = Math.min(80, Math.round((current + 0.5) * 2) / 2);
-      valEl.textContent = current;
-    });
-    document.getElementById('n1-confirm').addEventListener('click', () => {
-      const newExtra = Math.max(0, current - seuil);
-      this._saveN1Confirmed(mondayKey, newExtra, seuil);
-      // Écraser avec la valeur corrigée
-      try {
-        const yr = parseInt(mondayKey.slice(0,4));
-        const raw = localStorage.getItem('DATA_REPORT_'+yr);
-        const d = raw && raw !== '{}' ? JSON.parse(raw) : {};
-        const days = d.days || {};
-        days[mondayKey] = { extra: newExtra, recup: 0, absent: 0 };
-        d.days = days;
-        localStorage.setItem('DATA_REPORT_'+yr, JSON.stringify(d));
-      } catch(_) {}
-      this._step++;
-      this._render();
-    });
-    document.getElementById('n1-skip').addEventListener('click', () => {
-      _safeLS.set('DTE_N1_CONFIRMED', new Date().toISOString().slice(0,10));
-      this._step++;
-      this._render();
-    });
-  }
+  // _mondayN1Question, _saveN1Confirmed, _renderN1Edit supprimées :
+  // le lundi repart désormais sur le seuil CCN (weeklyExtra=0).
+  // La question N-1 "semaine passée" n'est plus posée au check-in.
 
   getLatest(){
     const h = _safeLS.json('DTE_CHECKIN_HISTORY', []);
