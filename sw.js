@@ -3,11 +3,11 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v8.8.0"; // fix PDF Android (blob frais + SW ignore blob/data) + nom unique
+const CACHE_NAME = "heuressup-cache-v10.2.0"; // + Anciennete & jalons
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
-  "./", "./index.html", "./menu.html", "./manifest.json",
+  "./", "./index.html", "./menu.html", "./outils.html", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png",
   "./glossaire.js", "./ccn/conventions-collectives.js",
   "./heures/index.html",
@@ -107,7 +107,29 @@ const FILES_TO_CACHE = [
   // === Module 7 — Nuit, Astreinte & Primes (Mimizuku) ===
   "./module7/index.html",
   "./module7/Mimizuku.png",
-  "./module7/mimizuku-menu.jpg"
+  "./module7/mimizuku-menu.jpg",
+  // === Module 8 — Frais Pro (notes de frais) ===
+  "./module8/index.html",
+  // === Trousse : Temps & Repos ===
+  "./module-temps/index.html",
+  // === Trousse : Congés payés ===
+  "./module-conges/index.html",
+  // === Trousse : Fin de contrat ===
+  "./module-fincontrat/index.html",
+  // === Trousse : Droits chômage (ARE) ===
+  "./module-chomage/index.html",
+  // === Trousse : Congés familiaux ===
+  "./module-famille/index.html",
+  // === Trousse : Arrêt maladie IJSS ===
+  "./module-arret/index.html",
+  // === Trousse : Titres-restaurant ===
+  "./module-tr/index.html",
+  // === Trousse : Jours fériés ===
+  "./module-feries/index.html",
+  // === Trousse : Saisie sur salaire ===
+  "./module-saisie/index.html",
+  // === Trousse : Ancienneté & jalons ===
+  "./module-anciennete/index.html"
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────

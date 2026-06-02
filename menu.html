@@ -1151,6 +1151,15 @@
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
 
+<div class="btn" id="btn-outils" onclick="go('outils')" style="border:2px solid rgba(255,255,255,0.45);background:linear-gradient(160deg,#6b7c8a,#4a5763);">
+  <div class="btn-no-img" style="background:linear-gradient(135deg,#5a6b7a,#3d4853);min-height:100px;display:flex">
+    <span style="font-size:2.4rem;">🧰</span>
+  </div>
+  <div class="title" style="color:#fff;">🧰 Trousse à outils</div>
+</div>
+
+<div id="pinnedTools"></div>
+
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
 
 <button class="info-btn" onclick="openSharePopup()" style="margin-top:-8px;">📲 Partager l'application</button>
@@ -2065,6 +2074,88 @@ document.addEventListener('DOMContentLoaded', function(){
     _safeLS.set("lastApp", app);
     window.location.href = app + "/index.html";
   }
+
+  // ── Trousse à outils : afficher les outils épinglés dans le menu principal ──
+  (function renderPinnedTools(){
+    var TOOLS = {
+      module8: {
+        title:'🧳 Carnet de frais pro', img:'module8/fraispro-menu.jpg', emoji:'🧳',
+        fbg:'linear-gradient(135deg,#c8a878,#a8895f)', tcolor:'#5a4631',
+        border:'2px solid rgba(168,137,95,0.7)', bg:'linear-gradient(160deg,#e8dcc4,#d2c3a2)'
+      },
+      'module-temps': {
+        title:'⚙️ Temps &amp; Repos', img:'module-temps/temps-menu.jpg', emoji:'⚙️',
+        fbg:'linear-gradient(135deg,#3a2c1d,#241a12)', tcolor:'#e8cf6b',
+        border:'2px solid rgba(201,162,39,0.6)', bg:'linear-gradient(160deg,#3a2c1d,#241a12)'
+      },
+      'module-conges': {
+        title:'🏝️ Mes Congés payés', img:'module-conges/conges-menu.jpg', emoji:'🏝️',
+        fbg:'linear-gradient(135deg,#ff9a6c,#f857a6)', tcolor:'#fff',
+        border:'2px solid rgba(248,87,166,0.5)', bg:'linear-gradient(160deg,#ff9a6c,#f857a6)'
+      },
+      'module-fincontrat': {
+        title:'🌄 Fin de contrat', img:'module-fincontrat/fincontrat-menu.jpg', emoji:'🌄',
+        fbg:'linear-gradient(135deg,#f7b58a,#7d6a9c)', tcolor:'#fff',
+        border:'2px solid rgba(201,107,142,0.5)', bg:'linear-gradient(160deg,#f7b58a,#c96b8e)'
+      },
+      'module-chomage': {
+        title:'🪂 Droits chômage (ARE)', img:'module-chomage/chomage-menu.jpg', emoji:'🪂',
+        fbg:'linear-gradient(135deg,#7fc4ec,#3b6fb5)', tcolor:'#fff',
+        border:'2px solid rgba(59,111,181,0.5)', bg:'linear-gradient(160deg,#7fc4ec,#3b6fb5)'
+      },
+      'module-famille': {
+        title:'🪺 Congés familiaux', img:'module-famille/famille-menu.jpg', emoji:'🪺',
+        fbg:'linear-gradient(135deg,#fbeeda,#e8956b)', tcolor:'#fff',
+        border:'2px solid rgba(232,149,107,0.5)', bg:'linear-gradient(160deg,#f4c9c0,#e8956b)'
+      },
+      'module-arret': {
+        title:'🩺 Arrêt maladie & IJSS', img:'module-arret/arret-menu.jpg', emoji:'🩺',
+        fbg:'linear-gradient(135deg,#c8dff0,#2d5f8a)', tcolor:'#fff',
+        border:'2px solid rgba(74,127,168,0.6)', bg:'linear-gradient(160deg,#d8ecf8,#4a7fa8)'
+      },
+      'module-tr': {
+        title:'🍽️ Titres-restaurant', img:'module-tr/tr-menu.jpg', emoji:'🍽️',
+        fbg:'linear-gradient(135deg,#5c0e0e,#2a2d35)', tcolor:'#f8f4ed',
+        border:'2px solid rgba(139,26,26,0.6)', bg:'linear-gradient(160deg,#8b1a1a,#2a2d35)'
+      },
+      'module-feries': {
+        title:'🎆 Jours feries 2026', img:'module-feries/feries-menu.jpg', emoji:'🎆',
+        fbg:'linear-gradient(135deg,#1a2a7a,#2b4bba)', tcolor:'#fff',
+        border:'2px solid rgba(43,75,186,0.6)', bg:'linear-gradient(160deg,#0d1440,#2b4bba)'
+      },
+      'module-saisie': {
+        title:'🔒 Saisie sur salaire', img:'module-saisie/saisie-menu.jpg', emoji:'🔒',
+        fbg:'linear-gradient(135deg,#2a3540,#141e26)', tcolor:'#c8d4dc',
+        border:'2px solid rgba(200,168,75,0.4)', bg:'linear-gradient(160deg,#3a4550,#1e2830)'
+      },
+      'module-anciennete': {
+        title:'🌳 Ancienneté & jalons', img:'module-anciennete/anciennete-menu.jpg', emoji:'🌳',
+        fbg:'linear-gradient(135deg,#2d5a2d,#3a2a1a)', tcolor:'#f8f4ec',
+        border:'2px solid rgba(74,154,74,0.5)', bg:'linear-gradient(160deg,#3a7a3a,#5a3e28)'
+      }
+    };
+    function getPinned(){ try{ return JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ return []; } }
+    function setPinned(a){ try{ localStorage.setItem('pinnedTools', JSON.stringify(a)); }catch(e){} }
+    var host = document.getElementById('pinnedTools');
+    if(!host) return;
+    var pinned = getPinned();
+    host.innerHTML='';
+    pinned.forEach(function(id){
+      var t=TOOLS[id]; if(!t) return;
+      var card=document.createElement('div'); card.className='btn'; card.id='btn-'+id;
+      card.setAttribute('style','border:'+t.border+';background:'+t.bg+';position:relative;');
+      card.innerHTML =
+        '<img src="'+t.img+'" loading="eager" alt="'+t.title+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+
+        '<div class="btn-no-img" style="background:'+t.fbg+';min-height:100px;display:none"><span style="font-size:2rem;">'+t.emoji+'</span></div>'+
+        '<button class="unpin-btn" title="Retirer du menu (remettre dans la trousse)" style="position:absolute;top:10px;right:10px;width:38px;height:38px;border-radius:50%;background:#ffd166;border:none;color:#7a5a00;font-size:18px;cursor:pointer;z-index:5;display:flex;align-items:center;justify-content:center;">★</button>'+
+        '<div class="title" style="color:'+t.tcolor+';">'+t.title+'</div>';
+      card.addEventListener('click', function(ev){ if(ev.target.closest('.unpin-btn')) return; go(id); });
+      card.querySelector('.unpin-btn').addEventListener('click', function(ev){ ev.stopPropagation();
+        var p=getPinned(); var i=p.indexOf(id); if(i>-1){ p.splice(i,1); setPinned(p); card.remove(); }
+      });
+      host.appendChild(card);
+    });
+  })();
 
   // Surbrillance du dernier module utilisé
   (function highlightLastApp() {

@@ -1,0 +1,218 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8">
+  <title>Trousse à outils — SimulHeures</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+  <meta name="color-scheme" content="only light">
+  <link rel="manifest" href="./manifest.json">
+  <meta name="theme-color" content="#5a6b7a">
+  <link rel="apple-touch-icon" href="./apple-touch-icon.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Trousse à outils">
+  <style>
+    *, *::before, *::after { box-sizing: border-box; }
+    body {
+      margin: 0;
+      background: #5a6b7a;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+      display: flex; flex-direction: column; align-items: center;
+      min-height: 100vh; min-height: 100dvh;
+      justify-content: flex-start;
+      padding-top: calc(env(safe-area-inset-top) + 20px);
+      padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
+      padding-left: calc(env(safe-area-inset-left) + 20px);
+      padding-right: calc(env(safe-area-inset-right) + 20px);
+      gap: 16px; overflow-x: hidden; -webkit-tap-highlight-color: transparent;
+      background-image:
+        radial-gradient(900px 500px at 80% -5%, rgba(255,255,255,0.10), transparent 60%),
+        radial-gradient(700px 500px at 5% 10%, rgba(0,0,0,0.12), transparent 55%);
+      background-attachment: fixed;
+    }
+    @media screen and (orientation:landscape) and (max-device-width:1024px){
+      body>*:not(#lb){display:none!important;}
+      #lb{position:fixed;inset:0;z-index:99999;background:#5a6b7a;color:#fff;display:flex!important;
+        flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:20px;}
+    }
+    @media screen and (orientation:portrait){#lb{display:none!important;}}
+
+    .topbar{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;}
+    .topbar .back{background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.3);color:#fff;
+      border-radius:14px;padding:10px 14px;font-size:14px;text-decoration:none;font-weight:600;}
+    .topbar .sp{flex:1;}
+
+    .head{text-align:center;color:#fff;margin:6px 0 4px;}
+    .head .ico{font-size:46px;}
+    .head h1{font-size:24px;margin:8px 0 4px;font-weight:800;}
+    .head p{font-size:13px;opacity:0.85;margin:0;max-width:330px;line-height:1.4;}
+
+    .btn {
+      width: 90%; max-width: 250px; border-radius: 28px; overflow: visible;
+      box-shadow: 0 10px 25px rgba(0,0,0,.25); cursor: pointer;
+      transition: transform .15s ease; background: rgba(255,255,255,0.1); position:relative;
+    }
+    .btn:active { transform: scale(0.96); }
+    .btn img { width: 100%; height: auto; display: block; border-radius: 28px 28px 0 0; }
+    .btn-no-img { display: flex; align-items: center; justify-content: center; min-height: 100px;
+      border-radius: 28px 28px 0 0; }
+    .title { text-align: center; font-weight: 600; margin: 8px 0 12px; font-size: 15px; padding: 0 12px; line-height: 1.3; }
+    /* pin star */
+    .pin{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;
+      background:rgba(0,0,0,0.45);border:none;color:#ffd166;font-size:20px;cursor:pointer;z-index:5;
+      display:flex;align-items:center;justify-content:center;transition:.15s;backdrop-filter:blur(4px);}
+    .pin:active{transform:scale(0.85);}
+    .pin.pinned{background:#ffd166;color:#7a5a00;}
+    .pin-hint{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;
+      padding:4px 8px;border-radius:12px;pointer-events:none;}
+
+    .empty{color:#fff;text-align:center;opacity:0.85;padding:30px 20px;max-width:330px;}
+    .empty .e{font-size:42px;display:block;margin-bottom:10px;}
+
+    .foot{color:#fff;opacity:0.7;font-size:11px;text-align:center;margin-top:14px;max-width:330px;line-height:1.5;}
+
+    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);z-index:9999;
+      background:#2a3640;color:#fff;font-size:13px;font-weight:600;padding:12px 22px;border-radius:24px;
+      box-shadow:0 8px 24px rgba(0,0,0,0.4);opacity:0;transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;}
+    .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  </style>
+</head>
+<body>
+<div id="lb">📱 Tournez votre téléphone</div>
+
+<div class="topbar">
+  <a href="menu.html" class="back">← Menu</a>
+  <div class="sp"></div>
+</div>
+
+<div class="head">
+  <div class="ico">🧰</div>
+  <h1>Trousse à outils</h1>
+  <p>Des outils sympas en plus du suivi des heures. Épingle ceux que tu utilises souvent : ils rejoindront le menu principal.</p>
+</div>
+
+<div id="toolList" style="display:contents;"></div>
+
+<div class="foot">⭐ Épingler un outil le déplace dans le menu principal pour un accès plus rapide.</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  function getPinned(){ try{ return JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ return []; } }
+  function setPinned(a){ try{ localStorage.setItem('pinnedTools', JSON.stringify(a)); }catch(e){} }
+  function go(app){ try{localStorage.setItem('lastApp',app);}catch(e){} window.location.href = app + '/index.html'; }
+  function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},1800); }
+
+  // Tool registry — add future mini-modules here
+  var TOOLS = [
+    {
+      id:'module8', title:'🧳 Carnet de frais pro',
+      img:'module8/fraispro-menu.jpg', fallbackEmoji:'🧳',
+      fallbackBg:'linear-gradient(135deg,#c8a878,#a8895f)',
+      titleColor:'#5a4631',
+      border:'2px solid rgba(168,137,95,0.7)', bg:'linear-gradient(160deg,#e8dcc4,#d2c3a2)'
+    },
+    {
+      id:'module-temps', title:'⚙️ Temps &amp; Repos',
+      img:'module-temps/temps-menu.jpg', fallbackEmoji:'⚙️',
+      fallbackBg:'linear-gradient(135deg,#3a2c1d,#241a12)',
+      titleColor:'#e8cf6b',
+      border:'2px solid rgba(201,162,39,0.6)', bg:'linear-gradient(160deg,#3a2c1d,#241a12)'
+    },
+    {
+      id:'module-conges', title:'🏝️ Mes Congés payés',
+      img:'module-conges/conges-menu.jpg', fallbackEmoji:'🏝️',
+      fallbackBg:'linear-gradient(135deg,#ff9a6c,#f857a6)',
+      titleColor:'#fff',
+      border:'2px solid rgba(248,87,166,0.5)', bg:'linear-gradient(160deg,#ff9a6c,#f857a6)'
+    },
+    {
+      id:'module-fincontrat', title:'🌄 Fin de contrat',
+      img:'module-fincontrat/fincontrat-menu.jpg', fallbackEmoji:'🌄',
+      fallbackBg:'linear-gradient(135deg,#f7b58a,#7d6a9c)',
+      titleColor:'#fff',
+      border:'2px solid rgba(201,107,142,0.5)', bg:'linear-gradient(160deg,#f7b58a,#c96b8e)'
+    },
+    {
+      id:'module-chomage', title:'🪂 Droits chômage (ARE)',
+      img:'module-chomage/chomage-menu.jpg', fallbackEmoji:'🪂',
+      fallbackBg:'linear-gradient(135deg,#7fc4ec,#3b6fb5)',
+      titleColor:'#fff',
+      border:'2px solid rgba(59,111,181,0.5)', bg:'linear-gradient(160deg,#7fc4ec,#3b6fb5)'
+    },
+    {
+      id:'module-famille', title:'🪺 Congés familiaux',
+      img:'module-famille/famille-menu.jpg', fallbackEmoji:'🪺',
+      fallbackBg:'linear-gradient(135deg,#fbeeda,#e8956b)',
+      titleColor:'#fff',
+      border:'2px solid rgba(232,149,107,0.5)', bg:'linear-gradient(160deg,#f4c9c0,#e8956b)'
+    },
+    {
+      id:'module-arret', title:'🩺 Arrêt maladie & IJSS',
+      img:'module-arret/arret-menu.jpg', fallbackEmoji:'🩺',
+      fallbackBg:'linear-gradient(135deg,#c8dff0,#2d5f8a)',
+      titleColor:'#fff',
+      border:'2px solid rgba(74,127,168,0.6)', bg:'linear-gradient(160deg,#d8ecf8,#4a7fa8)'
+    },
+    {
+      id:'module-tr', title:'🍽️ Titres-restaurant',
+      img:'module-tr/tr-menu.jpg', fallbackEmoji:'🍽️',
+      fallbackBg:'linear-gradient(135deg,#5c0e0e,#2a2d35)',
+      titleColor:'#f8f4ed',
+      border:'2px solid rgba(139,26,26,0.6)', bg:'linear-gradient(160deg,#8b1a1a,#2a2d35)'
+    },
+    {
+      id:'module-feries', title:'🎆 Jours feries 2026',
+      img:'module-feries/feries-menu.jpg', fallbackEmoji:'🎆',
+      fallbackBg:'linear-gradient(135deg,#1a2a7a,#2b4bba)',
+      titleColor:'#fff',
+      border:'2px solid rgba(43,75,186,0.6)', bg:'linear-gradient(160deg,#0d1440,#2b4bba)'
+    },
+    {
+      id:'module-saisie', title:'🔒 Saisie sur salaire',
+      img:'module-saisie/saisie-menu.jpg', fallbackEmoji:'🔒',
+      fallbackBg:'linear-gradient(135deg,#2a3540,#141e26)',
+      titleColor:'#c8d4dc',
+      border:'2px solid rgba(200,168,75,0.4)', bg:'linear-gradient(160deg,#3a4550,#1e2830)'
+    },
+    {
+      id:'module-anciennete', title:'🌳 Ancienneté & jalons',
+      img:'module-anciennete/anciennete-menu.jpg', fallbackEmoji:'🌳',
+      fallbackBg:'linear-gradient(135deg,#2d5a2d,#3a2a1a)',
+      titleColor:'#f8f4ec',
+      border:'2px solid rgba(74,154,74,0.5)', bg:'linear-gradient(160deg,#3a7a3a,#5a3e28)'
+    }
+  ];
+
+  function render(){
+    var pinned = getPinned();
+    var list = document.getElementById('toolList');
+    list.innerHTML='';
+    var shown = TOOLS.filter(function(t){ return pinned.indexOf(t.id)===-1; });
+    if(shown.length===0){
+      var e=document.createElement('div'); e.className='empty';
+      e.innerHTML='<span class="e">📌</span>Tous tes outils sont épinglés au menu principal.<br>Retrouve-les là-bas !';
+      list.appendChild(e); return;
+    }
+    shown.forEach(function(t){
+      var card=document.createElement('div'); card.className='btn';
+      card.setAttribute('style','border:'+t.border+';background:'+t.bg+';');
+      var imgHtml='<img src="'+t.img+'" loading="eager" alt="'+t.title+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+
+        '<div class="btn-no-img" style="background:'+t.fallbackBg+';display:none"><span style="font-size:2rem;">'+t.fallbackEmoji+'</span></div>';
+      card.innerHTML = imgHtml +
+        '<button class="pin" title="Épingler au menu principal">☆</button>'+
+        '<div class="title" style="color:'+t.titleColor+';">'+t.title+'</div>';
+      // open tool on card tap (but not when tapping pin)
+      card.addEventListener('click', function(ev){ if(ev.target.closest('.pin')) return; go(t.id); });
+      var pinBtn=card.querySelector('.pin');
+      pinBtn.addEventListener('click', function(ev){ ev.stopPropagation();
+        var p=getPinned(); if(p.indexOf(t.id)===-1){ p.push(t.id); setPinned(p); toast('Épinglé au menu principal ⭐'); render(); }
+      });
+      list.appendChild(card);
+    });
+  }
+  render();
+</script>
+</body>
+</html>
