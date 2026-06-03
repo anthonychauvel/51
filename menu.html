@@ -1160,7 +1160,12 @@
 
 <div style="display:flex;gap:8px;">
   <button class="info-btn" onclick="reopenWizard()" style="flex:2;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
-  <button class="info-btn" onclick="go('outils')" style="flex:1;background:linear-gradient(135deg,rgba(200,160,75,0.15),rgba(160,120,50,0.1));border:1px solid rgba(200,160,75,0.35);color:rgba(240,192,64,0.9);font-size:12px;">🦊 Le Terrier</button>
+  <button disabled title="Bientôt disponible"
+  style="flex:1;background:rgba(100,100,100,0.12);border:1px solid rgba(150,150,150,0.25);
+         color:rgba(180,180,180,0.5);font-size:11px;cursor:not-allowed;border-radius:8px;padding:10px 8px;
+         font-family:inherit;font-weight:600;">
+  🔨 Le Terrier<br><span style="font-size:9px;letter-spacing:0.5px;">EN CHANTIER</span>
+</button>
 </div>
 
 <div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
@@ -1219,7 +1224,6 @@
 
 <!-- ═══ TERRIER : VERSION ACTIVE ═══ -->
 <div id="btn-terrier-actif"
-  onclick="go('outils')"
   style="cursor:pointer;border-radius:16px;overflow:hidden;border:2px solid rgba(200,160,75,0.55);
     background:linear-gradient(160deg,#1e1408,#2a1e0e);
     box-shadow:0 8px 24px rgba(200,160,75,0.2),0 2px 0 rgba(200,160,75,0.3);
@@ -2817,7 +2821,10 @@ function acceptBeton(){
   }
 }
 function hasConsent(){
-  try{ return localStorage.getItem('SH_CONSENT')==='1'; }catch(e){return false;}
+  try{
+    return localStorage.getItem('SH_CONSENT')==='1'
+        && localStorage.getItem('SH_CONSENT_V')==='1.0';
+  }catch(e){return false;}
 }
 
 </script>
