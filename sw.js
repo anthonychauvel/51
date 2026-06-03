@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.9.3"; // + Audit disclaimers + enrichissements v10.9.3 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
+const CACHE_NAME = "heuressup-cache-v10.9.4"; // + Audit disclaimers + enrichissements v10.9.4 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
