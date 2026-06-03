@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.2.0"; // + Anciennete & jalons
+const CACHE_NAME = "heuressup-cache-v10.9.3"; // + Audit disclaimers + enrichissements v10.9.3 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -129,7 +129,31 @@ const FILES_TO_CACHE = [
   // === Trousse : Saisie sur salaire ===
   "./module-saisie/index.html",
   // === Trousse : Ancienneté & jalons ===
-  "./module-anciennete/index.html"
+  "./module-anciennete/index.html",
+  // === Trousse : Journal d'incidents ===
+  "./module-journal/index.html",
+  // === Trousse : C2P Pénibilité ===
+  "./module-c2p/index.html",
+  // === Trousse : Lexique bulletin de paie ===
+  "./module-lexique/index.html",
+  // === Trousse : Solde de tout compte ===
+  "./module-fincontrat2/index.html",
+  // === Trousse : CDI CDD Interim ===
+  "./module-contrats/index.html",
+  // === Trousse : Conservation documents RH ===
+  "./module-archives/index.html",
+  // === Trousse : Convertisseur de paie ===
+  "./module-convertisseur/index.html",
+  // === Trousse : Période d'essai ===
+  "./module-essai/index.html",
+  // === Trousse : Mutuelle obligatoire ===
+  "./module-mutuelle/index.html",
+  // === Trousse : Transport & Mobilité ===
+  "./module-transport/index.html",
+  // === Trousse : CSE & Représentation ===
+  "./module-cse/index.html",
+  // === Assets menu ===
+  "./trousse-menu.jpg"
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────

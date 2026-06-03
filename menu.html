@@ -472,7 +472,64 @@
         ⚠️ Calculs indicatifs — seul le bulletin de paie fait foi.
       </p>
     </div>
+
     <div class="wiz-step" id="wStep1">
+      <h2 style="text-align:center;font-size:17px;margin-bottom:10px;">⚖️ Engagement de l'utilisateur</h2>
+      <p style="text-align:center;font-size:11px;color:#888;margin-bottom:12px;">
+        Merci de lire attentivement avant de continuer.
+      </p>
+
+      <!-- Bloc scrollable — le bouton reste grisé tant qu'on n'a pas scrollé au bas -->
+      <div id="betonScroll"
+        onscroll="checkBetonScroll()"
+        style="height:220px;overflow-y:auto;background:rgba(0,0,0,0.25);border-radius:10px;padding:14px 14px 10px;font-size:12px;color:#ddd;line-height:1.65;border:1px solid rgba(255,255,255,0.12);margin-bottom:14px;">
+
+        <p style="font-weight:700;color:#f0c040;margin-bottom:8px;">Avant d'utiliser cet outil, prenez connaissance des points suivants :</p>
+
+        <p><strong>1. Outil à vocation purement pédagogique</strong><br>
+        SimulHeures est un simulateur privé à but éducatif. Il a été conçu pour aider à comprendre les mécanismes du droit du travail français, et non pour fournir des résultats officiels ou définitifs.</p>
+
+        <p style="margin-top:8px;"><strong>2. Résultats estimatifs uniquement</strong><br>
+        Les calculs présentés sont des estimations indicatives. Ils ne tiennent pas compte de la totalité des conventions collectives, accords d'entreprise, situations personnelles ou évolutions récentes de la législation. Seul votre bulletin de paie officiel fait foi.</p>
+
+        <p style="margin-top:8px;"><strong>3. Aucune valeur légale ou contractuelle</strong><br>
+        Les résultats de cet outil ne constituent ni un avis juridique, ni un avis fiscal, ni un avis médical. Ils ne peuvent pas être utilisés comme preuves ou fondements dans un cadre professionnel, contractuel ou judiciaire.</p>
+
+        <p style="margin-top:8px;"><strong>4. Droit à l'erreur et évolutivité du droit</strong><br>
+        Le droit du travail évolue rapidement. Malgré notre vigilance, certaines informations peuvent ne pas refléter les dernières modifications législatives ou réglementaires. Nous nous efforçons d'être à jour, mais ne pouvons garantir l'exactitude absolue à tout instant. En cas de doute, consultez un professionnel (avocat, juriste, syndicat, service RH).</p>
+
+        <p style="margin-top:8px;"><strong>5. Responsabilité de l'utilisateur</strong><br>
+        Vous utilisez cet outil librement, en connaissance de ses limites, et sous votre seule et entière responsabilité. Les développeurs ne sauraient être tenus responsables des décisions prises sur la base des estimations fournies.</p>
+
+        <p style="margin-top:8px;"><strong>6. Données personnelles</strong><br>
+        Aucune donnée saisie n'est collectée ni transmise. Tout reste sur votre appareil. Vous êtes l'unique propriétaire de vos données.</p>
+
+        <p style="margin-top:10px;text-align:center;font-size:10px;color:#666;">— Fin de l'avertissement — faites défiler jusqu'ici pour continuer</p>
+      </div>
+
+      <!-- Checkbox obligatoire -->
+      <label id="betonLabel"
+        style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;margin-bottom:14px;opacity:0.4;pointer-events:none;transition:.3s;"
+        id="betonCheckLabel">
+        <input type="checkbox" id="betonCheck" onchange="checkBetonReady()"
+          style="width:18px;height:18px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:#f0c040;">
+        <span style="font-size:12px;color:#ddd;line-height:1.5;">
+          Je confirme avoir lu l'avertissement dans son intégralité et j'accepte d'utiliser cet outil en tant que simulateur pédagogique indicatif, sans valeur légale.
+        </span>
+      </label>
+
+      <!-- Bouton bloqué jusqu'à scroll + checkbox -->
+      <button id="betonBtn" disabled onclick="acceptBeton()"
+        style="width:100%;padding:15px;font-size:14px;font-weight:700;border-radius:12px;border:none;cursor:not-allowed;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);transition:.3s;letter-spacing:0.3px;">
+        ↓ Faites défiler pour débloquer
+      </button>
+
+      <p style="text-align:center;font-size:10px;color:#666;margin-top:8px;">
+        Ce consentement est enregistré localement sur votre appareil.
+      </p>
+    </div>
+
+    <div class="wiz-step" id="wStep2">
       <h2>👋 Bienvenue !</h2>
       <p style="text-align:center;color:#555;font-size:13px;margin:8px 0">
         Outil personnel de suivi des heures supplémentaires.<br>
@@ -483,9 +540,9 @@
         ⚠️ Calculs <strong>indicatifs</strong> — seul le bulletin de paie fait foi.<br>
         Pensez à exporter régulièrement vos données.
       </p>
-      <button class="wiz-btn primary" onclick="goStep(2)" style="margin-top:10px">Commencer →</button>
+      <button class="wiz-btn primary" onclick="goStep(3)" style="margin-top:10px">Commencer →</button>
     </div>
-    <div class="wiz-step" id="wStep2">
+    <div class="wiz-step" id="wStep3">
       <h2>⚙️ Ton contrat de travail</h2>
       <div style="margin-bottom:16px;">
         <p style="font-size:12px;color:#666;margin-bottom:10px;">
@@ -517,9 +574,9 @@
           </button>
         </div>
       </div>
-      <button class="wiz-btn primary" onclick="goStep(3)" style="margin-top:16px">Continuer →</button>
+      <button class="wiz-btn primary" onclick="goStep(4)" style="margin-top:16px">Continuer →</button>
     </div>
-    <div class="wiz-step" id="wStep3">
+    <div class="wiz-step" id="wStep4">
       <h2>🎁 Deux modules bonus</h2>
       <p style="text-align:center;font-size:12px;color:#666;margin-bottom:16px;">En plus du suivi des heures, tu as accès à deux expériences uniques :</p>
       <div style="display:flex;flex-direction:column;gap:12px;margin-bottom:16px;">
@@ -536,9 +593,9 @@
           </div>
         </div>
       </div>
-      <button class="wiz-btn primary" onclick="goStep(4)">C'est parti ! →</button>
+      <button class="wiz-btn primary" onclick="goStep(5)">C'est parti ! →</button>
     </div>
-    <div class="wiz-step" id="wStep4">
+    <div class="wiz-step" id="wStep5">
       <h2>🎯 Votre situation</h2>
       <p style="text-align:center;color:#555;font-size:13px;margin-bottom:4px">
         Comment sont payées vos heures supplémentaires ?
@@ -567,10 +624,10 @@
         ✅ Adapté si vous êtes <strong>salarié payé chaque fin de mois</strong>.</p>
         <button class="wiz-btn go-mensuel" onclick="goApp('paye')">Ouvrir le simulateur mensuel →</button>
       </div>
-      <button class="wiz-btn secondary" onclick="goStep(5)" style="margin-top:16px">Je veux voir les deux outils →</button>
+      <button class="wiz-btn secondary" onclick="goStep(6)" style="margin-top:16px">Je veux voir les deux outils →</button>
       <p class="legal-note">Vous pourrez changer d'outil à tout moment depuis ce menu.</p>
     </div>
-    <div class="wiz-step" id="wStep5">
+    <div class="wiz-step" id="wStep6">
       <h2>✅ Tout est prêt</h2>
       <p style="text-align:center;font-size:13px;color:#555">Les deux simulateurs sont accessibles depuis le menu principal.</p>
       <div style="background:#f0fbfc;border-radius:12px;padding:14px;margin-top:10px;font-size:13px">
@@ -1095,7 +1152,10 @@
   <button onclick="dismissIOSBanner()">J'ai compris ✓</button>
 </div>
 
-<button class="info-btn" onclick="reopenWizard()" style="background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
+<div style="display:flex;gap:8px;">
+  <button class="info-btn" onclick="reopenWizard()" style="flex:2;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
+  <button class="info-btn" onclick="go('outils')" style="flex:1;background:linear-gradient(135deg,rgba(200,160,75,0.15),rgba(160,120,50,0.1));border:1px solid rgba(200,160,75,0.35);color:rgba(240,192,64,0.9);font-size:12px;">🦊 Le Terrier</button>
+</div>
 
 <div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
   <span>⚖️</span>
@@ -1151,18 +1211,67 @@
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
 
-<div class="btn" id="btn-outils" onclick="go('outils')" style="border:2px solid rgba(255,255,255,0.45);background:linear-gradient(160deg,#6b7c8a,#4a5763);">
-  <div class="btn-no-img" style="background:linear-gradient(135deg,#5a6b7a,#3d4853);min-height:100px;display:flex">
-    <span style="font-size:2.4rem;">🧰</span>
+<!-- ═══ TERRIER : VERSION ACTIVE ═══ -->
+<div id="btn-terrier-actif"
+  onclick="go('outils')"
+  style="cursor:pointer;border-radius:16px;overflow:hidden;border:2px solid rgba(200,160,75,0.55);
+    background:linear-gradient(160deg,#1e1408,#2a1e0e);
+    box-shadow:0 8px 24px rgba(200,160,75,0.2),0 2px 0 rgba(200,160,75,0.3);
+    position:relative;margin-bottom:6px;display:none;">
+  <img src="trousse-menu.jpg" alt="Le Terrier de la Famille Renard"
+    style="width:100%;height:140px;object-fit:cover;object-position:center 20%;display:block;"
+    onerror="this.style.display='none'">
+  <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:24px;">🦊</span>
+    <div style="flex:1;">
+      <div style="font-family:Georgia,serif;font-weight:700;font-size:15px;color:#f0c040;font-style:italic;">Le Terrier de la Famille Renard</div>
+      <div style="font-size:11px;color:rgba(255,255,255,0.6);margin-top:2px;">21 outils — Tous vos droits au clair</div>
+    </div>
+    <span style="font-size:18px;color:rgba(240,192,64,0.7);">→</span>
   </div>
-  <div class="title" style="color:#fff;">🧰 Trousse à outils</div>
 </div>
+
+<!-- ═══ TERRIER : VERSION EN TRAVAUX ═══ -->
+<div id="btn-terrier-wip"
+  style="cursor:default;border-radius:16px;overflow:hidden;border:2px solid rgba(120,120,120,0.35);
+    background:linear-gradient(160deg,#1a1a1a,#252525);
+    box-shadow:0 4px 12px rgba(0,0,0,0.3);
+    position:relative;margin-bottom:6px;display:none;opacity:0.7;">
+  <img src="trousse-menu.jpg" alt="Le Terrier en travaux"
+    style="width:100%;height:140px;object-fit:cover;object-position:center 20%;display:block;filter:grayscale(0.7) brightness(0.6);"
+    onerror="this.style.display='none'">
+  <!-- Bandeau travaux -->
+  <div style="position:absolute;top:12px;left:0;right:0;text-align:center;">
+    <span style="background:repeating-linear-gradient(45deg,#f0c040,#f0c040 10px,#1a1a00 10px,#1a1a00 20px);color:#1a1a00;font-weight:900;font-size:11px;letter-spacing:2px;padding:4px 18px;border-radius:0;">⚠️ EN TRAVAUX ⚠️</span>
+  </div>
+  <div style="padding:12px 14px;display:flex;align-items:center;gap:10px;">
+    <span style="font-size:24px;filter:grayscale(1);">🦊</span>
+    <div style="flex:1;">
+      <div style="font-family:Georgia,serif;font-weight:700;font-size:15px;color:#888;font-style:italic;">Le Terrier de la Famille Renard</div>
+      <div style="font-size:11px;color:#666;margin-top:2px;">🔨 En cours de mise à jour — bientôt disponible</div>
+    </div>
+  </div>
+</div>
+
+<script>
+// ── Afficher la bonne version du bouton Terrier ──
+(function(){
+  // Changer 'actif' en 'wip' pour mettre en travaux
+  var mode = 'actif'; // 'actif' ou 'wip'
+  var a=document.getElementById('btn-terrier-actif');
+  var w=document.getElementById('btn-terrier-wip');
+  if(a) a.style.display=(mode==='actif'?'block':'none');
+  if(w) w.style.display=(mode==='wip'?'block':'none');
+})();
+</script>
 
 <div id="pinnedTools"></div>
 
 <button class="info-btn" onclick="openPresentation()">📄 Présentation du projet</button>
 
 <button class="info-btn" onclick="openSharePopup()" style="margin-top:-8px;">📲 Partager l'application</button>
+
+<button class="info-btn" onclick="openSocialPopup()" style="margin-top:-8px;background:linear-gradient(135deg,#e87820,#c85010);border:none;color:#fff;">🎬 Nos réseaux &amp; tutos vidéo</button>
 
 <button class="info-btn" onclick="openBackupPopup()" style="margin-top:-8px;">💾 Sauvegarde générale</button>
 
@@ -1931,7 +2040,7 @@ document.addEventListener('DOMContentLoaded', function(){
     } else {
       // Temps plein : continuer le wizard normal
       try { localStorage.setItem('menuContratType','plein'); } catch(e){}
-      goStep(1);
+      goStep(2);
     }
   }
 
@@ -1984,7 +2093,7 @@ document.addEventListener('DOMContentLoaded', function(){
       // Temps plein → wizard normal + fond teal
       _safeLS.set('menuContratType', 'plein');
       document.body.style.background = '#4FB3C2';
-      goStep(1);
+      goStep(2);
     }
   }
 
@@ -2132,6 +2241,61 @@ document.addEventListener('DOMContentLoaded', function(){
         title:'🌳 Ancienneté & jalons', img:'module-anciennete/anciennete-menu.jpg', emoji:'🌳',
         fbg:'linear-gradient(135deg,#2d5a2d,#3a2a1a)', tcolor:'#f8f4ec',
         border:'2px solid rgba(74,154,74,0.5)', bg:'linear-gradient(160deg,#3a7a3a,#5a3e28)'
+      },
+      'module-journal': {
+        title:'📓 Journal d\'incidents', img:'module-journal/journal-menu.jpg', emoji:'📓',
+        fbg:'linear-gradient(135deg,#4a3020,#2c1e10)', tcolor:'#f5f0e8',
+        border:'2px solid rgba(74,48,32,0.6)', bg:'linear-gradient(160deg,#6a4a32,#2c1e10)'
+      },
+      'module-c2p': {
+        title:'🦺 C2P Pénibilité', img:'module-c2p/c2p-menu.jpg', emoji:'🦺',
+        fbg:'linear-gradient(135deg,#b85a10,#1a1e26)', tcolor:'#fff',
+        border:'2px solid rgba(232,120,32,0.5)', bg:'linear-gradient(160deg,#e87820,#252c38)'
+      },
+      'module-lexique': {
+        title:'📚 Lexique bulletin de paie', img:'module-lexique/lexique-menu.jpg', emoji:'📚',
+        fbg:'linear-gradient(135deg,#7a5530,#2a1e0e)', tcolor:'#faf6ee',
+        border:'2px solid rgba(160,120,72,0.5)', bg:'linear-gradient(160deg,#a07848,#5a3e1e)'
+      },
+      'module-fincontrat2': {
+        title:'📋 Solde de tout compte', img:'module-fincontrat2/stc-menu.jpg', emoji:'📋',
+        fbg:'linear-gradient(135deg,#1a6b3a,#0e4020)', tcolor:'#fff',
+        border:'2px solid rgba(26,107,58,0.5)', bg:'linear-gradient(160deg,#2a9b55,#1a6b3a)'
+      },
+      'module-contrats': {
+        title:'📊 CDI · CDD · Intérim', img:'module-contrats/contrats-menu.jpg', emoji:'📊',
+        fbg:'linear-gradient(135deg,#1a3a6a,#0e1a2e)', tcolor:'#fff',
+        border:'2px solid rgba(26,58,106,0.5)', bg:'linear-gradient(160deg,#2a5a9a,#1a3a6a)'
+      },
+      'module-archives': {
+        title:'📁 Conservation documents RH', img:'module-archives/archives-menu.jpg', emoji:'📁',
+        fbg:'linear-gradient(135deg,#6b4a1e,#4a2e0e)', tcolor:'#fdf8f0',
+        border:'2px solid rgba(107,74,30,0.5)', bg:'linear-gradient(160deg,#8b6a3e,#6b4a1e)'
+      },
+      'module-convertisseur': {
+        title:'🧮 Convertisseur de paie', img:'module-convertisseur/cvr-menu.jpg', emoji:'🧮',
+        fbg:'linear-gradient(135deg,#1e4a7a,#0a1628)', tcolor:'#fff',
+        border:'2px solid rgba(30,74,122,0.5)', bg:'linear-gradient(160deg,#2e6aaa,#1e4a7a)'
+      },
+      'module-essai': {
+        title:'⏳ Période d\'essai', img:'module-essai/essai-menu.jpg', emoji:'⏳',
+        fbg:'linear-gradient(135deg,#4a3080,#1a1228)', tcolor:'#fff',
+        border:'2px solid rgba(74,48,128,0.5)', bg:'linear-gradient(160deg,#6a50a0,#4a3080)'
+      },
+      'module-mutuelle': {
+        title:'🛡️ Mutuelle obligatoire', img:'module-mutuelle/mutuelle-menu.jpg', emoji:'🛡️',
+        fbg:'linear-gradient(135deg,#0d6e5a,#071e18)', tcolor:'#fff',
+        border:'2px solid rgba(13,110,90,0.5)', bg:'linear-gradient(160deg,#1a9e82,#0d6e5a)'
+      },
+      'module-transport': {
+        title:'🚌 Transport & Mobilité', img:'module-transport/transport-menu.jpg', emoji:'🚌',
+        fbg:'linear-gradient(135deg,#1a4a8a,#0a1428)', tcolor:'#fff',
+        border:'2px solid rgba(26,74,138,0.5)', bg:'linear-gradient(160deg,#2a6acc,#1a4a8a)'
+      },
+      'module-cse': {
+        title:'🏛️ CSE & Représentation', img:'module-cse/cse-menu.jpg', emoji:'🏛️',
+        fbg:'linear-gradient(135deg,#3a1a6a,#130a22)', tcolor:'#fff',
+        border:'2px solid rgba(58,26,106,0.5)', bg:'linear-gradient(160deg,#5a3a9a,#3a1a6a)'
       }
     };
     function getPinned(){ try{ return JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ return []; } }
@@ -2488,5 +2652,113 @@ document.getElementById('annonce-overlay').addEventListener('click', function(e)
 });
 </script>
 
+
+<!-- ══ POPUP RÉSEAUX SOCIAUX ════════════════════════════════════ -->
+<div id="social-popup-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.65);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;"
+  onclick="closeSocialPopup()">
+  <div onclick="event.stopPropagation()" style="
+    background:linear-gradient(165deg,#1a1208,#2a1e0e);
+    border:2px solid rgba(232,120,32,0.5);
+    border-top:4px solid #e87820;
+    border-radius:20px;width:100%;max-width:420px;
+    padding:24px 22px 28px;
+    box-shadow:0 24px 60px rgba(0,0,0,0.7);">
+    <div style="text-align:center;margin-bottom:18px;">
+      <div style="font-size:36px;margin-bottom:6px;">🦊</div>
+      <div style="font-family:Georgia,serif;font-size:20px;font-weight:700;color:#f0c040;font-style:italic;">Le Terrier de la Famille Renard</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:4px;">Retrouve-nous sur nos reseaux</div>
+    </div>
+    <a href="https://youtube.com/@heuressupplementairesfrance?si=vbzZuUu0Dodr4thB"
+       target="_blank" rel="noopener"
+       style="display:flex;align-items:center;gap:14px;background:rgba(255,0,0,0.15);border:1.5px solid rgba(255,60,60,0.4);border-radius:14px;padding:14px 16px;margin-bottom:10px;text-decoration:none;">
+      <span style="font-size:30px;flex-shrink:0;">&#9654;&#65039;</span>
+      <div>
+        <div style="font-weight:700;font-size:14px;color:#fff;">YouTube</div>
+        <div style="font-size:11.5px;color:rgba(255,255,255,0.7);margin-top:2px;">Tutoriels video de tous les modules — @heuressupplementairesfrance</div>
+      </div>
+      <span style="margin-left:auto;font-size:12px;background:#ff3c3c;color:#fff;border-radius:6px;padding:4px 8px;font-weight:700;flex-shrink:0;">TUTOS</span>
+    </a>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:18px;">
+      <a href="https://www.facebook.com/share/18ZNV61uY6/?mibextid=wwXIfr"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;gap:10px;background:rgba(24,119,242,0.15);border:1.5px solid rgba(24,119,242,0.4);border-radius:12px;padding:12px 13px;text-decoration:none;">
+        <span style="font-size:22px;">&#128216;</span>
+        <div><div style="font-weight:700;font-size:13px;color:#fff;">Facebook</div></div>
+      </a>
+      <a href="https://www.instagram.com/simulateurheuressup"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;gap:10px;background:rgba(225,48,108,0.15);border:1.5px solid rgba(225,48,108,0.4);border-radius:12px;padding:12px 13px;text-decoration:none;">
+        <span style="font-size:22px;">&#128248;</span>
+        <div><div style="font-weight:700;font-size:13px;color:#fff;">Instagram</div></div>
+      </a>
+      <a href="https://www.threads.com/@simulateurheuressup"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;gap:10px;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.2);border-radius:12px;padding:12px 13px;text-decoration:none;">
+        <span style="font-size:22px;">&#129525;</span>
+        <div><div style="font-weight:700;font-size:13px;color:#fff;">Threads</div></div>
+      </a>
+      <a href="https://www.tiktok.com/@appli.heures.sup"
+         target="_blank" rel="noopener"
+         style="display:flex;align-items:center;gap:10px;background:rgba(105,201,208,0.12);border:1.5px solid rgba(105,201,208,0.35);border-radius:12px;padding:12px 13px;text-decoration:none;">
+        <span style="font-size:22px;">&#127925;</span>
+        <div><div style="font-weight:700;font-size:13px;color:#fff;">TikTok</div></div>
+      </a>
+    </div>
+    <div style="font-size:11px;color:rgba(255,255,255,0.45);text-align:center;line-height:1.5;margin-bottom:16px;">
+      Les tutos video expliquent chaque module etape par etape.<br>Rejoins la communaute pour suivre les nouveautes 🦊
+    </div>
+    <button onclick="closeSocialPopup()" style="
+      display:block;width:100%;background:#e87820;border:none;border-radius:12px;
+      padding:13px;color:#fff;font-weight:700;font-size:14px;cursor:pointer;">
+      Fermer
+    </button>
+  </div>
+</div>
+<script>
+function openSocialPopup(){document.getElementById('social-popup-overlay').style.display='flex';}
+function closeSocialPopup(){document.getElementById('social-popup-overlay').style.display='none';}
+
+// ── BÉTON ARMÉ — Consentement utilisateur ──
+function checkBetonScroll(){
+  var el=document.getElementById('betonScroll');
+  if(!el) return;
+  var atBottom = el.scrollTop + el.clientHeight >= el.scrollHeight - 10;
+  var lbl=document.getElementById('betonCheckLabel')||document.getElementById('betonLabel');
+  if(atBottom && lbl){
+    lbl.style.opacity='1';
+    lbl.style.pointerEvents='auto';
+  }
+  checkBetonReady();
+}
+function checkBetonReady(){
+  var el=document.getElementById('betonScroll');
+  var cb=document.getElementById('betonCheck');
+  var btn=document.getElementById('betonBtn');
+  if(!el||!cb||!btn) return;
+  var atBottom=el.scrollTop+el.clientHeight>=el.scrollHeight-10;
+  var ready=atBottom&&cb.checked;
+  btn.disabled=!ready;
+  btn.style.cursor=ready?'pointer':'not-allowed';
+  btn.style.background=ready?'linear-gradient(135deg,#f0c040,#c89020)':'rgba(255,255,255,0.1)';
+  btn.style.color=ready?'#1a1a00':'rgba(255,255,255,0.35)';
+  btn.textContent=ready?'✅ J\'ai compris et j\'accepte':'↓ Faites défiler pour débloquer';
+}
+function acceptBeton(){
+  var ts=new Date().toISOString();
+  try{
+    localStorage.setItem('SH_CONSENT','1');
+    localStorage.setItem('SH_CONSENT_TS',ts);
+    localStorage.setItem('SH_CONSENT_V','1.0');
+  }catch(e){}
+  goStep(2);
+}
+function hasConsent(){
+  try{ return localStorage.getItem('SH_CONSENT')==='1'; }catch(e){return false;}
+}
+
+</script>
 </body>
 </html>

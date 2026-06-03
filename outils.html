@@ -2,217 +2,281 @@
 <html lang="fr">
 <head>
   <meta charset="UTF-8">
-  <title>Trousse à outils — SimulHeures</title>
+  <title>Le Terrier — SimulHeures</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <meta name="color-scheme" content="only light">
   <link rel="manifest" href="./manifest.json">
-  <meta name="theme-color" content="#5a6b7a">
+  <meta name="theme-color" content="#2a1e0e">
   <link rel="apple-touch-icon" href="./apple-touch-icon.png">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-  <meta name="apple-mobile-web-app-title" content="Trousse à outils">
+  <meta name="apple-mobile-web-app-title" content="Le Terrier">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,800;1,600&family=Lato:wght@400;600;700&display=swap">
   <style>
-    *, *::before, *::after { box-sizing: border-box; }
-    body {
-      margin: 0;
-      background: #5a6b7a;
-      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-      display: flex; flex-direction: column; align-items: center;
-      min-height: 100vh; min-height: 100dvh;
-      justify-content: flex-start;
-      padding-top: calc(env(safe-area-inset-top) + 20px);
-      padding-bottom: calc(env(safe-area-inset-bottom) + 20px);
-      padding-left: calc(env(safe-area-inset-left) + 20px);
-      padding-right: calc(env(safe-area-inset-right) + 20px);
-      gap: 16px; overflow-x: hidden; -webkit-tap-highlight-color: transparent;
-      background-image:
-        radial-gradient(900px 500px at 80% -5%, rgba(255,255,255,0.10), transparent 60%),
-        radial-gradient(700px 500px at 5% 10%, rgba(0,0,0,0.12), transparent 55%);
-      background-attachment: fixed;
-    }
-    @media screen and (orientation:landscape) and (max-device-width:1024px){
-      body>*:not(#lb){display:none!important;}
-      #lb{position:fixed;inset:0;z-index:99999;background:#5a6b7a;color:#fff;display:flex!important;
-        flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-size:20px;}
-    }
-    @media screen and (orientation:portrait){#lb{display:none!important;}}
+  *,*::before,*::after{box-sizing:border-box;}
+  html,body{min-height:100%;-webkit-tap-highlight-color:transparent;}
+  body{
+    margin:0;font-family:'Lato',-apple-system,sans-serif;color:#f5eedd;
+    min-height:100vh;overflow-x:hidden;
+    background:
+      radial-gradient(ellipse 700px 300px at 50% -5%, rgba(200,160,75,0.18), transparent 55%),
+      repeating-linear-gradient(90deg,transparent,transparent 38px,rgba(200,160,75,0.04) 38px,rgba(200,160,75,0.04) 39px),
+      repeating-linear-gradient(0deg,transparent,transparent 38px,rgba(200,160,75,0.03) 38px,rgba(200,160,75,0.03) 39px),
+      linear-gradient(170deg,#1e1408 0%,#2a1e0e 40%,#1a1208 100%);
+    background-attachment:fixed;
+    padding:0 0 40px;
+  }
+  /* spine */
+  body::before{content:"";position:fixed;left:0;top:0;bottom:0;width:6px;z-index:0;pointer-events:none;
+    background:linear-gradient(180deg,#c8a030,#8a6020,#c8a030,#8a6020);opacity:0.8;}
 
-    .topbar{width:100%;max-width:480px;display:flex;align-items:center;gap:10px;}
-    .topbar .back{background:rgba(255,255,255,0.16);border:1px solid rgba(255,255,255,0.3);color:#fff;
-      border-radius:14px;padding:10px 14px;font-size:14px;text-decoration:none;font-weight:600;}
-    .topbar .sp{flex:1;}
+  @media screen and (orientation:landscape) and (max-device-width:1024px){
+    body>*:not(#lb){display:none!important;}
+    #lb{position:fixed;inset:0;z-index:99999;background:#1e1408;color:#f0c040;display:flex!important;
+      flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;font-family:'Playfair Display',serif;font-size:22px;}
+  }
+  @media screen and (orientation:portrait){#lb{display:none!important;}}
 
-    .head{text-align:center;color:#fff;margin:6px 0 4px;}
-    .head .ico{font-size:46px;}
-    .head h1{font-size:24px;margin:8px 0 4px;font-weight:800;}
-    .head p{font-size:13px;opacity:0.85;margin:0;max-width:330px;line-height:1.4;}
+  .wrap{position:relative;z-index:2;max-width:480px;margin:0 auto;padding:0 14px;}
 
-    .btn {
-      width: 90%; max-width: 250px; border-radius: 28px; overflow: visible;
-      box-shadow: 0 10px 25px rgba(0,0,0,.25); cursor: pointer;
-      transition: transform .15s ease; background: rgba(255,255,255,0.1); position:relative;
-    }
-    .btn:active { transform: scale(0.96); }
-    .btn img { width: 100%; height: auto; display: block; border-radius: 28px 28px 0 0; }
-    .btn-no-img { display: flex; align-items: center; justify-content: center; min-height: 100px;
-      border-radius: 28px 28px 0 0; }
-    .title { text-align: center; font-weight: 600; margin: 8px 0 12px; font-size: 15px; padding: 0 12px; line-height: 1.3; }
-    /* pin star */
-    .pin{position:absolute;top:10px;right:10px;width:40px;height:40px;border-radius:50%;
-      background:rgba(0,0,0,0.45);border:none;color:#ffd166;font-size:20px;cursor:pointer;z-index:5;
-      display:flex;align-items:center;justify-content:center;transition:.15s;backdrop-filter:blur(4px);}
-    .pin:active{transform:scale(0.85);}
-    .pin.pinned{background:#ffd166;color:#7a5a00;}
-    .pin-hint{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.5);color:#fff;font-size:10px;
-      padding:4px 8px;border-radius:12px;pointer-events:none;}
+  /* header */
+  .topbar{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:10px;
+    padding:12px 14px;padding-top:max(12px,env(safe-area-inset-top));
+    background:linear-gradient(180deg,rgba(30,20,8,0.97),rgba(30,20,8,0.55) 75%,transparent);
+    backdrop-filter:blur(6px);max-width:480px;margin:0 auto;}
+  .topbar .back{background:rgba(255,255,255,0.1);border:1px solid rgba(200,160,75,0.35);color:#f0c040;
+    border-radius:8px;padding:9px 13px;font-weight:700;font-size:12px;text-decoration:none;flex-shrink:0;}
+  .topbar .ttl{flex:1;text-align:center;}
+  .topbar .ttl .t1{font-family:'Playfair Display',serif;font-size:18px;font-style:italic;color:#f0c040;font-weight:700;}
+  .topbar .ttl .t2{font-size:9px;color:rgba(240,192,64,0.55);letter-spacing:2px;text-transform:uppercase;margin-top:2px;}
+  .topbar .starbtn{background:rgba(255,215,0,0.12);border:1px solid rgba(255,215,0,0.25);color:#ffd166;
+    border-radius:50%;width:36px;height:36px;font-size:15px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;}
 
-    .empty{color:#fff;text-align:center;opacity:0.85;padding:30px 20px;max-width:330px;}
-    .empty .e{font-size:42px;display:block;margin-bottom:10px;}
+  /* banner */
+  .banner{background:linear-gradient(135deg,rgba(200,160,75,0.15),rgba(200,160,75,0.06));
+    border:1px solid rgba(200,160,75,0.3);border-radius:14px;padding:14px 16px;margin:10px 0 16px;
+    display:flex;gap:12px;align-items:center;}
+  .banner .bi{font-size:32px;flex-shrink:0;}
+  .banner .bt{font-family:'Playfair Display',serif;font-size:14px;font-style:italic;color:#f0c040;font-weight:700;line-height:1.3;}
+  .banner .bd{font-size:11px;color:rgba(240,192,64,0.65);margin-top:3px;line-height:1.35;}
 
-    .foot{color:#fff;opacity:0.7;font-size:11px;text-align:center;margin-top:14px;max-width:330px;line-height:1.5;}
+  /* search + filter */
+  .search-row{display:flex;gap:8px;margin-bottom:12px;align-items:center;}
+  .search-ip{flex:1;background:rgba(255,255,255,0.07);border:1px solid rgba(200,160,75,0.25);border-radius:10px;
+    padding:10px 12px;color:#f5eedd;font-size:14px;font-family:'Lato',sans-serif;font-weight:600;}
+  .search-ip::placeholder{color:rgba(245,238,221,0.35);}
+  .search-ip:focus{outline:none;border-color:rgba(200,160,75,0.6);}
 
-    .toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);z-index:9999;
-      background:#2a3640;color:#fff;font-size:13px;font-weight:600;padding:12px 22px;border-radius:24px;
-      box-shadow:0 8px 24px rgba(0,0,0,0.4);opacity:0;transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;}
-    .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+  /* section headers */
+  .sec-hd{font-family:'Playfair Display',serif;font-size:12px;font-weight:700;font-style:italic;
+    color:rgba(200,160,75,0.7);letter-spacing:1.5px;text-transform:uppercase;
+    margin:14px 0 8px;padding:0 2px;display:flex;align-items:center;gap:8px;}
+  .sec-hd::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,rgba(200,160,75,0.4),transparent);}
+
+  /* GRID compact */
+  .grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:4px;}
+
+  /* Tool tile */
+  .tile{background:rgba(255,255,255,0.06);border:1px solid rgba(200,160,75,0.18);border-radius:12px;
+    padding:11px 12px;cursor:pointer;display:flex;gap:10px;align-items:center;
+    transition:.12s;position:relative;overflow:hidden;}
+  .tile:active{transform:scale(0.97);background:rgba(200,160,75,0.12);}
+  .tile .te{font-size:22px;flex-shrink:0;line-height:1;}
+  .tile .tx{flex:1;min-width:0;}
+  .tile .tt{font-size:12px;font-weight:700;color:#f5eedd;line-height:1.25;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tile .ts{font-size:10px;color:rgba(245,238,221,0.5);margin-top:2px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;}
+  .tile .pin{position:absolute;top:6px;right:6px;background:transparent;border:none;color:rgba(255,209,102,0.4);font-size:13px;cursor:pointer;padding:2px;z-index:5;}
+  .tile .pin.pinned{color:#ffd166;}
+  .tile.pinned-tile{border-color:rgba(255,209,102,0.4);background:rgba(255,209,102,0.06);}
+
+  /* single wide tile */
+  .tile.wide{grid-column:1/-1;}
+
+  /* hint row at bottom */
+  .hint-row{display:flex;gap:6px;align-items:center;margin:14px 0 8px;font-size:11px;color:rgba(240,192,64,0.5);}
+  .hint-row::before{content:"⭐";} 
+
+  /* droit a l'erreur */
+  .erreur-band{background:rgba(255,255,255,0.04);border:1px solid rgba(200,160,75,0.2);border-radius:10px;
+    padding:11px 13px;margin:14px 0;font-size:11px;color:rgba(245,238,221,0.55);line-height:1.55;}
+  .erreur-band b{color:rgba(240,192,64,0.8);}
+
+  .foot{text-align:center;font-size:10px;color:rgba(245,238,221,0.3);line-height:1.6;margin-top:16px;letter-spacing:0.3px;}
+
+  .toast{position:fixed;bottom:28px;left:50%;transform:translateX(-50%) translateY(100px);z-index:9999;
+    background:#c8a030;color:#1a1208;font-weight:700;font-size:12px;padding:10px 20px;border-radius:20px;
+    box-shadow:0 6px 20px rgba(0,0,0,0.4);opacity:0;transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;}
+  .toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+
+  .empty{text-align:center;padding:28px 16px;color:rgba(240,192,64,0.4);grid-column:1/-1;}
+  .empty .ee{font-size:36px;display:block;margin-bottom:8px;}
   </style>
 </head>
 <body>
-<div id="lb">📱 Tournez votre téléphone</div>
+<div id="lb">🦊 Tournez votre téléphone</div>
 
 <div class="topbar">
   <a href="menu.html" class="back">← Menu</a>
-  <div class="sp"></div>
+  <div class="ttl"><div class="t1">Le Terrier</div><div class="t2">La Famille Renard</div></div>
+  <button class="starbtn" id="pinModeBtn" title="Voir les épinglés" onclick="togglePinMode()">⭐</button>
 </div>
 
-<div class="head">
-  <div class="ico">🧰</div>
-  <h1>Trousse à outils</h1>
-  <p>Des outils sympas en plus du suivi des heures. Épingle ceux que tu utilises souvent : ils rejoindront le menu principal.</p>
+<div class="wrap">
+
+  <div class="banner">
+    <div class="bi">🦊</div>
+    <div>
+      <div class="bt">Tous vos outils, réunis en un seul endroit</div>
+      <div class="bd">Appuie sur ⭐ pour épingler un outil dans le menu principal.</div>
+    </div>
+  </div>
+
+  <div class="search-row">
+    <input class="search-ip" id="searchIp" type="text" placeholder="🔍 Rechercher un outil…">
+  </div>
+
+  <div id="appHost"></div>
+
+  <div class="erreur-band">
+    <b>⚖️ Droit à l'erreur &amp; évolutivité du droit</b><br>
+    Le droit du travail évolue rapidement. Malgré notre vigilance, certaines informations peuvent ne pas refléter les toutes dernières évolutions législatives ou conventionnelles. Nous faisons au mieux, à l'instant T. En cas de doute, consultez un professionnel ou votre représentant du personnel. Tous les outils sont indicatifs et pédagogiques — ni avis juridique, ni valeur légale.
+  </div>
+
+  <div class="foot">🦊 Le Terrier de la Famille Renard · SimulHeures<br>Outil indicatif — ni avis juridique — données 100 % locales</div>
 </div>
-
-<div id="toolList" style="display:contents;"></div>
-
-<div class="foot">⭐ Épingler un outil le déplace dans le menu principal pour un accès plus rapide.</div>
 
 <div class="toast" id="toast"></div>
 
 <script>
-  function getPinned(){ try{ return JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ return []; } }
-  function setPinned(a){ try{ localStorage.setItem('pinnedTools', JSON.stringify(a)); }catch(e){} }
-  function go(app){ try{localStorage.setItem('lastApp',app);}catch(e){} window.location.href = app + '/index.html'; }
-  function toast(m){ var t=document.getElementById('toast'); t.textContent=m; t.classList.add('show'); clearTimeout(t._t); t._t=setTimeout(function(){t.classList.remove('show');},1800); }
+(function(){
+"use strict";
+function getPinned(){try{return JSON.parse(localStorage.getItem('pinnedTools')||'[]');}catch(e){return[];}}
+function setPinned(a){try{localStorage.setItem('pinnedTools',JSON.stringify(a));}catch(e){}}
+function go(id){try{localStorage.setItem('lastApp',id);}catch(e){}window.location.href=id+'/index.html';}
+function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},1800);}
 
-  // Tool registry — add future mini-modules here
-  var TOOLS = [
-    {
-      id:'module8', title:'🧳 Carnet de frais pro',
-      img:'module8/fraispro-menu.jpg', fallbackEmoji:'🧳',
-      fallbackBg:'linear-gradient(135deg,#c8a878,#a8895f)',
-      titleColor:'#5a4631',
-      border:'2px solid rgba(168,137,95,0.7)', bg:'linear-gradient(160deg,#e8dcc4,#d2c3a2)'
-    },
-    {
-      id:'module-temps', title:'⚙️ Temps &amp; Repos',
-      img:'module-temps/temps-menu.jpg', fallbackEmoji:'⚙️',
-      fallbackBg:'linear-gradient(135deg,#3a2c1d,#241a12)',
-      titleColor:'#e8cf6b',
-      border:'2px solid rgba(201,162,39,0.6)', bg:'linear-gradient(160deg,#3a2c1d,#241a12)'
-    },
-    {
-      id:'module-conges', title:'🏝️ Mes Congés payés',
-      img:'module-conges/conges-menu.jpg', fallbackEmoji:'🏝️',
-      fallbackBg:'linear-gradient(135deg,#ff9a6c,#f857a6)',
-      titleColor:'#fff',
-      border:'2px solid rgba(248,87,166,0.5)', bg:'linear-gradient(160deg,#ff9a6c,#f857a6)'
-    },
-    {
-      id:'module-fincontrat', title:'🌄 Fin de contrat',
-      img:'module-fincontrat/fincontrat-menu.jpg', fallbackEmoji:'🌄',
-      fallbackBg:'linear-gradient(135deg,#f7b58a,#7d6a9c)',
-      titleColor:'#fff',
-      border:'2px solid rgba(201,107,142,0.5)', bg:'linear-gradient(160deg,#f7b58a,#c96b8e)'
-    },
-    {
-      id:'module-chomage', title:'🪂 Droits chômage (ARE)',
-      img:'module-chomage/chomage-menu.jpg', fallbackEmoji:'🪂',
-      fallbackBg:'linear-gradient(135deg,#7fc4ec,#3b6fb5)',
-      titleColor:'#fff',
-      border:'2px solid rgba(59,111,181,0.5)', bg:'linear-gradient(160deg,#7fc4ec,#3b6fb5)'
-    },
-    {
-      id:'module-famille', title:'🪺 Congés familiaux',
-      img:'module-famille/famille-menu.jpg', fallbackEmoji:'🪺',
-      fallbackBg:'linear-gradient(135deg,#fbeeda,#e8956b)',
-      titleColor:'#fff',
-      border:'2px solid rgba(232,149,107,0.5)', bg:'linear-gradient(160deg,#f4c9c0,#e8956b)'
-    },
-    {
-      id:'module-arret', title:'🩺 Arrêt maladie & IJSS',
-      img:'module-arret/arret-menu.jpg', fallbackEmoji:'🩺',
-      fallbackBg:'linear-gradient(135deg,#c8dff0,#2d5f8a)',
-      titleColor:'#fff',
-      border:'2px solid rgba(74,127,168,0.6)', bg:'linear-gradient(160deg,#d8ecf8,#4a7fa8)'
-    },
-    {
-      id:'module-tr', title:'🍽️ Titres-restaurant',
-      img:'module-tr/tr-menu.jpg', fallbackEmoji:'🍽️',
-      fallbackBg:'linear-gradient(135deg,#5c0e0e,#2a2d35)',
-      titleColor:'#f8f4ed',
-      border:'2px solid rgba(139,26,26,0.6)', bg:'linear-gradient(160deg,#8b1a1a,#2a2d35)'
-    },
-    {
-      id:'module-feries', title:'🎆 Jours feries 2026',
-      img:'module-feries/feries-menu.jpg', fallbackEmoji:'🎆',
-      fallbackBg:'linear-gradient(135deg,#1a2a7a,#2b4bba)',
-      titleColor:'#fff',
-      border:'2px solid rgba(43,75,186,0.6)', bg:'linear-gradient(160deg,#0d1440,#2b4bba)'
-    },
-    {
-      id:'module-saisie', title:'🔒 Saisie sur salaire',
-      img:'module-saisie/saisie-menu.jpg', fallbackEmoji:'🔒',
-      fallbackBg:'linear-gradient(135deg,#2a3540,#141e26)',
-      titleColor:'#c8d4dc',
-      border:'2px solid rgba(200,168,75,0.4)', bg:'linear-gradient(160deg,#3a4550,#1e2830)'
-    },
-    {
-      id:'module-anciennete', title:'🌳 Ancienneté & jalons',
-      img:'module-anciennete/anciennete-menu.jpg', fallbackEmoji:'🌳',
-      fallbackBg:'linear-gradient(135deg,#2d5a2d,#3a2a1a)',
-      titleColor:'#f8f4ec',
-      border:'2px solid rgba(74,154,74,0.5)', bg:'linear-gradient(160deg,#3a7a3a,#5a3e28)'
-    }
-  ];
+var CATS=[
+  {label:'💼 Contrat & rémunération',ids:['module8','module-contrats','module-convertisseur','module-essai','module-lexique']},
+  {label:'⏱️ Temps de travail',ids:['module-temps','module-conges','module-feries','module-tr','module-transport','module-mutuelle']},
+  {label:'🛡️ Protection sociale',ids:['module-arret','module-famille','module-chomage','module-c2p','module-saisie']},
+  {label:'📋 Départ & documents',ids:['module-fincontrat','module-fincontrat2','module-archives']},
+  {label:'🌳 Parcours & droits',ids:['module-anciennete','module-cse','module-journal']},
+];
 
-  function render(){
-    var pinned = getPinned();
-    var list = document.getElementById('toolList');
-    list.innerHTML='';
-    var shown = TOOLS.filter(function(t){ return pinned.indexOf(t.id)===-1; });
-    if(shown.length===0){
-      var e=document.createElement('div'); e.className='empty';
-      e.innerHTML='<span class="e">📌</span>Tous tes outils sont épinglés au menu principal.<br>Retrouve-les là-bas !';
-      list.appendChild(e); return;
-    }
-    shown.forEach(function(t){
-      var card=document.createElement('div'); card.className='btn';
-      card.setAttribute('style','border:'+t.border+';background:'+t.bg+';');
-      var imgHtml='<img src="'+t.img+'" loading="eager" alt="'+t.title+'" onerror="this.style.display=\'none\';this.nextElementSibling.style.display=\'flex\'">'+
-        '<div class="btn-no-img" style="background:'+t.fallbackBg+';display:none"><span style="font-size:2rem;">'+t.fallbackEmoji+'</span></div>';
-      card.innerHTML = imgHtml +
-        '<button class="pin" title="Épingler au menu principal">☆</button>'+
-        '<div class="title" style="color:'+t.titleColor+';">'+t.title+'</div>';
-      // open tool on card tap (but not when tapping pin)
-      card.addEventListener('click', function(ev){ if(ev.target.closest('.pin')) return; go(t.id); });
-      var pinBtn=card.querySelector('.pin');
-      pinBtn.addEventListener('click', function(ev){ ev.stopPropagation();
-        var p=getPinned(); if(p.indexOf(t.id)===-1){ p.push(t.id); setPinned(p); toast('Épinglé au menu principal ⭐'); render(); }
-      });
-      list.appendChild(card);
+var TOOLS={
+  'module8':{e:'🧳',t:'Carnet de frais pro',s:'Notes de frais'},
+  'module-temps':{e:'⚙️',t:'Temps & Repos',s:'Durées légales'},
+  'module-conges':{e:'🏝️',t:'Congés payés',s:'Calcul & solde'},
+  'module-fincontrat':{e:'🌄',t:'Fin de contrat',s:'Indemnités & rupture'},
+  'module-chomage':{e:'🪂',t:'Droits chômage',s:'ARE & calcul'},
+  'module-famille':{e:'🪺',t:'Congés familiaux',s:'Maternité, paternité…'},
+  'module-arret':{e:'🩺',t:'Arrêt maladie',s:'IJSS & maintien salaire'},
+  'module-tr':{e:'🍽️',t:'Titres-restaurant',s:'Plafonds & règles 2026'},
+  'module-feries':{e:'🎆',t:'Jours fériés',s:'Calendrier 2026'},
+  'module-saisie':{e:'🔒',t:'Saisie sur salaire',s:'Barème & calcul'},
+  'module-anciennete':{e:'🌳',t:'Ancienneté & jalons',s:'Droits par année'},
+  'module-journal':{e:'📓',t:'Journal incidents',s:'Aide-mémoire local'},
+  'module-c2p':{e:'🦺',t:'C2P Pénibilité',s:'Facteurs & points'},
+  'module-lexique':{e:'📚',t:'Lexique bulletin',s:'Ligne par ligne'},
+  'module-fincontrat2':{e:'📋',t:'Solde de tout compte',s:'Checklist départ'},
+  'module-contrats':{e:'📊',t:'CDI · CDD · Intérim',s:'Comparatif droits'},
+  'module-archives':{e:'📁',t:'Conservation docs RH',s:'Durées légales'},
+  'module-convertisseur':{e:'🧮',t:'Convertisseur paie',s:'Horaire/mensuel/annuel'},
+  'module-essai':{e:'⏳',t:"Période d'essai",s:'Délais prévenance'},
+  'module-mutuelle':{e:'🛡️',t:'Mutuelle obligatoire',s:'Règles & dispenses'},
+  'module-transport':{e:'🚌',t:'Transport & Mobilité',s:'TC, FMD, barème km'},
+  'module-cse':{e:'🏛️',t:'CSE & Représentation',s:'Droits & attributions'},
+};
+
+var curSearch='', pinMode=false;
+
+window.togglePinMode=function(){pinMode=!pinMode;document.getElementById('pinModeBtn').style.background=pinMode?'rgba(255,209,102,0.3)':'rgba(255,215,0,0.12)';render();}
+
+function render(){
+  var host=document.getElementById('appHost');
+  host.innerHTML='';
+  var q=curSearch.toLowerCase().trim();
+  var pinned=getPinned();
+
+  if(pinMode){
+    // Show only pinned
+    var sec=document.createElement('div');sec.className='sec-hd';sec.textContent='⭐ Épinglés dans le menu';host.appendChild(sec);
+    var grid=document.createElement('div');grid.className='grid';host.appendChild(grid);
+    var found=false;
+    pinned.forEach(function(id){
+      var tool=TOOLS[id];if(!tool)return;found=true;
+      grid.appendChild(makeTile(id,tool,pinned));
     });
+    if(!found){
+      var e=document.createElement('div');e.className='empty';e.innerHTML='<span class="ee">⭐</span>Aucun outil épinglé encore.';
+      grid.appendChild(e);
+    }
+    return;
   }
-  render();
+
+  if(q){
+    var sec2=document.createElement('div');sec2.className='sec-hd';sec2.textContent='🔍 Résultats';host.appendChild(sec2);
+    var grid2=document.createElement('div');grid2.className='grid';host.appendChild(grid2);
+    var found2=false;
+    Object.keys(TOOLS).forEach(function(id){
+      var tool=TOOLS[id];
+      if((tool.t+' '+tool.s).toLowerCase().indexOf(q)>=0){
+        grid2.appendChild(makeTile(id,tool,pinned));found2=true;
+      }
+    });
+    if(!found2){
+      var e2=document.createElement('div');e2.className='empty';e2.innerHTML='<span class="ee">🦊</span>Aucun outil trouvé.';
+      grid2.appendChild(e2);
+    }
+    return;
+  }
+
+  CATS.forEach(function(cat){
+    var sec=document.createElement('div');sec.className='sec-hd';sec.textContent=cat.label;host.appendChild(sec);
+    var grid=document.createElement('div');grid.className='grid';host.appendChild(grid);
+    cat.ids.forEach(function(id){
+      var tool=TOOLS[id];if(!tool)return;
+      grid.appendChild(makeTile(id,tool,pinned));
+    });
+  });
+
+  // Pin hint
+  var h=document.createElement('div');h.className='hint-row';h.textContent='Épingle un outil pour l\'avoir dans le menu principal.';host.appendChild(h);
+}
+
+function makeTile(id,tool,pinned){
+  var isPinned=pinned.indexOf(id)>=0;
+  var el=document.createElement('div');
+  el.className='tile'+(isPinned?' pinned-tile':'');
+  el.innerHTML=
+    '<div class="te">'+tool.e+'</div>'+
+    '<div class="tx">'+
+      '<div class="tt">'+tool.t+'</div>'+
+      '<div class="ts">'+tool.s+'</div>'+
+    '</div>'+
+    '<button class="pin'+(isPinned?' pinned':'')+'" title="'+(isPinned?'Désépingler':'Épingler')+'">'+(isPinned?'★':'☆')+'</button>';
+  el.querySelector('.pin').addEventListener('click',function(e){
+    e.stopPropagation();togglePin(id);
+  });
+  el.addEventListener('click',function(ev){if(ev.target.closest('.pin'))return;go(id);});
+  return el;
+}
+
+function togglePin(id){
+  var pinned=getPinned();
+  var idx=pinned.indexOf(id);
+  if(idx>=0){pinned.splice(idx,1);toast('Retiré du menu');}
+  else{pinned.push(id);toast('⭐ Épinglé dans le menu !');}
+  setPinned(pinned);render();
+}
+
+document.getElementById('searchIp').addEventListener('input',function(){curSearch=this.value;render();});
+
+render();
+})();
 </script>
 </body>
 </html>
