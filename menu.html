@@ -474,58 +474,64 @@
     </div>
 
     <div class="wiz-step" id="wStep1">
-      <h2 style="text-align:center;font-size:17px;margin-bottom:10px;">⚖️ Engagement de l'utilisateur</h2>
-      <p style="text-align:center;font-size:11px;color:#888;margin-bottom:12px;">
+      <h2 style="text-align:center;font-size:17px;margin-bottom:6px;color:#1a1a2e;">⚖️ Engagement de l'utilisateur</h2>
+      <p style="text-align:center;font-size:11px;color:#555;margin-bottom:12px;">
         Merci de lire attentivement avant de continuer.
       </p>
 
-      <!-- Bloc scrollable — le bouton reste grisé tant qu'on n'a pas scrollé au bas -->
+      <!-- Bloc scrollable — fond sombre pour lisibilité, texte clair -->
       <div id="betonScroll"
         onscroll="checkBetonScroll()"
-        style="height:220px;overflow-y:auto;background:rgba(0,0,0,0.25);border-radius:10px;padding:14px 14px 10px;font-size:12px;color:#ddd;line-height:1.65;border:1px solid rgba(255,255,255,0.12);margin-bottom:14px;">
+        style="height:210px;overflow-y:auto;background:#1e2435;border-radius:12px;padding:16px;font-size:12.5px;color:#e8eaf0;line-height:1.7;border:2px solid #3a4a6a;margin-bottom:14px;-webkit-overflow-scrolling:touch;">
 
-        <p style="font-weight:700;color:#f0c040;margin-bottom:8px;">Avant d'utiliser cet outil, prenez connaissance des points suivants :</p>
+        <p style="font-weight:700;color:#f0c040;margin-bottom:10px;font-size:13px;">Avant d'utiliser cet outil, prenez connaissance des points suivants :</p>
 
-        <p><strong>1. Outil à vocation purement pédagogique</strong><br>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">1. Outil à vocation purement pédagogique</strong><br>
         SimulHeures est un simulateur privé à but éducatif. Il a été conçu pour aider à comprendre les mécanismes du droit du travail français, et non pour fournir des résultats officiels ou définitifs.</p>
 
-        <p style="margin-top:8px;"><strong>2. Résultats estimatifs uniquement</strong><br>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">2. Résultats estimatifs uniquement</strong><br>
         Les calculs présentés sont des estimations indicatives. Ils ne tiennent pas compte de la totalité des conventions collectives, accords d'entreprise, situations personnelles ou évolutions récentes de la législation. Seul votre bulletin de paie officiel fait foi.</p>
 
-        <p style="margin-top:8px;"><strong>3. Aucune valeur légale ou contractuelle</strong><br>
-        Les résultats de cet outil ne constituent ni un avis juridique, ni un avis fiscal, ni un avis médical. Ils ne peuvent pas être utilisés comme preuves ou fondements dans un cadre professionnel, contractuel ou judiciaire.</p>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">3. Aucune valeur légale ou contractuelle</strong><br>
+        Les résultats ne constituent ni un avis juridique, ni un avis fiscal, ni un avis médical. Ils ne peuvent pas être utilisés comme preuves ou fondements dans un cadre professionnel, contractuel ou judiciaire.</p>
 
-        <p style="margin-top:8px;"><strong>4. Droit à l'erreur et évolutivité du droit</strong><br>
-        Le droit du travail évolue rapidement. Malgré notre vigilance, certaines informations peuvent ne pas refléter les dernières modifications législatives ou réglementaires. Nous nous efforçons d'être à jour, mais ne pouvons garantir l'exactitude absolue à tout instant. En cas de doute, consultez un professionnel (avocat, juriste, syndicat, service RH).</p>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">4. Droit à l'erreur — le droit évolue vite</strong><br>
+        Le droit du travail évolue rapidement. Malgré notre vigilance, certaines informations peuvent ne pas refléter les toutes dernières évolutions. En cas de doute, consultez un professionnel (avocat, juriste, syndicat, service RH).</p>
 
-        <p style="margin-top:8px;"><strong>5. Responsabilité de l'utilisateur</strong><br>
-        Vous utilisez cet outil librement, en connaissance de ses limites, et sous votre seule et entière responsabilité. Les développeurs ne sauraient être tenus responsables des décisions prises sur la base des estimations fournies.</p>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">5. Responsabilité de l'utilisateur</strong><br>
+        Vous utilisez cet outil librement, en connaissance de ses limites, et sous votre seule et entière responsabilité.</p>
 
-        <p style="margin-top:8px;"><strong>6. Données personnelles</strong><br>
-        Aucune donnée saisie n'est collectée ni transmise. Tout reste sur votre appareil. Vous êtes l'unique propriétaire de vos données.</p>
+        <p style="margin-bottom:10px;"><strong style="color:#fff;">6. Données personnelles</strong><br>
+        Aucune donnée saisie n'est collectée ni transmise. Tout reste sur votre appareil.</p>
 
-        <p style="margin-top:10px;text-align:center;font-size:10px;color:#666;">— Fin de l'avertissement — faites défiler jusqu'ici pour continuer</p>
+        <p style="margin-top:12px;text-align:center;font-size:11px;color:#f0c040;font-weight:700;">
+          ↑ Faites défiler jusqu'ici pour débloquer le bouton ↑
+        </p>
       </div>
 
-      <!-- Checkbox obligatoire -->
-      <label id="betonLabel"
-        style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);border-radius:8px;padding:12px;margin-bottom:14px;opacity:0.4;pointer-events:none;transition:.3s;"
-        id="betonCheckLabel">
+      <!-- Checkbox — grisée tant que pas scrollé jusqu'en bas -->
+      <label id="betonCheckLabel"
+        style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;
+               background:#f0f4ff;border:2px solid #c0cce8;border-radius:10px;
+               padding:12px;margin-bottom:14px;opacity:0.4;pointer-events:none;
+               transition:opacity .3s,border-color .3s;">
         <input type="checkbox" id="betonCheck" onchange="checkBetonReady()"
-          style="width:18px;height:18px;flex-shrink:0;margin-top:2px;cursor:pointer;accent-color:#f0c040;">
-        <span style="font-size:12px;color:#ddd;line-height:1.5;">
+          style="width:20px;height:20px;flex-shrink:0;margin-top:1px;cursor:pointer;accent-color:#1a6b3a;">
+        <span style="font-size:12.5px;color:#1a1a2e;line-height:1.5;font-weight:600;">
           Je confirme avoir lu l'avertissement dans son intégralité et j'accepte d'utiliser cet outil en tant que simulateur pédagogique indicatif, sans valeur légale.
         </span>
       </label>
 
-      <!-- Bouton bloqué jusqu'à scroll + checkbox -->
+      <!-- Bouton — bloqué jusqu'à scroll + checkbox cochée -->
       <button id="betonBtn" disabled onclick="acceptBeton()"
-        style="width:100%;padding:15px;font-size:14px;font-weight:700;border-radius:12px;border:none;cursor:not-allowed;background:rgba(255,255,255,0.1);color:rgba(255,255,255,0.35);transition:.3s;letter-spacing:0.3px;">
+        style="width:100%;padding:16px;font-size:14px;font-weight:700;border-radius:12px;
+               border:none;cursor:not-allowed;letter-spacing:0.3px;transition:.3s;
+               background:#d0d8e8;color:#8090a8;">
         ↓ Faites défiler pour débloquer
       </button>
 
-      <p style="text-align:center;font-size:10px;color:#666;margin-top:8px;">
-        Ce consentement est enregistré localement sur votre appareil.
+      <p style="text-align:center;font-size:10px;color:#aaa;margin-top:8px;">
+        🔒 Ce consentement est enregistré localement sur votre appareil.
       </p>
     </div>
 
@@ -1257,7 +1263,7 @@
 // ── Afficher la bonne version du bouton Terrier ──
 (function(){
   // Changer 'actif' en 'wip' pour mettre en travaux
-  var mode = 'actif'; // 'actif' ou 'wip'
+  var mode = 'wip'; // 'actif' ou 'wip'
   var a=document.getElementById('btn-terrier-actif');
   var w=document.getElementById('btn-terrier-wip');
   if(a) a.style.display=(mode==='actif'?'block':'none');
@@ -1274,6 +1280,36 @@
 <button class="info-btn" onclick="openSocialPopup()" style="margin-top:-8px;background:linear-gradient(135deg,#e87820,#c85010);border:none;color:#fff;">🎬 Nos réseaux &amp; tutos vidéo</button>
 
 <button class="info-btn" onclick="openBackupPopup()" style="margin-top:-8px;">💾 Sauvegarde générale</button>
+
+<!-- ══ DROIT À L'ERREUR — BAS DE PAGE ════════════════════════ -->
+<div style="
+  margin:20px 16px 8px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.1);
+  border-left:3px solid rgba(240,192,64,0.5);
+  border-radius:0 12px 12px 0;
+  padding:14px 16px;
+  font-size:11.5px;
+  color:rgba(255,255,255,0.55);
+  line-height:1.65;">
+  <div style="font-weight:700;color:rgba(240,192,64,0.8);margin-bottom:6px;font-size:12px;">
+    ⚖️ Droit à l'erreur &amp; évolutivité du droit
+  </div>
+  Le droit du travail évolue rapidement (lois, décrets, jurisprudence, barèmes…). Malgré notre vigilance, certaines informations peuvent ne pas refléter les toutes dernières évolutions à l'instant où vous lisez ces lignes. Nous faisons au mieux, nous mettons à jour régulièrement, mais nous ne pouvons pas garantir une exactitude absolue en temps réel.<br><br>
+  <strong style="color:rgba(255,255,255,0.7);">En cas de doute :</strong> consultez un professionnel (avocat, juriste, représentant du personnel, syndicat, service RH). Tous les outils sont indicatifs et pédagogiques — ils n'ont aucune valeur légale ou contractuelle.
+</div>
+
+<div style="
+  text-align:center;
+  font-size:10px;
+  color:rgba(255,255,255,0.25);
+  line-height:1.7;
+  margin:0 16px 24px;
+  letter-spacing:0.3px;">
+  SimulHeures · Outil pédagogique privé · Ni avis juridique ni avis fiscal<br>
+  Données 100 % locales · Aucune collecte · Votre appareil, vos données
+</div>
+
 
 <!-- ══ POPUP SAUVEGARDE / EXPORT-IMPORT ════════════════════════ -->
 <div id="backup-popup-overlay" style="
@@ -2032,14 +2068,13 @@ document.addEventListener('DOMContentLoaded', function(){
 
   function wizChoixContrat(type) {
     if(type === 'partiel') {
-      // Mémoriser le choix + marquer le wizard comme vu
       try { localStorage.setItem('menuContratType','partiel'); } catch(e){}
-      // Fermer le wizard et aller directement sur Mizuki
+      if(!hasConsent()) { goStep(1); return; }
       closeWizard();
       go('module5');
     } else {
-      // Temps plein : continuer le wizard normal
-      try { localStorage.setItem('menuContratType','plein'); } catch(e){}
+      try { localStorage.setItem('menuContratType', type||'plein'); } catch(e){}
+      if(!hasConsent()) { goStep(1); return; }
       goStep(2);
     }
   }
@@ -2071,27 +2106,34 @@ document.addEventListener('DOMContentLoaded', function(){
   function goApp(app) { closeWizard(); go(app); }
 
   function wizChoixContrat(type) {
+    // Mémoriser le choix
+    try { _safeLS.set('menuContratType', type||'plein'); } catch(e){}
+    try { localStorage.setItem('menuContratType', type||'plein'); } catch(e){}
+    // Béton armé : forcer le step 1 si consentement pas encore donné
+    if(!hasConsent()) {
+      // Stocker le type pour y revenir après le consentement
+      try { localStorage.setItem('_pendingType', type); } catch(e){}
+      goStep(1);
+      return;
+    }
+    // Consentement déjà donné — continuer normalement
     if(type === 'partiel') {
-      _safeLS.set('menuContratType', 'partiel');
-      _safeLS.set('menuWizardDone', '1');
-      // Transition fond violet avant de partir
+      try { _safeLS.set('menuWizardDone', '1'); } catch(e){}
       document.body.style.transition = 'background 0.4s ease';
       document.body.style.background = 'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
-      document.getElementById('welcomeWizard').style.display = 'none';
-      unlockScroll();
-      setTimeout(() => go('module5'), 400);
+      var ww = document.getElementById('welcomeWizard');
+      if(ww) ww.style.display = 'none';
+      try { unlockScroll(); } catch(e){}
+      setTimeout(function(){ go('module5'); }, 400);
     } else if(type === 'cadre') {
-      _safeLS.set('menuContratType', 'cadre');
-      _safeLS.set('menuWizardDone', '1');
-      // Transition fond charbon/champagne avant de partir
+      try { _safeLS.set('menuWizardDone', '1'); } catch(e){}
       document.body.style.transition = 'background 0.4s ease';
       document.body.style.background = 'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)';
-      document.getElementById('welcomeWizard').style.display = 'none';
-      unlockScroll();
-      setTimeout(() => go('module6'), 400);
+      var ww = document.getElementById('welcomeWizard');
+      if(ww) ww.style.display = 'none';
+      try { unlockScroll(); } catch(e){}
+      setTimeout(function(){ go('module6'); }, 400);
     } else {
-      // Temps plein → wizard normal + fond teal
-      _safeLS.set('menuContratType', 'plein');
       document.body.style.background = '#4FB3C2';
       goStep(2);
     }
@@ -2753,7 +2795,26 @@ function acceptBeton(){
     localStorage.setItem('SH_CONSENT_TS',ts);
     localStorage.setItem('SH_CONSENT_V','1.0');
   }catch(e){}
-  goStep(2);
+  // Reprendre le choix contrat en attente
+  var pending='';
+  try{ pending=localStorage.getItem('_pendingType')||''; }catch(e){}
+  try{ localStorage.removeItem('_pendingType'); }catch(e){}
+  if(pending==='partiel'){
+    document.body.style.background='linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
+    var ww=document.getElementById('welcomeWizard');
+    if(ww) ww.style.display='none';
+    try{unlockScroll();}catch(e){}
+    setTimeout(function(){go('module5');},400);
+  } else if(pending==='cadre'){
+    document.body.style.background='linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)';
+    var ww=document.getElementById('welcomeWizard');
+    if(ww) ww.style.display='none';
+    try{unlockScroll();}catch(e){}
+    setTimeout(function(){go('module6');},400);
+  } else {
+    document.body.style.background='#4FB3C2';
+    goStep(2);
+  }
 }
 function hasConsent(){
   try{ return localStorage.getItem('SH_CONSENT')==='1'; }catch(e){return false;}
