@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.9.4"; // + Audit disclaimers + enrichissements v10.9.4 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
+const CACHE_NAME = "heuressup-cache-v11.1.0"; // + Audit disclaimers + enrichissements v10.9.4 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -109,50 +109,79 @@ const FILES_TO_CACHE = [
   "./module7/Mimizuku.png",
   "./module7/mimizuku-menu.jpg",
   // === Module 8 — Frais Pro (notes de frais) ===
-  "./module8/index.html",
+  "./outils/module8/index.html",
   // === Trousse : Temps & Repos ===
-  "./module-temps/index.html",
+  "./outils/module-temps/index.html",
   // === Trousse : Congés payés ===
-  "./module-conges/index.html",
+  "./outils/module-conges/index.html",
   // === Trousse : Fin de contrat ===
-  "./module-fincontrat/index.html",
+  "./outils/module-fincontrat/index.html",
   // === Trousse : Droits chômage (ARE) ===
-  "./module-chomage/index.html",
+  "./outils/module-chomage/index.html",
   // === Trousse : Congés familiaux ===
-  "./module-famille/index.html",
+  "./outils/module-famille/index.html",
   // === Trousse : Arrêt maladie IJSS ===
-  "./module-arret/index.html",
+  "./outils/module-arret/index.html",
   // === Trousse : Titres-restaurant ===
-  "./module-tr/index.html",
+  "./outils/module-tr/index.html",
   // === Trousse : Jours fériés ===
-  "./module-feries/index.html",
+  "./outils/module-feries/index.html",
   // === Trousse : Saisie sur salaire ===
-  "./module-saisie/index.html",
+  "./outils/module-saisie/index.html",
   // === Trousse : Ancienneté & jalons ===
-  "./module-anciennete/index.html",
+  "./outils/module-anciennete/index.html",
   // === Trousse : Journal d'incidents ===
-  "./module-journal/index.html",
+  "./outils/module-journal/index.html",
   // === Trousse : C2P Pénibilité ===
-  "./module-c2p/index.html",
+  "./outils/module-c2p/index.html",
   // === Trousse : Lexique bulletin de paie ===
-  "./module-lexique/index.html",
+  "./outils/module-lexique/index.html",
   // === Trousse : Solde de tout compte ===
-  "./module-fincontrat2/index.html",
+  "./outils/module-fincontrat2/index.html",
   // === Trousse : CDI CDD Interim ===
-  "./module-contrats/index.html",
+  "./outils/module-contrats/index.html",
   // === Trousse : Conservation documents RH ===
-  "./module-archives/index.html",
+  "./outils/module-archives/index.html",
   // === Trousse : Convertisseur de paie ===
-  "./module-convertisseur/index.html",
+  "./outils/module-convertisseur/index.html",
   // === Trousse : Période d'essai ===
-  "./module-essai/index.html",
+  "./outils/module-essai/index.html",
   // === Trousse : Mutuelle obligatoire ===
-  "./module-mutuelle/index.html",
+  "./outils/module-mutuelle/index.html",
   // === Trousse : Transport & Mobilité ===
-  "./module-transport/index.html",
+  "./outils/module-transport/index.html",
   // === Trousse : CSE & Représentation ===
-  "./module-cse/index.html",
+  "./outils/module-cse/index.html",
   // === Assets menu ===
+    // === Nouveaux modules trousse ===
+  "./outils/module-rupture/index.html",
+  "./outils/module-preavis/index.html",
+  "./outils/module-preavis-comp/index.html",
+  "./outils/module-bulletin/index.html",
+  "./outils/module-cet/index.html",
+  "./outils/module-entretien/index.html",
+  "./outils/module-mobilites/index.html",
+  "./outils/module-retraite/index.html",
+  "./outils/module-egalite/index.html",
+  "./outils/module-astreintes/index.html",
+  "./outils/module-precarite/index.html",
+  "./outils/module-parentalite/index.html",
+  "./outils/module-teletravail/index.html",
+  "./outils/module-formation/index.html",
+  "./outils/module-atmp/index.html",
+  "./outils/module-nonconcurrence/index.html",
+  "./outils/module-epargne/index.html",
+  "./outils/module-greve/index.html",
+  "./outils/module-cumul-retraite/index.html",
+  "./outils/module-sabbatique/index.html",
+  "./outils/module-inaptitude/index.html",
+  "./outils/module-miseapied/index.html",
+  "./outils/module-demission-are/index.html",
+  "./outils/module-alternance/index.html",
+  "./outils/module-conge-ss/index.html",
+  "./outils/module-delegation/index.html",
+  "./outils/module-proche-aidant/index.html",
+  "./outils/module-invalidite/index.html",
   "./trousse-menu.jpg"
 ];
 

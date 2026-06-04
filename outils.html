@@ -155,15 +155,16 @@
 "use strict";
 function getPinned(){try{return JSON.parse(localStorage.getItem('pinnedTools')||'[]');}catch(e){return[];}}
 function setPinned(a){try{localStorage.setItem('pinnedTools',JSON.stringify(a));}catch(e){}}
-function go(id){try{localStorage.setItem('lastApp',id);}catch(e){}window.location.href=id+'/index.html';}
+function go(id){try{localStorage.setItem('lastApp',id);}catch(e){}window.location.href='outils/'+id+'/index.html';}
 function toast(m){var t=document.getElementById('toast');t.textContent=m;t.classList.add('show');clearTimeout(t._t);t._t=setTimeout(function(){t.classList.remove('show');},1800);}
 
 var CATS=[
-  {label:'💼 Contrat & rémunération',ids:['module8','module-contrats','module-convertisseur','module-essai','module-lexique']},
-  {label:'⏱️ Temps de travail',ids:['module-temps','module-conges','module-feries','module-tr','module-transport','module-mutuelle']},
-  {label:'🛡️ Protection sociale',ids:['module-arret','module-famille','module-chomage','module-c2p','module-saisie']},
-  {label:'📋 Départ & documents',ids:['module-fincontrat','module-fincontrat2','module-archives']},
-  {label:'🌳 Parcours & droits',ids:['module-anciennete','module-cse','module-journal']},
+  {label:'💼 Rupture & Fin de contrat',ids:['module-rupture','module-preavis','module-preavis-comp','module-fincontrat','module-fincontrat2','module-archives','module-miseapied','module-demission-are']},
+  {label:'📊 Paie & Cotisations',ids:['module8','module-contrats','module-convertisseur','module-essai','module-lexique','module-bulletin']},
+  {label:'🏠 Conditions de travail',ids:['module-temps','module-conges','module-feries','module-tr','module-transport','module-mutuelle','module-teletravail','module-mobilites','module-astreintes']},
+  {label:'🛡️ Protection sociale & Santé',ids:['module-arret','module-famille','module-chomage','module-c2p','module-saisie','module-atmp','module-inaptitude','module-parentalite','module-proche-aidant','module-invalidite']},
+  {label:'🌳 Droits & Parcours pro',ids:['module-anciennete','module-cse','module-journal','module-entretien','module-cet','module-formation','module-epargne','module-delegation']},
+  {label:'📋 Statuts & Clauses spéciales',ids:['module-nonconcurrence','module-precarite','module-greve','module-sabbatique','module-retraite','module-cumul-retraite','module-egalite','module-alternance','module-conge-ss']},
 ];
 
 var TOOLS={
@@ -189,6 +190,34 @@ var TOOLS={
   'module-mutuelle':{e:'🛡️',t:'Mutuelle obligatoire',s:'Règles & dispenses'},
   'module-transport':{e:'🚌',t:'Transport & Mobilité',s:'TC, FMD, barème km'},
   'module-cse':{e:'🏛️',t:'CSE & Représentation',s:'Droits & attributions'},
+  'module-rupture':{e:'🤝',t:'Rupture conventionnelle',s:'Indemnité & procédure'},
+  'module-preavis':{e:'⏱️',t:'Préavis',s:'Durée légale & calcul'},
+  'module-preavis-comp':{e:'⚖️',t:'Comparatif ruptures',s:'Démo/Licenc./RC/Faute'},
+  'module-bulletin':{e:'📄',t:'Bulletin décrypté',s:'Cotisations expliquées'},
+  'module-cet':{e:'⏳',t:'Compte Épargne-Temps',s:'CET · Droits & usages'},
+  'module-entretien':{e:'🤝',t:'Entretien professionnel',s:'Échéance & droits'},
+  'module-mobilites':{e:'🚲',t:'Forfait Mobilités',s:'Vélo · Covoiturage · Exo.'},
+  'module-retraite':{e:'🏛️',t:'Retraite',s:'Comprendre ses droits'},
+  'module-egalite':{e:'⚖️',t:'Index Égalité H/F',s:'Score & indicateurs'},
+  'module-astreintes':{e:'📟',t:'Astreintes',s:'Définition & compensation'},
+  'module-precarite':{e:'📄',t:'Prime de précarité',s:'Fin de CDD · 10%'},
+  'module-parentalite':{e:'👶',t:'Parentalité',s:'Maternité · Paternité · Parental'},
+  'module-teletravail':{e:'🏠',t:'Télétravail',s:'Règles & indemnités'},
+  'module-formation':{e:'🎓',t:'CPF & Formation',s:'Droits · Dispositifs · Fraude'},
+  'module-atmp':{e:'🦺',t:'AT / MP',s:'Accident travail · Maladie pro'},
+  'module-nonconcurrence':{e:'⚖️',t:'Non-concurrence',s:'Validité & indemnisation'},
+  'module-epargne':{e:'💰',t:'Épargne salariale',s:'Participation · PEE · PER'},
+  'module-greve':{e:'✊',t:'Grève',s:'Droits & retenue 1/30e'},
+  'module-cumul-retraite':{e:'🏖️',t:'Cumul emploi-retraite',s:'Libéralisé & plafonné'},
+  'module-sabbatique':{e:'🌍',t:'Congé sabbatique',s:'6-11 mois · Conditions'},
+  'module-inaptitude':{e:'🏥',t:'Inaptitude',s:'Procédure & reclassement'},
+  'module-miseapied':{e:'⏸️',t:'Mise à pied',s:'Conservatoire vs disciplinaire'},
+  'module-demission-are':{e:'🚪',t:'Démission légitime',s:'Cas d'ouverture ARE'},
+  'module-alternance':{e:'🎓',t:'Alternance',s:'Apprentissage · Contrat pro'},
+  'module-conge-ss':{e:'🌿',t:'Congé sans solde',s:'Durée libre · Accord requis'},
+  'module-delegation':{e:'🏛️',t:'Heures de délégation',s:'Mandats · Crédits · Droits'},
+  'module-proche-aidant':{e:'🤲',t:'Proche aidant',s:'Congé · AJPA · CAF'},
+  'module-invalidite':{e:'♿',t:'Invalidité',s:'Catégories · Pension · Droits'},
 };
 
 var curSearch='', pinMode=false;
