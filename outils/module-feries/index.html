@@ -1,0 +1,525 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Jours Fériés 2026 — La Fête</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#2b4bba">
+<link rel="manifest" href="../../manifest.json">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jours Fériés">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Righteous&family=Nunito:wght@500;600;700;800;900&display=swap">
+<style>
+:root{
+  --bleu:#2b4bba; --bleu-l:#5577e0; --bleu-ll:#8ea8f5;
+  --rouge:#e03030; --rouge-l:#ff5555;
+  --blanc:#f8f9ff; --creme:#fef9f0;
+  --or:#f0b030; --or-d:#c8900a;
+  --vert:#2a8a4a; --vert-l:#4ab86a;
+  --ink:#1a1a2e; --ink2:#3a3a5c; --faded:#8a8aaa;
+  --card:#ffffff; --card-edge:#e0e8ff;
+  --pont:#ff8c00;
+  --line:rgba(26,26,46,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;}
+body{
+  font-family:'Nunito',-apple-system,sans-serif;color:var(--ink);padding-bottom:60px;min-height:100vh;
+  background:linear-gradient(170deg,#0d1440 0%,#1a2a7a 40%,#2b4bba 100%);
+  background-attachment:fixed;-webkit-text-size-adjust:100%;overflow-x:hidden;position:relative;
+}
+/* confetti dots */
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:
+    radial-gradient(3px 3px at 8% 15%, rgba(255,220,60,0.6), transparent),
+    radial-gradient(2px 2px at 22% 32%, rgba(255,80,80,0.5), transparent),
+    radial-gradient(3px 3px at 78% 12%, rgba(60,180,255,0.6), transparent),
+    radial-gradient(2px 2px at 88% 40%, rgba(80,220,120,0.5), transparent),
+    radial-gradient(3px 3px at 45% 8%, rgba(255,140,50,0.6), transparent),
+    radial-gradient(2px 2px at 65% 25%, rgba(220,60,200,0.4), transparent),
+    radial-gradient(3px 3px at 12% 60%, rgba(255,220,60,0.4), transparent),
+    radial-gradient(2px 2px at 93% 70%, rgba(255,80,80,0.4), transparent);}
+/* guirlande */
+body::after{content:"🎆";position:fixed;top:72px;right:14px;font-size:28px;opacity:0.18;z-index:0;pointer-events:none;}
+
+.wrap{position:relative;z-index:2;max-width:480px;margin:0 auto;padding:0 16px 16px;}
+
+@media screen and (orientation:landscape) and (max-device-width:1024px){
+  body>*:not(#lb){display:none!important;}
+  #lb{position:fixed;inset:0;z-index:99999;background:#1a2a7a;color:#fff;display:flex!important;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  #lb .i{font-size:60px;margin-bottom:16px;} #lb .t{font-family:'Righteous',cursive;font-size:28px;}
+}
+@media screen and (orientation:portrait){#lb{display:none!important;}}
+
+header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+  background:linear-gradient(180deg, rgba(13,20,64,0.97), rgba(13,20,64,0.6) 75%, transparent);
+  backdrop-filter:blur(6px);max-width:480px;margin:0 auto;}
+header .back{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;
+  border-radius:20px;padding:9px 14px;font-weight:800;font-size:12px;text-decoration:none;flex-shrink:0;}
+header .brand{flex:1;text-align:center;}
+header .brand .ti{font-family:'Righteous',cursive;font-size:20px;color:#fff;letter-spacing:0.5px;}
+header .brand .su{font-weight:700;font-size:9px;color:rgba(255,255,255,0.7);margin-top:2px;letter-spacing:1.5px;text-transform:uppercase;}
+header .hbtn{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:50%;width:38px;height:38px;font-size:16px;cursor:pointer;flex-shrink:0;}
+
+/* hero counter */
+.hero{background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2);border-radius:22px;padding:20px;margin:8px 0 14px;
+  box-shadow:inset 0 1px 0 rgba(255,255,255,0.2),0 12px 30px rgba(0,0,0,0.4);text-align:center;backdrop-filter:blur(8px);}
+.hero .htag{font-weight:800;font-size:11px;letter-spacing:2px;text-transform:uppercase;color:var(--or);margin-bottom:6px;}
+.hero .hrow{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin-top:8px;}
+.hero .hstat{background:rgba(255,255,255,0.1);border-radius:14px;padding:12px 14px;min-width:80px;}
+.hero .hn{font-family:'Righteous',cursive;font-size:30px;color:#fff;line-height:1;}
+.hero .nl{font-size:11px;font-weight:700;color:rgba(255,255,255,0.7);margin-top:2px;text-transform:uppercase;letter-spacing:0.5px;}
+.hero .hn.or{color:var(--or);} .hero .hn.rouge{color:var(--rouge-l);}
+
+/* filter tabs */
+.ftabs{display:flex;gap:8px;margin-bottom:14px;overflow-x:auto;padding-bottom:2px;}
+.ftab{flex-shrink:0;background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);color:rgba(255,255,255,0.8);
+  border-radius:20px;padding:8px 14px;font-weight:700;font-size:12px;cursor:pointer;transition:.15s;white-space:nowrap;}
+.ftab.on{background:#fff;color:var(--bleu);}
+
+/* holiday cards */
+.hlist{display:flex;flex-direction:column;gap:10px;}
+.hcard{background:#fff;border-radius:16px;padding:14px 16px;display:flex;align-items:center;gap:13px;
+  box-shadow:0 6px 16px rgba(0,0,0,0.28);position:relative;overflow:hidden;}
+.hcard .hdate{text-align:center;flex-shrink:0;min-width:52px;}
+.hcard .hday{font-family:'Righteous',cursive;font-size:22px;color:var(--bleu);line-height:1;}
+.hcard .hmonth{font-size:10px;font-weight:800;color:var(--ink2);text-transform:uppercase;letter-spacing:0.5px;margin-top:1px;}
+.hcard .hdow{font-size:10px;font-weight:700;padding:2px 6px;border-radius:8px;margin-top:4px;display:inline-block;}
+.hcard .hdow.lun,.hcard .hdow.ven,.hcard .hdow.mer,.hcard .hdow.jeu,.hcard .hdow.mar{background:#e8f0fe;color:var(--bleu);}
+.hcard .hdow.sam,.hcard .hdow.dim{background:#fde8e8;color:var(--rouge);}
+.hcard .hinfo{flex:1;min-width:0;}
+.hcard .hname{font-weight:800;font-size:14px;color:var(--ink);}
+.hcard .hdesc{font-size:11.5px;color:var(--ink2);margin-top:2px;line-height:1.3;}
+.hcard .hbadge{position:absolute;top:10px;right:10px;font-size:10px;font-weight:800;padding:3px 8px;border-radius:10px;}
+.hbadge.we{background:#fde8e8;color:var(--rouge);} .hbadge.pont{background:#fff3cd;color:var(--pont);}
+.hbadge.today{background:#e8f5e9;color:var(--vert);}
+.hcard.past{opacity:0.55;}
+/* pont hint under card */
+.pont-hint{background:rgba(255,140,0,0.15);border:1px solid rgba(255,140,0,0.4);border-radius:12px;
+  padding:10px 13px;margin-top:-4px;margin-bottom:4px;font-size:12px;font-weight:700;color:var(--creme);display:flex;gap:8px;align-items:center;}
+.pont-hint .pi{font-size:16px;}
+
+/* rules */
+.rule-strip{background:rgba(255,255,255,0.1);border:1px solid rgba(255,255,255,0.2);border-radius:14px;
+  padding:14px 16px;margin-bottom:10px;display:flex;gap:11px;backdrop-filter:blur(4px);}
+.rule-strip .re{font-size:20px;flex-shrink:0;}
+.rule-strip .rt{font-weight:800;font-size:13px;color:#fff;} .rule-strip .rd{font-size:12px;color:rgba(255,255,255,0.75);margin-top:2px;line-height:1.35;}
+
+.note{font-size:11.5px;color:rgba(255,255,255,0.7);line-height:1.5;text-align:center;margin-top:14px;padding:0 8px;font-weight:600;}
+.foot{margin-top:18px;text-align:center;font-size:11px;color:rgba(255,255,255,0.5);line-height:1.7;}
+
+/* overlays */
+.ov{position:fixed;inset:0;z-index:200;background:rgba(10,16,50,0.8);backdrop-filter:blur(4px);display:none;align-items:center;justify-content:center;padding:16px;}
+.ov.show{display:flex;animation:fade .25s;}
+@keyframes fade{from{opacity:0}to{opacity:1}}
+.box{background:linear-gradient(170deg,#fff,#f0f4ff);border-radius:20px;max-width:430px;width:100%;max-height:90vh;overflow-y:auto;
+  box-shadow:0 24px 60px rgba(0,0,0,0.7);animation:boxin .3s cubic-bezier(.2,.9,.3,1.2);border-top:5px solid var(--bleu);}
+@keyframes boxin{from{opacity:0;transform:scale(.95) translateY(15px)}to{opacity:1;transform:none}}
+.box .hd{padding:20px 20px 12px;text-align:center;position:relative;}
+.box .hd .t{font-family:'Righteous',cursive;font-size:22px;color:var(--bleu);}
+.box .hd .s{font-size:13px;color:var(--ink2);margin-top:4px;font-weight:600;}
+.box .hd .x{position:absolute;top:14px;right:14px;background:#f0f4ff;border:none;border-radius:50%;width:32px;height:32px;font-size:15px;color:var(--bleu);cursor:pointer;}
+.box .bd{padding:0 20px 20px;}
+.btn{display:block;width:100%;border:none;border-radius:14px;padding:14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:14px;cursor:pointer;transition:.15s;}
+.btn:active{transform:translateY(2px);}
+.btn-fete{background:linear-gradient(135deg,var(--bleu),var(--bleu-l));color:#fff;box-shadow:0 5px 18px rgba(43,75,186,0.5);}
+.btn-ghost{background:transparent;color:var(--bleu);border:2px solid var(--card-edge);}
+.wstep{display:none;text-align:center;padding:8px 2px;}
+.wstep.show{display:block;animation:fade .35s;}
+.wmasc{width:120px;height:120px;object-fit:contain;display:inline-block;margin-bottom:6px;filter:drop-shadow(2px 4px 8px rgba(0,0,0,0.25));animation:pop 3s ease-in-out infinite;}
+@keyframes pop{0%,100%{transform:scale(1) rotate(-2deg)}50%{transform:scale(1.05) rotate(2deg)}}
+.wemoji{font-size:60px;display:inline-block;margin-bottom:8px;animation:pop 3s ease-in-out infinite;}
+.wstep h2{font-family:'Righteous',cursive;font-size:24px;color:var(--bleu);margin-bottom:10px;}
+.wstep p{font-size:14px;color:var(--ink2);line-height:1.5;margin-bottom:10px;font-weight:600;}
+.wstep .accent{color:var(--bleu);font-weight:800;}
+.feat{display:flex;gap:12px;align-items:flex-start;text-align:left;margin-bottom:12px;}
+.feat .ic{font-size:20px;flex-shrink:0;}
+.feat .tx{font-size:14px;color:var(--ink2);line-height:1.4;font-weight:600;}
+.feat .tx b{display:block;font-weight:800;font-size:13px;color:var(--bleu);margin-bottom:2px;}
+.legal{font-size:11px;color:var(--faded);line-height:1.5;background:#f0f4ff;border-radius:8px;padding:10px;border-left:3px solid var(--bleu);}
+.dots{display:flex;gap:7px;justify-content:center;margin:16px 0;}
+.dots .d{width:8px;height:8px;border-radius:50%;background:rgba(43,75,186,0.2);transition:.2s;}
+.dots .d.on{background:var(--bleu);width:22px;border-radius:4px;}
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);z-index:9999;
+  background:var(--or-d);color:#fff;font-weight:800;font-size:13px;padding:12px 22px;border-radius:20px;
+  box-shadow:0 8px 24px rgba(0,0,0,0.4);opacity:0;transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+<body>
+
+<div id="safe-top-bar" style="position:fixed;top:0;left:0;right:0;height:env(safe-area-inset-top);background:#0d1440;z-index:9999;"></div>
+<div id="lb"><div class="i">🎆</div><div class="t">Tourne ton téléphone</div></div>
+
+<header>
+  <a href="../../outils.html" class="back">← Trousse</a>
+  <div class="brand">
+    <div class="ti">Jours Fériés <span id="headerYear">2026</span></div>
+    <div class="su">La Fête · v1.0</div>
+  </div>
+  <button class="hbtn" id="helpBtn" title="Aide">?</button>
+</header>
+
+<!-- WIZARD -->
+<div class="ov" id="wizard">
+  <div class="box"><div class="hd"></div><div class="bd">
+    <div class="wstep show" data-step="0">
+      <img class="wmasc" src="Mascotte.png" alt="" onerror="this.outerHTML='<span class=\'wemoji\'>🎆</span>'">
+      <h2>La Fête !</h2>
+      <p>Les <span class="accent">11 jours fériés 2026</span> d'un coup d'œil — avec les ponts possibles, les jours tombant le week-end, et ce qu'il te reste à venir.</p>
+    </div>
+    <div class="wstep" data-step="1">
+      <span class="wemoji">🌉</span>
+      <h2>Les ponts en 2026</h2>
+      <p>2026 est <span class="accent">une bonne année pour les ponts</span> : plusieurs fériés tombent un vendredi ou un jeudi, offrant de beaux week-ends prolongés.</p>
+      <p>L'outil les repère automatiquement pour toi.</p>
+    </div>
+    <div class="wstep" data-step="2">
+      <span class="wemoji">📋</span>
+      <h2>Les règles à savoir</h2>
+      <div class="feat"><div class="ic">⚠️</div><div class="tx"><b>1er mai uniquement obligatoire</b>C'est le seul férié légalement chômé pour tous. Les autres dépendent de ta convention.</div></div>
+      <div class="feat"><div class="ic">📅</div><div class="tx"><b>Pas de report automatique</b>Un férié qui tombe un dimanche n'est pas automatiquement rattrapé le lundi.</div></div>
+      <div class="feat"><div class="ic">📍</div><div class="tx"><b>Alsace-Moselle</b>13 jours fériés (+ Vendredi Saint + Saint-Étienne).</div></div>
+    </div>
+    <div class="dots" id="wdots"></div>
+    <button class="btn btn-fete" id="wNext">Continuer</button>
+    <button class="btn btn-ghost" id="wSkip" style="margin-top:9px;">Passer</button>
+  </div></div>
+</div>
+
+<!-- HELP -->
+<div class="ov" id="help">
+  <div class="box"><div class="hd"><div class="t">Mode d'emploi</div><div class="s">Lire le calendrier</div>
+    <button class="x" data-close="help">✕</button></div>
+  <div class="bd">
+    <div class="feat"><div class="ic">🌉</div><div class="tx"><b>Pont</b>Férié le jeudi → pont possible vendredi (1 jour de congé). Férié le mardi → pont possible lundi. Résultat : 4 jours d'affilée.</div></div>
+    <div class="feat"><div class="ic">🔴</div><div class="tx"><b>Week-end</b>Férié tombant sam. ou dim. → pas de récupération automatique en droit commun.</div></div>
+    <div class="feat"><div class="ic">✅</div><div class="tx"><b>Aujourd'hui</b>Le férié en cours (s'il y en a un) est mis en évidence.</div></div>
+    <div class="feat"><div class="ic">📍</div><div class="tx"><b>Alsace-Moselle</b>Active le filtre pour voir les 13 jours (+ Vendredi Saint + Saint-Étienne).</div></div>
+    <div class="legal">Seul le 1er mai est obligatoirement chômé (art. L3133-4 C.trav.). Les autres fériés peuvent être travaillés selon convention. Pas de report légal obligatoire si un férié tombe un dimanche.</div>
+    <button class="btn btn-fete" style="margin-top:14px;" data-close="help">Compris</button>
+  </div></div>
+</div>
+
+<div class="wrap" id="app">
+
+  <!-- HERO STATS -->
+  <div class="hero">
+    <div class="htag">🎆 Calendrier <span id="heroYear">2026</span></div>
+    <div class="hrow">
+      <div class="hstat"><div class="hn" id="sTot">11</div><div class="nl">Fériés</div></div>
+      <div class="hstat"><div class="hn or" id="sPont">—</div><div class="nl">Ponts possibles</div></div>
+      <div class="hstat"><div class="hn rouge" id="sWE">—</div><div class="nl">Week-end</div></div>
+      <div class="hstat"><div class="hn" id="sLeft">—</div><div class="nl">À venir</div></div>
+    </div>
+  </div>
+
+  <!-- YEAR SELECTOR + API -->
+  <div style="display:flex;gap:10px;align-items:center;margin-bottom:14px;">
+    <select id="yearSel" style="flex:1;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.3);color:#fff;border-radius:14px;padding:11px 14px;font-family:'Nunito',sans-serif;font-weight:800;font-size:15px;appearance:none;-webkit-appearance:none;text-align:center;cursor:pointer;"></select>
+    <button id="importBtn" style="flex:1;background:linear-gradient(135deg,#f0b030,#c8900a);color:#fff;border:none;border-radius:14px;padding:12px;font-family:'Nunito',sans-serif;font-weight:800;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px;">
+      <span id="importIco">🏛️</span><span id="importLbl">Importer (API gouv.)</span>
+    </button>
+  </div>
+  <div id="apiStatus" style="display:none;background:rgba(255,255,255,0.1);border-radius:12px;padding:10px 14px;margin-bottom:12px;font-size:12px;font-weight:700;color:rgba(255,255,255,0.9);text-align:center;"></div>
+
+  <!-- FILTER TABS -->
+  <div class="ftabs">
+    <div class="ftab on" data-filter="all">Tous</div>
+    <div class="ftab" data-filter="ahead">À venir</div>
+    <div class="ftab" data-filter="pont">🌉 Ponts</div>
+    <div class="ftab" data-filter="we">🔴 Week-ends</div>
+    <div class="ftab" data-filter="alsace">Alsace-Moselle</div>
+  </div>
+
+  <div class="hlist" id="holidayList"></div>
+
+  <!-- RULES -->
+  <div style="margin-top:18px;margin-bottom:8px;font-family:'Righteous',cursive;font-size:15px;color:var(--or);letter-spacing:0.5px;">📋 Les règles essentielles</div>
+  <div class="rule-strip"><div class="re">⚖️</div><div><div class="rt">Seul le 1er mai est obligatoirement chômé</div><div class="rd">Pour tous les salariés (sauf professions indispensables). Les autres fériés dépendent de ta convention collective ou de ton accord d'entreprise.</div></div></div>
+  <div class="rule-strip"><div class="re">📅</div><div><div class="rt">Pas de report si le férié tombe un dimanche</div><div class="rd">En France, aucun report légal automatique. Si ta convention le prévoit, tu peux avoir droit à un repos compensateur.</div></div></div>
+  <div class="rule-strip" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:10px;">
+    <div style="font-weight:700;font-size:13px;color:#fff;margin-bottom:10px;">📅 Les 11 jours fériés légaux 2026</div>
+    <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🎉 Jour de l'An</span><span style="color:rgba(255,255,255,0.6);">Jeudi 1er janv.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Lundi de Pâques</span><span style="color:rgba(255,255,255,0.6);">Lundi 6 avril</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🌹 Fête du Travail</span><span style="color:#f0c040;font-weight:700;">Vendredi 1er mai ⭐</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🇫🇷 Victoire 1945</span><span style="color:rgba(255,255,255,0.6);">Vendredi 8 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Ascension</span><span style="color:rgba(255,255,255,0.6);">Jeudi 14 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Lundi de Pentecôte</span><span style="color:rgba(255,255,255,0.6);">Lundi 25 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🎖️ Fête Nationale</span><span style="color:rgba(255,255,255,0.6);">Mardi 14 juil.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🙏 Assomption</span><span style="color:rgba(255,255,255,0.6);">Samedi 15 août</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Toussaint</span><span style="color:rgba(255,255,255,0.6);">Dimanche 1er nov.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🕊️ Armistice</span><span style="color:rgba(255,255,255,0.6);">Mercredi 11 nov.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;"><span>🎄 Noël</span><span style="color:rgba(255,255,255,0.6);">Vendredi 25 déc.</span></div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">⭐ Seul jour obligatoirement chômé et doublement rémunéré si travaillé.</div>
+  </div>  <div class="rule-strip"><div class="re">💶</div><div><div class="rt">Rémunération des jours fériés</div><div class="rd">Un férié chômé est rémunéré pour les salariés ayant au moins 3 mois d'ancienneté. S'il est travaillé, une majoration peut être due selon la convention.</div></div></div>
+  <div class="rule-strip"><div class="re">📍</div><div><div class="rt">Alsace-Moselle : 13 fériés</div><div class="rd">Les depts. Bas-Rhin (67), Haut-Rhin (68) et Moselle (57) bénéficient en plus du Vendredi Saint (3 avr.) et du Saint-Étienne (26 déc.).</div></div></div>
+  <div class="rule-strip" style="background:rgba(255,255,255,0.05);border-radius:12px;padding:14px;margin-bottom:10px;">
+    <div style="font-weight:700;font-size:13px;color:#fff;margin-bottom:10px;">📅 Les 11 jours fériés légaux 2026</div>
+    <div style="display:flex;flex-direction:column;gap:4px;font-size:12px;">
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🎉 Jour de l'An</span><span style="color:rgba(255,255,255,0.6);">Jeudi 1er janv.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Lundi de Pâques</span><span style="color:rgba(255,255,255,0.6);">Lundi 6 avril</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🌹 Fête du Travail</span><span style="color:#f0c040;font-weight:700;">Vendredi 1er mai ⭐</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🇫🇷 Victoire 1945</span><span style="color:rgba(255,255,255,0.6);">Vendredi 8 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Ascension</span><span style="color:rgba(255,255,255,0.6);">Jeudi 14 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Lundi de Pentecôte</span><span style="color:rgba(255,255,255,0.6);">Lundi 25 mai</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🎖️ Fête Nationale</span><span style="color:rgba(255,255,255,0.6);">Mardi 14 juil.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🙏 Assomption</span><span style="color:rgba(255,255,255,0.6);">Samedi 15 août</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>✝️ Toussaint</span><span style="color:rgba(255,255,255,0.6);">Dimanche 1er nov.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid rgba(255,255,255,0.05);"><span>🕊️ Armistice</span><span style="color:rgba(255,255,255,0.6);">Mercredi 11 nov.</span></div>
+      <div style="display:flex;justify-content:space-between;padding:5px 0;"><span>🎄 Noël</span><span style="color:rgba(255,255,255,0.6);">Vendredi 25 déc.</span></div>
+    </div>
+    <div style="font-size:10px;color:rgba(255,255,255,0.35);margin-top:8px;">⭐ Seul jour obligatoirement chômé et doublement rémunéré si travaillé.</div>
+  </div>  <div class="rule-strip"><div class="re">💶</div><div><div class="rt">Travailler un jour férié — majorations</div><div class="rd">Sauf le 1er mai (doublement obligatoire du salaire), les majorations pour jours fériés travaillés dépendent de la convention collective. Légalement, aucune majoration n'est imposée pour les jours fériés autres que le 1er mai — c'est la convention qui fixe les règles (souvent 100 % de majoration).</div></div></div>
+  <div class="rule-strip"><div class="re">🔄</div><div><div class="rt">Repos compensateur — pas automatique</div><div class="rd">Travailler un jour férié ne donne pas automatiquement droit à un repos compensateur, sauf si la convention ou un accord d'entreprise le prévoit. Pour le 1er mai, le salarié qui travaille a droit à une indemnité égale à son salaire (en plus du salaire normal).</div></div></div>
+  <div class="rule-strip"><div class="re">📋</div><div><div class="rt">Salariés mensualisés — jours fériés chômés payés</div><div class="rd">Pour les salariés rémunérés au mois avec au moins 3 mois d'ancienneté, les jours fériés chômés sont payés comme des jours travaillés. Pas de perte de salaire. Pour les salariés à l'heure ou à la journée, la règle est différente selon la convention.</div></div></div>  <!-- Alsace-Moselle spécifique -->
+  <div class="rule-strip"><div class="re">🗺️</div><div><div class="rt">Alsace-Moselle : 2 jours fériés supplémentaires</div><div class="rd">Le Vendredi Saint (vendredi avant Pâques) et le 26 décembre (2e jour de Noël) sont fériés et chômés dans les départements du Bas-Rhin (67), Haut-Rhin (68) et Moselle (57). Soit 13 jours fériés au lieu de 11.</div></div></div>
+  <div class="rule-strip"><div class="re">🏝️</div><div><div class="rt">DOM-TOM : jours fériés locaux supplémentaires</div><div class="rd">Les départements d'Outre-Mer disposent de jours fériés locaux supplémentaires (abolition de l'esclavage, fête locale…). Ils varient selon le territoire et s'ajoutent aux 11 jours communs.</div></div></div>
+  <div class="note">Jours fériés 2026 — art. L3133-1 du Code du travail. Ta convention collective peut accorder d'autres avantages.
+    <button onclick="resetState()" style="background:none;border:none;color:var(--faded);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:10px;">🔄 Réinitialiser</button></div>
+  <div class="foot">Outil indicatif &amp; pédagogique — ni avis juridique.<br>🎆 Tout reste sur ton appareil.</div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+(function(){
+  "use strict";
+  var LS={ WELCOME:'JF_WELCOMED', DATA:'JF_DATA' };
+  function get(k,d){ try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;} }
+  function set(k,v){ try{localStorage.setItem(k,JSON.stringify(v));}catch(e){} }
+  function $(s,r){ return (r||document).querySelector(s); }
+  function $all(s,r){ return Array.prototype.slice.call((r||document).querySelectorAll(s)); }
+
+  var JOURS_FR=['dim','lun','mar','mer','jeu','ven','sam'];
+  var MOIS_FR=['jan.','fév.','mar.','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  var EMOJIS={'1er janvier':'🎉','Lundi de Pâques':'🐣','Fête du Travail':'🌹','Victoire 1945':'🕊️','Ascension':'✝️','Lundi de Pentecôte':'☀️','Fête Nationale':'🇫🇷','Assomption':'🌸','Toussaint':'🍂','Armistice':'🎖️','Noël':'🎄','Vendredi Saint':'✝️','Saint-Étienne':'🎄'};
+  function getEmoji(name){ var k=Object.keys(EMOJIS).find(function(k){return name.toLowerCase().indexOf(k.toLowerCase())>=0;}); return k?EMOJIS[k]:'🎆'; }
+  var OBLIG_KEYS=['Fête du Travail','fête du travail','travail'];
+  var LOCAL_KEYS=['Saint-Étienne','Vendredi Saint'];
+
+  // Easter algorithm (Meeus/Jones/Butcher) — fallback only
+  function easter(y){
+    var a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4;
+    var f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3);
+    var h=(19*a+b-d-g+15)%30;
+    var i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+    var m=Math.floor((a+11*h+22*l)/451);
+    var month=Math.floor((h+l-7*m+114)/31),day=((h+l-7*m+114)%31)+1;
+    return new Date(y,month-1,day);
+  }
+  function addDays(d,n){ var r=new Date(d); r.setDate(r.getDate()+n); return r; }
+  function iso(d){ return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'); }
+
+  function localFeries(y){
+    var p=easter(y);
+    var days=[
+      {date:iso(new Date(y,0,1)),name:'1er janvier',desc:'Nouvel An',local:false},
+      {date:iso(addDays(p,1)),name:'Lundi de Pâques',desc:'Fête religieuse mobile',local:false},
+      {date:iso(new Date(y,4,1)),name:'Fête du Travail',desc:'Seul jour obligatoirement chômé pour tous',oblig:true,local:false},
+      {date:iso(new Date(y,4,8)),name:'Victoire 1945',desc:'Victoire des Allies en Europe',local:false},
+      {date:iso(addDays(p,39)),name:'Ascension',desc:'Fête religieuse mobile',local:false},
+      {date:iso(addDays(p,50)),name:'Lundi de Pentecôte',desc:'Journée de solidarité',local:false},
+      {date:iso(new Date(y,6,14)),name:'Fête Nationale',desc:'Prise de la Bastille, 1789',local:false},
+      {date:iso(new Date(y,7,15)),name:'Assomption',desc:'Fête religieuse',local:false},
+      {date:iso(new Date(y,10,1)),name:'Toussaint',desc:'Fête de tous les saints',local:false},
+      {date:iso(new Date(y,10,11)),name:'Armistice 1918',desc:'Fin de la Grande Guerre',local:false},
+      {date:iso(new Date(y,11,25)),name:'Noël',desc:'Fête de la nativité',local:false}
+    ];
+    return days.sort(function(a,b){return a.date.localeCompare(b.date);});
+  }
+
+  var curYear=new Date().getFullYear();
+  var curFilter='all';
+  var showAlsace=false;
+  var FERIES=[];
+
+  // Build year selector (current year ± 5)
+  var sel=$('#yearSel');
+  var minY=curYear-2, maxY=curYear+5;
+  for(var yy=minY;yy<=maxY;yy++){
+    var opt=document.createElement('option'); opt.value=yy; opt.textContent=yy;
+    if(yy===curYear) opt.selected=true;
+    sel.appendChild(opt);
+  }
+
+  function updateYearUI(y){
+    $('#headerYear').textContent=y; $('#heroYear').textContent=y;
+  }
+
+  function setFeries(data, fromAPI, year){
+    FERIES=data;
+    updateYearUI(year);
+    curFilter='all';
+    $all('.ftab').forEach(function(t){t.classList.toggle('on',t.dataset.filter==='all');});
+    showAlsace=false;
+    $all('.ftab').forEach(function(t){if(t.dataset.filter==='alsace')t.classList.remove('on');});
+    render();
+    var status=$('#apiStatus');
+    if(fromAPI){
+      status.style.display='block';
+      status.textContent='✅ Données officielles importées depuis calendrier.api.gouv.fr';
+      status.style.background='rgba(74,184,106,0.25)';
+      setTimeout(function(){status.style.display='none';},4000);
+    }
+  }
+
+  function loadLocal(year){
+    var f=localFeries(year);
+    setFeries(f, false, year);
+  }
+
+  function apiImport(){
+    var year=parseInt($('#yearSel').value,10);
+    var btn=$('#importBtn');
+    $('#importIco').textContent='⏳';
+    $('#importLbl').textContent='Chargement…';
+    btn.style.opacity='0.7';
+    var zone=showAlsace?'alsace-moselle':'metropole';
+    var url='https://calendrier.api.gouv.fr/jours-feries/'+zone+'/'+year+'.json';
+    fetch(url).then(function(r){
+      if(!r.ok) throw new Error('HTTP '+r.status);
+      return r.json();
+    }).then(function(json){
+      // json: { "2026-01-01": "1er janvier", ... }
+      var feries=Object.keys(json).sort().map(function(date){
+        var name=json[date];
+        var isLocal=LOCAL_KEYS.some(function(k){return name.indexOf(k)>=0;});
+        var isOblig=OBLIG_KEYS.some(function(k){return name.toLowerCase().indexOf(k)>=0;});
+        return {date:date,name:name,desc:'',emoji:getEmoji(name),oblig:isOblig,local:isLocal};
+      });
+      // cache
+      var cached=get(LS.DATA,{});
+      cached[year+'-'+(showAlsace?'alsace':'metro')]=feries;
+      set(LS.DATA,cached);
+      setFeries(feries, true, year);
+    }).catch(function(err){
+      var status=$('#apiStatus');
+      status.style.display='block';
+      status.textContent='Impossible de contacter l API. Donnees locales affichees. (' + err.message + ')';
+      status.style.background='rgba(220,80,80,0.25)';
+      loadLocal(year);
+      setTimeout(function(){status.style.display='none';},5000);
+    }).finally(function(){
+      $('#importIco').textContent='🏛️';
+      $('#importLbl').textContent='Importer (API gouv.)';
+      btn.style.opacity='1';
+    });
+  }
+
+  $('#importBtn').addEventListener('click', apiImport);
+  sel.addEventListener('change',function(){
+    var year=parseInt(this.value,10);
+    // check cache first
+    var cached=get(LS.DATA,{});
+    var key=year+'-'+(showAlsace?'alsace':'metro');
+    if(cached[key]){ setFeries(cached[key],false,year); return; }
+    loadLocal(year);
+  });
+
+  function parse(s){ var p=s.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+  function dayOfWeek(d){ return JOURS_FR[d.getDay()]; }
+  function isPont(d){ var dow=d.getDay(); return dow===4||dow===2; }
+  function isWE(d){ var dow=d.getDay(); return dow===0||dow===6; }
+  function isToday(d){ var t=new Date(); return d.getFullYear()===t.getFullYear()&&d.getMonth()===t.getMonth()&&d.getDate()===t.getDate(); }
+  function isFuture(d){ var t=new Date(); t.setHours(0,0,0,0); return d>=t; }
+  function pontText(d){ var dow=d.getDay();
+    if(dow===4) return '🌉 Pont possible : prends le vendredi pour 4 jours de suite.';
+    if(dow===2) return '🌉 Pont possible : prends le lundi pour 4 jours de suite.';
+    return '';
+  }
+
+  function computeStats(list){
+    var ponts=0,we=0,left=0;
+    list.forEach(function(h){ var d=parse(h.date);
+      if(isPont(d)&&!isWE(d))ponts++;
+      if(isWE(d))we++; if(isFuture(d))left++;
+    });
+    return {ponts:ponts,we:we,left:left};
+  }
+
+  function render(){
+    var baseList=showAlsace?FERIES:FERIES.filter(function(h){return !h.local;});
+    var stats=computeStats(baseList);
+    $('#sTot').textContent=baseList.length;
+    $('#sPont').textContent=stats.ponts;
+    $('#sWE').textContent=stats.we;
+    $('#sLeft').textContent=stats.left;
+
+    var filtered=baseList;
+    if(curFilter==='ahead') filtered=baseList.filter(function(h){return isFuture(parse(h.date));});
+    else if(curFilter==='pont') filtered=baseList.filter(function(h){var d=parse(h.date);return isPont(d)&&!isWE(d);});
+    else if(curFilter==='we') filtered=baseList.filter(function(h){return isWE(parse(h.date));});
+
+    var list=$('#holidayList'); list.innerHTML='';
+    if(!filtered.length){ list.innerHTML='<div style="color:rgba(255,255,255,0.7);text-align:center;padding:24px;font-weight:700;">Aucun jour dans ce filtre</div>'; return; }
+
+    filtered.forEach(function(h){
+      var d=parse(h.date); var dow=dayOfWeek(d);
+      var day=d.getDate(); var mon=MOIS_FR[d.getMonth()];
+      var past=!isFuture(d); var we=isWE(d); var pont=isPont(d)&&!we; var today=isToday(d);
+      var card=document.createElement('div'); card.className='hcard'+(past?' past':'');
+      var badge=today?'<span class="hbadge today">Aujourd\'hui !</span>':
+        we?'<span class="hbadge we">Week-end</span>':
+        pont?'<span class="hbadge pont">Pont !</span>':'';
+      var obligBadge=h.oblig?'<span style="font-size:10px;background:#e8f5e9;color:#2a8a4a;border-radius:8px;padding:2px 6px;font-weight:800;margin-right:4px;">Obligatoire</span>':'';
+      var localBadge=h.local?'<span style="font-size:10px;background:#fff3cd;color:#c8900a;border-radius:8px;padding:2px 6px;font-weight:800;">Alsace-Moselle</span>':'';
+      var emoji=h.emoji||getEmoji(h.name);
+      card.innerHTML='<div class="hdate"><div class="hday">'+day+'</div><div class="hmonth">'+mon+'</div><div class="hdow '+dow+'">'+dow+'.</div></div>'+badge+
+        '<div class="hinfo"><div class="hname">'+emoji+' '+h.name+'</div>'+
+        (h.desc?'<div class="hdesc">'+h.desc+'</div>':'')+
+        ((h.oblig||h.local)?'<div style="margin-top:6px;">'+obligBadge+localBadge+'</div>':'')+
+        '</div>';
+      list.appendChild(card);
+      if(pont&&!past){ var hint=document.createElement('div'); hint.className='pont-hint';
+        hint.innerHTML='<div class="pi">💡</div><div>'+pontText(d)+'</div>'; list.appendChild(hint); }
+    });
+  }
+
+  $all('.ftab').forEach(function(t){ t.addEventListener('click',function(){
+    if(t.dataset.filter==='alsace'){
+      showAlsace=!showAlsace; t.classList.toggle('on',showAlsace);
+      curFilter='all'; $all('.ftab').forEach(function(x){if(x!==t)x.classList.toggle('on',x.dataset.filter==='all');});
+    } else {
+      curFilter=t.dataset.filter; $all('.ftab').forEach(function(x){x.classList.toggle('on',x===t||(x.dataset.filter==='alsace'&&showAlsace));});
+    }
+    render();
+  });});
+
+  // wizard
+  // wizard
+  var wStep=0,wMax=3;
+  function dots(){var c=$('#wdots');c.innerHTML='';for(var i=0;i<wMax;i++){var d=document.createElement('div');d.className='d'+(i===wStep?' on':'');c.appendChild(d);}}
+  function show(n){wStep=n;$all('.wstep').forEach(function(s){s.classList.toggle('show',+s.dataset.step===n);});dots();}
+  $('#wNext').addEventListener('click',function(){ if(wStep<wMax-1)show(wStep+1); else { $('#wizard').classList.remove('show'); set(LS.WELCOME,1); } });
+  $('#wSkip')&&$('#wSkip').addEventListener('click',function(){ $('#wizard').classList.remove('show'); set(LS.WELCOME,1); });
+  $('#helpBtn').addEventListener('click',function(){$('#help').classList.add('show');});
+  $all('[data-close]').forEach(function(b){b.addEventListener('click',function(){$('#'+b.dataset.close).classList.remove('show');});});
+
+  // init with local data for current year
+  loadLocal(curYear);
+  if(!get(LS.WELCOME,0)){ $('#wizard').classList.add('show'); show(0); }
+})();
+
+  // ── LocalStorage ──────────────────────────────────────────────
+  var LS={STATE:'FER_STATE',WELCOME:'FER_WELCOMED'};
+  function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+  function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function resetState(){
+    if(!confirm('Remettre à zéro les données de ce module ?'))return;
+    localStorage.removeItem(LS.STATE);
+    localStorage.removeItem(LS.WELCOME);
+    location.reload();
+  }
+  var state=get(LS.STATE,{});
+  // ──────────────────────────────────────────────────────────────
+</script>
