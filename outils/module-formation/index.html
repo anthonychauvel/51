@@ -102,9 +102,70 @@ select.ip{appearance:none;-webkit-appearance:none;
 
 .note{font-size:11px;color:var(--faded);line-height:1.5;text-align:center;margin-top:14px;padding:0 8px;}
 .foot{margin-top:18px;text-align:center;font-size:10px;color:var(--faded);line-height:1.7;}
+
+/* ── WIZARD ─────────────────────────────────────────── */
+.wiz-ov{position:fixed;inset:0;z-index:500;background:rgba(0,0,0,0.72);backdrop-filter:blur(6px);
+  display:none;align-items:center;justify-content:center;padding:16px;}
+.wiz-ov.show{display:flex;animation:wizFadeIn .25s;}
+@keyframes wizFadeIn{from{opacity:0}to{opacity:1}}
+.wiz-box{background:linear-gradient(170deg,#1e1a14,#2a2018);border:1.5px solid rgba(255,255,255,0.12);
+  border-radius:22px;max-width:420px;width:100%;max-height:88vh;overflow-y:auto;
+  box-shadow:0 28px 70px rgba(0,0,0,0.7);animation:wizBoxIn .32s cubic-bezier(.2,.9,.3,1.2);
+  border-top:4px solid var(--acc,#e07030);}
+@keyframes wizBoxIn{from{opacity:0;transform:scale(.94) translateY(18px)}to{opacity:1;transform:none}}
+.wiz-bd{padding:22px 22px 24px;}
+.wiz-step{display:none;text-align:center;}
+.wiz-step.on{display:block;animation:wizFadeIn .3s;}
+.wiz-emoji{font-size:58px;display:block;margin:0 auto 10px;animation:wizFloat 4s ease-in-out infinite;}
+@keyframes wizFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
+.wiz-h{font-family:inherit;font-weight:800;font-size:22px;color:#fff;margin-bottom:8px;line-height:1.2;}
+.wiz-p{font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.55;margin-bottom:10px;}
+.wiz-accent{color:var(--acc-l,#f09050);font-weight:700;}
+.wiz-feat{display:flex;gap:11px;align-items:flex-start;text-align:left;margin-bottom:11px;
+  background:rgba(255,255,255,0.05);border-radius:10px;padding:10px 12px;}
+.wiz-feat .wi{font-size:20px;flex-shrink:0;}
+.wiz-feat .wt{font-size:13px;color:rgba(255,255,255,0.75);line-height:1.4;}
+.wiz-feat .wt b{display:block;font-weight:700;font-size:12.5px;color:#fff;margin-bottom:2px;}
+.wiz-legal{font-size:11px;color:rgba(255,255,255,0.38);line-height:1.5;
+  background:rgba(255,255,255,0.04);border-radius:8px;padding:9px 11px;text-align:left;
+  border-left:2px solid var(--acc,#e07030);}
+.wiz-dots{display:flex;gap:6px;justify-content:center;margin:16px 0 14px;}
+.wiz-dots span{width:7px;height:7px;border-radius:50%;background:rgba(255,255,255,0.18);transition:.2s;}
+.wiz-dots span.on{background:var(--acc-l,#f09050);width:20px;border-radius:3px;}
+.wiz-btn{display:block;width:100%;border:none;border-radius:12px;padding:13px;font-weight:700;font-size:14px;
+  cursor:pointer;font-family:inherit;background:linear-gradient(135deg,var(--acc-l,#f09050),var(--acc,#e07030));
+  color:#fff;box-shadow:0 5px 16px rgba(0,0,0,0.35);}
+.wiz-btn:active{transform:translateY(2px);}
+.wiz-skip{display:block;width:100%;margin-top:9px;border:1.5px solid rgba(255,255,255,0.15);
+  border-radius:12px;padding:11px;font-weight:600;font-size:13px;cursor:pointer;
+  background:transparent;color:rgba(255,255,255,0.45);font-family:inherit;}
+/* ── END WIZARD ─────────────────────────────────────── */
 </style>
 </head>
 <body>
+
+<!-- ── WIZARD BIENVENUE ── -->
+<div class="wiz-ov" id="wizOv">
+  <div class="wiz-box"><div class="wiz-bd">
+    <div class="wiz-step on" data-s="0">
+      <span class="wiz-emoji">🎓</span>
+      <div class="wiz-h">CPF & Formation</div>
+      <div class="wiz-p">Le Compte Personnel de Formation finance des formations tout au long de la carrière.</div>
+      <div class="wiz-p" style="font-size:12px;opacity:.6;">Droits · Dispositifs · Fraude</div>
+    </div>
+    <div class="wiz-step" data-s="1">
+      <div class="wiz-feat"><div class="wi">🎓</div><div class="wt"><b>Mon solde CPF</b>Alimenté chaque année selon le temps de travail. Consultable sur moncompteformation.gouv.fr</div></div>
+    </div>
+    <div class="wiz-step" data-s="2">
+      <div class="wiz-feat"><div class="wi">⚖️</div><div class="wt"><b>⚠️ Attention à la fraude</b>Ne jamais partager ses identifiants. Les arnaques au CPF sont nombreuses.</div></div>
+      <div class="wiz-legal">Outil indicatif et pédagogique — ni avis juridique, ni valeur légale. Données 100 % locales.</div>
+    </div>
+    <div class="wiz-dots" id="wizDots"></div>
+    <button class="wiz-btn" id="wizNext">Continuer</button>
+    <button class="wiz-skip" id="wizSkip">Passer</button>
+  </div></div>
+</div>
+<!-- ── END WIZARD ── -->
 <div id="lb"><div style="font-size:60px;">🎓</div>
   <div style="font-size:26px;font-weight:700;">Tournez votre téléphone</div></div>
 
@@ -294,6 +355,31 @@ function recalc(){
   }
   var state=get(LS.STATE,{ans:'',sit:'plein'});
   // ──────────────────────────────────────────────────────────────
+
+  // ── Wizard bienvenue ──────────────────────────────────────────
+  (function(){
+    var WK='FOR_WELCOMED';
+    function wGet(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+    function wSet(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+    var wStep=0,wMax=3;
+    var ov=document.getElementById('wizOv');
+    if(!ov)return;
+    function wDots(){var c=document.getElementById('wizDots');if(!c)return;c.innerHTML='';
+      for(var i=0;i<wMax;i++){var d=document.createElement('span');d.className=i===wStep?'on':'';c.appendChild(d);}}
+    function wShow(n){wStep=n;
+      var steps=document.querySelectorAll('.wiz-step');
+      steps.forEach(function(s){s.classList.toggle('on',+s.dataset.s===n);});
+      wDots();
+      var nb=document.getElementById('wizNext');var sk=document.getElementById('wizSkip');
+      if(nb)nb.textContent=(n===wMax-1)?'Commencer 🎓':'Continuer';
+      if(sk)sk.style.display=(n===wMax-1)?'none':'block';}
+    function wClose(){ov.classList.remove('show');wSet(WK,1);}
+    var nb=document.getElementById('wizNext');var sk=document.getElementById('wizSkip');
+    if(nb)nb.addEventListener('click',function(){if(wStep<wMax-1)wShow(wStep+1);else wClose();});
+    if(sk)sk.addEventListener('click',wClose);
+    if(!wGet(WK,0)){ov.classList.add('show');wShow(0);}
+  })();
+  // ── End Wizard ───────────────────────────────────────────────
 </script>
 </body>
 </html>
