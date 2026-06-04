@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Mise à Pied — Conservatoire & Disciplinaire</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="theme-color" content="#5a3a1a">
+<link rel="manifest" href="../../manifest.json">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Mise à pied">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&display=swap">
+<style>
+:root{
+  --acc:#8a5a2a;--acc-l:#b07a4a;--acc-d:#6a3a10;
+  --dark:#160e04;--dark2:#221408;
+  --card:rgba(255,255,255,0.07);--card-edge:rgba(255,255,255,0.13);
+  --ink:#fff;--ink2:rgba(255,255,255,0.75);--faded:rgba(255,255,255,0.45);
+  --ok:#4aaa7a;--warn:#e8a030;--ko:#e06050;--info:#5a9ad8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;}
+body{font-family:'Plus Jakarta Sans',-apple-system,sans-serif;color:var(--ink);padding-bottom:60px;min-height:100vh;
+  background:linear-gradient(165deg,#160e04 0%,#221408 50%,#120c04 100%);
+  background-attachment:fixed;-webkit-text-size-adjust:100%;overflow-x:hidden;}
+body::before{content:"";position:fixed;inset:0;z-index:0;pointer-events:none;
+  background:radial-gradient(600px 400px at 60% 0%,rgba(138,90,42,0.2),transparent 60%);}
+.wrap{position:relative;z-index:2;max-width:480px;margin:0 auto;padding:0 16px 16px;}
+@media screen and (orientation:landscape) and (max-device-width:1024px){
+  body>*:not(#lb){display:none!important;}
+  #lb{position:fixed;inset:0;z-index:99999;background:var(--dark);color:#fff;display:flex!important;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+}
+@media screen and (orientation:portrait){#lb{display:none!important;}}
+header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+  background:linear-gradient(180deg,rgba(22,14,4,0.97),rgba(22,14,4,0.6) 75%,transparent);
+  backdrop-filter:blur(6px);max-width:480px;margin:0 auto;}
+header .back{background:var(--card);border:1px solid var(--card-edge);color:#fff;border-radius:8px;
+  padding:9px 13px;font-weight:700;font-size:12px;text-decoration:none;flex-shrink:0;}
+header .brand{flex:1;text-align:center;}
+header .brand .ti{font-weight:800;font-size:17px;}
+header .brand .su{font-size:9px;color:var(--faded);margin-top:2px;letter-spacing:1.5px;text-transform:uppercase;}
+header .hbtn{background:var(--card);border:1px solid var(--card-edge);color:#fff;border-radius:50%;
+  width:38px;height:38px;font-size:16px;cursor:pointer;flex-shrink:0;}
+
+/* onglets */
+.tabs{display:flex;gap:6px;margin:14px 0;background:rgba(0,0,0,0.3);border-radius:12px;padding:4px;}
+.tab{flex:1;padding:10px 6px;border-radius:9px;border:none;font-family:inherit;font-weight:700;
+  font-size:12px;cursor:pointer;color:var(--faded);background:transparent;transition:.2s;}
+.tab.on{background:var(--acc);color:#fff;}
+.pane{display:none;} .pane.on{display:block;}
+
+/* comparatif */
+.cmp{background:var(--card);border:1.5px solid var(--card-edge);border-radius:14px;overflow:hidden;margin:14px 0;}
+.cmp-head{display:grid;grid-template-columns:1fr 1fr;background:rgba(0,0,0,0.3);}
+.cmp-head div{padding:10px 14px;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:1px;}
+.cmp-head .cons{color:var(--warn);} .cmp-head .disc{color:var(--ko);}
+.cmp-row{display:grid;grid-template-columns:1fr 1fr;border-top:1px solid var(--card-edge);}
+.cmp-row .ck{font-size:11px;font-weight:700;color:var(--faded);padding:6px 14px;background:rgba(0,0,0,0.15);
+  grid-column:1/-1;border-top:1px solid var(--card-edge);}
+.cmp-row div{padding:9px 14px;font-size:12px;color:var(--ink2);border-left:1px solid var(--card-edge);}
+.cmp-row div:first-child{border-left:none;}
+
+/* procédure */
+.steps{display:flex;flex-direction:column;gap:0;}
+.step{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--card-edge);}
+.step:last-child{border-bottom:none;}
+.step .sn{width:28px;height:28px;border-radius:50%;background:var(--acc);color:#fff;font-weight:800;
+  font-size:13px;display:flex;align-items:center;justify-content:center;flex-shrink:0;margin-top:1px;}
+.step .st{font-weight:700;font-size:13px;}
+.step .sd{font-size:12px;color:var(--ink2);margin-top:3px;line-height:1.35;}
+.step .stag{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;
+  padding:2px 8px;border-radius:8px;background:rgba(138,90,42,0.2);color:var(--acc-l);}
+
+.panel{background:var(--card);border:1.5px solid var(--card-edge);border-radius:16px;padding:16px;margin:14px 0;}
+.sec-t{font-weight:800;font-size:13px;color:var(--acc-l);margin:16px 0 10px;}
+.rule{background:var(--card);border:1.5px solid var(--card-edge);border-radius:12px;
+  padding:13px 15px;display:flex;gap:12px;margin-bottom:8px;}
+.rule .ri{font-size:20px;flex-shrink:0;}
+.rule .rt{font-weight:700;font-size:13px;}
+.rule .rd{font-size:12px;color:var(--ink2);margin-top:3px;line-height:1.35;}
+.ctag{display:inline-block;margin-top:5px;font-size:10px;font-weight:700;padding:2px 8px;border-radius:6px;}
+.ctag.ok{background:rgba(74,170,122,0.2);color:var(--ok);}
+.ctag.warn{background:rgba(232,160,48,0.2);color:var(--warn);}
+.ctag.ko{background:rgba(224,80,80,0.15);color:var(--ko);}
+.ctag.info{background:rgba(90,154,216,0.2);color:var(--info);}
+.note{font-size:11px;color:var(--faded);line-height:1.5;text-align:center;margin-top:14px;padding:0 8px;}
+.foot{margin-top:18px;text-align:center;font-size:10px;color:var(--faded);line-height:1.7;}
+</style>
+</head>
+<body>
+<div id="lb"><div style="font-size:60px;">⏸️</div>
+  <div style="font-size:26px;font-weight:700;">Tournez votre téléphone</div></div>
+<header>
+  <a href="../../outils.html" class="back">← Trousse</a>
+  <div class="brand"><div class="ti">Mise à Pied</div>
+    <div class="su">Conservatoire · Disciplinaire · V1.0</div></div>
+  <button class="hbtn" onclick="document.getElementById('help').style.display='flex'">?</button>
+</header>
+<div class="wrap">
+
+  <div class="tabs">
+    <button class="tab on" onclick="sw('comp')">📊 Comparatif</button>
+    <button class="tab" onclick="sw('cons')">⚠️ Conservatoire</button>
+    <button class="tab" onclick="sw('disc')">🔴 Disciplinaire</button>
+  </div>
+
+  <!-- COMPARATIF -->
+  <div class="pane on" id="pane-comp">
+    <div class="cmp">
+      <div class="cmp-head">
+        <div class="cons">⚠️ Conservatoire</div>
+        <div class="disc">🔴 Disciplinaire</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Qui décide ?</div></div>
+      <div class="cmp-row">
+        <div>L'employeur, en attendant la fin de la procédure de licenciement</div>
+        <div>L'employeur, comme sanction en elle-même</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Objectif</div></div>
+      <div class="cmp-row">
+        <div>Éloigner le salarié le temps de l'enquête ou de la procédure</div>
+        <div>Punir un comportement fautif</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Durée</div></div>
+      <div class="cmp-row">
+        <div>Pas de durée maximale légale — doit rester raisonnable</div>
+        <div>Maximum <strong>2 jours</strong> pour les non-cadres (souvent fixé par convention)</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Salaire pendant la MAP</div></div>
+      <div class="cmp-row">
+        <div>Maintenu intégralement pendant toute la durée</div>
+        <div>Suspendu (c'est l'objet de la sanction)</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Suite possible</div></div>
+      <div class="cmp-row">
+        <div>Licenciement pour faute grave ou lourde (procédure obligatoire)</div>
+        <div>Aucune autre sanction pour les mêmes faits (non bis in idem)</div>
+      </div>
+      <div class="cmp-row"><div class="ck">Notification</div></div>
+      <div class="cmp-row">
+        <div>Peut être notifiée immédiatement, sans entretien préalable</div>
+        <div>Nécessite un entretien préalable si la sanction affecte la présence</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CONSERVATOIRE -->
+  <div class="pane" id="pane-cons">
+    <div class="sec-t" style="margin-top:14px;">⚠️ Mise à pied conservatoire — procédure</div>
+    <div class="panel" style="padding:14px 16px;">
+      <div class="steps">
+        <div class="step"><div class="sn">1</div><div>
+          <div class="st">Notification immédiate</div>
+          <div class="sd">L'employeur notifie la MAP conservatoire dès la découverte des faits. Aucun entretien préalable n'est requis à ce stade. Notification écrite recommandée.</div>
+          <div class="stag">Pas d'entretien préalable requis</div>
+        </div></div>
+        <div class="step"><div class="sn">2</div><div>
+          <div class="st">Convocation à entretien préalable</div>
+          <div class="sd">Dans les jours qui suivent, l'employeur convoque le salarié à un entretien préalable au licenciement (LRAR ou remise en main propre). Délai minimum de 5 jours ouvrables entre la convocation et l'entretien.</div>
+          <div class="stag">5 jours ouvrables minimum</div>
+        </div></div>
+        <div class="step"><div class="sn">3</div><div>
+          <div class="st">Entretien préalable</div>
+          <div class="sd">Le salarié peut se faire assister. L'employeur expose les motifs. Le salarié peut s'expliquer. Aucune décision ne peut être prise le jour même.</div>
+        </div></div>
+        <div class="step"><div class="sn">4</div><div>
+          <div class="st">Notification de la décision</div>
+          <div class="sd">Licenciement notifié au minimum 2 jours ouvrables après l'entretien. Si aucun licenciement n'est prononcé, le salarié est réintégré et perçoit le salaire rétroactivement pour toute la durée de la MAP.</div>
+          <div class="stag">Salaire rétroactif si pas de licenciement</div>
+        </div></div>
+      </div>
+    </div>
+
+    <div class="rule"><div class="ri">💶</div><div>
+      <div class="rt">Salaire intégralement maintenu</div>
+      <div class="rd">Pendant toute la durée de la MAP conservatoire, le salaire est dû intégralement. La MAP conservatoire n'est pas une sanction — elle ne prive pas le salarié de sa rémunération.</div>
+      <span class="ctag ok">Salaire maintenu à 100%</span>
+    </div></div>
+    <div class="rule"><div class="ri">⏰</div><div>
+      <div class="rt">Durée raisonnable exigée</div>
+      <div class="rd">La loi ne fixe pas de durée maximale, mais la jurisprudence exige que la MAP conservatoire ne dure pas "trop longtemps". Une durée excessive peut être requalifiée en sanction déguisée.</div>
+      <span class="ctag warn">Jurisprudence : raisonnable</span>
+    </div></div>
+  </div>
+
+  <!-- DISCIPLINAIRE -->
+  <div class="pane" id="pane-disc">
+    <div class="sec-t" style="margin-top:14px;">🔴 Mise à pied disciplinaire — ce qu'il faut savoir</div>
+    <div class="rule"><div class="ri">📋</div><div>
+      <div class="rt">Sanction en elle-même</div>
+      <div class="rd">La MAP disciplinaire est une sanction du règlement intérieur. Elle suspend le contrat et le salaire pendant sa durée. Elle ne peut pas être suivie d'un licenciement pour les mêmes faits (principe non bis in idem).</div>
+      <span class="ctag ko">Salaire suspendu</span>
+    </div></div>
+    <div class="rule"><div class="ri">📅</div><div>
+      <div class="rt">Durée fixée par le règlement intérieur</div>
+      <div class="rd">La durée maximale est fixée par le règlement intérieur ou la convention collective (souvent 2 à 5 jours). Sans précision dans le RI : la jurisprudence admet en général jusqu'à 2 jours pour les non-cadres.</div>
+      <span class="ctag warn">Max fixé par RI ou convention</span>
+    </div></div>
+    <div class="rule"><div class="ri">🗣️</div><div>
+      <div class="rt">Entretien préalable obligatoire</div>
+      <div class="rd">Si la mise à pied disciplinaire entraîne une absence du salarié (même 1 jour), un entretien préalable est obligatoire — au même titre qu'un licenciement. Art. L1332-2 CT.</div>
+      <span class="ctag info">Art. L1332-2 CT</span>
+    </div></div>
+    <div class="rule"><div class="ri">🚫</div><div>
+      <div class="rt">Non bis in idem</div>
+      <div class="rd">L'employeur ne peut pas sanctionner deux fois les mêmes faits. Une MAP disciplinaire purge la faute : impossible de licencier ensuite pour les mêmes motifs.</div>
+      <span class="ctag ok">Protection du salarié</span>
+    </div></div>
+    <div class="rule"><div class="ri">📅</div><div>
+      <div class="rt">Délai de prescription des fautes</div>
+      <div class="rd">Une faute ne peut plus être sanctionnée si elle est connue depuis plus de 2 mois sans qu'une procédure ait été engagée. Art. L1332-4 CT.</div>
+      <span class="ctag info">2 mois — Art. L1332-4 CT</span>
+    </div></div>
+  </div>
+
+  <div class="note">Art. L1332-1 à L1332-4 CT · Outil indicatif & pédagogique — ni avis juridique.<br>
+    🔄 Tout reste sur ton appareil.
+    <button onclick="resetState()" style="background:none;border:none;color:var(--faded);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:10px;">🔄 Réinitialiser</button></div>
+  <div class="foot">Code du travail français · Outil pédagogique · ni avis juridique</div>
+</div>
+
+<div id="help" style="display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.85);
+  backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:16px;">
+  <div style="background:#221408;border:1.5px solid var(--card-edge);border-radius:16px;max-width:430px;width:100%;padding:20px;">
+    <div style="font-weight:800;font-size:18px;margin-bottom:12px;">💡 Mode d'emploi</div>
+    <div style="font-size:13px;color:var(--ink2);line-height:1.6;">
+      3 onglets : comparatif côte à côte, détail de la MAP conservatoire (salaire maintenu) et de la MAP disciplinaire (salaire suspendu).<br><br>
+      La distinction clé : conservatoire = mesure provisoire en attente de licenciement. Disciplinaire = sanction définitive.
+    </div>
+    <button onclick="document.getElementById('help').style.display='none'"
+      style="margin-top:16px;width:100%;background:var(--acc);color:#fff;border:none;border-radius:10px;padding:12px;font-weight:700;font-size:14px;cursor:pointer;">Fermer</button>
+  </div>
+</div>
+<script>
+function sw(t){
+  document.querySelectorAll('.tab').forEach(function(el,i){el.classList.toggle('on',['comp','cons','disc'][i]===t);});
+  document.querySelectorAll('.pane').forEach(function(el){el.classList.toggle('on',el.id==='pane-'+t);});
+}
+
+  // ── LocalStorage ──────────────────────────────────────────────
+  var LS={STATE:'MAP_STATE',WELCOME:'MAP_WELCOMED'};
+  function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+  function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+  function resetState(){
+    if(!confirm('Remettre à zéro les données de ce module ?'))return;
+    localStorage.removeItem(LS.STATE);
+    localStorage.removeItem(LS.WELCOME);
+    location.reload();
+  }
+  var state=get(LS.STATE,{});
+  // ──────────────────────────────────────────────────────────────
+</script>
+</body>
+</html>
