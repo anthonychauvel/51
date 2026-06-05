@@ -238,23 +238,11 @@ const M5_Wellbeing = {
       currentWeekExcluded,  // semaine en cours exclue car incomplète
       currentWeekH,          // heures saisies cette semaine (pour info)
       nbSemaines: n,
-      noteMin: (() => {
-        if (n < 4) {
-          // Vérifier si c'est dû à un début de contrat récent
-          try {
-            const cont = JSON.parse(localStorage.getItem('M5_CONTRACT')||'null');
-            const exStart = cont && cont.exerciceStart;
-            if (exStart) {
-              return `Analyse en cours (${n} sem.) — contrat démarré récemment. Les scores seront complets avec 4+ semaines saisies.`;
-            }
-          } catch(_) {}
-          return `Analyse basée sur ${n} semaine${n>1?'s':''} — les scores seront plus précis avec 4+ semaines.`;
-        }
-        if (isMultiYear) {
-          return `Analyse sur ${n} semaines (${yearsSpanned[0]}–${yearsSpanned[yearsSpanned.length-1]}) — la mémoire biologique traverse les exercices (Sonnentag 2003).`;
-        }
-        return null;
-      })(),
+      noteMin: n < 4
+        ? `Analyse basée sur ${n} semaine${n>1?'s':''} — les scores en italique seront plus précis avec 4+ semaines.`
+        : isMultiYear
+          ? `Analyse sur ${n} semaines (${yearsSpanned[0]}–${yearsSpanned[yearsSpanned.length-1]}) — la mémoire biologique traverse les exercices (Sonnentag 2003).`
+          : null,
       scoreGlobal,
       scoreGlobalFiable,
       niveau,
@@ -386,7 +374,7 @@ const M5_Wellbeing = {
       return `🦊 ${n}Bien-être moyen — point à surveiller : ${plusFaible.nom.toLowerCase()} (${plusFaible.ref}).`;
     }
     if (niveau === 'tendu') return `🦊 ${n}Rythme sous tension : ${stats.ecartType}h d'écart-type et ${stats.ratioVariations}% de semaines avec variation soudaine. Higgins 2010 et Janssen 2004 identifient ce profil comme à risque.`;
-    return `🦊 ${n}Signal critique bien-être. Ton temps partiel ressemble à un temps plein non déclaré — risque dépression ×1.5 selon Bambra 2008. Garde cet historique.`;
+    return `🦊 ${n}Signal critique bien-être. Ton temps partiel ressemble à un temps plein non déclaré — risque de dépression ×1.5 selon Bambra 2008. Garde cet historique.`;
   }
 };
 
