@@ -3,11 +3,11 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v11.1.0"; // + Audit disclaimers + enrichissements v10.9.4 // + Convertisseur + Periode essai // + STC + Contrats + Archives // + bouton reseaux sociaux + vignette trousse
+const CACHE_NAME = "heuressup-cache-v8.9.2"; // partage : deux liens (iOS + Android)
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
-  "./", "./index.html", "./menu.html", "./outils.html", "./manifest.json",
+  "./", "./index.html", "./menu.html", "./manifest.json",
   "./icon-192.png", "./icon-512.png", "./apple-touch-icon.png",
   "./glossaire.js", "./ccn/conventions-collectives.js",
   "./heures/index.html",
@@ -107,82 +107,7 @@ const FILES_TO_CACHE = [
   // === Module 7 — Nuit, Astreinte & Primes (Mimizuku) ===
   "./module7/index.html",
   "./module7/Mimizuku.png",
-  "./module7/mimizuku-menu.jpg",
-  // === Module 8 — Frais Pro (notes de frais) ===
-  "./outils/module8/index.html",
-  // === Trousse : Temps & Repos ===
-  "./outils/module-temps/index.html",
-  // === Trousse : Congés payés ===
-  "./outils/module-conges/index.html",
-  // === Trousse : Fin de contrat ===
-  "./outils/module-fincontrat/index.html",
-  // === Trousse : Droits chômage (ARE) ===
-  "./outils/module-chomage/index.html",
-  // === Trousse : Congés familiaux ===
-  "./outils/module-famille/index.html",
-  // === Trousse : Arrêt maladie IJSS ===
-  "./outils/module-arret/index.html",
-  // === Trousse : Titres-restaurant ===
-  "./outils/module-tr/index.html",
-  // === Trousse : Jours fériés ===
-  "./outils/module-feries/index.html",
-  // === Trousse : Saisie sur salaire ===
-  "./outils/module-saisie/index.html",
-  // === Trousse : Ancienneté & jalons ===
-  "./outils/module-anciennete/index.html",
-  // === Trousse : Journal d'incidents ===
-  "./outils/module-journal/index.html",
-  // === Trousse : C2P Pénibilité ===
-  "./outils/module-c2p/index.html",
-  // === Trousse : Lexique bulletin de paie ===
-  "./outils/module-lexique/index.html",
-  // === Trousse : Solde de tout compte ===
-  "./outils/module-fincontrat2/index.html",
-  // === Trousse : CDI CDD Interim ===
-  "./outils/module-contrats/index.html",
-  // === Trousse : Conservation documents RH ===
-  "./outils/module-archives/index.html",
-  // === Trousse : Convertisseur de paie ===
-  "./outils/module-convertisseur/index.html",
-  // === Trousse : Période d'essai ===
-  "./outils/module-essai/index.html",
-  // === Trousse : Mutuelle obligatoire ===
-  "./outils/module-mutuelle/index.html",
-  // === Trousse : Transport & Mobilité ===
-  "./outils/module-transport/index.html",
-  // === Trousse : CSE & Représentation ===
-  "./outils/module-cse/index.html",
-  // === Assets menu ===
-    // === Nouveaux modules trousse ===
-  "./outils/module-rupture/index.html",
-  "./outils/module-preavis/index.html",
-  "./outils/module-preavis-comp/index.html",
-  "./outils/module-bulletin/index.html",
-  "./outils/module-cet/index.html",
-  "./outils/module-entretien/index.html",
-  "./outils/module-mobilites/index.html",
-  "./outils/module-retraite/index.html",
-  "./outils/module-egalite/index.html",
-  "./outils/module-astreintes/index.html",
-  "./outils/module-precarite/index.html",
-  "./outils/module-parentalite/index.html",
-  "./outils/module-teletravail/index.html",
-  "./outils/module-formation/index.html",
-  "./outils/module-atmp/index.html",
-  "./outils/module-nonconcurrence/index.html",
-  "./outils/module-epargne/index.html",
-  "./outils/module-greve/index.html",
-  "./outils/module-cumul-retraite/index.html",
-  "./outils/module-sabbatique/index.html",
-  "./outils/module-inaptitude/index.html",
-  "./outils/module-miseapied/index.html",
-  "./outils/module-demission-are/index.html",
-  "./outils/module-alternance/index.html",
-  "./outils/module-conge-ss/index.html",
-  "./outils/module-delegation/index.html",
-  "./outils/module-proche-aidant/index.html",
-  "./outils/module-invalidite/index.html",
-  "./trousse-menu.jpg"
+  "./module7/mimizuku-menu.jpg"
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────
