@@ -62,13 +62,6 @@ function runAnalysis() {
   }
 
   const allWeeks=M5_DataStore.getWeeksSorted(year);
-  // Pour calcAnnuel : utiliser getWeeksMultiYear pour inclure :
-  //   1) les données rétroactives saisies sur des semaines passées (même si l'utilisateur
-  //      avait ces données sur papier et les rentre plus tard)
-  //   2) les exercices qui chevauchent 2 années civiles (ex: sept 2025 → août 2026)
-  const allWeeksMulti = typeof M5_DataStore.getWeeksMultiYear === 'function'
-    ? M5_DataStore.getWeeksMultiYear(year, 999, true) // true = pas de filtre contrat → tout l'historique rétroactif
-    : allWeeks;
   const last12=M5_DataStore.getLast12Weeks(year);
   const rule12=CalcEngine.check12WeeksRule(last12,contract.hoursBase);
   const stats=M5_DataStore.getAnnualStats(year,contract.hoursBase,contract);
@@ -76,7 +69,7 @@ function runAnalysis() {
   // Mode ANNUEL
   let annuelResult=null;
   if(contract.modeCalcul==='ANNUEL') {
-    annuelResult=CalcEngine.calcAnnuel(contract.hoursBase,contract.exerciceStart||'01/01',allWeeksMulti);
+    annuelResult=CalcEngine.calcAnnuel(contract.hoursBase,contract.exerciceStart||'01/01',allWeeks);
   }
   // Mode MENSUEL
   let mensuelResult=null;
@@ -724,32 +717,6 @@ function renderQuickStats(analysis) {
   if(mode==='ANNUEL'&&annuelResult) {
     const solde=annuelResult.solde;
     const cls=solde>1?'ok':solde<-2?'danger':'warn';
-
-    // Vérifier si le point de départ a été auto-détecté (différent de exerciceStart configuré)
-    const configuredStart = contract.exerciceStart || '01/01';
-    const autoDetected = annuelResult.debutEx !== (() => {
-      // Recalculer ce qu'aurait été debutEx sans auto-détection
-      try {
-        if (configuredStart.includes('-')) return configuredStart;
-        if (configuredStart.includes('/')) {
-          const [j,m] = configuredStart.split('/').map(Number);
-          const y = new Date().getFullYear();
-          const d = new Date(y,m-1,j);
-          return (d > new Date() ? new Date(y-1,m-1,j) : d).toISOString().split('T')[0];
-        }
-        return new Date().getFullYear()+'-01-01';
-      } catch(_) { return ''; }
-    })();
-
-    // Bandeau info si auto-détection active
-    if (autoDetected) {
-      html+=`<div style="background:rgba(108,63,197,0.07);border:1px solid rgba(108,63,197,0.25);border-radius:8px;padding:7px 10px;font-size:11px;color:#5b21b6;margin-bottom:8px;display:flex;gap:6px;align-items:center;">
-        <span>📍</span>
-        <div><strong>Départ détecté automatiquement : ${annuelResult.debutEx}</strong><br>
-        Le contingent est calculé depuis ta première semaine saisie — pas depuis le 1er janvier.</div>
-      </div>`;
-    }
-
     html+=`<div class="m5-stat-grid" style="margin-bottom:10px;">
       <div class="m5-stat"><div class="m5-stat-val">${annuelResult.pctAvancement}%</div><div class="m5-stat-label">Exercice écoulé</div></div>
       <div class="m5-stat"><div class="m5-stat-val">${annuelResult.reelCumule}h</div><div class="m5-stat-label">Heures réalisées</div></div>
@@ -2090,7 +2057,7 @@ function wizFinish() {
   if(name) localStorage.setItem('M5_USER_NAME', name);
   calendarMonday=M5_getCurrentMonday();
   Mizuki.clearCache();
-  toast('Bienvenue '+(name?name+'! ':'')+'Mizuki est prête 🦊','success');
+  toast('Bienvenue'+(name?' '+name+' !':'')+'! Mizuki est prête 🦊','success');
   // FIX : supprimer le style anti-flash qui bloquait le switch wizard → vue principale
   // (avec !important, il empêchait refreshUI() de modifier display)
   try {
