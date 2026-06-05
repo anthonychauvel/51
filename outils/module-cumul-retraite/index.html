@@ -5,8 +5,8 @@
 <title>Cumul Emploi-Retraite</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#2a5a7a">
-<link rel="manifest" href="../manifest.json">
-<link rel="apple-touch-icon" href="../apple-touch-icon.png">
+<link rel="manifest" href="../../manifest.json">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
 <meta name="apple-mobile-web-app-title" content="Cumul Emploi-Retraite">
@@ -116,7 +116,7 @@ select.ip{appearance:none;-webkit-appearance:none;
 .wiz-step.on{display:block;animation:wizFadeIn .3s;}
 .wiz-emoji{font-size:58px;display:block;margin:0 auto 10px;animation:wizFloat 4s ease-in-out infinite;}
 @keyframes wizFloat{0%,100%{transform:translateY(0)}50%{transform:translateY(-7px)}}
-.wiz-h{font-family:inherit;font-weight:800;font-size:22px;color:#fff;margin-bottom:8px;line-height:1.2;}
+.wiz-h{font-weight:800;font-size:22px;color:#fff;margin-bottom:8px;line-height:1.2;}
 .wiz-p{font-size:13.5px;color:rgba(255,255,255,0.7);line-height:1.55;margin-bottom:10px;}
 .wiz-accent{color:var(--acc-l,#f09050);font-weight:700;}
 .wiz-feat{display:flex;gap:11px;align-items:flex-start;text-align:left;margin-bottom:11px;
@@ -364,19 +364,12 @@ function recalc(){
 });
 recalc();
 })();
-
-  // ── LocalStorage ──────────────────────────────────────────────
-  var LS={STATE:'CUM_STATE',WELCOME:'CUM_WELCOMED'};
-  function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
-  function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-  function resetState(){
-    if(!confirm('Remettre à zéro les données de ce module ?'))return;
-    localStorage.removeItem(LS.STATE);
-    localStorage.removeItem(LS.WELCOME);
+  // resetState global (appelé par onclick)
+  window.resetState = function(){
+    if(!confirm('Remettre à zéro les données de ce module ?')) return;
+    try{ localStorage.removeItem('CUM_STATE'); localStorage.removeItem('CUM_WELCOMED'); }catch(e){}
     location.reload();
-  }
-  var state=get(LS.STATE,{sit:'plein',pension:'',salaire:''});
-  // ──────────────────────────────────────────────────────────────
+  };
 
   // ── Wizard bienvenue ──────────────────────────────────────────
   (function(){
