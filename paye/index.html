@@ -565,17 +565,17 @@ document.addEventListener("DOMContentLoaded", function(){
         <span style="font-size:13px;color:var(--muted)">Report précédent</span>
         <b id="prevCarry" style="font-size:14px">0.00</b>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <span style="font-size:13px;color:var(--muted)">Total période</span>
         <b id="totalMonth" style="font-size:14px">0.00</b>
       </div>
-      <div style="display:flex;justify-content:space-between;align-items:center">
-        <label style="font-size:13px;color:var(--muted);margin:0">Heures payées</label>
-        <input type="number" inputmode="decimal" id="paidHours" step="0.25" style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;font-size:14px;font-weight:600">
-      </div>
+      <!-- Inputs heures payées par taux — générés dynamiquement -->
+      <div id="paidInputsContainer" style="border-top:1px solid rgba(255,255,255,.07);padding-top:10px"></div>
+      <!-- Champ caché — valeur totale pour recalcCascade (backward compat) -->
+      <input type="hidden" id="paidHours" value="0">
     </div>
 
-    <!-- RESTANT DÛ -->
+    <!-- RESTANT DÛ HEURES (sans €, toujours visible) -->
     <div id="restantDuContainer"></div>
 
     <!-- RELIQUAT -->
@@ -610,6 +610,8 @@ document.addEventListener("DOMContentLoaded", function(){
         <div style="font-size:32px;font-weight:900;color:#fff"><b id="euroResult">0.00 €</b></div>
         <div id="euroDetail" style="font-size:12px;color:rgba(255,255,255,.6);margin-top:8px;line-height:1.6"></div>
       </div>
+      <!-- RESTANT DÛ AVEC € (dans la zone protégée) -->
+      <div id="restantDuEuro" style="margin-top:10px"></div>
       <p style="font-size:11px;color:#9aa0a6;margin-top:10px;line-height:1.4;text-align:center">
         &#x26A0;&#xFE0F; Indicatif uniquement. <b>Seul le bulletin de paie fait foi.</b>
       </p>
@@ -1115,8 +1117,11 @@ function recalc(){
   if(stat50) stat50.textContent = fmtH(t50);
   if(stat50L) stat50L.textContent = "À " + rules.taux2 + "%";
 
+  // Inputs heures payées par taux (dynamiques selon CCN)
+  renderPaidInputs(rules);
+
   // Restant dû
-  updateRestantDu(t25, tInter, t50, DATA[currentKey]?.paid||0, getPreviousCarry(currentKey), rules);
+  updateRestantDu();
 
   if(unlocked)calcEuro();
   const infoEl = document.getElementById("calcInfoText");
@@ -1130,38 +1135,195 @@ function recalc(){
   if(unlocked)calcEuro();
   updateContingent();
 }
-function updateRestantDu(t25, tInter, t50, paid, prevCarry, rules){
-  const container = document.getElementById("restantDuContainer");
+/* ─────────────────────────────────────────────────────────────────────
+   renderPaidInputs : génère les inputs "heures payées" par palier CCN.
+   Appelé depuis recalc() quand les règles CCN sont connues.
+   Stocke paid1/paidInter/paid2 dans DATA[currentKey].
+   Met à jour paid (total) pour compatibilité recalcCascade.
+───────────────────────────────────────────────────────────────────── */
+function renderPaidInputs(rules){
+  const container = document.getElementById("paidInputsContainer");
   if(!container) return;
-  const totalPeriod = t25 + (tInter||0) + t50;
-  const totalAvail = totalPeriod + prevCarry;
-  const carry = Math.max(0, totalAvail - paid);
-  if(carry <= 0){
-    container.innerHTML = '<div class="restedu-ok">\u2705 Toutes les heures de la p\u00e9riode ont \u00e9t\u00e9 pay\u00e9es</div>';
-    return;
+  const m = DATA[currentKey] || {};
+
+  const paliers = [
+    { id:'paidH1',  key:'paid1',     taux:rules.taux1,      color:'#f39c12', label:'À '+rules.taux1+'%' },
+    ...(rules.taux_inter ? [{ id:'paidHI', key:'paidInter', taux:rules.taux_inter, color:'#e67e22', label:'À '+rules.taux_inter+'%' }] : []),
+    { id:'paidH2',  key:'paid2',     taux:rules.taux2,      color:'#e74c3c', label:'À '+rules.taux2+'%' },
+  ];
+
+  // Reconstruire seulement si la structure a changé (nombre de paliers)
+  const existingCount = container.querySelectorAll('input[type="number"]').length;
+  if(existingCount !== paliers.length){
+    container.innerHTML = paliers.map(p => `
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+        <label style="font-size:13px;font-weight:600;color:${p.color};margin:0">${p.label} payées</label>
+        <input type="number" inputmode="decimal" id="${p.id}" step="0.25" value="0"
+          style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
+                 font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
+      </div>`).join('');
+
+    // Bind des événements
+    paliers.forEach(p => {
+      const inp = document.getElementById(p.id);
+      if(!inp) return;
+      inp.oninput = () => {
+        if(!DATA||!DATA[currentKey]) return;
+        DATA[currentKey][p.key] = parseFloat(inp.value)||0;
+        // Recalculer le total paid (backward compat recalcCascade)
+        DATA[currentKey].paid = paliers.reduce((s,t)=>s+(Number(DATA[currentKey][t.key])||0), 0);
+        // Sync champ caché
+        const h = document.getElementById('paidHours');
+        if(h) h.value = DATA[currentKey].paid;
+        save(); recalc();
+      };
+    });
   }
-  let remainPaid = paid;
-  const prevPaid = Math.min(prevCarry, remainPaid); remainPaid -= prevPaid;
-  const pay25 = Math.min(t25, remainPaid); remainPaid -= pay25;
-  const payInter = Math.min(tInter||0, remainPaid); remainPaid -= payInter;
-  const pay50 = Math.min(t50, remainPaid);
-  const unpaid25 = t25 - pay25;
-  const unpaidInter = (tInter||0) - payInter;
-  const unpaid50 = t50 - pay50;
-  const unpaidPrev = prevCarry - prevPaid;
-  const rate = Number(document.getElementById("rate")?.value)||0;
-  const c25v = Number(document.getElementById("coef25")?.value)||1.25;
-  const cIv = Number(document.getElementById("coefInter")?.value)||(1+((rules.taux_inter)||10)/100);
-  const c50v = Number(document.getElementById("coef50")?.value)||1.50;
-  const cn = Number(document.getElementById("coefNet")?.value)||1;
-  const hasRate = rate > 0 && unlocked;
-  let rows = "";
-  if(unpaidPrev > 0){const est=hasRate?" \u2192 ~"+(unpaidPrev*rate*cn).toFixed(2)+" \u20ac":"";rows+=`<div class="restedu-row"><span style="color:var(--muted)">Report non sold\u00e9</span><span style="font-weight:700">${fmtH(unpaidPrev)}${est}</span></div>`;}
-  if(unpaid25 > 0){const est=hasRate?" \u2192 ~"+(unpaid25*c25v*rate*cn).toFixed(2)+" \u20ac":"";rows+=`<div class="restedu-row"><span style="color:#f39c12">\u00c0 ${rules.taux1}% (\u00d7${c25v.toFixed(2)})</span><span style="font-weight:700">${fmtH(unpaid25)}${est}</span></div>`;}
-  if(unpaidInter > 0 && rules.taux_inter){const est=hasRate?" \u2192 ~"+(unpaidInter*cIv*rate*cn).toFixed(2)+" \u20ac":"";rows+=`<div class="restedu-row"><span style="color:#e67e22">\u00c0 ${rules.taux_inter}% (\u00d7${cIv.toFixed(2)})</span><span style="font-weight:700">${fmtH(unpaidInter)}${est}</span></div>`;}
-  if(unpaid50 > 0){const est=hasRate?" \u2192 ~"+(unpaid50*c50v*rate*cn).toFixed(2)+" \u20ac":"";rows+=`<div class="restedu-row"><span style="color:#e74c3c">\u00c0 ${rules.taux2}% (\u00d7${c50v.toFixed(2)})</span><span style="font-weight:700">${fmtH(unpaid50)}${est}</span></div>`;}
-  const totalEst=hasRate?`<div style="font-size:11px;color:var(--muted);margin-top:6px">Estimation nette : ~${((unpaid25*c25v+(unpaidInter||0)*cIv+unpaid50*c50v+unpaidPrev)*rate*cn).toFixed(2)} \u20ac</div>`:"";
-  container.innerHTML=`<div class="restedu-card"><div class="rd-title">\u26a0\ufe0f Restant d\u00fb ce cycle</div>${rows}<div class="restedu-total">${fmtH(carry)} non pay\u00e9es${totalEst}</div><div style="font-size:10px;color:var(--muted);margin-top:8px">Calcul indicatif (FIFO). Seul le bulletin de paie fait foi.</div></div>`;
+
+  // Remplir les valeurs depuis DATA (migration : si paid1 absent, répartir paid sur taux1)
+  paliers.forEach(p => {
+    const inp = document.getElementById(p.id);
+    if(!inp) return;
+    if(m[p.key] !== undefined){
+      inp.value = m[p.key];
+    } else {
+      // Données legacy : paid non ventilé → on l'affecte à taux1 par défaut
+      inp.value = p.id==='paidH1' ? (m.paid||0) : 0;
+    }
+  });
+
+  // Sync champ caché
+  const hid = document.getElementById('paidHours');
+  if(hid) hid.value = m.paid||0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   computeCarryBreakdown : ventilation des heures impayées par taux
+   sur TOUT l'historique jusqu'à upToKey.
+   - Mois avec paid1/paid2 : soustraction directe par taux (précis)
+   - Mois legacy (paid seulement) : FIFO sur l'accumulé
+   Ne touche à aucune donnée — lecture seule.
+───────────────────────────────────────────────────────────────────── */
+function computeCarryBreakdown(upToKey){
+  const rules = getCCNRules();
+  const yd = ALL_DATA[currentYear] || {};
+  const allKeys = Object.keys(yd)
+    .filter(k => /^\d{4}-\d{2}$/.test(k) && k <= upToKey)
+    .sort();
+
+  let acc1=0, accI=0, acc2=0; // heures accumulées non-payées par taux
+
+  allKeys.forEach(mk => {
+    const {start,end} = getPeriodBounds(mk);
+    const days = buildDayList(start, end);
+    const {h25, hInter, h50} = calcWeeks(days);
+    const m = yd[mk] || {};
+
+    acc1 += (h25||0);
+    accI += (hInter||0);
+    acc2 += (h50||0);
+
+    if(m.paid1 !== undefined || m.paid2 !== undefined){
+      // Données per-taux disponibles : soustraction directe
+      acc1 = Math.max(0, acc1 - (Number(m.paid1)||0));
+      accI = Math.max(0, accI - (Number(m.paidInter)||0));
+      acc2 = Math.max(0, acc2 - (Number(m.paid2)||0));
+    } else if(m.paid){
+      // Legacy FIFO : payer taux1 d'abord, puis inter, puis taux2
+      let rem = Number(m.paid)||0;
+      const p1 = Math.min(acc1, rem); acc1 -= p1; rem -= p1;
+      const pI = Math.min(accI, rem); accI -= pI; rem -= pI;
+      const p2 = Math.min(acc2, rem); acc2 -= p2;
+    }
+  });
+
+  return {
+    unpaid1:     Math.max(0, acc1),
+    unpaidInter: Math.max(0, accI),
+    unpaid2:     Math.max(0, acc2),
+    totalCarry:  Math.max(0, acc1 + accI + acc2),
+    rules
+  };
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   updateRestantDu : appelle computeCarryBreakdown, puis :
+   - rend les heures par taux (sans €) dans #restantDuContainer
+   - rend la carte complète avec € dans #restantDuEuro (zone protégée)
+───────────────────────────────────────────────────────────────────── */
+function updateRestantDu(){
+  const bd = computeCarryBreakdown(currentKey);
+  const { unpaid1, unpaidInter, unpaid2, totalCarry, rules } = bd;
+  const container = document.getElementById("restantDuContainer");
+  const euroDiv   = document.getElementById("restantDuEuro");
+
+  /* ── HEURES SEULES (toujours visible, sans €) ── */
+  if(container){
+    if(totalCarry <= 0){
+      container.innerHTML = '<div class="restedu-ok">\u2705 Toutes les heures sont pay\u00e9es</div>';
+    } else {
+      const COLORS = ["#f39c12","#e67e22","#e74c3c"];
+      const paliers = [
+        { h: unpaid1,     taux: rules.taux1,                  color: COLORS[0] },
+        { h: unpaidInter, taux: rules.taux_inter,              color: COLORS[1], hide: !rules.taux_inter },
+        { h: unpaid2,     taux: rules.taux2,                   color: COLORS[2] },
+      ];
+      let rows = "";
+      paliers.forEach(p => {
+        if(p.hide || p.h <= 0) return;
+        rows += `<div class="restedu-row">
+          <span style="color:${p.color}">\u00c0 ${p.taux}%</span>
+          <span style="font-weight:700">${fmtH(p.h)}</span>
+        </div>`;
+      });
+      container.innerHTML = `<div class="restedu-card">
+        <div class="rd-title">\u26a0\ufe0f Restant d\u00fb : ${fmtH(totalCarry)}</div>
+        ${rows}
+        <div style="font-size:10px;color:var(--muted);margin-top:6px">D\u00e9tail par taux — montants dans la zone €</div>
+      </div>`;
+    }
+  }
+
+  /* ── CARTE EURO COMPLÈTE (dans zone protégée) ── */
+  if(euroDiv){
+    if(totalCarry <= 0){
+      euroDiv.innerHTML = '<div class="restedu-ok">\u2705 Toutes les heures sont pay\u00e9es</div>';
+      return;
+    }
+    const rate = Number(document.getElementById("rate")?.value)||0;
+    const c1   = Number(document.getElementById("coef25")?.value)||(1+rules.taux1/100);
+    const cI   = Number(document.getElementById("coefInter")?.value)||(1+(rules.taux_inter||10)/100);
+    const c2   = Number(document.getElementById("coef50")?.value)||(1+rules.taux2/100);
+    const cn   = Number(document.getElementById("coefNet")?.value)||1;
+    const hasRate = rate > 0;
+    const COLORS = ["#f39c12","#e67e22","#e74c3c"];
+    const paliers = [
+      { h: unpaid1,     taux: rules.taux1,       coef: c1,  color: COLORS[0] },
+      { h: unpaidInter, taux: rules.taux_inter,  coef: cI,  color: COLORS[1], hide: !rules.taux_inter },
+      { h: unpaid2,     taux: rules.taux2,       coef: c2,  color: COLORS[2] },
+    ];
+    let rows = "", totalEuro = 0;
+    paliers.forEach(p => {
+      if(p.hide || p.h <= 0) return;
+      const eur = p.h * p.coef * rate * cn;
+      totalEuro += eur;
+      const estStr = hasRate ? ` \u2192 ~${eur.toFixed(2)}\u00a0\u20ac` : "";
+      rows += `<div class="restedu-row">
+        <span style="color:${p.color}">\u00c0 ${p.taux}% (\u00d7${p.coef.toFixed(2)})</span>
+        <span style="font-weight:700">${fmtH(p.h)}${estStr}</span>
+      </div>`;
+    });
+    const totalStr = hasRate
+      ? `<div class="restedu-total">${fmtH(totalCarry)} non pay\u00e9es</div>
+         <div style="font-size:13px;font-weight:700;color:#e74c3c;margin-top:4px">Estimation nette : ~${totalEuro.toFixed(2)}\u00a0\u20ac</div>`
+      : `<div class="restedu-total">${fmtH(totalCarry)} non pay\u00e9es</div>`;
+    euroDiv.innerHTML = `<div class="restedu-card">
+      <div class="rd-title">\u26a0\ufe0f Restant d\u00fb ce cycle</div>
+      ${rows}
+      ${totalStr}
+      <div style="font-size:10px;color:var(--muted);margin-top:8px">Calcul indicatif (FIFO) — ventilation sur tout l\'historique.</div>
+    </div>`;
+  }
 }
 
 function calcEuro(){
@@ -1191,6 +1353,8 @@ function calcEuro(){
   }else{
     document.getElementById("euroDetail").innerHTML=`${fmtH(h25)} × ${c25.toFixed(2)} = ${fmtH(w25)}<br>${fmtH(h50)} × ${c50.toFixed(2)} = ${fmtH(w50)}<br><b>Total pondéré : ${fmtH(wt)}</b>`;
   }
+  // Rafraîchir le restant dû avec les nouveaux coefs/taux
+  updateRestantDu();
 }
 function recalcCascade(){
   // Opérer uniquement sur l'exercice actif pour éviter contamination entre années
