@@ -2813,15 +2813,22 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
         alerte: { niveau: 'danger', texte: `⚠️ ${_fmtH(cwTotal)}/sem — Art. L3121-20 : 48h maximum` }
       };
     } else if (cwTotal >= 44) {
+      // Lire la vraie moyenne 12 semaines depuis s.weekly pour ne pas alarmer à tort
+      const avg12 = (s && s.weekly && s.weekly.maxAvg12) ? Math.round(s.weekly.maxAvg12 * 10) / 10 : 0;
+      const avg12Over = avg12 >= 44;
       return {
-        titre: `⚠️ Semaine à ${_fmtH(cwTotal)} — charge élevée`,
-        message: `${pr_pr}${_fmtH(cwTotal)} cette semaine (${_fmtH(cwHS)} de HS). Au-delà de 44h en moyenne sur 12 semaines, la limite est dépassée (Art. L3121-22). Surveille la tendance.`,
+        titre: `⚠️ Semaine à ${_fmtH(cwTotal)} — semaine chargée`,
+        message: avg12Over
+          ? `${pr_pr}${_fmtH(cwTotal)} cette semaine (${_fmtH(cwHS)} de HS). Ta moyenne sur 12 semaines atteint ${_fmtH(avg12)} — au-delà de la limite de 44h (Art. L3121-22).`
+          : `${pr_pr}${_fmtH(cwTotal)} cette semaine (${_fmtH(cwHS)} de HS). C'est au-dessus de 44h mais ta moyenne sur 12 semaines reste raisonnable. Si ce rythme se répète, surveille la tendance (Art. L3121-22).`,
         actions: [
           `HS majorées : ${cwHS <= 8 ? _fmtH(cwHS) + ' à +25%' : '8h à +25% + ' + _fmtH(cwHS-8) + ' à +50%'}`,
-          'Vérifie ta moyenne sur 12 semaines dans FOX',
-          'En parler à ton responsable si récurrent'
+          avg12Over ? 'Deux seuils franchis — en parler à ton responsable' : 'Semaine ponctuelle — continue à saisir pour suivre la tendance',
+          'Vérifier les majorations sur ta prochaine fiche de paie'
         ],
-        alerte: { niveau: 'warning', texte: `⚠️ ${_fmtH(cwTotal)}/sem — surveille la moyenne 12 sem (Art. L3121-22)` }
+        alerte: avg12Over
+          ? { niveau: 'warning', texte: `⚠️ Moy. 12 sem : ${_fmtH(avg12)} — limite 44h dépassée (Art. L3121-22)` }
+          : { niveau: 'info', texte: `📊 ${_fmtH(cwTotal)} cette semaine — moy. 12 sem : ${avg12 > 0 ? _fmtH(avg12) : 'calcul en cours'}` }
       };
     } else {
       // Entre 35h et 44h
