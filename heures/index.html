@@ -2341,6 +2341,27 @@ function closeTip(){
 }
 </script>
 
+<!-- Stub glossaire — actif si glossaire.js absent, écrasé s'il est présent -->
+<script>
+(function(){
+  var stored = localStorage.getItem('APP_MODE') || localStorage.getItem('GLOSSAIRE_MODE') || 'debutant';
+  function applyMode(mode){
+    localStorage.setItem('APP_MODE', mode);
+    localStorage.setItem('GLOSSAIRE_MODE', mode);
+    localStorage.setItem('GLOS_MODE', mode);
+    var bi1=document.getElementById('btnModeDebutant'), bi2=document.getElementById('btnModeExpert');
+    if(bi1){bi1.style.background=mode==='debutant'?'#4FB3C2':'#fff';bi1.style.color=mode==='debutant'?'#fff':'#555';bi1.style.borderColor=mode==='debutant'?'#2196a6':'#dde3ec';}
+    if(bi2){bi2.style.background=mode==='expert'?'#4FB3C2':'#fff';bi2.style.color=mode==='expert'?'#fff':'#555';bi2.style.borderColor=mode==='expert'?'#2196a6':'#dde3ec';}
+    if(mode==='expert'){document.documentElement.classList.add('mode-expert');document.body&&document.body.classList.add('mode-expert');}
+    else{document.documentElement.classList.remove('mode-expert');document.body&&document.body.classList.remove('mode-expert');}
+  }
+  window.setGlosMode = function(mode){ applyMode(mode); };
+  window.openGlossaire = function(){ openNotice(); };
+  window.toggleGlossaire = window.openGlossaire;
+  document.addEventListener('DOMContentLoaded', function(){ applyMode(stored); });
+})();
+</script>
+
 <!-- Glossaire mode débutant/expert -->
 <script src="../glossaire.js"></script>
 
