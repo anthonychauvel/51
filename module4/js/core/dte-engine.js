@@ -1212,6 +1212,57 @@ class DTEEngine {
       cumulMonths = Math.round((cumulWeeksR / 4.33) * 10) / 10;
     }
 
+    // ── cumulWeeksLong : fenêtre 12 semaines glissantes ───────────────────────
+    //
+    // Utilisé UNIQUEMENT pour cvRisk (Kivimäki 2015) et cogRisk (Jang/OEM 2025).
+    // Ces risques sont STRUCTURELS (long terme) : une exposition de 3 mois à 55h/sem
+    // ne s'efface pas en 4 semaines normales (contrairement à la fatigue courante).
+    //
+    // Règle identique au 28j mais sur 12 semaines (référentiel légal Art. L3121-22).
+    // Fériés = 7h CCN (méthode origine). Pas de séparation isVacWeek/isRestWeek :
+    // seule l'accumulation compte (pas de réduction — le risque structurel ne décroît
+    // pas à -0.12/sem, il requiert des mois de retour à la normale).
+    //
+    let cumulWeeksLong = 0;
+    for (let w = 11; w >= 0; w--) {
+      let weekHLong = 0, hasAnyLong = false;
+
+      for (let dd = 0; dd < workDaysPerWeek; dd++) {
+        const dt = new Date(todayMonday);
+        dt.setDate(todayMonday.getDate() - w * 7 + dd);
+        if (dt > today) continue;
+
+        const k = localDK(dt);
+        const e = days[k];
+        const isFerie = specialDays[k] === 'ferie';
+        const isVacReal = !!vacances[k] && !isFerie; // vrai congé seulement
+
+        if (isVacReal) {
+          weekHLong += baseJourCCN; // congé = base 7h, 0 HS
+          hasAnyLong = true;
+          continue;
+        }
+        if (e && e.absent > 0) continue;
+        if (e && e.recup >= baseJourCCN) continue;
+
+        const hs = e ? (e.extra || 0) : 0;
+        weekHLong += baseJourCCN + hs; // férié = 7h base + HS si travaillé
+        hasAnyLong = true;
+      }
+
+      if (!hasAnyLong) continue;
+
+      const hs35Long = Math.max(0, weekHLong - _ccnSeuilW);
+      if (hs35Long >= 5) {
+        const contrib = Math.min(1.0, hs35Long / (_ccnSeuilW * 0.20));
+        cumulWeeksLong = Math.round((cumulWeeksLong + contrib) * 1e9) / 1e9;
+      }
+      // Pas de réduction (-0.12) : le risque structurel est cumulatif sur la fenêtre
+    }
+
+    const cumulWeeksLongR = Math.round(cumulWeeksLong * 10) / 10;
+    const cumulMonthsLong = Math.round((cumulWeeksLongR / 4.33) * 10) / 10;
+
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
     // FIX BUG 7 : ANACT recommande d'exclure congés, absences longues, arrêts
     // Sinon semaine 0h vs 45h → sigma artificiellement gonflé (12.5h au lieu de 3h)
@@ -1422,7 +1473,9 @@ class DTEEngine {
       _isVacationWeek: isCurrentWeekVacation,
       _consec:        consec,
       _consecOT:      consecOT,
-      _cumulWeeks:    cumulWeeksR,
+      _cumulWeeks:    cumulWeeksR,      // 28j — fatigue/stress/score
+      _cumulWeeksLong: cumulWeeksLongR,  // 12sem — cvRisk/cogRisk
+      _cumulMonthsLong: cumulMonthsLong,
       _cumulMonths:   cumulMonths,
       _consecRestDays: consecRestDays,
       _consecNonOTDays: consecNonOTDays,
@@ -1487,8 +1540,10 @@ class DTEEngine {
         }
       }
     } catch(_) {}
-    const cumW    = norm._cumulWeeks    || 0;
-    const cumM    = norm._cumulMonths   || 0;
+    const cumW     = norm._cumulWeeks     || 0; // 28j → fatigue/stress/score
+    const cumM     = norm._cumulMonths    || 0; // dérivé 28j (conservé pour compat)
+    const cumWLong = norm._cumulWeeksLong || 0; // 12sem → cvRisk/cogRisk (Kivimäki/Jang)
+    const cumMLong = norm._cumulMonthsLong|| 0; // dérivé 12sem
     // Deux compteurs de récupération — voir _normalize() pour la justification scientifique
     const consecRest    = norm._consecRestDays   || 0; // repos COMPLET (Sonnentag 2003 / HPA)
     const consecNonOT   = norm._consecNonOTDays  || 0; // sans HS (Meijman & Mulder 1998)
@@ -1512,7 +1567,7 @@ class DTEEngine {
         diabetesRisk:0, musculoRisk:0,
         _f:0, _s:0, _p:0, _r:0,
         _hasData:false, _hasM1:false, _hasM2:false,
-        _weeklyH:weeklyH, _cumulWeeks:cumW,
+        _weeklyH:weeklyH, _cumulWeeks:cumW, _cumulWeeksLong:cumWLong,
       };
     }
 
@@ -1631,7 +1686,8 @@ class DTEEngine {
     // On retourne la capacité de base (Pencavel à 35h) sans dégradation cumulative.
     const perfPencavel = pencavelPerf(weeklyH);
     // Dégradation cognitive OEM 2025 (>52h)
-    const cogDeg       = cogRisk(weeklyH, cumW);
+    // cogDeg pour perf → risque long terme (Jang/OEM 2025)
+    const cogDeg       = cogRisk(weeklyH, cumWLong);
     const perfMotiv    = norm.motiv * 0.12;
     const perfFat      = fatigue * 0.50; // FIX 0.65→0.50 : Pencavel 2014 — lien fatigue→perf moins punitif
     const perfStr      = stress  * 0.10;
@@ -1738,11 +1794,14 @@ class DTEEngine {
       ? Math.max(0.88, Math.exp(-Math.log(2) * _consecForRiskDecay / 120))
       : 1.0;
 
-    const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumM) * nightFactor * _pf.cvF);
+    // cvRisk : Kivimäki 2015 (Lancet) — risque structurel long terme → 12 semaines
+    const cvR_base  = Math.min(0.65, cvRisk(weeklyH, cumMLong) * nightFactor * _pf.cvF);
     const cvR       = cvR_base * cvRiskRestDecay; // FIX: decay toujours appliqué (pas seulement vacances)
-    const cogR_base = Math.min(0.5, cogRisk(weeklyH, cumW) * _pf.cogF);
+    // cogRisk : Jang/OEM 2025 (Yonsei) — modifications cérébrales long terme → 12 semaines
+    const cogR_base = Math.min(0.5, cogRisk(weeklyH, cumWLong) * _pf.cogF);
     const cogR      = cogR_base * cogRiskRestDecay; // FIX: idem
-    const diabR     = metabolicRisk(weeklyH, cumM); // Lancet 2021 HR=1.18
+    // metabolicRisk : Lancet 2021 — risque structurel long terme → 12 semaines
+    const diabR     = metabolicRisk(weeklyH, cumMLong); // Lancet 2021 HR=1.18
     const muscR     = musculoRisk(weeklyH, cumM, norm._consec || 0); // Lancet 2021 HR=1.15
 
     // Appliquer lifestyle (multiplicateur sur fatigue) + check-in (additif modéré)
