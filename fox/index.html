@@ -4424,7 +4424,22 @@ function kitsuneNarrateOvertime(deltaH, source) {
         _globalHash = ((_globalHash << 5) - _globalHash + _s.charCodeAt(_i)) | 0;
       }
     } catch(e) {}
-    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_ci' + (localStorage.getItem('DTE_CHECKIN_HISTORY')||'').length + '_r5';
+    // Calculer le total HS semaine courante pour invalider le cache si la semaine change
+    let _weekHSKey = 0;
+    try {
+      const _yr_k = new Date().getFullYear().toString();
+      const _m2k = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + _yr_k) || '{}');
+      const _m1k = JSON.parse(localStorage.getItem('DATA_REPORT_' + _yr_k) || '{}');
+      const _nowK = new Date(); const _dowK = (_nowK.getDay()+6)%7;
+      for (let _dk2 = 0; _dk2 <= _dowK && _dk2 < 7; _dk2++) {
+        const _dtK = new Date(_nowK); _dtK.setDate(_nowK.getDate()-_dowK+_dk2);
+        const _dkS = _dtK.getFullYear()+'-'+String(_dtK.getMonth()+1).padStart(2,'0')+'-'+String(_dtK.getDate()).padStart(2,'0');
+        const _eK1 = _m1k[_dkS]; const _ym2k = _dkS.substring(0,7); const _dd2k = parseInt(_dkS.substring(8));
+        const _ex = _eK1 ? (_eK1.extra||0) : (_m2k[_ym2k]&&_m2k[_ym2k].days ? (_m2k[_ym2k].days[_dd2k]||0) : 0);
+        _weekHSKey += _ex;
+      }
+    } catch(_ek) {}
+    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_ci' + (localStorage.getItem('DTE_CHECKIN_HISTORY')||'').length + '_wk' + Math.round(_weekHSKey*10) + '_r6';
     let _cachedPopup  = null;
     try {
       const _pc = JSON.parse(localStorage.getItem('FOX_POPUP_DAILY') || '{}');
