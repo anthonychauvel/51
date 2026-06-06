@@ -111,7 +111,7 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--ink);color:
 /* ENCART AIDE */
 .help{background:linear-gradient(135deg,#f5ead0,#eedfc3);border-radius:17px;
   padding:17px;display:flex;align-items:center;gap:14px;cursor:pointer;transition:.18s;
-  border:1px solid rgba(200,160,48,0.2);margin-top:16px;}
+  border:1px solid rgba(200,160,48,0.2);margin-top:16px;margin-bottom:20px;}
 .help:active{transform:scale(0.98);}
 .help .t{font-size:16px;font-weight:800;color:var(--txt);}
 .help .d{font-size:12.5px;color:var(--txt-soft);margin-top:2px;line-height:1.4;}
@@ -199,7 +199,7 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--ink);color:
 <!-- HEADER -->
 <div class="hdr">
   <div class="hdr-row">
-    <button class="hdr-btn" onclick="window.location.href='../../menu.html'" aria-label="Menu">
+    <button class="hdr-btn" onclick="window.location.href='menu.html'" aria-label="Menu">
       <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="3" y1="6" x2="21" y2="6"/><line x1="3" y1="12" x2="21" y2="12"/><line x1="3" y1="18" x2="21" y2="18"/></svg>
     </button>
     <div class="hdr-title"><div class="t">Le Terrier</div><div class="s">La Famille Renard</div></div>
@@ -402,9 +402,13 @@ function renderFavGrid(){var p=getPinned();var h=document.getElementById('favGri
 
 /* ===== Catégories accordéon ===== */
 var openCats={};
+
+/* Normalise les accents pour la recherche (ex: "conges" trouve "Congés") */
+function normSearch(s){ return s ? s.toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'') : ''; }
+
 function renderCats(q){var h=document.getElementById('catList');var html='';
   CATS.forEach(function(cat){
-    var ids=q?cat.ids.filter(function(id){var t=TOOLS[id];return t&&(t.t.toLowerCase().indexOf(q)>=0||t.s.toLowerCase().indexOf(q)>=0);}):cat.ids;
+    var ids=q?cat.ids.filter(function(id){var t=TOOLS[id];return t&&(normSearch(t.t).indexOf(normSearch(q))>=0||normSearch(t.s).indexOf(normSearch(q))>=0);}):cat.ids;
     if(q&&!ids.length)return;
     var op=q||openCats[cat.id];' ';
     html+='<div class="cat'+( op?' open':'')+'" id="cat-'+cat.id+'">'
@@ -430,8 +434,8 @@ function renderRecents(){var r=getRecent();var h=document.getElementById('recent
 
 /* ===== Vue Plus ===== */
 function renderPlus(){document.getElementById('plusContent').innerHTML=
-  ['<div class="tool-row" onclick="window.location.href=\'../../menu.html\'">'+makeSvg(SVGP.briefcase)+'<div class="tool-info"><div class="t">Retour au menu principal</div><div class="s">Les 8 grands modules</div></div></div>',
-   '<div class="tool-row" onclick="window.location.href=\'../../mentions-legales.html\'">'+makeSvg(SVGP.doc)+'<div class="tool-info"><div class="t">Mentions légales</div><div class="s">LCEN — éditeur & hébergeurs</div></div></div>',
+  ['<div class="tool-row" onclick="window.location.href=\'menu.html\'">'+makeSvg(SVGP.briefcase)+'<div class="tool-info"><div class="t">Retour au menu principal</div><div class="s">Les 8 grands modules</div></div></div>',
+   '<div class="tool-row" onclick="window.location.href=\'mentions-legales.html\'">'+makeSvg(SVGP.doc)+'<div class="tool-info"><div class="t">Mentions légales</div><div class="s">LCEN — éditeur & hébergeurs</div></div></div>',
    '<div class="tool-row" onclick="startWiz()">'+makeSvg(SVGP.growth)+'<div class="tool-info"><div class="t">Revoir le guide</div><div class="s">Comment utiliser la trousse</div></div></div>',
   ].join('');}
 
