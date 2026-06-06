@@ -1241,9 +1241,6 @@
   </div>
 </div>
 
-<!-- Favoris trousse -->
-<div class="pinned-section" id="pinnedSection" style="display:none;margin:12px 14px 0;"><div class="pinned-title">⭐ Mes outils favoris</div><div class="pinned-grid" id="pinnedGrid"></div></div>
-
 <div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
   <span>⚖️</span>
   <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
@@ -3194,30 +3191,8 @@ function hasConsent(){
   };
 
   // ── FAVORIS DE LA TROUSSE ────────────────────────────────────
-  function loadPinned(){
-    var pinned;
-    try{ pinned = JSON.parse(localStorage.getItem('OT_PINNED')||'[]'); }catch(e){ pinned=[]; }
-    // Aussi l'ancienne clé pinnedTools (compatibilité)
-    if(!pinned.length){
-      try{ pinned = JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ pinned=[]; }
-    }
-    var section = document.getElementById('pinnedSection');
-    var grid = document.getElementById('pinnedGrid');
-    if(!section || !grid) return;
-    if(!pinned.length){ section.style.display='none'; return; }
-    section.style.display='block';
-    // Afficher max 8 favoris en grille
-    grid.innerHTML = pinned.slice(0,8).map(function(id){
-      // Récupérer le titre depuis window.TOOLS s'il existe
-      var t = (window.TOOLS && window.TOOLS[id]) ? window.TOOLS[id] : null;
-      var em = t ? t.e : '🔧';
-      var nm = t ? t.t : id.replace('module-','');
-      return '<div class="pinned-cell" onclick="location.href=\'outils/'+id+'/index.html\'">' +
-        '<span class="pc-e">' + em + '</span>' +
-        '<span class="pc-t">' + nm + '</span>' +
-      '</div>';
-    }).join('');
-  }
+  // La grille pinnedSection a été remplacée par le dropdown favDropContainer
+  function loadPinned(){ /* désactivé — remplacé par le dropdown ⭐ */ }
 
   // ── OUTILS REGISTRY (pour le dropdown favoris et loadPinned) ──
   const TOOLS={
