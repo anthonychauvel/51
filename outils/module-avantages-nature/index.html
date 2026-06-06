@@ -344,6 +344,8 @@ function show(n){wStep=n;$all('.wstep').forEach(function(s){s.classList.toggle('
   $('#wSkip').style.display=(n===wMax-1)?'none':'block';}
 $('#wNext').addEventListener('click',function(){if(wStep<wMax-1)show(wStep+1);else{$('#wizard').classList.remove('show');set(LS.WELCOME,1);}});
 $('#wSkip').addEventListener('click',function(){$('#wizard').classList.remove('show');set(LS.WELCOME,1);});
+// Tap outside box to dismiss
+$('#wizard').addEventListener('click',function(e){if(e.target===this){$('#wizard').classList.remove('show');set(LS.WELCOME,1);}});
 $('#helpBtn').addEventListener('click',function(){$('#help').classList.add('show');});
 $all('[data-close]').forEach(function(b){b.addEventListener('click',function(){$('#'+b.dataset.close).classList.remove('show');});});
 if(!get(LS.WELCOME,0)){$('#wizard').classList.add('show');show(0);}
