@@ -845,9 +845,12 @@ class DTEEngine {
     for (let i = 0; i < 28; i++) {
       const d = new Date(today); d.setDate(today.getDate() - i);
       const dow = d.getDay();
-      if (_isRestDowAt(dow, d)) continue; // FIX VERSIONING : config active à cette date historique
       const k = localDK(d);
       const e = days[k];
+      // FIX REPOS AVEC HS : si un jour de repos (sam/dim) a des heures réelles saisies,
+      // il compte dans la charge biologique (travail exceptionnel déclaré dans M2/M1)
+      const isRestDay28 = _isRestDowAt(dow, d);
+      if (isRestDay28 && !(e && e.extra > 0)) continue; // FIX VERSIONING : config active à cette date historique
       if (e && e.absent > 0) continue;
       if (e && (e.recup >= 7)) continue;
       // FIX FÉRIÉ + M2 : si des heures sont saisies sur un jour férié → jour travaillé
@@ -873,11 +876,18 @@ class DTEEngine {
     // Avant : !e → count7++ (jour vide compté comme jour travaillé → faux pour les vacances)
     let sumExtra7 = 0, count7 = 0;
     let hasAnyEntryThisWeek = false; // au moins 1 entrée M1/M2 cette semaine
-    for (let dd = 0; dd < todayDowA && dd < workDaysPerWeek; dd++) {
+    // FIX REPOS AVEC HS : on scanne 7 jours (pas workDaysPerWeek) pour inclure
+    // les HS saisies un samedi/dimanche (travail exceptionnel déclaré dans M2/M1)
+    // Le filtre rest-day s'applique DANS la boucle, pas sur le compteur de jours
+    const todayDow7Real = Math.floor((today.getTime() - weekMondayA.getTime()) / 86400000) + 1;
+    for (let dd = 0; dd < Math.min(7, todayDow7Real); dd++) {
       const d = new Date(weekMondayA); d.setDate(weekMondayA.getDate() + dd);
       if (d > today) break;
       const k = localDK(d);
       const e = days[k];
+      // FIX REPOS AVEC HS : skip les jours de repos SAUF si HS réelles saisies
+      const _dow7 = d.getDay();
+      if (_isRestDowAt(_dow7, d) && !(e && e.extra > 0)) continue;
       // FIX : M2/M1 heures réelles priment TOUJOURS sur vacation déclarée dans M4.
       // Si M2 dit que tu as travaillé (extra > 0), ces heures sont réelles —
       // la déclaration vacances dans M4 ne doit pas les effacer.
@@ -1197,7 +1207,11 @@ class DTEEngine {
         if (isFerieDay3 && !(e && e.extra > 0)) continue;
         const isVacDay = !!vacances[k];
         weekH += baseJourCCN + (isVacDay ? 0 : (e ? (e.extra || 0) : 0));
-        hasAnyDay = true; // Passe 2 : semaines vides = repos → décroissance cumulWeeks
+        // FIX PASSE2 : hasAnyDay uniquement si entrée M1/M2 réelle OU jour vacances déclaré
+        // Avant : toujours true → semaines 2025 sans données comptaient comme "semaines normales"
+        //         → 30+ semaines × -0.12 = -3.6 points fantômes → saut 2.9→4 à 28j de données
+        // Après : même logique que Passe 1 — seules les semaines avec données contribuent
+        if (e || isVacDay) hasAnyDay = true;
       }
       // FIX : isM1RestWeekP2 requiert majorité des jours absents (même logique que Passe 1)
       // 1 jour absent seul (ex: lundi férié marqué absent) ne = pas semaine de vacances
