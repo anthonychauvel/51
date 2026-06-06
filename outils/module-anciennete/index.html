@@ -169,6 +169,19 @@ select.ip{appearance:none;-webkit-appearance:none;
   box-shadow:0 8px 24px rgba(26,20,14,0.4);opacity:0;transition:.35s cubic-bezier(.2,.9,.3,1.3);pointer-events:none;}
 #toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
 .pop{animation:popk .4s;} @keyframes popk{0%{transform:scale(1)}40%{transform:scale(1.07)}100%{transform:scale(1)}}
+
+input[type="date"]{-webkit-appearance:none;appearance:none;box-sizing:border-box;max-width:100%;min-width:0;}
+
+/* Arbre qui pousse selon l'anciennete */
+.tree-grow{text-align:center;line-height:1;margin:4px 0 2px;min-height:48px;display:flex;align-items:flex-end;justify-content:center;overflow:visible;}
+.tree-emoji{display:inline-block;font-size:44px;transition:font-size .8s cubic-bezier(.2,1.3,.4,1),transform .8s cubic-bezier(.2,1.3,.4,1),filter .8s ease;transform-origin:bottom center;filter:drop-shadow(0 4px 8px rgba(42,80,40,0.25));}
+.tree-emoji.sprout{font-size:38px;}
+.tree-emoji.young{font-size:58px;}
+.tree-emoji.grown{font-size:82px;}
+.tree-emoji.mature{font-size:108px;}
+.tree-emoji.ancient{font-size:132px;filter:drop-shadow(0 8px 18px rgba(42,80,40,0.4));}
+@keyframes treePulse{0%{transform:scale(0.7);opacity:0;}60%{transform:scale(1.12);}100%{transform:scale(1);opacity:1;}}
+.tree-emoji.justgrew{animation:treePulse .9s cubic-bezier(.2,1.3,.4,1);}
 </style>
 <body>
 
@@ -231,6 +244,7 @@ select.ip{appearance:none;-webkit-appearance:none;
   <!-- TRUNK -->
   <div class="trunk">
     <div class="ttag">🌳 Ancienneté dans l'entreprise</div>
+    <div class="tree-grow" id="treeGrow"><span class="tree-emoji" id="treeEmoji">🌱</span></div>
     <div class="tbig pop" id="tBig">—</div>
     <div class="tunit" id="tUnit">an</div>
     <div class="tsub" id="tSub">Entre ta date d'embauche ci-dessous</div>
@@ -426,6 +440,20 @@ select.ip{appearance:none;-webkit-appearance:none;
 
     // hero
     var bigEl=$('#tBig'); bigEl.classList.remove('pop'); void bigEl.offsetWidth; bigEl.classList.add('pop');
+    // ── Arbre qui pousse selon l'anciennete ──
+    (function(){
+      var te=$('#treeEmoji'); if(!te) return;
+      var yrs=diff.years||0; var emoji,cls;
+      if(yrs<1){ emoji='🌱'; cls='sprout'; }
+      else if(yrs<3){ emoji='🌿'; cls='young'; }
+      else if(yrs<7){ emoji='🌳'; cls='grown'; }
+      else if(yrs<15){ emoji='🌳'; cls='mature'; }
+      else { emoji='🌳'; cls='ancient'; }
+      var prevCls=te.className.replace('tree-emoji','').replace('justgrew','').trim();
+      te.textContent=emoji;
+      te.className='tree-emoji '+cls;
+      if(prevCls!==cls){ void te.offsetWidth; te.classList.add('justgrew'); }
+    })();
     if(diff.years>=1){ bigEl.textContent=diff.years; $('#tUnit').textContent='an'+(diff.years>1?'s':''); }
     else if(diff.totalMonths>=1){ bigEl.textContent=diff.totalMonths; $('#tUnit').textContent='mois'; }
     else { bigEl.textContent=diff.totalDays; $('#tUnit').textContent='jours'; }
@@ -469,6 +497,7 @@ select.ip{appearance:none;-webkit-appearance:none;
   }
 
   function showEmpty(){
+    var te=$('#treeEmoji'); if(te){ te.textContent='🌱'; te.className='tree-emoji sprout'; }
     $('#tBig').textContent='—'; $('#tUnit').textContent='an'; $('#tSub').textContent='Entre ta date d\'embauche ci-dessous';
     $('#tDetail').style.display='none';
     $('#timelineHost').innerHTML='<div class="empty-tree"><span class="e">🌱</span><div class="t">L\'arbre attend ta date d\'embauche</div></div>';
