@@ -56,7 +56,7 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--ink);color:
 
 /* ZONE CLAIRE */
 .light{background:var(--cream);border-radius:26px 26px 0 0;min-height:60vh;
-  padding:22px 16px 30px;margin-top:14px;}
+  padding:22px 16px calc(80px + env(safe-area-inset-bottom));margin-top:14px;}
 
 /* SECTION */
 .section{background:var(--paper);border-radius:20px;padding:16px;
@@ -243,11 +243,7 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--ink);color:
     </div>
     <div class="sec-sep">Catégories</div>
     <div id="catList"></div>
-    <div class="help" onclick="goTab('plus')">
-      <svg width="40" height="40" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" style="flex-shrink:0;color:var(--gold-deep)"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 3-3 3"/><line x1="12" y1="17" x2="12.01" y2="17" stroke-width="3" stroke-linecap="round"/></svg>
-      <div><div class="t">Besoin d'aide ?</div><div class="d">Guide d'utilisation de la trousse.</div></div>
-      <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" style="flex-shrink:0;color:var(--txt-mute)"><polyline points="9 18 15 12 9 6"/></svg>
-    </div>
+
   </div>
 
   <!-- FAVORIS -->
@@ -461,6 +457,11 @@ var wStep=0,wMax=3;
 function wDots(){var c=document.getElementById('wDots');c.innerHTML='';for(var i=0;i<wMax;i++){var d=document.createElement('span');if(i===wStep)d.className='on';c.appendChild(d);}}
 function wShow(n){wStep=n;document.querySelectorAll('.wiz-step').forEach(function(s){s.classList.toggle('on',+s.dataset.s===n);});wDots();document.getElementById('wNext').textContent=(n===wMax-1)?'C\'est parti ! 🦊':'Continuer';document.getElementById('wSkip').style.display=(n===wMax-1)?'none':'block';}
 function wClose(){document.getElementById('wizOv').classList.remove('on');ls(LS.W,1);}
+function resetOutils(){
+  if(!confirm('Reinitialiser la trousse ?\n\nCela efface les favoris, les recents et relance le guide de demarrage.')) return;
+  try{localStorage.removeItem(LS.P);localStorage.removeItem(LS.R);localStorage.removeItem(LS.W);}catch(e){}
+  location.reload();
+}
 function startWiz(){document.getElementById('wizOv').classList.add('on');wShow(0);goTab('accueil');}
 document.getElementById('wNext').addEventListener('click',function(){if(wStep<wMax-1)wShow(wStep+1);else wClose();});
 document.getElementById('wSkip').addEventListener('click',wClose);
