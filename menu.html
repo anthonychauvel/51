@@ -1214,6 +1214,33 @@
   </button>
 </div>
 
+<!-- Favoris trousse dropdown -->
+<div style="position:relative;margin-top:8px;" id="favDropContainer">
+  <button onclick="toggleFavDrop()" title="Mes outils favoris"
+    style="width:100%;cursor:pointer;border-radius:10px;padding:9px 12px;
+           font-family:inherit;font-weight:700;font-size:12px;
+           background:linear-gradient(135deg,rgba(240,192,64,0.1),rgba(200,160,48,0.18));
+           border:1.5px solid rgba(240,192,64,0.4);
+           color:#f0c040;box-shadow:0 2px 8px rgba(0,0,0,0.3);
+           display:flex;align-items:center;justify-content:space-between;">
+    <span>⭐ Mes favoris épinglés</span>
+    <span id="favDropArrow" style="font-size:10px;opacity:0.7;">▼</span>
+  </button>
+  <div id="favDropMenu" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;
+    background:#1a2035;border:1px solid rgba(240,192,64,0.3);border-radius:12px;
+    padding:6px;z-index:900;box-shadow:0 8px 24px rgba(0,0,0,0.6);">
+    <div id="favDropList" style="display:flex;flex-direction:column;gap:4px;"></div>
+    <div style="border-top:1px solid rgba(255,255,255,0.08);margin-top:6px;padding-top:6px;">
+      <button onclick="location.href='outils.html';"
+        style="width:100%;background:linear-gradient(135deg,#2a1e08,#3a2a10);
+        border:1px solid rgba(240,192,64,0.4);border-radius:8px;padding:8px;
+        color:#f0c040;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;">
+        🦊 Ouvrir La Caisse à outils
+      </button>
+    </div>
+  </div>
+</div>
+
 <!-- Favoris trousse -->
 <div class="pinned-section" id="pinnedSection" style="display:none;margin:12px 14px 0;"><div class="pinned-title">⭐ Mes outils favoris</div><div class="pinned-grid" id="pinnedGrid"></div></div>
 
@@ -1392,15 +1419,20 @@ function openBackupPopup() {
   if (!o) return;
   // Compter les clés et la taille
   try {
-    let count = 0, bytes = 0;
+    let count = 0, bytes = 0, modCount = 0;
+    // Préfixes connus des 54 modules outils
+    const modPrefixes = /^(STC_|CUM_|M8_|TR_|FAM_|RUP_|ENT_|JI_|TT_|INA_|CP_|PA_|PE_|ESS_|AN_|EFF_|LBP_|LEX_|CSE_|INV_|ALT_|AM_|ANC_|AP_|ARC_|AST_|AT_|BUL_|C2P_|CET_|CF_|CH_|CMP_|CON_|CSS_|CVR_|CV_|DAR_|DEL_|EGA_|EPA_|FC_|FER_|FOR_|GRV_|MAP_|MOB_|MOD_|MUT_|NC_|PAR_|PRC_|PRC2_|PRV_|RET_|SAB_|SS_|TR2_|TRA_|DEL_)/;
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       count++;
       bytes += (k.length + (localStorage.getItem(k) || '').length);
+      if (modPrefixes.test(k)) modCount++;
     }
     const kb = (bytes / 1024).toFixed(1);
     const el = document.getElementById('backup-stats');
-    if (el) el.innerHTML = '<b>' + count + '</b> entrées sauvegardées · environ <b>' + kb + ' Ko</b>';
+    if (el) el.innerHTML = '<b>' + count + '</b> entrées · <b>' + kb + ' Ko</b>' +
+      (modCount > 0 ? ' · <span style="color:#4CAF50"><b>' + modCount + '</b> données modules</span>' : '') +
+      '<br><small style="color:#888">Couvre les 54 modules outils + réglages</small>';
   } catch(e) {}
   const msg = document.getElementById('backup-message');
   if (msg) msg.style.display = 'none';
@@ -2264,6 +2296,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div style="margin-top:16px;padding:12px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.15);border-radius:8px;font-size:11px;color:rgba(255,255,255,0.5);">
       Contact : appareils.treves6g@icloud.com
     </div>
+    <button onclick="window.closeLicensePopup()" style="display:block;width:100%;margin-top:18px;padding:12px;background:rgba(0,200,255,0.12);border:1px solid rgba(0,200,255,0.3);border-radius:10px;color:#00c8ff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Fermer</button>
   </div>
 </div>`;
     document.body.appendChild(popup); lockScroll();
@@ -2302,6 +2335,7 @@ document.addEventListener('DOMContentLoaded', function(){
     <div style="margin-top:16px;padding:12px;background:rgba(0,200,255,0.05);border:1px solid rgba(0,200,255,0.15);border-radius:8px;font-size:11px;color:rgba(255,255,255,0.5);">
       Contact : appareils.treves6g@icloud.com
     </div>
+    <button onclick="window.closePrivacyPopup()" style="display:block;width:100%;margin-top:18px;padding:12px;background:rgba(0,200,255,0.12);border:1px solid rgba(0,200,255,0.3);border-radius:10px;color:#00c8ff;font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;">Fermer</button>
   </div>
 </div>`;
     document.body.appendChild(popup); lockScroll();
@@ -2780,6 +2814,12 @@ body.perso-mode .btn.hidden-module{opacity:0.35;outline-color:rgba(198,40,40,0.2
 .pinned-cell:active{transform:scale(0.93);}
 .pinned-cell .pc-e{font-size:22px;line-height:1;}
 .pinned-cell .pc-t{font-size:10.5px;color:rgba(255,255,255,0.75);font-weight:600;line-height:1.2;}
+/* Dropdown favoris menu.html */
+.fav-drop-item{display:flex;align-items:center;gap:8px;padding:7px 10px;border-radius:8px;
+  cursor:pointer;color:#fff;font-size:13px;font-weight:600;transition:.15s;text-decoration:none;}
+.fav-drop-item:hover,.fav-drop-item:active{background:rgba(240,192,64,0.1);}
+.fav-drop-item .fdi-e{font-size:18px;flex-shrink:0;}
+.fav-drop-empty{color:rgba(255,255,255,0.4);font-size:12px;padding:8px 10px;text-align:center;}
 /* Drawer modules masqués */
 .hidden-drawer{position:fixed;bottom:0;left:0;right:0;z-index:400;
   background:linear-gradient(180deg,#1a1208,#0f0a04);border-top:1px solid rgba(240,192,64,0.2);
@@ -3179,6 +3219,110 @@ function hasConsent(){
     }).join('');
   }
 
+  // ── OUTILS REGISTRY (pour le dropdown favoris et loadPinned) ──
+  const TOOLS={
+  'module8':{e:'🧳',t:'Carnet de frais pro',s:'Notes de frais'},
+  'module-temps':{e:'⚙️',t:'Temps & Repos',s:'Durées légales'},
+  'module-conges':{e:'🏝️',t:'Congés payés',s:'Calcul & solde'},
+  'module-fincontrat':{e:'🌄',t:'Fin de contrat',s:'Indemnités & rupture'},
+  'module-chomage':{e:'🪂',t:'Droits chômage',s:'ARE & calcul'},
+  'module-famille':{e:'🪺',t:'Congés familiaux',s:'Maternité, paternité…'},
+  'module-arret':{e:'🩺',t:'Arrêt maladie',s:'IJSS & maintien salaire'},
+  'module-tr':{e:'🍽️',t:'Titres-restaurant',s:'Plafonds & règles 2026'},
+  'module-feries':{e:'🎆',t:'Jours fériés',s:'Calendrier 2026'},
+  'module-saisie':{e:'🔒',t:'Saisie sur salaire',s:'Barème & calcul'},
+  'module-anciennete':{e:'🌳',t:'Ancienneté & jalons',s:'Droits par année'},
+  'module-journal':{e:'📓',t:'Journal incidents',s:'Aide-mémoire local'},
+  'module-c2p':{e:'🦺',t:'C2P Pénibilité',s:'Facteurs & points'},
+  'module-lexique':{e:'📚',t:'Lexique bulletin',s:'Ligne par ligne'},
+  'module-fincontrat2':{e:'📋',t:'Solde de tout compte',s:'Checklist départ'},
+  'module-contrats':{e:'📊',t:'CDI · CDD · Intérim',s:'Comparatif droits'},
+  'module-archives':{e:'📁',t:'Conservation docs RH',s:'Durées légales'},
+  'module-convertisseur':{e:'🧮',t:'Convertisseur paie',s:'Horaire/mensuel/annuel'},
+  'module-mutuelle':{e:'🛡️',t:'Mutuelle obligatoire',s:'Règles & dispenses'},
+  'module-transport':{e:'🚌',t:'Transport & Mobilité',s:'TC, FMD, barème km'},
+  'module-cse':{e:'🏛️',t:'CSE & Représentation',s:'Droits & attributions'},
+  'module-rupture':{e:'🤝',t:'Rupture conventionnelle',s:'Indemnité & procédure'},
+  'module-preavis':{e:'⏱️',t:'Préavis',s:'Durée légale & calcul'},
+  'module-preavis-comp':{e:'⚖️',t:'Comparatif ruptures',s:'Démo/Licenc./RC/Faute'},
+  'module-bulletin':{e:'📄',t:'Bulletin décrypté',s:'Cotisations expliquées'},
+  'module-cet':{e:'⏳',t:'Compte Épargne-Temps',s:'CET · Droits & usages'},
+  'module-entretien':{e:'🤝',t:'Entretien professionnel',s:'Échéance & droits'},
+  'module-mobilites':{e:'🚲',t:'Forfait Mobilités',s:'Vélo · Covoiturage · Exo.'},
+  'module-retraite':{e:'🏛️',t:'Retraite',s:'Comprendre ses droits'},
+  'module-egalite':{e:'⚖️',t:'Index Égalité H/F',s:'Score & indicateurs'},
+  'module-astreintes':{e:'📟',t:'Astreintes',s:'Définition & compensation'},
+  'module-precarite':{e:'📄',t:'Prime de précarité',s:'Fin de CDD · 10%'},
+  'module-parentalite':{e:'👶',t:'Parentalité',s:'Maternité · Paternité · Parental'},
+  'module-teletravail':{e:'🏠',t:'Télétravail',s:'Règles & indemnités'},
+  'module-formation':{e:'🎓',t:'CPF & Formation',s:'Droits · Dispositifs · Fraude'},
+  'module-atmp':{e:'🦺',t:'AT / MP',s:'Accident travail · Maladie pro'},
+  'module-nonconcurrence':{e:'⚖️',t:'Non-concurrence',s:'Validité & indemnisation'},
+  'module-epargne':{e:'💰',t:'Épargne salariale',s:'Participation · PEE · PER'},
+  'module-greve':{e:'✊',t:'Grève',s:'Droits & retenue 1/30e'},
+  'module-cumul-retraite':{e:'🏖️',t:'Cumul emploi-retraite',s:'Libéralisé & plafonné'},
+  'module-sabbatique':{e:'🌍',t:'Congé sabbatique',s:'6-11 mois · Conditions'},
+  'module-inaptitude':{e:'🏥',t:'Inaptitude',s:'Procédure & reclassement'},
+  'module-miseapied':{e:'⏸️',t:'Mise à pied',s:'Conservatoire vs disciplinaire'},
+  'module-alternance':{e:'🎓',t:'Alternance',s:'Apprentissage · Contrat pro'},
+  'module-conge-ss':{e:'🌿',t:'Congé sans solde',s:'Durée libre · Accord requis'},
+  'module-delegation':{e:'🏛️',t:'Heures de délégation',s:'Mandats · Crédits · Droits'},
+  'module-proche-aidant':{e:'🤲',t:'Proche aidant',s:'Congé · AJPA · CAF'},
+  'module-invalidite':{e:'♿',t:'Invalidité',s:'Catégories · Pension · Droits'},
+  'module-avantages-nature':{e:'🎁',t:'Avantages en nature',s:'Voiture · Repas · Logement'},
+  'module-modulation':{e:'🎼',t:'Modulation du temps',s:'Annualisation · Lissage salaire'},
+  'module-activite-partielle':{e:'🌿',t:'Activité partielle',s:'AP · APLD · Calcul indemnité'},
+  'module-demission-are':{e:'🚪',t:'Démission légitime',s:'Cas d\'ouverture ARE'},
+  'module-essai':{e:'⏳',t:'Période d\'essai',s:'Délais prévenance'},
+  'module-effectifs':{e:'🏢',t:'Seuils d\'effectif',s:'11 · 50 · 250 · 300 · 1000 sal.'},
+};
+  window.TOOLS = TOOLS;
+
+  // ── DROPDOWN FAVORIS (bouton menu principal) ─────────────────
+  var _favDropOpen = false;
+  window.toggleFavDrop = function(){
+    _favDropOpen = !_favDropOpen;
+    var menu = document.getElementById('favDropMenu');
+    var arrow = document.getElementById('favDropArrow');
+    if(!menu) return;
+    if(_favDropOpen){ renderFavDrop(); menu.style.display='block'; if(arrow) arrow.textContent='▲'; }
+    else { menu.style.display='none'; if(arrow) arrow.textContent='▼'; }
+  };
+  function renderFavDrop(){
+    var list = document.getElementById('favDropList');
+    if(!list) return;
+    var pinned;
+    try{ pinned = JSON.parse(localStorage.getItem('OT_PINNED')||'[]'); }catch(e){ pinned=[]; }
+    if(!pinned.length){
+      try{ pinned = JSON.parse(localStorage.getItem('pinnedTools')||'[]'); }catch(e){ pinned=[]; }
+    }
+    if(!pinned.length){
+      list.innerHTML = '<div class="fav-drop-empty">Aucun favori epingle<br><small>Ouvre la Caisse a outils et epingle des outils</small></div>';
+      return;
+    }
+    list.innerHTML = pinned.slice(0,10).map(function(id){
+      var t = (window.TOOLS && window.TOOLS[id]) ? window.TOOLS[id] : null;
+      var em = t ? t.e : '';
+      var nm = t ? t.t : id.replace('module-','');
+      var sub = t ? t.s : '';
+      return '<a class="fav-drop-item" href="outils/'+id+'/index.html" onclick="document.getElementById('favDropMenu').style.display='none'">' +
+        (em ? '<span class="fdi-e">'+em+'</span>' : '') +
+        '<span style="flex:1;"><span style="display:block;">'+nm+'</span>' +
+        (sub ? '<span style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:400;">'+sub+'</span>' : '') +
+        '</span>' +
+      '</a>';
+    }).join('');
+  }
+  // Fermer le dropdown si clic en dehors
+  document.addEventListener('click', function(e){
+    if(_favDropOpen && !document.getElementById('favDropContainer').contains(e.target)){
+      _favDropOpen = false;
+      var menu = document.getElementById('favDropMenu');
+      if(menu) menu.style.display='none';
+      var arrow = document.getElementById('favDropArrow');
+      if(arrow) arrow.textContent='▼';
+    }
+  });
   // ── BADGE NOUVEAUTÉS ─────────────────────────────────────────
   function checkNewBadge(){
     try{
