@@ -3280,8 +3280,10 @@ function hasConsent(){
 
   // ── DROPDOWN FAVORIS (bouton menu principal) ─────────────────
   var _favDropOpen = false;
+  window._favDropOpen = false;
   window.toggleFavDrop = function(){
     _favDropOpen = !_favDropOpen;
+    window._favDropOpen = _favDropOpen;
     var menu = document.getElementById('favDropMenu');
     var arrow = document.getElementById('favDropArrow');
     if(!menu) return;
@@ -3305,7 +3307,7 @@ function hasConsent(){
       var em = t ? t.e : '';
       var nm = t ? t.t : id.replace('module-','');
       var sub = t ? t.s : '';
-      return '<a class="fav-drop-item" href="outils/'+id+'/index.html" onclick="document.getElementById('favDropMenu').style.display='none'">' +
+      return '<a class="fav-drop-item" href="outils/'+id+'/index.html" onclick="var m=document.getElementById(\'favDropMenu\');if(m)m.style.display=\'none\';_favDropOpen=false;var a=document.getElementById(\'favDropArrow\');if(a)a.textContent=\'▼\';">' +
         (em ? '<span class="fdi-e">'+em+'</span>' : '') +
         '<span style="flex:1;"><span style="display:block;">'+nm+'</span>' +
         (sub ? '<span style="font-size:10px;color:rgba(255,255,255,0.5);font-weight:400;">'+sub+'</span>' : '') +
