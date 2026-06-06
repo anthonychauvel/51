@@ -536,21 +536,8 @@ document.addEventListener("DOMContentLoaded", function(){
   <div class="card">
     <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px">Récapitulatif</div>
 
-    <!-- STAT GRID -->
-    <div class="stat-grid">
-      <div class="stat-box">
-        <div class="val" id="totalMonthStat">0</div>
-        <div class="lbl">Total période</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" id="hours25Stat" style="color:#f39c12">0</div>
-        <div class="lbl" id="stat25Label">À 25%</div>
-      </div>
-      <div class="stat-box">
-        <div class="val" id="hours50Stat" style="color:#e74c3c">0</div>
-        <div class="lbl" id="stat50Label">À 50%</div>
-      </div>
-    </div>
+    <!-- STAT GRID — rendue dynamiquement par recalc() selon les paliers CCN -->
+    <div id="statGridContainer" class="stat-grid"></div>
 
     <!-- DETAIL PALIERS (caché dans stat-grid, gardé pour JS) -->
     <div style="display:none" id="hoursBreakdown">
@@ -1104,18 +1091,20 @@ function recalc(){
   document.getElementById("prevCarry").textContent=fmtH(getPreviousCarry(currentKey));
   document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
 
-  // Alimenter la stat-grid
-  const tTot = t25+(tInter||0)+t50;
-  const statTot = document.getElementById("totalMonthStat");
-  const stat25 = document.getElementById("hours25Stat");
-  const stat25L = document.getElementById("stat25Label");
-  const stat50 = document.getElementById("hours50Stat");
-  const stat50L = document.getElementById("stat50Label");
-  if(statTot) statTot.textContent = fmtH(ph);
-  if(stat25) stat25.textContent = fmtH(t25);
-  if(stat25L) stat25L.textContent = "À " + rules.taux1 + "%";
-  if(stat50) stat50.textContent = fmtH(t50);
-  if(stat50L) stat50L.textContent = "À " + rules.taux2 + "%";
+  // Stat-grid dynamique (s'adapte au nombre de paliers CCN)
+  const sgc = document.getElementById("statGridContainer");
+  if(sgc){
+    const paliers = [
+      { val: fmtH(ph),     lbl: 'Total<br>période', color: 'var(--accent)' },
+      { val: fmtH(t25),    lbl: 'À&nbsp;'+rules.taux1+'%',          color: '#f39c12' },
+      ...(rules.taux_inter !== null ? [{ val: fmtH(tInter), lbl: 'À&nbsp;'+rules.taux_inter+'%', color: '#e67e22' }] : []),
+      { val: fmtH(t50),    lbl: 'À&nbsp;'+rules.taux2+'%',          color: '#e74c3c' },
+    ];
+    sgc.style.gridTemplateColumns = 'repeat('+paliers.length+',1fr)';
+    sgc.innerHTML = paliers.map(p =>
+      '<div class="stat-box"><div class="val" style="color:'+p.color+'">'+p.val+'</div><div class="lbl">'+p.lbl+'</div></div>'
+    ).join('');
+  }
 
   // Inputs heures payées par taux (dynamiques selon CCN)
   renderPaidInputs(rules);
