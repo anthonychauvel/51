@@ -340,7 +340,7 @@ header .hbtn{background:var(--wood);color:var(--paper);border:none;border-radius
 })();
 
   // ── LocalStorage ──────────────────────────────────────────────
-  var LS={STATE:'AR_STATE',WELCOME:'AR_WELCOMED'};
+  var LS={STATE:'ARC_STATE',WELCOME:'ARC_WELCOMED'};
   function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
   function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
   function resetState(){
