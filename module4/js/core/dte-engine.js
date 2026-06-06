@@ -1263,6 +1263,75 @@ class DTEEngine {
     const cumulWeeksLongR = Math.round(cumulWeeksLong * 10) / 10;
     const cumulMonthsLong = Math.round((cumulWeeksLongR / 4.33) * 10) / 10;
 
+    // ── COMPTEURS DE RÉCUPÉRATION — deux niveaux distincts ───────────────────
+    //
+    // [A] consecRestDays : jours de REPOS COMPLET (vacances, WE, fériés, absent)
+    //     → utilisé pour : cortisol HPA (Sonnentag 2003 : détachement psychologique REQUIS)
+    //       et risques structurels cvRisk/cogRisk (Kivimäki 2015, OEM 2025)
+    //     Raison : le détachement psychologique nécessite une vraie coupure du travail.
+    //
+    // [B] consecNonOTDays : jours sans heures SUPPLÉMENTAIRES (inclut jours normaux ≤ seuil)
+    //     → utilisé pour : fatigue chronique + stressExt (Meijman & Mulder 1998)
+    //     Raison : l'Effort-Recovery model dit que la récupération commence DÈS que
+    //     la charge revient au niveau de base, même sans vrai repos.
+    //     Sonnentag 2003 confirme : la récupération partielle est possible sans détachement
+    //     si la charge est "mastery" (maîtrisée) — i.e. ≤ seuil contractuel.
+
+    let consecRestDays = 0;
+    for (let i = 0; i < 60; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      const isVac   = vacances[k];
+      const isFerie = specialDays[k] === 'ferie';
+      const dow     = d.getDay();
+      const isWE    = _isRestDowAt(dow, d); // FIX VERSIONING
+
+      // M1→M4 : absent ≥ 7h OU recup ≥ 7h dans M1 = jour de repos complet pour M4
+      // Le salarié n'a pas travaillé ce jour → traité comme vacances/WE pour la récupération
+      const isM1FullRest = !!(e && ((e.absent >= 7) || (e.recup >= 7)));
+
+      // Sonnentag 2003 : détachement psychologique = vraie coupure.
+      // Un jour ouvré est repos uniquement si : WE, férié, vacances M4, absence M1, ou recup M1
+      // noWorkThisWeek ne s'applique QU'à la semaine courante (i=0..6)
+      const isCurrentWeek  = i < 7;
+      // FIX FÉRIÉ + M2 : heures saisies sur un férié → jour travaillé (M2 prioritaire)
+      // vacances M4 reste prioritaire (déclaration volontaire), mais férié = automatique
+      const ferieWithHours = isFerie && e && e.extra > 0;
+      const hasOverload    = e && (e.extra > 0) && !isWE && !isVac && !isM1FullRest && (!isFerie || ferieWithHours);
+      const isRestDay = isWE || isVac || (isFerie && !ferieWithHours) || isM1FullRest
+                     || (isCurrentWeek && !isWE && !hasOverload && noWorkThisWeek);
+
+      if (hasOverload) break; // HS réelles (hors vacances/repos) → stop définitif
+      // Jour ouvré sans données M1 = pas de HS connue → traité comme jour normal (pas de repos complet)
+      // Ne casse PAS consecRestDays — mais ne l'incrémente pas non plus (isRestDay = false)
+      // Seul hasOverload casse le compteur (Sonnentag 2003 : seul le surmenage bloque la récupération)
+      const hasNoData = !e && !isWE && !isVac && !isFerie;
+      if (hasNoData) continue; // jour sans données = ni repos ni surcharge → on continue
+
+      if (isRestDay) consecRestDays++;
+    }
+
+    // [B] consecNonOTDays : jours SANS heures supplémentaires
+    // Reset uniquement sur un jour avec HS réelles — les jours normaux ET les WE/vacances
+    // maintiennent le compteur (Meijman & Mulder 1998 : tout jour sans surcharge = récupération)
+    let consecNonOTDays = 0;
+    for (let i = 0; i < 90; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      const dow = d.getDay();
+      const isWE = _isRestDowAt(dow, d); // FIX VERSIONING
+      const isVac = !!vacances[k];
+      // M1→M4 : recup ≥ 7h = repos → ne casse pas le compteur consecNonOT (Meijman & Mulder 1998)
+      const isM1Rest = !!(e && ((e.absent >= 7) || (e.recup >= 7)));
+      // FIX BUG VACANCES : un jour vacances ne casse pas le compteur même avec entrées M1/M2
+      if (e && e.extra > 0 && !isWE && !isVac && !isM1Rest) break;
+      // Jour sans données M1 = pas de HS → contribue à la récupération (Meijman & Mulder 1998)
+      consecNonOTDays++;
+    }
+
+
     // Variabilité horaire (ANACT) — fenêtre VARIAB_WINDOW semaines COMPLÈTES passées
     // FIX BUG 7 : ANACT recommande d'exclure congés, absences longues, arrêts
     // Sinon semaine 0h vs 45h → sigma artificiellement gonflé (12.5h au lieu de 3h)
