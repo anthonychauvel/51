@@ -2467,7 +2467,7 @@ document.addEventListener('DOMContentLoaded', function(){
     const idcc   = _safeLS.get('CCN_IDCC');
     const nom    = _safeLS.get('CCN_NOM');
     const custom = _safeLS.get('CCN_CUSTOM');
-    let label = 'Convention collective — cliquer pour choisir';
+    let label = '📋 Droit commun (35h) — cliquer pour changer';
     if (custom) { try { const c = JSON.parse(custom); label = '⚙️ ' + (c.nom || 'Accord personnalisé'); } catch(e){} }
     else if (idcc && nom) { label = nom + ' · IDCC ' + idcc; }
     document.getElementById('ccn-badge-name').textContent = label;
@@ -2483,7 +2483,24 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById('ccnModal').classList.add('open');
   }
 
-  function closeCCNModal() { document.getElementById('ccnModal').classList.remove('open'); }
+
+  function selectDroitCommun() {
+    _ccnSelected = null;
+    _ccnCustom = false;
+    // Supprimer toute CCN sélectionnée → revenir au droit commun
+    _safeLS.del('CCN_IDCC');
+    _safeLS.del('CCN_NOM');
+    _safeLS.del('CCN_CUSTOM');
+    if (typeof CCN_API !== 'undefined') CCN_API.resetCustom();
+    // Marquer visuellement
+    document.querySelectorAll('.ccn-item').forEach(function(el){ el.classList.remove('active'); });
+    var el = document.querySelector('.ccn-item-default');
+    if (el) el.classList.add('active');
+    // Appliquer directement (pas besoin de cliquer Appliquer)
+    initCCNBadge();
+    closeCCNModal();
+  }
+    function closeCCNModal() { document.getElementById('ccnModal').classList.remove('open'); }
 
   function ccnSearch(q) {
     const results = document.getElementById('ccn-results');
@@ -2492,10 +2509,17 @@ document.addEventListener('DOMContentLoaded', function(){
     }
     const items = CCN_API.search(q, 60);
     const activeIdcc = _ccnSelected ? _ccnSelected.idcc : parseInt(_safeLS.get('CCN_IDCC') || '0');
+    // Vérifier si droit commun est actif
+    const isDroitCommun = !activeIdcc;
+    const droitCommunItem = `<div class="ccn-item ccn-item-default${isDroitCommun?' active':''}" onclick="selectDroitCommun()" style="border-left:3px solid #4FB3C2;background:${isDroitCommun?'#e0f4f7':''};">
+      <div style="font-weight:${isDroitCommun?'700':'600'}">📋 Je ne connais pas ma CCN — Droit commun</div>
+      <div class="ccn-item-idcc">Règles légales de base · 35h · Maj. 25%/50% · 220h/an</div>
+    </div>`;
     let html = items.map(it => {
       const isActive = it.i === activeIdcc;
       return `<div class="ccn-item${isActive?' active':''}" onclick="selectCCN(${it.i},this)"><div>${it.n}</div><div class="ccn-item-idcc">IDCC ${it.i} · ${it.g}</div></div>`;
     }).join('');
+    html = droitCommunItem + html;
     html += `<div class="ccn-item-custom" onclick="toggleCustomForm()">⚙️ Accord d'entreprise / personnalisé…</div>`;
     results.innerHTML = html;
     results.querySelectorAll('.ccn-item').forEach(el => {
@@ -2510,7 +2534,22 @@ document.addEventListener('DOMContentLoaded', function(){
     });
   }
 
-  function selectCCN(idcc, el) {}
+  function selectCCN(idcc, el) {
+    // Retrouver le nom depuis CCN_API
+    var nom = '';
+    if (typeof CCN_API !== 'undefined') {
+      var items = CCN_API.search('', 9999);
+      var found = items.find(function(it){ return it.i === idcc; });
+      if (found) nom = found.n;
+    }
+    _ccnSelected = { idcc: idcc, nom: nom };
+    _ccnCustom = false;
+    // Mettre à jour visuellement les items actifs
+    document.querySelectorAll('.ccn-item').forEach(function(el2){
+      el2.classList.remove('active');
+    });
+    if (el) el.classList.add('active');
+  }
 
   function toggleCustomForm() {
     _ccnCustom = true; _ccnSelected = null;
