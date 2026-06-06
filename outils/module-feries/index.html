@@ -1,0 +1,260 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Jours Fériés 2026</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="color-scheme" content="light">
+<meta name="theme-color" content="#1565C0">
+<link rel="manifest" href="../../manifest.json">
+<link rel="apple-touch-icon" href="../../apple-touch-icon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Jours Fériés">
+<meta name="mobile-web-app-capable" content="yes">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,600;0,700;1,600&family=Lato:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --blue:#1565C0;--blue-l:#1976D2;--blue-ll:#42A5F5;
+  --cream:#f0f4ff;--cream2:#e3eaff;--card:#fff;--card-edge:#c5cae9;
+  --ink:#1a237e;--ink2:#283593;--faded:#7986cb;
+  --ok:#2e7d50;--warn:#c07820;--red:#c62828;
+  --line:rgba(26,35,126,0.10);
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body{min-height:100%;background:var(--cream);}
+body{font-family:'Lato',-apple-system,sans-serif;color:var(--ink);padding-bottom:60px;min-height:100vh;}
+@media screen and (orientation:landscape) and (max-device-width:1024px){
+  body>*:not(#lb){display:none!important;}
+  #lb{position:fixed;inset:0;z-index:99999;background:var(--cream);color:var(--ink);display:flex!important;
+    flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;}
+  #lb .i{font-size:60px;margin-bottom:20px;} #lb .t{font-size:28px;font-weight:700;color:var(--blue);}
+}
+@media screen and (orientation:portrait){#lb{display:none!important;}}
+.wrap{max-width:480px;margin:0 auto;padding:0 16px 20px;}
+header{position:sticky;top:0;z-index:40;display:flex;align-items:center;gap:8px;
+  padding:12px 16px;padding-top:max(12px,env(safe-area-inset-top));
+  background:rgba(240,244,255,0.95);backdrop-filter:blur(8px);border-bottom:1px solid var(--card-edge);
+  max-width:480px;margin:0 auto;}
+header a.back{background:var(--card);border:1.5px solid var(--card-edge);color:var(--ink);border-radius:10px;
+  padding:7px 14px;font-family:'Lato',sans-serif;font-size:12px;font-weight:700;text-decoration:none;flex-shrink:0;}
+header .brand{flex:1;text-align:center;}
+header .brand .ti{font-family:'Playfair Display',serif;font-size:22px;font-weight:700;color:var(--ink);}
+header .brand .su{font-size:9.5px;color:var(--faded);letter-spacing:1px;text-transform:uppercase;margin-top:1px;}
+header .hbtn{background:var(--card);border:1.5px solid var(--card-edge);color:var(--ink);border-radius:50%;
+  width:36px;height:36px;font-size:15px;cursor:pointer;flex-shrink:0;}
+
+.hero{background:linear-gradient(135deg,var(--blue),var(--blue-l));color:#fff;
+  border-radius:20px;padding:20px 22px;margin:16px 0;text-align:center;}
+.hero .big{font-size:48px;font-weight:800;line-height:1;}
+.hero .sub{font-size:13px;opacity:0.8;margin-top:6px;}
+.hero .chips{display:flex;gap:8px;justify-content:center;margin-top:14px;flex-wrap:wrap;}
+.hero .chip{background:rgba(255,255,255,0.18);border-radius:20px;padding:5px 14px;font-size:11.5px;font-weight:700;}
+
+.year-nav{display:flex;align-items:center;gap:12px;margin:0 0 16px;background:var(--card);
+  border-radius:14px;padding:10px 16px;border:1px solid var(--card-edge);}
+.year-nav button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--blue);padding:4px;}
+.year-nav .yr{flex:1;text-align:center;font-size:18px;font-weight:800;color:var(--ink);}
+
+.month-sec{margin-bottom:12px;}
+.month-hd{font-size:13px;font-weight:800;color:var(--faded);letter-spacing:1px;text-transform:uppercase;
+  padding:8px 4px 6px;border-bottom:1px solid var(--line);margin-bottom:6px;}
+.ferie-row{background:var(--card);border-radius:12px;padding:12px 16px;margin-bottom:7px;
+  display:flex;align-items:center;gap:12px;border:1px solid var(--card-edge);
+  box-shadow:0 1px 4px rgba(26,35,126,0.06);}
+.ferie-row.today{border-color:var(--blue-ll);background:#f0f4ff;}
+.ferie-row.past{opacity:0.55;}
+.ferie-date{min-width:52px;text-align:center;}
+.ferie-date .d{font-size:26px;font-weight:800;line-height:1;color:var(--blue);}
+.ferie-date .dw{font-size:10px;text-transform:uppercase;color:var(--faded);letter-spacing:0.5px;margin-top:1px;}
+.ferie-info{flex:1;}
+.ferie-info .nm{font-size:14px;font-weight:700;color:var(--ink);}
+.ferie-info .note{font-size:11.5px;color:var(--faded);margin-top:2px;line-height:1.35;}
+.ferie-tag{font-size:10px;font-weight:700;border-radius:6px;padding:3px 8px;white-space:nowrap;}
+.ferie-tag.lun{background:#e8f5e9;color:#2e7d32;}
+.ferie-tag.ven{background:#fff3e0;color:#e65100;}
+.ferie-tag.mer{background:#ede7f6;color:#4527a0;}
+.ferie-tag.sam,.ferie-tag.dim{background:#fce4ec;color:#c62828;}
+.ferie-tag.jeu,.ferie-tag.mar{background:#e3eaff;color:#1565C0;}
+
+.info-card{background:var(--card);border-radius:16px;padding:16px 18px;margin-bottom:12px;
+  border:1px solid var(--card-edge);}
+.info-card h3{font-size:14px;font-weight:800;color:var(--ink);margin-bottom:10px;display:flex;align-items:center;gap:7px;}
+.info-card p,.info-card li{font-size:12.5px;color:var(--ink2);line-height:1.55;margin-bottom:6px;}
+.info-card ul{padding-left:16px;}
+
+.today-badge{background:var(--blue);color:#fff;font-size:10px;font-weight:800;
+  border-radius:6px;padding:2px 7px;margin-left:auto;flex-shrink:0;}
+
+#toast{position:fixed;bottom:30px;left:50%;transform:translateX(-50%) translateY(100px);z-index:9999;
+  background:#1a237e;color:#fff;padding:10px 20px;border-radius:24px;font-size:13px;font-weight:700;
+  opacity:0;transition:.25s;white-space:nowrap;pointer-events:none;}
+#toast.show{transform:translateX(-50%) translateY(0);opacity:1;}
+</style>
+</head>
+<body>
+<div id="lb"><div class="i">🎆</div><div class="t">Passe en portrait pour utiliser cet outil</div></div>
+<header>
+  <a href="../../outils.html" class="back">← Trousse</a>
+  <div class="brand"><div class="ti">🎆 Jours Fériés</div><div class="su">Calendrier légal · France métropolitaine</div></div>
+  <button class="hbtn" id="helpBtn" aria-label="Aide">?</button>
+</header>
+
+<div class="wrap">
+  <div class="year-nav">
+    <button onclick="changeYear(-1)" aria-label="Année précédente">‹</button>
+    <div class="yr" id="yearLabel">2026</div>
+    <button onclick="changeYear(1)" aria-label="Année suivante">›</button>
+  </div>
+  <div class="hero" id="heroBlock"></div>
+  <div id="feriesList"></div>
+  <div class="info-card">
+    <h3>📌 Règles essentielles</h3>
+    <ul>
+      <li><b>Chômés et payés (Art. L3133-1) :</b> les 11 jours fériés légaux sont obligatoirement chômés pour les salariés dont l'horaire habituel comprend ce jour.</li>
+      <li><b>Pont non obligatoire :</b> le pont (ex. vendredi entre un jeudi férié et le week-end) n'est pas de droit. Il doit être négocié ou compensé.</li>
+      <li><b>Majoration 100 % :</b> si le salarié travaille un jour férié (hors 1er mai), la convention collective ou l'accord d'entreprise peut prévoir une majoration. Le 1er mai travaillé est obligatoirement majoré de 100 %.</li>
+      <li><b>Jours fériés tombant le dimanche :</b> pas de report obligatoire sauf dispositions conventionnelles.</li>
+      <li><b>Alsace-Moselle :</b> 2 jours fériés supplémentaires (Vendredi Saint + 26 décembre — St-Étienne).</li>
+    </ul>
+  </div>
+  <div class="info-card">
+    <h3>⚖️ Droit au chômage du jour férié</h3>
+    <p>Pour bénéficier du chômage d'un jour férié sans perte de salaire, le salarié doit justifier de <b>3 mois d'ancienneté</b> dans l'entreprise (ou d'accord collectif plus favorable). Les intérimaires bénéficient des mêmes droits que les salariés permanents pour les jours fériés travaillés.</p>
+  </div>
+  <p style="font-size:11px;color:var(--faded);text-align:center;padding:8px 0 16px;line-height:1.6;">
+    Estimations indicatives — ni avis fiscal, ni avis juridique.<br>Outil pédagogique pour ton suivi personnel.<br>Ta convention collective peut prévoir des règles différentes.
+  </p>
+</div>
+
+<div id="toast"></div>
+
+<div id="helpOv" style="display:none;position:fixed;inset:0;z-index:300;background:rgba(26,35,126,0.7);backdrop-filter:blur(6px);align-items:center;justify-content:center;padding:20px;">
+  <div style="background:#fff;border-radius:20px;padding:24px;max-width:360px;width:100%;max-height:80vh;overflow-y:auto;">
+    <div style="font-size:32px;text-align:center;margin-bottom:12px;">🎆</div>
+    <h2 style="font-family:'Playfair Display',serif;text-align:center;color:var(--ink);margin-bottom:14px;">Jours Fériés</h2>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.55;margin-bottom:10px;">Les <b>11 jours fériés légaux</b> en France métropolitaine sont listés avec leur positionnement dans la semaine — utile pour anticiper les ponts.</p>
+    <p style="font-size:13px;color:var(--ink2);line-height:1.55;margin-bottom:10px;">Navigue entre les années avec les flèches ‹ ›. Les jours passés s'affichent en grisé.</p>
+    <button onclick="document.getElementById('helpOv').style.display='none'" style="display:block;width:100%;background:var(--blue);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:8px;">Compris ✓</button>
+  </div>
+</div>
+
+<script>
+var LS={WELCOME:'FER_WELCOMED'};
+function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
+function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
+
+var DAYS=['dim','lun','mar','mer','jeu','ven','sam'];
+var MONTHS_FR=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+
+function getFeries(year){
+  // Calcul de Pâques (algorithme de Meeus/Jones/Butcher)
+  var a=year%19,b=Math.floor(year/100),c=year%100;
+  var d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25);
+  var g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30;
+  var i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7;
+  var m=Math.floor((a+11*h+22*l)/451);
+  var month=Math.floor((h+l-7*m+114)/31);
+  var day=((h+l-7*m+114)%31)+1;
+  var paques=new Date(year,month-1,day);
+  var lp=new Date(paques); lp.setDate(paques.getDate()+1);
+  var av=new Date(paques); av.setDate(paques.getDate()+39);
+  var pent=new Date(paques); pent.setDate(paques.getDate()+49);
+  var lpent=new Date(paques); lpent.setDate(paques.getDate()+50);
+  return [
+    {date:new Date(year,0,1),nom:"Jour de l'An",note:"Art. L3133-1 Code du travail"},
+    {date:lp,nom:"Lundi de Pâques",note:"Variable selon l'année · "+MONTHS_FR[lp.getMonth()]+" "+lp.getDate()},
+    {date:new Date(year,4,1),nom:"Fête du Travail",note:"Chômé et payé sans condition d'ancienneté · Travail = +100% obligatoire"},
+    {date:new Date(year,4,8),nom:"Victoire 1945",note:"Art. L3133-1 · Commémoration armistice 8 mai 1945"},
+    {date:av,nom:"Ascension",note:"Variable · "+MONTHS_FR[av.getMonth()]+" "+av.getDate()+" · Souvent source de pont"},
+    {date:lpent,nom:"Lundi de Pentecôte",note:"Variable · "+MONTHS_FR[lpent.getMonth()]+" "+lpent.getDate()+" · Journée solidarité (souvent travaillée)"},
+    {date:new Date(year,6,14),nom:"Fête Nationale",note:"14 juillet · Commémoration prise de la Bastille"},
+    {date:new Date(year,7,15),nom:"Assomption",note:"15 août · Fête religieuse catholique"},
+    {date:new Date(year,10,1),nom:"Toussaint",note:"1er novembre · Fête de tous les saints"},
+    {date:new Date(year,10,11),nom:"Armistice 1918",note:"11 novembre · Commémoration fin de la Première Guerre mondiale"},
+    {date:new Date(year,11,25),nom:"Noël",note:"25 décembre · Fête de la Nativité"},
+  ];
+}
+
+var curYear=new Date().getFullYear();
+if(curYear<2024||curYear>2030) curYear=2026;
+var today=new Date();
+today.setHours(0,0,0,0);
+
+function changeYear(delta){
+  curYear+=delta;
+  if(curYear<2020)curYear=2020;
+  if(curYear>2035)curYear=2035;
+  render();
+}
+
+function pad(n){return String(n).padStart(2,'0');}
+function dk(d){return d.getFullYear()+'-'+pad(d.getMonth()+1)+'-'+pad(d.getDate());}
+
+function render(){
+  document.getElementById('yearLabel').textContent=curYear;
+  var feries=getFeries(curYear);
+  var todayKey=dk(today);
+  var nextFerie=null;
+  var countFuturs=0;
+  feries.forEach(function(f){
+    f.date.setHours(0,0,0,0);
+    if(f.date>=today){countFuturs++;if(!nextFerie)nextFerie=f;}
+  });
+
+  // Hero
+  var hero='<div class="big">'+feries.length+' jours</div>';
+  hero+='<div class="sub">Fériés légaux en France métropolitaine '+curYear+'</div>';
+  hero+='<div class="chips">';
+  hero+='<div class="chip">'+countFuturs+' à venir</div>';
+  // Compter les lundis/vendredis (ponts potentiels)
+  var ponts=feries.filter(function(f){var d=f.date.getDay();return d===4||d===2;}).length; // jeu→ven, mar→lun
+  hero+='<div class="chip">'+ponts+' pont'+(ponts>1?'s':'')+' potentiel'+(ponts>1?'s':'')+'</div>';
+  hero+='</div>';
+  document.getElementById('heroBlock').innerHTML=hero;
+
+  // Group by month
+  var byMonth={};
+  feries.forEach(function(f){
+    var m=f.date.getMonth();
+    if(!byMonth[m])byMonth[m]=[];
+    byMonth[m].push(f);
+  });
+
+  var html='';
+  Object.keys(byMonth).sort(function(a,b){return a-b;}).forEach(function(m){
+    html+='<div class="month-sec"><div class="month-hd">'+MONTHS_FR[m]+' '+curYear+'</div>';
+    byMonth[m].forEach(function(f){
+      var dw=f.date.getDay();
+      var dwLabel=DAYS[dw];
+      var fKey=dk(f.date);
+      var isToday=fKey===todayKey;
+      var isPast=f.date<today&&!isToday;
+      var cls='ferie-row'+(isToday?' today':'')+(isPast?' past':'');
+      // Pont info
+      var pontInfo='';
+      if(dw===4) pontInfo=' · vendredi = 🌉 pont probable';
+      if(dw===2) pontInfo=' · lundi = 🌉 pont probable';
+      if(dw===3) pontInfo=' · mercredi = semaine coupée';
+      html+='<div class="'+cls+'">';
+      html+='<div class="ferie-date"><div class="d">'+f.date.getDate()+'</div><div class="dw">'+MONTHS_FR[f.date.getMonth()].slice(0,3)+'</div></div>';
+      html+='<div class="ferie-info"><div class="nm">'+f.nom+'</div><div class="note">'+f.note+pontInfo+'</div></div>';
+      html+='<span class="ferie-tag '+dwLabel+'">'+dwLabel.toUpperCase()+'</span>';
+      if(isToday) html+='<span class="today-badge">Aujourd\'hui</span>';
+      html+='</div>';
+    });
+    html+='</div>';
+  });
+  document.getElementById('feriesList').innerHTML=html;
+}
+
+document.getElementById('helpBtn').addEventListener('click',function(){
+  document.getElementById('helpOv').style.display='flex';
+});
+render();
+if(!get(LS.WELCOME,0)){document.getElementById('helpOv').style.display='flex';set(LS.WELCOME,1);}
+</script>
+</body>
+</html>
