@@ -2084,25 +2084,17 @@ class DTEEngine {
 
   /* ── Adaptatif ──────────────────────────────────────────────── */
   _loadCoefs() {
-    const def = { fh: 1, fc: 1 };
-    try { const r = localStorage.getItem('DTE_COEFS'); if (r) return Object.assign(def, JSON.parse(r)); } catch(_) {}
-    return def;
+    // COEFS FIXES : fh=1, fc=1 — M3 (RPG) ne modifie plus M4.
+    // L'ancien autoAdapt() comparait burnout M3 à fatigue M4 et montait fh jusqu'à 2.0,
+    // faussant tous les calculs biologiques. Supprimé définitivement.
+    // Nettoyage de l'éventuel DTE_COEFS corrompu en localStorage :
+    try { localStorage.removeItem('DTE_COEFS'); } catch(_) {}
+    return { fh: 1, fc: 1 };
   }
-  saveCoefs() { try { localStorage.setItem('DTE_COEFS', JSON.stringify(this._coefs)); } catch(_) {} }
-  adapt(real, predicted, key) {
-    const err = real - predicted;
-    this._coefs[key] = Math.max(0.5, Math.min(2, this._coefs[key] - D.LR * err));
-    this.saveCoefs();
-  }
-  resetCoefs() { this._coefs = { fh: 1, fc: 1 }; this.saveCoefs(); }
-  autoAdapt() {
-    const state = this._cache;
-    if (!state || !state.raw.rpg.burnout) return;
-    const real = state.raw.rpg.burnout / 100;
-    const pred = state.scores._f || 0;
-    this.adapt(real, pred, 'fh');
-    this.adapt(real, pred, 'fc');
-  }
+  saveCoefs() { /* no-op : coefs fixes, pas d'écriture */ }
+  adapt(real, predicted, key) { /* no-op : M3 lecture seule sur M4 */ }
+  resetCoefs() { this._coefs = { fh: 1, fc: 1 }; }
+  autoAdapt() { /* no-op : M3 lecture seule sur M4 */ }
 
   /* Expose les fonctions scientifiques */
 
