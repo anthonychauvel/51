@@ -55,6 +55,8 @@ input[type="date"],input[type="month"]{overflow:hidden;min-width:0;-webkit-appea
 .wiz-step.active{display:block}
 .wiz-nav{display:flex;gap:10px;margin-top:20px}
 .wiz-nav button{flex:1;margin-top:0;border-radius:14px}
+.wiz-skip-link{display:block;text-align:center;font-size:13px;color:var(--muted);margin-top:10px;cursor:pointer;background:none;border:none;width:100%;padding:4px;text-decoration:underline;transition:color .15s}
+.wiz-skip-link:hover{color:var(--accent)}
 .wiz-choice{display:flex;gap:10px;margin-top:8px}
 .wiz-choice button{flex:1;margin-top:0;font-size:13px;padding:12px 8px;border-radius:14px}
 .blur{filter:blur(8px)}
@@ -293,6 +295,7 @@ document.addEventListener("DOMContentLoaded", function(){
       <li>La zone € est protégée par un code</li>
     </ol>
     <div class="wiz-nav"><button onclick="wizNext()">Suivant &#x2192;</button></div>
+    <button class="wiz-skip-link" onclick="closeWizard()">Passer la configuration &#x2192;</button>
   </div>
 
   <div class="wiz-step" id="wizStep2">
