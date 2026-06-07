@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script src="../articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>AT/MP — Accident du Travail & Maladie Pro</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -144,6 +145,20 @@ select.ip{appearance:none;-webkit-appearance:none;
   border-radius:12px;padding:11px;font-weight:600;font-size:13px;cursor:pointer;
   background:transparent;color:rgba(255,255,255,0.45);font-family:inherit;}
 /* ── END WIZARD ─────────────────────────────────────── */
+
+body.pageBlancheGuard>*{display:block!important;}
+
+/* Mini-dialog confirm custom (sans URL) */
+#sh-confirm-ov{position:fixed;inset:0;z-index:99999;background:rgba(0,0,0,0.6);
+  display:flex;align-items:center;justify-content:center;padding:20px;}
+#sh-confirm-box{background:#fff;border-radius:16px;padding:22px 20px;max-width:280px;
+  width:100%;text-align:center;box-shadow:0 8px 32px rgba(0,0,0,0.35);}
+#sh-confirm-msg{font-size:15px;font-weight:600;color:#1a1a1a;margin-bottom:18px;line-height:1.4;}
+.sh-confirm-btns{display:flex;gap:10px;}
+.sh-confirm-btns button{flex:1;padding:11px;border:none;border-radius:10px;
+  font-size:14px;font-weight:700;cursor:pointer;font-family:inherit;}
+.sh-confirm-yes{background:#e53935;color:#fff;}
+.sh-confirm-no{background:#f0f0f0;color:#444;}
 </style>
 </head>
 <body>
@@ -162,7 +177,7 @@ select.ip{appearance:none;-webkit-appearance:none;
     </div>
     <div class="wiz-step" data-s="2">
       <div class="wiz-feat"><div class="wi">⚖️</div><div class="wt"><b>⚖️ Protections renforcées</b>Licenciement interdit pendant arrêt AT/MP sauf faute grave ou impossibilité maintien.</div></div>
-      <div class="wiz-legal">Outil indicatif et pédagogique — ni avis juridique, ni valeur légale. Données 100 % locales.</div>
+      <div class="wiz-legal"><span data-txt="disclaimer"></span>. Données 100 % locales.</div>
     </div>
     <div class="wiz-dots" id="wizDots"></div>
     <button class="wiz-btn" id="wizNext">Continuer</button>
@@ -199,7 +214,7 @@ select.ip{appearance:none;-webkit-appearance:none;
           <div class="sn">1</div>
           <div><div class="st">Informer l'employeur dans les 24h</div>
           <div class="sd">Le salarié (ou un tiers) doit déclarer l'accident à l'employeur dans les 24 heures, sauf cas de force majeure. Par tout moyen (oral, écrit, LRAR).</div>
-          <div class="stag">24h — Art. L441-1 CSS</div></div>
+          <div class="stag">24h — <span data-art="L441-1"></span></div></div>
         </div>
         <div class="step">
           <div class="sn">2</div>
@@ -263,13 +278,13 @@ select.ip{appearance:none;-webkit-appearance:none;
       <span class="ctag info">Tableaux officiels CPAM</span>
     </div></div>
     <div class="rule"><div class="ri">📅</div><div>
-      <div class="rt">Délai de déclaration : 15 jours</div>
-      <div class="rd">Le salarié doit déclarer la MP à sa CPAM dans les 15 jours suivant l'arrêt de travail ou la constatation médicale. La déclaration se fait via le formulaire Cerfa n°60-3950.</div>
-      <span class="ctag warn">15 jours — formulaire Cerfa</span>
+      <div class="rt">Délai de déclaration : 2 ans</div>
+      <div class="rd">Le salarié dispose de 2 ans pour déclarer la maladie professionnelle à sa CPAM. Ce délai court à partir de la date du certificat médical initial (CMI) qui établit le lien entre la maladie et le travail, ou de la cessation d'activité. La déclaration se fait via le formulaire Cerfa n°60-3950.</div>
+      <span class="ctag warn">2 ans pour déclarer — formulaire Cerfa</span>
     </div></div>
     <div class="rule"><div class="ri">🔍</div><div>
-      <div class="rt">Instruction par la CPAM (3 mois)</div>
-      <div class="rd">La CPAM dispose de 3 mois pour instruire la demande (consultation des tableaux, enquête si nécessaire). Sans réponse dans ce délai, la MP est reconnue tacitement.</div>
+      <div class="rt">Instruction par la CPAM (120 jours — 4 mois)</div>
+      <div class="rd">La CPAM dispose de 120 jours francs pour instruire la demande (consultation des tableaux, enquête si nécessaire). Si l'enquête est complexe, le délai peut être prolongé. Sans décision dans ce délai, la demande peut être considérée tacitement acceptée selon les cas.</div>
       <span class="ctag ok">Silence = reconnaissance</span>
     </div></div>
     <div class="rule"><div class="ri">🫁</div><div>
@@ -298,7 +313,7 @@ select.ip{appearance:none;-webkit-appearance:none;
           <input class="ip" id="fSalJour" type="number" min="0" step="0.01" placeholder="0">
           <span class="unit">€/jour</span>
         </div>
-        <div class="hint">Salaire brut du mois précédent ÷ 30,42.</div>
+        <div class="hint">Saisis ton salaire mensuel brut (M-1). Le SJR est calculé automatiquement : salaire ÷ 30,42.</div>
       </div>
       <div class="field">
         <label>Période d'arrêt</label>
@@ -346,7 +361,7 @@ select.ip{appearance:none;-webkit-appearance:none;
     </div></div>
   </div>
 
-  <div class="note">Art. L411-1 à L452-5 CSS · Art. L461-1 à L461-7 CSS.<br>
+  <div class="note"><span data-art="L411-1"></span> à <span data-art="L452-5"></span> CSS · <span data-art="L461-1"></span> à <span data-art="L461-7"></span> CSS.<br>
     IJ AT/MP 2026 : 60% (J1–J28) puis 80% (J29+). Sans délai de carence.<br>
     🦺 Tout reste sur ton appareil.
     <button onclick="resetState()" style="background:none;border:none;color:var(--faded);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:10px;">🔄 Réinitialiser</button></div>
@@ -405,11 +420,25 @@ function calcIndem(){
   var LS={STATE:'AT_STATE',WELCOME:'AT_WELCOMED'};
   function get(k,d){try{var v=localStorage.getItem(k);return v==null?d:JSON.parse(v);}catch(e){return d;}}
   function set(k,v){try{localStorage.setItem(k,JSON.stringify(v));}catch(e){}}
-  function resetState(){
-    if(!confirm('Remettre à zéro les données de ce module ?'))return;
+  
+// Dialog confirm custom sans URL
+function shConfirm(msg, cb){
+  var ov=document.createElement('div'); ov.id='sh-confirm-ov';
+  ov.innerHTML='<div id="sh-confirm-box">' +
+    '<div id="sh-confirm-msg">'+msg+'</div>' +
+    '<div class="sh-confirm-btns">' +
+    '<button class="sh-confirm-no" onclick="document.getElementById(\'sh-confirm-ov\').remove()">Annuler</button>' +
+    '<button class="sh-confirm-yes" onclick="document.getElementById(\'sh-confirm-ov\').remove();(window._shCb||function(){})()">Remettre a zero</button>' +
+    '</div></div>';
+  window._shCb=cb; document.body.appendChild(ov);
+}
+
+  window.resetState = function resetState(){
+    shConfirm('Tout remettre à zero ?', function(){
     localStorage.removeItem(LS.STATE);
     localStorage.removeItem(LS.WELCOME);
     location.reload();
+    });
   }
   var state=get(LS.STATE,{salJour:'',periode:'j1_28'});
   // ──────────────────────────────────────────────────────────────
@@ -438,6 +467,23 @@ function calcIndem(){
     if(!wGet(WK,0)){ov.classList.add('show');wShow(0);}
   })();
   // ── End Wizard ───────────────────────────────────────────────
+</script>
+
+<script>
+// Guard anti-page-blanche: si apres 800ms le contenu n'est pas affiche, forcer
+(function(){
+  var _t = setTimeout(function(){
+    if(document.body){
+      var visible = false;
+      for(var i=0;i<document.body.children.length;i++){
+        var el=document.body.children[i];
+        if(el.id!=='lb' && window.getComputedStyle(el).display!=='none'){visible=true;break;}
+      }
+      if(!visible){ document.body.classList.add('pageBlancheGuard'); }
+    }
+  }, 800);
+  // pageBlancheGuard: afficher tout
+})();
 </script>
 </body>
 </html>
