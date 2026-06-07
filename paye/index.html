@@ -551,9 +551,9 @@ document.addEventListener("DOMContentLoaded", function(){
 
     <!-- INFOS COMPLÉMENTAIRES -->
     <div class="card-inner" style="margin-top:12px">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
         <span style="font-size:13px;color:var(--muted)">Report précédent</span>
-        <b id="prevCarry" style="font-size:14px">0.00</b>
+        <div id="prevCarry" style="font-size:14px;text-align:right;font-weight:700">0.00</div>
       </div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
         <span style="font-size:13px;color:var(--muted)">Total période</span>
@@ -1091,7 +1091,27 @@ function recalc(){
   }
   
   document.getElementById("totalMonth").textContent=fmtH(ph);
-  document.getElementById("prevCarry").textContent=fmtH(getPreviousCarry(currentKey));
+
+  // Report précédent avec décomposition par taux
+  const prevCarryVal = getPreviousCarry(currentKey);
+  const prevCarryEl = document.getElementById("prevCarry");
+  if(prevCarryEl){
+    if(prevCarryVal <= 0){
+      prevCarryEl.innerHTML = fmtH(0);
+    } else {
+      const prevBd = computePrevBreakdown();
+      let html = fmtH(prevCarryVal);
+      if(prevBd && prevBd.totalCarry > 0){
+        const parts = [];
+        if(prevBd.unpaid1 > 0) parts.push(`<span style="color:#f39c12">${fmtH(prevBd.unpaid1)}@${rules.taux1}%</span>`);
+        if(prevBd.unpaidInter > 0 && rules.taux_inter) parts.push(`<span style="color:#e67e22">${fmtH(prevBd.unpaidInter)}@${rules.taux_inter}%</span>`);
+        if(prevBd.unpaid2 > 0) parts.push(`<span style="color:#e74c3c">${fmtH(prevBd.unpaid2)}@${rules.taux2}%</span>`);
+        if(parts.length > 1) html += `<br><span style="font-size:11px;font-weight:400;opacity:.8">${parts.join(' + ')}</span>`;
+      }
+      prevCarryEl.innerHTML = html;
+    }
+  }
+
   document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
 
   // Stat-grid dynamique (s'adapte au nombre de paliers CCN)
@@ -1189,13 +1209,21 @@ function renderPaidInputs(rules){
   if(hid) hid.value = m.paid||0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────
-   computeCarryBreakdown : ventilation des heures impayées par taux
+/* Décomposition par taux du carry accumulé jusqu'au mois AVANT currentKey */
+function computePrevBreakdown(){
+  const yd = ALL_DATA[currentYear] || {};
+  const prevKeys = Object.keys(yd)
+    .filter(k => /^\d{4}-\d{2}$/.test(k) && k < currentKey)
+    .sort();
+  if(prevKeys.length === 0) return null;
+  return computeCarryBreakdown(prevKeys[prevKeys.length - 1]);
+}
+
+/* computeCarryBreakdown : ventilation des heures impayées par taux
    sur TOUT l'historique jusqu'à upToKey.
    - Mois avec paid1/paid2 : soustraction directe par taux (précis)
    - Mois legacy (paid seulement) : FIFO sur l'accumulé
-   Ne touche à aucune donnée — lecture seule.
-───────────────────────────────────────────────────────────────────── */
+   Ne touche à aucune donnée — lecture seule. */
 function computeCarryBreakdown(upToKey){
   const rules = getCCNRules();
   const yd = ALL_DATA[currentYear] || {};
@@ -1319,7 +1347,9 @@ function updateRestantDu(){
 }
 
 function calcEuro(){
-  if(!unlocked)return;
+  // Si blur désactivé : le calcul est visible de toute façon → on affiche
+  // Si blur activé : nécessite d'être déverrouillé
+  if(!unlocked && isBlurEnabled())return;
   const rate=Number(document.getElementById("rate").value)||0;
   const c25=Number(document.getElementById("coef25").value)||1.25;
   const cInter=Number(document.getElementById("coefInter")?.value)||1.10;
@@ -1389,16 +1419,18 @@ function initEuroBox(){
   const badge = document.getElementById("euroLockBadge");
   if(!euroBox) return;
   if(!isCodeEnabled()){
-    // Pas de code → accès direct
     unlocked = true;
     if(euroBox) euroBox.classList.remove("blur");
     if(unlockBox) unlockBox.style.display = "none";
     if(badge) badge.innerHTML = "🔓 Accès libre";
+    setTimeout(calcEuro, 0);
   } else {
     unlocked = false;
     if(isBlurEnabled()) euroBox.classList.add("blur"); else euroBox.classList.remove("blur");
     if(unlockBox) unlockBox.style.display = "block";
-    if(badge) badge.innerHTML = "🔒 Verrouillé";
+    if(badge) badge.innerHTML = isBlurEnabled() ? "🔒 Verrouillé" : "🔒 Code requis";
+    // Blur désactivé : les valeurs sont visibles → calcul immédiat même sans code
+    if(!isBlurEnabled()) setTimeout(calcEuro, 0);
   }
 }
 
@@ -1420,7 +1452,12 @@ async function changeCode(){const o=document.getElementById("oldCode").value,n=d
 
 /* SAUVEGARDE */
 function save(){localStorage.setItem(`${STORAGE_PREFIX}_AUTO_SAVE_DATE`,Date.now());recalcCascade();Object.entries(ALL_DATA).forEach(([y,yd])=>saveYearData(y,yd));updateSaveBadge()}
-function updateSaveBadge(){const el=document.querySelector(".badge.ok");if(!el)return;const stamp=Number(localStorage.getItem(`${STORAGE_PREFIX}_AUTO_SAVE_DATE`));el.textContent=(!stamp||isNaN(stamp))?"🟢 Sauvegarde locale auto":"🟢 Sauvegarde : "+new Date(stamp).toLocaleString()}
+function updateSaveBadge(){
+  const el=document.querySelector(".badge.ok");
+  if(el){const stamp=Number(localStorage.getItem(`${STORAGE_PREFIX}_AUTO_SAVE_DATE`));el.textContent=(!stamp||isNaN(stamp))?"🟢 Sauvegarde locale auto":"🟢 Sauvegarde : "+new Date(stamp).toLocaleString();}
+  const fileEl=document.getElementById("fileDate");
+  if(fileEl){const fs=Number(localStorage.getItem(`${STORAGE_PREFIX}_FILE_SAVE_DATE`));fileEl.textContent=(!fs||isNaN(fs))?"—":new Date(fs).toLocaleString();}
+}
 function registerYear(y){let idx=JSON.parse(localStorage.getItem(kIndex())||"[]");if(!idx.includes(y)){idx.push(y);idx.sort();localStorage.setItem(kIndex(),JSON.stringify(idx))}}
 function loadYearData(y){return JSON.parse(localStorage.getItem(kData(y))||"{}")}
 function saveYearData(y,d){localStorage.setItem(kData(y),JSON.stringify(d))}
@@ -1444,7 +1481,25 @@ window.addEventListener('storage',e=>{if(e.key==='CCN_IDCC'||e.key==='CCN_CUSTOM
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
-function exportJSON(){prepareExport();const y=getYearFromMonth(currentKey),p={exportedAt:new Date().toISOString(),year:y,appVersion:APP_VERSION,dataVersion:DATA_VERSION,DATA,SETTINGS};const b=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download="heures_sup_backup_"+Date.now()+".json";a.click();document.getElementById("fileDate").textContent=new Date().toLocaleDateString()}
+function exportJSON(){
+  prepareExport();
+  const y=getYearFromMonth(currentKey),
+        p={exportedAt:new Date().toISOString(),year:y,appVersion:APP_VERSION,dataVersion:DATA_VERSION,DATA,SETTINGS};
+  const b=new Blob([JSON.stringify(p,null,2)],{type:"application/json"});
+  const url=URL.createObjectURL(b);
+  const a=document.createElement("a");
+  a.href=url;
+  a.download="heures_sup_backup_"+Date.now()+".json";
+  document.body.appendChild(a);   // Fix Android WebView
+  a.click();
+  setTimeout(()=>{document.body.removeChild(a);URL.revokeObjectURL(url);},300);
+  // Sauvegarder la date en localStorage pour persistance
+  const stamp=Date.now();
+  localStorage.setItem(`${STORAGE_PREFIX}_FILE_SAVE_DATE`,stamp);
+  const el=document.getElementById("fileDate");
+  if(el) el.textContent=new Date(stamp).toLocaleString();
+  toast("✅ Fichier sauvegardé","success");
+}
 /* =====================================================
    MODALE PDF UNIFIÉE
 ===================================================== */
