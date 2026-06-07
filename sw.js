@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v9.0.0"; // partage : deux liens (iOS + Android)
+const CACHE_NAME = "heuressup-cache-v10.0.0"; // partage : deux liens (iOS + Android)
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -110,6 +110,8 @@ const FILES_TO_CACHE = [
   // ── Trousse à outils (54 modules) + légal ──
   "./outils.html",
   "./mentions-legales.html",
+  "./privacy.html",
+  "./outils/articles-loi.js",
   "./outils/module-activite-partielle/index.html",
   "./outils/module-alternance/index.html",
   "./outils/module-anciennete/index.html",
