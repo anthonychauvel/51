@@ -63,17 +63,82 @@ body{font-family:-apple-system,'Manrope',sans-serif;background:var(--ink);color:
 <div class="version">
   <div class="v-head">
     <span class="v-date">Juin 2026</span>
-    <span class="v-num">v9.0</span>
+    <span class="v-num">v10.0</span>
     <span class="v-new-badge">NOUVEAU</span>
   </div>
 
+  <!-- M1 -->
   <div class="item">
     <div class="dot"></div>
-    <div class="txt"><b>La Trousse à outils — Le Terrier</b> : 54 outils accessibles depuis le menu principal. Recherche, favoris, récents, catégories par thème. <span class="v-tag tag-new">Nouveau</span></div>
+    <div class="txt"><b>M1 Compteur annuel — refonte complète</b> : nouveau design gris-bleu, cartes arrondies, barre contingent redessinée, menu déroulant de période au-dessus du calendrier. Soldes en cartes (Brut / Récupération / Net). Taux horaire permanent dans la configuration. Boutons d'ajout rapide (+15 min, +30 min, +1h, +2h). <span class="v-tag tag-new">Nouveau</span></div>
+  </div>
+
+  <!-- M2 -->
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>M2 Suivi de paie — heures payées par taux</b> : saisie séparée par palier (25 % / 50 % ou 3 niveaux pour les CCN à taux intermédiaire). Nouvelle section Restant dû ventilée par taux avec estimation en €. Calcul sur tout l'historique avec rétrocompatibilité FIFO. Zone euro : deux toggles indépendants (code d'accès / floutage). Fix coefficient "×21.25" → "×1.25". <span class="v-tag tag-new">Nouveau</span></div>
+  </div>
+
+  <!-- M3/M4 -->
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>M4 Jumeau numérique — calcul de surcharge revu</b> : fenêtre glissante 28 j pour fatigue/stress/récupération ; 12 semaines pour les risques structurels (cardiovasculaire, cérébral, métabolique). Une semaine à 35 h améliore le score dès la semaine suivante. <span class="v-tag tag-fix">Correction</span></div>
   </div>
   <div class="item">
     <div class="dot"></div>
-    <div class="txt"><b>Menu personnalisable</b> : masque les modules que tu n'utilises pas. Retrouve-les à tout moment. <span class="v-tag tag-new">Nouveau</span></div>
+    <div class="txt"><b>M4 — Jours fériés et récupération</b> : un férié non travaillé compte désormais comme 7 h base CCN (et non comme une vraie semaine de congé). Le plancher de récupération élevé ne s'applique plus qu'aux vraies vacances déclarées. Fix "0 h travaillées" le week-end et score récupération 99 le dimanche hors vacances. <span class="v-tag tag-fix">Correction</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>M3 Kitsune — lecture seule sur M4</b> : suppression de autoAdapt() et adaptFromCheckin() qui doublaient artificiellement la fatigue affichée. M3 lit les données de M4, il ne les modifie plus. Nettoyage automatique de la clé DTE_COEFS corrompue au lancement. <span class="v-tag tag-fix">Correction</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>M3 Kitsune — messages selon la charge réelle</b> : les messages de Kitsune reflètent désormais les vraies heures de la semaine en cours (3 niveaux : norme / charge modérée / plafond légal Art. L3121-20). Le cache se régénère dès que les saisies M2 changent. <span class="v-tag tag-fix">Correction</span></div>
+  </div>
+
+  <!-- Trousse à outils -->
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Trousse à outils — 54 modules audités et corrigés</b> : chaque module a été vérifié contre les règles 2026. Corrections majeures : faute grave conserve l'ARE, MAP conservatoire salaire suspendu, délai MP 2 ans, grève au prorata dans le privé (pas le 1/30e), retraite anticipée RACL 58 ans si début avant 16 ans, FMD 600/900 €, dégressivité ARE à 55 ans, C2P 500 €/point. 44/44 points de l'audit conformes. <span class="v-tag tag-legal">Légal</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Référentiel juridique commun</b> : 125 articles de loi, 47 valeurs chiffrées et 16 formules partagées centralisés dans un fichier unique. Toute mise à jour (revalorisation du SMIC, plafonds…) ne nécessite plus de modifier les 54 modules un par un. <span class="v-tag tag-new">Nouveau</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Valeurs 2026 à jour</b> : SMIC 12,31 €/h (revalorisation juin 2026), PMSS 4 005 €, PASS 48 060 €, IJSS max 42,97 €/jour, AJPA 64,54 €/jour. <span class="v-tag tag-legal">Légal</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Bouton Favoris</b> : remplace le bouton Terrier dans le menu. Menu déroulant donnant accès direct aux outils épinglés + lien vers la caisse à outils. <span class="v-tag tag-new">Nouveau</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Optimiseur de congés</b> : dans le module Jours fériés, un encart calcule automatiquement les meilleurs combos fériés + ponts pour maximiser les jours de repos consécutifs. <span class="v-tag tag-new">Nouveau</span></div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Corrections techniques</b> : bouton Réinitialiser réparé dans 41 modules, sélection d'onglets dans Avantages en nature, dialogue de confirmation sans URL, anti-page-blanche sur tous les modules. <span class="v-tag tag-fix">Correction</span></div>
+  </div>
+</div>
+
+<div class="sep"></div>
+
+<!-- ═══ VERSION PRÉCÉDENTE ═══ -->
+<div class="version">
+  <div class="v-head">
+    <span class="v-date">Juin 2026</span>
+    <span class="v-num">v9.0</span>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>La Trousse à outils — Le Terrier</b> : 54 outils accessibles depuis le menu principal. Recherche, favoris, récents, catégories par thème.</div>
+  </div>
+  <div class="item">
+    <div class="dot"></div>
+    <div class="txt"><b>Menu personnalisable</b> : masque les modules que tu n'utilises pas. Retrouve-les à tout moment.</div>
   </div>
   <div class="item">
     <div class="dot"></div>
@@ -81,11 +146,11 @@ body{font-family:-apple-system,'Manrope',sans-serif;background:var(--ink);color:
   </div>
   <div class="item">
     <div class="dot"></div>
-    <div class="txt"><b>Valeurs 2026</b> : SMIC 12,31 €/h (juin 2026), PMSS 4 005 €, PASS 48 060 € mis à jour dans tous les modules. <span class="v-tag tag-fix">Mise à jour</span></div>
+    <div class="txt"><b>Valeurs 2026</b> : SMIC, PMSS, PASS mis à jour dans tous les modules. <span class="v-tag tag-fix">Mise à jour</span></div>
   </div>
   <div class="item">
     <div class="dot"></div>
-    <div class="txt"><b>Module Ancienneté</b> : l'arbre pousse visuellement selon les années d'ancienneté. <span class="v-tag tag-fix">Amélioration</span></div>
+    <div class="txt"><b>Module Ancienneté</b> : l'arbre pousse visuellement selon les années d'ancienneté.</div>
   </div>
 </div>
 
@@ -99,7 +164,7 @@ body{font-family:-apple-system,'Manrope',sans-serif;background:var(--ink);color:
   </div>
   <div class="item">
     <div class="dot"></div>
-    <div class="txt"><b>GrillePaye Lumina (M2)</b> : 419 conventions collectives avec grilles de salaires 2026. SMIC 1 867,02 € intégré.</div>
+    <div class="txt"><b>GrillePaye Lumina (M7)</b> : 419 conventions collectives avec grilles de salaires 2026. SMIC 1 867,02 € intégré.</div>
   </div>
   <div class="item">
     <div class="dot"></div>
