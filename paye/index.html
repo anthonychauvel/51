@@ -1368,8 +1368,16 @@ function updateRestantDu(){
   }
 
   const bd = computeCarryBreakdown(currentKey);
-  const { unpaid1, unpaidInter, unpaid2, totalCarry, rules } = bd;
+  const actualCarry = DATA[currentKey]?.carry || 0;
+  // Réconciliation : si le total du breakdown diverge du carry réel
+  // (peut arriver après changement CCN car les heures historiques sont
+  // recalculées avec les nouvelles règles mais paid1/paid2 correspondent aux anciennes)
+  const breakdownOk = Math.abs(bd.totalCarry - actualCarry) <= 0.26;
+  const { unpaid1, unpaidInter, unpaid2, totalCarry, rules } = breakdownOk ? bd
+    : { unpaid1: actualCarry, unpaidInter: 0, unpaid2: 0, totalCarry: actualCarry, rules: bd.rules };
   const COLORS = ["#f39c12","#e67e22","#e74c3c"];
+  // Si incohérence, on n'affiche pas la ventilation per-taux (données invalides après CCN change)
+  const showBreakdown = breakdownOk && (unpaid1 > 0 || unpaidInter > 0 || unpaid2 > 0);
   function buildRows(withEuro, rate, c1, cI, c2, cn){
     const paliers = [
       { h: unpaid1,     taux: rules.taux1,      coef: c1, color: COLORS[0] },
@@ -1393,6 +1401,8 @@ function updateRestantDu(){
   if(container){
     if(totalCarry <= 0){
       container.innerHTML = '<div class="restedu-ok">\u2705 Toutes les heures sont pay\u00e9es</div>';
+    } else if(!showBreakdown){
+      container.innerHTML = `<div class="restedu-card"><div class="rd-title">\u26a0\ufe0f Restant d\u00fb : ${fmtH(totalCarry)}</div><div style="font-size:11px;color:#f39c12;margin-top:6px">\u26a0\ufe0f CCN modifi\u00e9e\u00a0\u2014 v\u00e9rifiez les paiements per-taux des mois pr\u00e9c\u00e9dents.</div></div>`;
     } else {
       const { rows } = buildRows(false);
       container.innerHTML = `<div class="restedu-card"><div class="rd-title">\u26a0\ufe0f Restant d\u00fb : ${fmtH(totalCarry)}</div>${rows}<div style="font-size:10px;color:var(--muted);margin-top:6px">D\u00e9tail par taux \u2014 montants dans la zone \u20ac</div></div>`;
@@ -1400,6 +1410,10 @@ function updateRestantDu(){
   }
   if(euroDiv){
     if(totalCarry <= 0){ euroDiv.innerHTML = '<div class="restedu-ok">\u2705 Toutes les heures sont pay\u00e9es</div>'; return; }
+    if(!showBreakdown){
+      euroDiv.innerHTML = `<div class="restedu-card"><div class="rd-title">\u26a0\ufe0f Restant d\u00fb : ${fmtH(totalCarry)}</div><div style="font-size:12px;color:#f39c12;margin-top:6px">\u26a0\ufe0f CCN modifi\u00e9e \u2014 les paiements per-taux pr\u00e9c\u00e9dents doivent \u00eatre revrifi\u00e9s pour que l\u2019estimation \u20ac soit juste.</div></div>`;
+      return;
+    }
     const rate = Number(document.getElementById("rate")?.value)||0;
     const c1   = Number(document.getElementById("coef25")?.value)||(1+rules.taux1/100);
     const cI   = Number(document.getElementById("coefInter")?.value)||(1+(rules.taux_inter||10)/100);
@@ -1579,7 +1593,21 @@ const rules=getCCNRules();
 const defaultCoefs=getDefaultCoefs();
 ["rate","coef25","coefInter","coef50","coefNet"].forEach(id=>{const def=defaultCoefs[id],inp=document.getElementById(id);if(inp){inp.value=SETTINGS[id]??def;inp.oninput=()=>{SETTINGS[id]=parseFloat(inp.value)||0;localStorage.setItem(kSettings(),JSON.stringify(SETTINGS));recalc()}}});
 // Réappliquer les coefs si la CCN change depuis un autre onglet/module
-window.addEventListener('storage',e=>{if(e.key==='CCN_IDCC'||e.key==='CCN_CUSTOM'){Object.keys(SETTINGS).forEach(k=>delete SETTINGS[k]);applyDefaultCoefs();}});
+function clearPerRatePaidData(){
+  /* Appelé quand la CCN change — les paid1/paid2/paidInter stockés correspondent
+     aux anciens paliers de taux et deviendraient incohérents avec la nouvelle CCN. */
+  Object.values(ALL_DATA).forEach(yd=>{
+    Object.values(yd||{}).forEach(m=>{
+      if(m && typeof m === 'object'){
+        delete m.paid1; delete m.paid2; delete m.paidInter;
+      }
+    });
+  });
+  // Re-sauvegarder toutes les années
+  Object.entries(ALL_DATA).forEach(([y,yd])=>saveYearData(y,yd));
+}
+
+window.addEventListener('storage',e=>{if(e.key==='CCN_IDCC'||e.key==='CCN_CUSTOM'){Object.keys(SETTINGS).forEach(k=>delete SETTINGS[k]);applyDefaultCoefs();clearPerRatePaidData();}});
 
 /* EXPORT */
 function prepareExport(){createSnapshot("before_export",true);recalcCascade();saveYearData(getYearFromMonth(currentKey),ALL_DATA[getYearFromMonth(currentKey)])}
