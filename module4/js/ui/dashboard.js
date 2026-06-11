@@ -140,23 +140,16 @@ class Dashboard {
             return '+'+v.toFixed(1)+'h/jour ('+impact+')'+suffix;
         }},
         // _consecOT : calculé en arrière-plan (bio) mais non affiché — évite confusion utilisateur
-        { label:'Semaines de surcharge cumulées', key:'_cumulWeeks', fmt: v => {
+        { label:'Surcharge chronique (12 sem.)', key:'_cumulWeeksLong', fmt: v => {
             const vR = Math.round(v * 10) / 10;
-            if (vR <= 0) return 'Aucun cumul (rythme normal)';
-            // Échelle :
-            //  - < 1   : effet partiel d'une seule semaine (charge légère ponctuelle)
-            //  - 1-3   : 1 à 3 semaines en surcharge — phase de vigilance
-            //  - 4-7   : phase P2 INRS — fatigue chronique modérée
-            //  - 8-15  : phase P3 INRS — surmenage installé
-            //  - 16+   : phase P4 INRS — risque burn-out
-            let phase, multiplier;
-            if (vR < 1)        { phase = 'effet partiel (semaine légère)'; multiplier = '×1.00'; }
-            else if (vR < 4)   { phase = 'phase P1 — vigilance';            multiplier = '×1.00'; }
-            else if (vR < 8)   { phase = 'phase P2 — fatigue chronique';   multiplier = '×1.12'; }
-            else if (vR < 16)  { phase = 'phase P3 — surmenage';            multiplier = '×1.25'; }
-            else if (vR < 24)  { phase = 'phase P4 — risque burn-out';     multiplier = '×1.40'; }
-            else               { phase = 'phase P4+ — épuisement critique';multiplier = '×1.55'; }
-            return vR.toFixed(1)+' sem. — '+phase+' '+multiplier;
+            if (vR <= 0) return 'Aucune surcharge chronique';
+            // Phases alignées sur le panneau Stress (même fenêtre 12 sem, mêmes seuils)
+            let phase;
+            if (vR < 4)        phase = 'phase P1 — vigilance';
+            else if (vR < 8)   phase = 'phase P2 — fatigue chronique';
+            else if (vR < 16)  phase = 'phase P3 — surmenage';
+            else               phase = 'phase P4 — risque burn-out';
+            return vR.toFixed(1)+' sem. en surcharge — '+phase;
         }},
       ],
       facteurs_vie: [
@@ -189,9 +182,10 @@ class Dashboard {
             if (vR <= 0) return 'Sous le seuil (12 sem.)';
             if (vR < 1) return 'Effet partiel d\'1 semaine légère';
             if (vR < 4) return vR.toFixed(1)+' sem. — vigilance';
-            if (vR < 8) return vR.toFixed(1)+' sem. — fatigue chronique';
-            if (vR < 16) return vR.toFixed(1)+' sem. — surmenage';
-            return vR.toFixed(1)+' sem. — risque burn-out';
+            if (vR < 4) return vR.toFixed(1)+' sem. — phase P1 vigilance';
+            if (vR < 8) return vR.toFixed(1)+' sem. — phase P2 fatigue chronique';
+            if (vR < 16) return vR.toFixed(1)+' sem. — phase P3 surmenage';
+            return vR.toFixed(1)+' sem. — phase P4 risque burn-out';
         }},
       ],
       facteurs_vie: [
@@ -246,7 +240,7 @@ class Dashboard {
       source: 'OMS/OIT 2021 (Pega et al.) · Lancet 2021 (Ervasti) · Kivimäki 2015',
       facteurs_heures: [
         { label:'Heures hebdo vs seuil OMS (48h)', key:'_recentWeeklyH', fmt: v => v>=55?'≥55h : RR=1.35 AVC, RR=1.17 cardio':v>=48?v.toFixed(0)+'h : au-delà du légal (48h)':'Dans les normes (<48h)' },
-        { label:'Durée d\'exposition (dose-temps)', key:'_cumulMonths', fmt: v => {
+        { label:'Durée d\'exposition (12 sem.)', key:'_cumulMonthsLong', fmt: v => {
             const vR = Math.round(v * 100) / 100; // 2 décimales pour voir le decay
             const norm3 = window.DTE&&window.DTE._state&&window.DTE._state.norm;
             const isRest = norm3&&norm3._isVacationWeek;
@@ -303,7 +297,7 @@ class Dashboard {
       desc: 'Capacité à récupérer. Diminue avec l\'accumulation. Sonnentag 2003 : le détachement psychologique est clé.',
       source: 'INRS · Sonnentag 2003 (J.Applied Psychology) · Nature 2025 (Fan)',
       facteurs_heures: [
-        { label:'Fatigue accumulée', key:'_cumulWeeks', fmt: v => {
+        { label:'Fatigue accumulée (12 sem.)', key:'_cumulWeeksLong', fmt: v => {
             const isRest = (window.DTE&&window.DTE._state&&window.DTE._state.norm&&window.DTE._state.norm._isVacationWeek);
             const vR = Math.round(v * 10) / 10;
             if (isRest && vR > 0) {
