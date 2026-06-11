@@ -24,6 +24,7 @@ class Dashboard {
     const {scores, norm, raw}=state;
     this._renderHero(scores, norm, raw);
     this._renderScores(scores);
+    this._renderCommuteActivation(scores);
     this._renderRisks(risks||[]);
     this._renderAdvice(advice||[]);
     this._renderRadar(scores, norm);
@@ -470,6 +471,49 @@ class Dashboard {
             </div>
           </div>
 
+          <!-- DÉTAIL COMPLET DU CALCUL (transparence — depuis scores._detail) -->
+          ${(() => {
+            const det = scores2 && scores2._detail && scores2._detail[key];
+            const cmt = scores2 && scores2._commute;
+            const badScore = !['performance','recovery'].includes(key);
+            let html = '';
+            if (det && det.components) {
+              const rows = det.components.filter(c => c.points !== 0 || c.reconcile).map(c => {
+                const sign = c.points > 0 ? '+' : '';
+                const colr = c.points === 0 ? 'rgba(255,255,255,0.5)'
+                  : (c.points > 0) === badScore ? '#ff8888' : '#88ddaa';
+                return `<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;margin-bottom:5px;">
+                  <div style="flex:1;font-size:11px;color:rgba(255,255,255,0.78);line-height:1.35;">${c.label}
+                    <span style="display:block;font-size:8px;color:rgba(255,255,255,0.32);font-family:var(--font-mono);">${c.study||''}</span></div>
+                  <div style="font-size:12px;font-weight:700;color:${colr};font-family:var(--font-mono);white-space:nowrap;">${sign}${c.points} pts</div>
+                </div>`;
+              }).join('');
+              html += `<div style="background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.1);padding:10px;margin-bottom:8px;">
+                <div style="font-size:10px;font-family:var(--font-mono);color:rgba(255,255,255,0.65);letter-spacing:.1em;margin-bottom:8px;display:flex;justify-content:space-between;">
+                  <span>🧮 DÉTAIL DU CALCUL</span><span style="color:${col};font-weight:700;">= ${det.total}</span></div>
+                ${rows}
+                ${det.note ? `<div style="font-size:9px;color:rgba(255,255,255,0.42);margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,0.08);line-height:1.5;">ℹ️ ${det.note}</div>` : ''}
+              </div>`;
+            }
+            // Section Trajet — feature active + score concerné
+            if (cmt && cmt.enabled && ['fatigue','stress','recovery','cvRisk'].includes(key)) {
+              const t = cmt.today;
+              const imp = cmt.impact[key];
+              html += `<div style="background:rgba(155,109,255,0.06);border:1px solid rgba(155,109,255,0.25);padding:10px;margin-bottom:8px;">
+                <div style="font-size:10px;font-family:var(--font-mono);color:#b18bff;letter-spacing:.1em;margin-bottom:8px;">🚦 TRAJET DOMICILE-TRAVAIL</div>
+                ${t ? `<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:11px;">
+                  <div><span style="color:rgba(255,255,255,0.4);">Mode</span><br><b style="color:#fff;">${t.modeLabel}</b></div>
+                  <div><span style="color:rgba(255,255,255,0.4);">Durée A/R</span><br><b style="color:#fff;">${t.timeMin} min</b></div>
+                  <div><span style="color:rgba(255,255,255,0.4);">Conditions</span><br><b style="color:#fff;">${t.qualLabel}</b></div>
+                  <div><span style="color:rgba(255,255,255,0.4);">Impact</span><br><b style="color:#b18bff;">${imp>0?'+':''}${imp} pts</b></div>
+                </div>` : `<div style="font-size:11px;color:rgba(255,255,255,0.5);">Pas de saisie aujourd'hui — charge moyenne calculée sur ${cmt.nbDays28} jour(s).</div>`}
+                <div style="font-size:9px;color:rgba(255,255,255,0.45);margin-top:7px;padding-top:6px;border-top:1px solid rgba(155,109,255,0.15);line-height:1.5;">
+                  Charge trajet 28j : <b style="color:#b18bff;">${cmt.level}</b>${key==='cvRisk'?'<br>⚠️ '+cmt.cvRiskNote:''}</div>
+              </div>`;
+            }
+            return html;
+          })()}
+
           <!-- Note explicative (optionnelle) -->
           ${meta.note ? `<div style="font-size:10px;color:rgba(255,255,255,0.45);padding:7px 8px;margin-bottom:6px;background:rgba(255,255,255,0.04);border-left:2px solid rgba(0,200,255,0.3);">ℹ️ ${meta.note}</div>` : ''}
 
@@ -480,6 +524,99 @@ class Dashboard {
         </div>`;
       modal.querySelector('.modal-overlay').addEventListener('click',()=>modal.classList.add('hidden'));
       modal.classList.remove('hidden');
+    };
+  }
+
+  // ── CARTE D'ACTIVATION DU SUIVI TRANSPORT (module optionnel) ───────────────
+  // Le suivi transport est ajouté par-dessus l'original. OFF par défaut : sans
+  // activation, l'utilisateur reste sur les scores de base (études d'origine).
+  // Cette carte est le point d'activation depuis le Dashboard.
+  _renderCommuteActivation(scores){
+    const grid = document.getElementById('scores-grid');
+    const anchor = grid ? (grid.closest('.panel') || grid.parentElement) : document.querySelector('.dashboard-main');
+    const old = document.getElementById('commute-activation-card');
+    if(old) old.remove();
+    if(!anchor || !scores || !scores._hasData) return; // rien à enrichir sans données
+
+    let enabled = false, commuteH = 0;
+    try { enabled = localStorage.getItem('M4_COMMUTE_ENABLED') === 'true'; } catch(_){}
+    try { commuteH = parseFloat((JSON.parse(localStorage.getItem('DTE_SETTINGS')||'{}')).commuteH)||0; } catch(_){}
+    const pickerOpen = !!window._dashCommutePickerOpen;
+
+    const card = document.createElement('div');
+    card.id = 'commute-activation-card';
+    card.style.cssText = 'margin:12px 16px;padding:14px 16px;border-radius:10px;border:1px solid rgba(155,109,255,'
+      + (enabled?'0.35':'0.2') + ');background:rgba(155,109,255,' + (enabled?'0.06':'0.03') + ');';
+
+    const btn = (onclick,label,solid)=>`<button onclick="${onclick}" style="white-space:nowrap;padding:8px 14px;border-radius:6px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;letter-spacing:.08em;border:1px solid rgba(155,109,255,0.5);`
+      + (solid?'background:linear-gradient(135deg,#9b6dff,#6d3fcc);color:#fff;':'background:rgba(255,255,255,0.05);color:#b18bff;') + '">' + label + '</button>';
+
+    if(enabled){
+      const cmt = scores._commute || {};
+      const lvl = (cmt.level && cmt.level !== 'off') ? cmt.level : null;
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#fff;">🚦 Suivi transport activé</div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;line-height:1.5;">
+              Vos trajets domicile-travail influent sur fatigue, stress, récupération et risque cardio.${lvl?' Charge actuelle : <b style="color:#b18bff;">'+lvl+'</b>.':''}
+            </div>
+          </div>
+          ${btn('window._dashDeactivateCommute()','Désactiver',false)}
+        </div>`;
+    } else if(pickerOpen){
+      // Activer nécessite une durée de trajet → mini-sélecteur (aller, comme les réglages)
+      const opts = [15,30,45,60,90].map(m =>
+        `<button onclick="window._dashCommutePick(${m})" style="flex:1;padding:8px 2px;border-radius:5px;cursor:pointer;font-family:var(--font-mono);font-size:11px;font-weight:700;border:1px solid rgba(155,109,255,0.3);background:rgba(0,10,25,0.6);color:#fff;">${m}</button>`
+      ).join('');
+      card.innerHTML = `
+        <div style="font-size:13px;font-weight:700;color:#fff;margin-bottom:4px;">🚦 Durée de votre trajet ?</div>
+        <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-bottom:10px;line-height:1.5;">Minutes par trajet (aller). Vous pourrez l'ajuster chaque jour au check-in.</div>
+        <div style="display:flex;gap:6px;">${opts}</div>
+        <div style="text-align:right;margin-top:8px;"><button onclick="window._dashCommuteCancel()" style="background:none;border:none;color:rgba(255,255,255,0.4);font-size:11px;cursor:pointer;">Annuler</button></div>`;
+    } else {
+      card.innerHTML = `
+        <div style="display:flex;align-items:center;justify-content:space-between;gap:12px;">
+          <div style="flex:1;">
+            <div style="font-size:13px;font-weight:700;color:#fff;">🚦 Suivi transport <span style="font-size:9px;color:#b18bff;font-family:var(--font-mono);border:1px solid rgba(155,109,255,0.4);border-radius:3px;padding:1px 5px;margin-left:4px;">OPTIONNEL</span></div>
+            <div style="font-size:11px;color:rgba(255,255,255,0.55);margin-top:3px;line-height:1.5;">
+              Intégrez l'impact de vos trajets domicile-travail à vos scores santé. Sinon, votre analyse reste sur les études de base.
+            </div>
+          </div>
+          ${btn('window._dashActivateCommute()','Activer',true)}
+        </div>`;
+    }
+    anchor.insertAdjacentElement('afterend', card);
+
+    // Handlers (réattachés à chaque rendu — idempotent)
+    window._dashActivateCommute = () => {
+      let cH = 0; try { cH = parseFloat((JSON.parse(localStorage.getItem('DTE_SETTINGS')||'{}')).commuteH)||0; } catch(_){}
+      if(cH > 0){
+        try { localStorage.setItem('M4_COMMUTE_ENABLED','true'); } catch(_){}
+        window._dashCommutePickerOpen = false;
+        if(window._fullSync) window._fullSync();
+      } else {
+        window._dashCommutePickerOpen = true; // pas de durée → demander
+        if(window.DTE && window.DTE._state) this._renderCommuteActivation(window.DTE._state.scores);
+      }
+    };
+    window._dashCommutePick = (min) => {
+      try {
+        const s = JSON.parse(localStorage.getItem('DTE_SETTINGS')||'{}');
+        s.commuteH = min/60; localStorage.setItem('DTE_SETTINGS', JSON.stringify(s));
+        localStorage.setItem('M4_COMMUTE_ENABLED','true');
+      } catch(_){}
+      window._dashCommutePickerOpen = false;
+      if(window._fullSync) window._fullSync();
+    };
+    window._dashCommuteCancel = () => {
+      window._dashCommutePickerOpen = false;
+      if(window.DTE && window.DTE._state) this._renderCommuteActivation(window.DTE._state.scores);
+    };
+    window._dashDeactivateCommute = () => {
+      try { localStorage.setItem('M4_COMMUTE_ENABLED','false'); } catch(_){}
+      window._dashCommutePickerOpen = false;
+      if(window._fullSync) window._fullSync();
     };
   }
 
