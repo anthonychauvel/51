@@ -1527,10 +1527,15 @@ class DTEEngine {
                           avgExtra7, nightInfo.isNightComplete)
       : sleepDebtScore(avgH7);
 
-    // Taux de surcharge (jours >BASE+2h)
+    // Taux de surcharge — RAMPE GRADUELLE (anti-falaise)
+    // Avant : seuil binaire (jour > BASE+2h → compte pour 1, sinon 0) → falaise 45h→46h
+    // (à 2h/j pile : 0% des jours ; à 2.2h/j : 100% → saut de fatigue +23 en 1h).
+    // Maintenant : chaque jour contribue PROPORTIONNELLEMENT à son excès entre +2h et +3h.
+    // Endpoints préservés : +2h → 0 (45h), +3h → 1 (50h) ; seul le 46-49h est lissé.
     const allDays   = Object.values(days);
-    const overCount = allDays.filter(d => (D.BASE_JOUR + d.extra) > D.BASE_JOUR + 2).length;
-    const overRatio = allDays.length ? overCount / allDays.length : 0;
+    const overRatio = allDays.length
+      ? allDays.reduce((sum, d) => sum + Math.min(1, Math.max(0, ((d.extra || 0) - 2) / 1)), 0) / allDays.length
+      : 0;
 
     // Contingent légal — reset au 1er janvier (Art. L3121-30)
     // Calculé sur l'année courante UNIQUEMENT depuis le days fusionné M1+M2
@@ -2113,8 +2118,21 @@ class DTEEngine {
 
     // Appliquer lifestyle (multiplicateur sur fatigue) + check-in (additif modéré)
     const lsMult    = lifestyleBoost.fatigueMult || 1.0;
-    const fatWithLS = fatigue * lsMult;
-    let fatFinal  = Math.max(0, Math.min(1, fatWithLS + checkinBoost.fatigue));
+    // ── ATTÉNUATION SOUS SURCHARGE CHRONIQUE (anti-optimisme) ──────────────────
+    // Un bon mode de vie MODULE la fatigue mais ne peut pas EFFACER 10 semaines de
+    // surcharge soutenue (on ne compense pas une dette physiologique chronique par
+    // le sport). Plus la surcharge 12 sem est élevée, moins la protection lifestyle
+    // et le bon ressenti comptent. Réf : la charge allostatique (McEwen 1998) domine.
+    const chronicSev = Math.min(1, (norm._cumulWeeksLong || 0) / 12); // 0 (aucune) → 1 (12+ sem)
+    const lsProtection = Math.max(0, 1 - lsMult);                     // part protectrice (>0 si lsMult<1)
+    const effLsMult = lsMult >= 1
+      ? lsMult                                                        // lifestyle défavorable : inchangé
+      : 1 - lsProtection * (1 - chronicSev * 0.65);                   // protection réduite jusqu'à -65% à 12 sem
+    const fatWithLS = fatigue * effLsMult;
+    // Un bon ressenti (check-in qui RÉDUIT la fatigue) pèse moins sous surcharge chronique
+    let ciFat = checkinBoost.fatigue;
+    if (ciFat < 0) ciFat = ciFat * (1 - chronicSev * 0.5);
+    let fatFinal  = Math.max(0, Math.min(1, fatWithLS + ciFat));
     let strFinal  = Math.max(0, Math.min(1, stress + (lifestyleBoost.stress||0))); // PATCH : let (vs const) — réassignable par plafond long terme
     let perfFinal = Math.max(0.05, Math.min(1, perf  + checkinBoost.performance + (lifestyleBoost.performance||0)));
     // Récupération : check-in subjectif a plus de poids en repos actif (Sonnentag 2003)
