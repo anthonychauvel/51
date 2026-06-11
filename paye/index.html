@@ -542,6 +542,9 @@ document.addEventListener("DOMContentLoaded", function(){
     <!-- STAT GRID — rendue dynamiquement par recalc() selon les paliers CCN -->
     <div id="statGridContainer" class="stat-grid"></div>
 
+    <!-- AVERTISSEMENT : paiements enregistrés dans les périodes futures -->
+    <div id="futurePaymentsAlert" style="display:none;margin-top:10px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.4);border-radius:14px;padding:12px 14px"></div>
+
     <!-- DETAIL PALIERS (caché dans stat-grid, gardé pour JS) -->
     <div style="display:none" id="hoursBreakdown">
       <p>Heures à 25 % : <b id="hours25">0.00</b></p>
@@ -1040,7 +1043,8 @@ function closeTutorial(){document.getElementById("tutorialModal").classList.remo
 /* CALCUL */
 function getPreviousCarry(mk){const am=[];const yd=ALL_DATA[currentYear]||{};Object.keys(yd).forEach(k=>{if(/^\d{4}-\d{2}$/.test(k))am.push({key:k,month:yd[k]})});am.sort((a,b)=>a.key.localeCompare(b.key));let pc=0;for(const item of am){if(item.key===mk)break;if(item.month.carry!=null)pc=item.month.carry}return pc}
 function recalc(){
-  checkActivatePerTaux(); // Active per-taux définitivement si carry précédent = 0
+  checkActivatePerTaux();
+  updateFuturePaymentsAlert(); // Avertir si des paiements futurs existent sur cette période
   const{start,end}=getPeriodBounds(currentKey);const weeks={};
   const rules=getCCNRules();
   Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const wk=getWeekKeyM2(date);weeks[wk]=(weeks[wk]||0)+h})});
@@ -1271,6 +1275,60 @@ function renderPaidInputs(rules){
   });
   const hid = document.getElementById('paidHours');
   if(hid) hid.value = m.paid||0;
+}
+
+/* ─────────────────────────────────────────────────────────────────────
+   checkFuturePayments / updateFuturePaymentsAlert
+   Détecte si des périodes FUTURES ont déjà des paiements enregistrés.
+   Affiche un avertissement quand l'utilisateur consulte/modifie une
+   période passée (évite les incohérences silencieuses).
+───────────────────────────────────────────────────────────────────── */
+function checkFuturePayments(){
+  const yd = ALL_DATA[currentYear]||{};
+  const found=[];
+  Object.keys(yd).filter(k=>/^\d{4}-\d{2}$/.test(k)&&k>currentKey).sort().forEach(k=>{
+    const m=yd[k]; if(!m)return;
+    const paid=m.paid1!==undefined?(Number(m.paid1)||0)+(Number(m.paidInter)||0)+(Number(m.paid2)||0):(Number(m.paid)||0);
+    if(paid>0)found.push({key:k,paid});
+  });
+  return found;
+}
+
+function updateFuturePaymentsAlert(){
+  const el=document.getElementById("futurePaymentsAlert");
+  if(!el)return;
+  const future=checkFuturePayments();
+
+  // Vérifier si la période courante a des heures à 50% (signe que le palier a été dépassé)
+  const has50 = (DATA[currentKey]?.carry||0) > 0;
+  const bd = computeCarryBreakdown(currentKey);
+  const has50pct = bd.unpaid2 > 0;
+
+  if(future.length===0 && !has50pct){el.style.display="none";return;}
+
+  let html = '';
+
+  if(future.length > 0){
+    const rows=future.map(f=>{
+      const[y,m]=f.key.split("-").map(Number);
+      const label=new Date(y,m-1,1).toLocaleDateString("fr-FR",{month:"long",year:"numeric"});
+      return `<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span>${label}</span><b style="color:#f39c12">${fmtH(f.paid)} enregistr\u00e9es</b></div>`;
+    }).join("");
+    html += `<div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.5px;color:#f39c12;margin-bottom:8px">\u26a0\ufe0f Paiements d\u00e9j\u00e0 enregistr\u00e9s dans les p\u00e9riodes suivantes</div>${rows}<div style="font-size:10px;color:var(--muted);margin-top:6px;line-height:1.4">Si vous avez modifi\u00e9 cette p\u00e9riode, v\u00e9rifiez que ces paiements correspondent toujours au nouveau solde.</div>`;
+  }
+
+  if(has50pct && future.length > 0){
+    html += `<div style="margin-top:10px;padding-top:10px;border-top:1px solid rgba(243,156,18,.3);font-size:11px;color:var(--muted);line-height:1.5">
+      \u2139\ufe0f Des heures \u00e0 50% sont pr\u00e9sentes dans le restant d\u00fb. Des heures ajout\u00e9es r\u00e9troactivement ont pu faire d\u00e9passer le palier hebdomadaire (${getCCNRules().palier1}h/sem.) \u2014 l\u2019exc\u00e9dent bascule automatiquement \u00e0 ${getCCNRules().taux2}%.
+    </div>`;
+  }
+
+  if(html){
+    el.style.display="block";
+    el.innerHTML=html;
+  } else {
+    el.style.display="none";
+  }
 }
 
 /* Décomposition par taux du carry accumulé jusqu'au mois AVANT currentKey */
