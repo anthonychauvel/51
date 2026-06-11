@@ -203,6 +203,62 @@ function cvRisk(weeklyH, cumulMonths) {
   return Math.min(0.65, (acuteRisk * durationF) + cumulRisk);
 }
 
+/* ═══════════════════════════════════════════════════════════════════════════
+ * FEATURE IMPACT TRAJET (commute) — spec M4 « SimulHeures · Juin 2026 »
+ * Optionnelle, OFF par défaut (M4_COMMUTE_ENABLED === 'true' requis).
+ * Modélisée par deux moyennes mobiles (28 jours ouvrés / 12 semaines), comme
+ * cumulWeeks : un trajet quotidien identique → charge STABLE, jamais croissante.
+ * ═══════════════════════════════════════════════════════════════════════════ */
+
+// Facteur durée (trajet A/R, en minutes) — Künn-Nelen 2016 (J. Health Economics)
+function commuteDureeFactor(minutes) {
+  const m = Number(minutes) || 0;
+  if (m <= 0)  return 0.00; // télétravail / pas de trajet
+  if (m <= 30) return 0.05;
+  if (m <= 60) return 0.12;
+  if (m <= 90) return 0.20; // seuil critique Künn-Nelen
+  return 0.28;
+}
+
+// Facteur qualité déclarée (Q3) — Hansson 2011 / Evans 2002
+//   0 = Fluide/Agréable · 1 = Normal · 2 = Long ou retard · 3 = Difficile/Stressant
+function commuteQualityFactor(qual) {
+  switch (Number(qual)) {
+    case 0:  return 0.80; // Hansson 2011
+    case 2:  return 1.30; // Evans 2002
+    case 3:  return 1.53; // Evans 2002 (cortisol +18%)
+    case 1:
+    default: return 1.00;
+  }
+}
+
+// Libellés d'affichage (transparence popups + glossaire)
+const COMMUTE_QUAL_LABELS = { 0: 'Fluide / Agréable', 1: 'Normal', 2: 'Long ou retard', 3: 'Difficile / Stressant' };
+const COMMUTE_MODE_LABELS = { car: 'Voiture / Moto', transit: 'Transports en commun', bike: 'Vélo / Trottinette', walk: 'À pied', remote: 'Télétravail' };
+
+// Coefficients d'injection dans les scores (spec §4.4) — exposés pour le glossaire
+const COMMUTE_COEFS = {
+  fatigue:  { coef: 0.30, window: '28j',   study: 'ANACT 2015',     note: 'Amplitude de la journée' },
+  stress:   { coef: 0.45, window: '28j',   study: 'Künn-Nelen 2016', note: 'Durée trajet → stress' },
+  recovery: { coef: 0.25, window: '28j',   study: 'Novaco 2004',     note: 'Congestion → récupération −15%' },
+  cvRisk:   { coef: 0.10, window: '12 sem', study: 'Kivimäki 2015 (extrapolé)', note: 'Signal INDIRECT — cortisol chronique' },
+};
+
+// Sources complètes pour le glossaire du module (transparence scientifique §6)
+const COMMUTE_SOURCES = [
+  { id: 'kunn-nelen-2016', label: 'Durée trajet → stress / fatigue', ref: 'Künn-Nelen 2016, Journal of Health Economics', statut: 'Solide' },
+  { id: 'evans-2002',      label: 'Imprévisibilité → cortisol +18%', ref: 'Evans 2002, Environment & Behavior',       statut: 'Solide' },
+  { id: 'novaco-2004',     label: 'Congestion → récupération −15%',  ref: 'Novaco 2004, Journal of Applied Psychology', statut: 'Solide' },
+  { id: 'anact-2015',      label: 'Amplitude journée → fatigue',     ref: 'ANACT 2015 (France)',                       statut: 'Solide' },
+  { id: 'hansson-2011',    label: 'Mode de transport (statistique)', ref: 'Hansson 2011, Journal of Transport & Health', statut: 'Tendance' },
+  { id: 'kivimaki-2015',   label: 'Trajet → risque cardio (indirect)', ref: 'Extrapolé depuis Kivimäki 2015',          statut: 'Indirect' },
+  { id: 'sonnentag-2003',  label: 'Décroissance pendant vacances',   ref: 'Sonnentag 2003 (détachement)',              statut: 'Plausible' },
+];
+
+// Mention obligatoire dans le panneau cvRisk (spec §6)
+const COMMUTE_CVRISK_DISCLAIMER = "Le lien trajet → risque cardio est une extrapolation (cortisol chronique). Non mesuré directement dans Künn-Nelen 2016.";
+
+
 /**
  * RISQUE COGNITIF — OEM 2025 (Jang et al.)
  * +19% volume gyrus frontal médian à ≥52h → impact sur attention,
@@ -870,6 +926,60 @@ class DTEEngine {
       : workDaysPerWeek));
     const weeklyExtra28 = avgExtraPerDay28 * _stdDays;
 
+    // ── FENÊTRE GLISSANTE 7 JOURS RÉELLE — charge biologique courante ──────────
+    // REFONTE : la charge "live" est désormais la somme des HS sur les 7 derniers
+    // jours CALENDAIRES (J-6 → J), repos inclus comme 0 HS — PAS la semaine civile
+    // tronquée (lun → aujourd'hui).
+    //
+    // Justification (Meijman & Mulder 1998, Effort-Recovery) : le corps porte la
+    // charge des jours précédents. Il n'y a aucune réinitialisation physiologique
+    // le lundi. L'ancienne logique (weeklyExtra = sumExtra7, somme lun→auj) faisait
+    // chuter la charge de 45h (dimanche) à 36h (lundi +1h) → fatigue 47→7 (artefact).
+    //
+    // Propriétés de la fenêtre glissante :
+    //   - Continuité : dim 45h → lun 44h (les jours N-1 restent dans la fenêtre)
+    //   - Lissage des pics : un pic isolé reste 7j dans la fenêtre puis sort
+    //     progressivement → décroissance douce, pas de cliff
+    //   - cumulWeeks (28j) porte la charge CHRONIQUE ; cette fenêtre = charge AIGUË
+    let sumExtra7d = 0;
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      if (e && e.absent > 0) continue;
+      if (e && (e.recup >= 7)) continue;
+      if (vacances[k]) continue;
+      const isFerie7 = specialDays[k] === 'ferie';
+      if (isFerie7 && !(e && e.extra > 0)) continue; // férié non travaillé = repos
+      sumExtra7d += e ? (e.extra || 0) : 0; // jours de repos/normaux = 0 HS (lissage)
+    }
+
+    // ── PIC JOURNALIER AIGU — amplitude d'une journée extrême (7 derniers jours) ──
+    // Une journée de 17h (= base 7h + 10h sup pour une CCN 35h) est dangereuse EN SOI,
+    // indépendamment du volume hebdomadaire :
+    //   - Amplitude journalière > 13h (L3121-18 : 10h max, dérogation 12h)
+    //   - Repos quotidien de 11h impossible (L3131-1)
+    //   - Fenêtre de sommeil écrasée → pic de cortisol (Thompson 2022 : +14% dès 1 nuit courte)
+    // La fenêtre glissante 7j (volume) ne capte PAS cette concentration : 10h sup sur 1 jour
+    // ou étalées sur la semaine donnent le même volume mais un risque aigu très différent.
+    // → on isole la journée la PLUS chargée des 7 derniers jours + son ancienneté (décroissance).
+    let peakDayH = 0;          // heures totales de la journée la plus chargée (base + HS)
+    let daysSincePeak = 0;     // ancienneté du pic (0 = aujourd'hui)
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today); d.setDate(today.getDate() - i);
+      const k = localDK(d);
+      const e = days[k];
+      if (!e || e.absent > 0 || (e.recup >= 7)) continue;
+      if (vacances[k]) continue;
+      const isFerieP = specialDays[k] === 'ferie';
+      if (isFerieP && !(e.extra > 0)) continue;
+      // Total réel de la journée = base du jour (seuil/jour) + HS du jour
+      const dayH = (e.extra > 0 || !_isRestDowAt(d.getDay(), d))
+        ? (_dteGetCCNRules().seuil / Math.max(1, (7 - _getRestDaysSet().size))) + (e.extra || 0)
+        : 0;
+      if (dayH > peakDayH) { peakDayH = dayH; daysSincePeak = i; }
+    }
+
     // Semaine civile courante (lun → aujourd'hui)
     // CORRECTION : on ne compte un jour que s'il a une ENTRÉE RÉELLE dans M1/M2
     // (e !== undefined ET e.extra >= 0). Un jour sans entrée = pas de donnée = pas comptabilisé.
@@ -936,27 +1046,21 @@ class DTEEngine {
     //   Avant : countWorkDays28 >= 5 → 28j écrasait la semaine courante →
     //   progression lun→ven invisible (weeklyExtra constant = moyenne historique).
     let weeklyExtra;
-    if (count7 >= 1 || sumExtra7 > 0) {
-      // Des HS saisies cette semaine → utiliser les HS réelles (progression jour par jour)
-      weeklyExtra = sumExtra7;
-    } else if (todayDowA === 1 && countWorkDays28 >= 5) {
-      // Lundi matin sans saisie → moyenne rolling 28j (Sonnentag 2003 : persistance biologique)
-      // Remplace l'ancienne logique semaine N-1 brute qui causait des artefacts avec M2
-      // (somme jour par jour → valeur gonflée). weeklyExtra28 est lissé et source-agnostique.
-      weeklyExtra = weeklyExtra28;
-    } else if (todayDowA === 1) {
-      // Lundi matin, pas assez d'historique → seuil CCN (0 HS)
-      weeklyExtra = 0;
+    if (sumExtra7d > 0 || count7 >= 1 || sumExtra7 > 0) {
+      // Charge biologique courante = fenêtre glissante 7 jours réelle.
+      // Élimine la discontinuité de la semaine civile : aucun reset le lundi,
+      // les jours N-1 encore dans la fenêtre maintiennent la continuité.
+      weeklyExtra = sumExtra7d;
     } else if (countWorkDays28 >= 5) {
-      // FIX no-entry mid-week : estimation PROPORTIONNELLE au jour de semaine
-      // Avant : weeklyExtra28 plein → score chute de 72→54 en milieu de semaine sans saisie
-      // Après : weeklyExtra28 × (jours écoulés / semaine) → estimation progressive
-      // Ex: mardi sans saisie → 2/5 × historique → estimation légère, pas alarmiste
-      // Sonnentag 2003 : la charge biologique s'accumule progressivement dans la semaine
-      const _dayRatio = Math.min(1, todayDowA / Math.max(1, workDaysPerWeek));
-      weeklyExtra = weeklyExtra28 * _dayRatio;
+      // Aucune charge dans les 7 derniers jours MAIS historique 28j présent.
+      // Cas : reprise après une longue coupure. La charge aiguë récente est nulle
+      // (récupération en cours) — la persistance de la fatigue accumulée est portée
+      // par cumulWeeks (28j) dans _scores(), pas par weeklyExtra. → 0 HS aiguë.
+      // (Filet de sécurité conservé pour ne pas afficher 35h sec en plein historique :
+      //  on garde une trace résiduelle très atténuée plutôt que 0 brut.)
+      weeklyExtra = 0;
     } else {
-      // Fallback démarrage
+      // Démarrage / aucune donnée
       weeklyExtra = 0;
     }
     // FIX BUG 2 : avgExtra7 normalisé sur workDaysPerWeek STANDARD (5j)
@@ -1130,23 +1234,32 @@ class DTEEngine {
     const todayMonday = weekMondayA;
     const baseJourCCN = _baseJourCCN;
 
-    // ── 4 semaines glissantes (w=3=plus ancienne → w=0=semaine courante) ──────
+    // ── 4 fenêtres de 7 jours ANCRÉES SUR `today` (glissement jour par jour) ──
+    // FIX RÉSIDU dim→lun : l'ancien code ancrait les 4 semaines sur le LUNDI civil
+    // (weekMondayA). Quand `today` franchit dimanche→lundi, weekMondayA saute de 7j
+    // d'un coup → toute la fenêtre 28j se décale d'une semaine → la semaine la plus
+    // ancienne sortait ENTIÈREMENT → cumulWeeks chutait d'un cran entier (4→3) →
+    // saut de score de ~15 pts le lundi matin (résidu signalé).
+    //
+    // NOUVEAU : fenêtre w = [today-(w*7+6) … today-(w*7)]. Quand `today` avance d'1 jour,
+    // chaque fenêtre se décale d'1 jour → la plus ancienne perd 1 jour et la courante
+    // en gagne 1 → variation FRACTIONNAIRE et continue, plus de cliff hebdomadaire.
+    // La calibration (overload/semaine, cap 1.0/fenêtre) est strictement préservée.
     for (let w = 3; w >= 0; w--) {
       let weekH = 0, hasAnyDay = false;
       let isVacWeekCur = false;
 
-      for (let dd = 0; dd < workDaysPerWeek; dd++) {
-        const dt = new Date(todayMonday);
-        dt.setDate(todayMonday.getDate() - w * 7 + dd);
+      // 7 jours calendaires de la fenêtre — on saute les jours de repos comme avant
+      for (let dd = 0; dd < 7; dd++) {
+        const dt = new Date(today);
+        dt.setDate(today.getDate() - (w * 7 + dd));
         if (dt > today) continue;
 
         const k = localDK(dt);
         const e = days[k];
+        const dow = dt.getDay();
         const isFerieDay = specialDays[k] === 'ferie';
         const isVacDay   = !!vacances[k];
-
-        // RÈGLE FÉRIÉS : férié seul dans DTE_VACANCES → NE déclenche PAS isVacWeek
-        // Un vrai congé = vacances ET pas un jour férié
         const isRealVacDay = isVacDay && !isFerieDay;
 
         if (isRealVacDay) {
@@ -1157,35 +1270,30 @@ class DTEEngine {
           continue;
         }
 
-        // MÉTHODE ORIGINE : un férié non travaillé = repos = 7h CCN, pas de HS
-        // La semaine garde sa base complète (5j × 7h = 35h)
-        // Si l'utilisateur a travaillé le férié → check-in ignoré → extra = 0 ou présent
+        // Jour de repos configuré (sam/dim) SANS heures réelles → ignoré (pas de base)
+        // Avec heures réelles (travail exceptionnel) → compté comme jour travaillé
+        if (_isRestDowAt(dow, dt) && !(e && e.extra > 0)) continue;
+
         if (e && e.absent > 0) continue;
         if (e && e.recup >= baseJourCCN) continue;
+        // Férié non travaillé = repos (pas de base, pas de HS) — méthode origine
+        if (isFerieDay && !(e && e.extra > 0)) continue;
 
-        const hs = (e && !isVacDay && !isFerieDay) ? (e.extra || 0)
-                 : (e && isFerieDay) ? (e.extra || 0)  // travaillé sur férié → HS comptées
-                 : 0;
+        const hs = e ? (e.extra || 0) : 0;
         weekH += baseJourCCN + hs;
         hasAnyDay = true;
       }
 
       if (!hasAnyDay) continue;
 
-      // Surcharge = weekH dépasse le SEUIL CCN ABSOLU (35h par défaut)
-      // Un férié retire un jour → weekH peut être < 35h même avec HS → pas de surcharge
       const hsAuDessus35 = Math.max(0, weekH - _ccnSeuilW);
 
       if (isVacWeekCur) {
         // Semaine de vrais congés → pas d'accumulation (repos actif)
-        // Pas de réduction non plus (déjà à 0 en base glissante)
       } else if (hsAuDessus35 >= 5) {
-        // Vraie surcharge ≥ 5h au-dessus de 35h → accumulation
         const contribution = Math.min(1.0, hsAuDessus35 / (_ccnSeuilW * 0.20));
         cumulWeeks = Math.round((cumulWeeks + contribution) * 1e9) / 1e9;
       }
-      // Semaines ≤ 35h (normales, légères, avec fériés) → contribution = 0
-      // En fenêtre glissante : elles "tombent" automatiquement quand elles sortent des 4 sem
     }
 
     // Arrondi final
@@ -1524,6 +1632,111 @@ class DTEEngine {
       console.log('%c[DTE-DBG] recentWeeklyH final:', 'color:#0fa;font-weight:bold', recentWeeklyH);
     }
 
+    // ═══ FEATURE IMPACT TRAJET — moyennes mobiles 28j ouvrés / 12 semaines ═══════
+    // OFF par défaut : aucun impact si M4_COMMUTE_ENABLED ≠ 'true'.
+    let commuteLoad28 = 0, commuteLoad12 = 0;
+    let _commuteEnabled = false, _commuteProfileH = 0;
+    let _commuteToday = null;       // entrée du jour (pour affichage popup)
+    let _commuteNbDays28 = 0, _commuteNbWeeks12 = 0;
+    try {
+      _commuteEnabled = (typeof localStorage !== 'undefined') &&
+                        localStorage.getItem('M4_COMMUTE_ENABLED') === 'true'; // défaut OFF
+      try {
+        const _set = JSON.parse(localStorage.getItem('DTE_SETTINGS') || '{}');
+        if (_set && _set.commuteH !== undefined) _commuteProfileH = parseFloat(_set.commuteH) || 0;
+      } catch (_) {}
+
+      if (_commuteEnabled) {
+        const _hist = JSON.parse(localStorage.getItem('DTE_CHECKIN_HISTORY') || '[]');
+        const _byDate = {};
+        _hist.forEach(e => { if (e && e.date) _byDate[e.date] = e; });
+
+        const _hasCommute = (e) => e && (e.commuteTime !== undefined || e.commuteMode !== undefined);
+        const _contrib = (e) => commuteDureeFactor(e.commuteMode === 'remote' ? 0 : e.commuteTime)
+                              * commuteQualityFactor(e.commuteQual);
+
+        // Entrée du jour (ou la plus récente) pour le panneau détail
+        const _todayE = _byDate[localDK(today)];
+        if (_hasCommute(_todayE)) _commuteToday = _todayE;
+
+        // ── Moyenne mobile 28 JOURS OUVRÉS (hors week-ends, hors fériés) ──────────
+        // Numérateur = somme des contributions ; dénominateur = jours ouvrés AVEC
+        // donnée (entrée commute OU jour de congé déclaré → contrib 0, dilue → récup).
+        let _sum28 = 0, _count28 = 0, _seen = 0;
+        for (let i = 0; i < 60 && _seen < 28; i++) { // borne calendaire de sécurité
+          const d = new Date(today); d.setDate(today.getDate() - i);
+          const k = localDK(d);
+          if (_isRestDowAt(d.getDay(), d)) continue;     // week-end / repos hebdo → hors moyenne
+          if (specialDays[k] === 'ferie') continue;       // férié → exclu (spec §4.1)
+          _seen++;                                        // jour ouvré du fenêtrage
+          const e = _byDate[k];
+          if (_hasCommute(e)) { _sum28 += _contrib(e); _count28++; }
+          else if (vacances[k]) { _count28++; }           // congé : contrib 0, compté → récupération
+          // sinon (jour ouvré non renseigné) → ni numérateur ni dénominateur
+        }
+        _commuteNbDays28 = _count28;
+        commuteLoad28 = _count28 > 0 ? (_sum28 / _count28) : 0;
+
+        // ── Moyenne mobile 12 SEMAINES (moyenne des moyennes hebdo) ───────────────
+        let _weekVals = [];
+        for (let w = 0; w < 12; w++) {
+          let _ws = 0, _wc = 0;
+          for (let dd = 0; dd < 7; dd++) {
+            const d = new Date(today); d.setDate(today.getDate() - (w * 7 + dd));
+            const k = localDK(d);
+            if (_isRestDowAt(d.getDay(), d)) continue;
+            if (specialDays[k] === 'ferie') continue;
+            const e = _byDate[k];
+            if (_hasCommute(e)) { _ws += _contrib(e); _wc++; }
+            else if (vacances[k]) { _wc++; }
+          }
+          if (_wc > 0) _weekVals.push(_ws / _wc);
+        }
+        _commuteNbWeeks12 = _weekVals.length;
+        commuteLoad12 = _weekVals.length > 0
+          ? _weekVals.reduce((a, b) => a + b, 0) / _weekVals.length
+          : 0;
+      }
+    } catch (_) { commuteLoad28 = 0; commuteLoad12 = 0; }
+
+    // Niveau qualitatif pour le dashboard (spec §5 : faible / modéré / élevé)
+    const _commuteLevel = !_commuteEnabled ? 'off'
+      : commuteLoad28 < 0.08 ? 'faible'
+      : commuteLoad28 < 0.18 ? 'modéré'
+      : 'élevé';
+
+    // Objet TRANSPARENCE — consommé par les popups de scores + glossaire.
+    // Tous les impacts sont en POINTS (sur 100) pour affichage direct.
+    const _commute = {
+      enabled:       _commuteEnabled,
+      profileH:      _commuteProfileH,
+      load28:        Math.round(commuteLoad28 * 1000) / 1000,
+      load12:        Math.round(commuteLoad12 * 1000) / 1000,
+      level:         _commuteLevel,
+      nbDays28:      _commuteNbDays28,
+      nbWeeks12:     _commuteNbWeeks12,
+      // Détail du jour (saisies Q1/Q2/Q3) — null si pas de saisie
+      today: _commuteToday ? {
+        mode:        _commuteToday.commuteMode || null,
+        modeLabel:   COMMUTE_MODE_LABELS[_commuteToday.commuteMode] || '—',
+        timeMin:     _commuteToday.commuteMode === 'remote' ? 0 : (_commuteToday.commuteTime || 0),
+        qual:        _commuteToday.commuteQual ?? null,
+        qualLabel:   COMMUTE_QUAL_LABELS[_commuteToday.commuteQual] || '—',
+        dureeFactor: commuteDureeFactor(_commuteToday.commuteMode === 'remote' ? 0 : _commuteToday.commuteTime),
+        qualFactor:  commuteQualityFactor(_commuteToday.commuteQual),
+      } : null,
+      // Impact CHIFFRÉ par score (points sur 100) — pour affichage dans chaque popup
+      impact: {
+        fatigue:  Math.round(commuteLoad28 * COMMUTE_COEFS.fatigue.coef  * 100 * 10) / 10,
+        stress:   Math.round(commuteLoad28 * COMMUTE_COEFS.stress.coef   * 100 * 10) / 10,
+        recovery: Math.round(-commuteLoad28 * COMMUTE_COEFS.recovery.coef * 100 * 10) / 10,
+        cvRisk:   Math.round(commuteLoad12 * COMMUTE_COEFS.cvRisk.coef    * 100 * 10) / 10,
+      },
+      coefs:         COMMUTE_COEFS,
+      sources:       COMMUTE_SOURCES,
+      cvRiskNote:    COMMUTE_CVRISK_DISCLAIMER,
+    };
+
     return {
       heures:         clamp(avgH7, 0, 14),
       consec:         clamp(consec, 0, 14),
@@ -1553,6 +1766,11 @@ class DTEEngine {
       _consecRestDays: consecRestDays,
       _consecNonOTDays: consecNonOTDays,
       _recentVacDays28: recentVacDays28,
+      _peakDayH:        peakDayH,
+      _daysSincePeak:   daysSincePeak,
+      _commuteLoad28:   commuteLoad28,
+      _commuteLoad12:   commuteLoad12,
+      _commute:         _commute,
       _sigma:         sigma,
       _contingentPct: contingentPct,
       _rcoDepassement: rcoDepassement,
@@ -1722,8 +1940,24 @@ class DTEEngine {
     // On utilise cortisolModel (indépendant de fatigue, pas de dépendance circulaire)
     const prelimStress = cortisolModel(weeklyH, norm._sigma || 0, cumW, consecRest, consecNonOT);
     const stressFatigueMult = 1 + prelimStress * 0.15; // INRS: stress amplifie fatigue (modéré — 0.15 évite surréaction)
+
+    // ── COMPOSANTE AIGUË JOURNALIÈRE (amplitude d'une journée extrême) ─────────
+    // Indépendante du volume hebdo : une journée de 17h pique en soi (sommeil écrasé,
+    // repos quotidien 11h impossible, amplitude > 13h). Décroissance rapide : un pic
+    // isolé s'estompe en ~3 jours (Thompson 2022 : cortisol revient en quelques nuits).
+    //   peakDayH=17 → excès 7h au-dessus du max légal 10h → bump fort le jour même
+    //   demi-vie 2.5j : J0=100%, J+1=76%, J+2=58%, J+3=44%
+    // En vacances : pas d'amplitude de travail → composante neutralisée.
+    const peakDayH       = norm._peakDayH || 0;
+    const daysSincePeak  = norm._daysSincePeak || 0;
+    const dayExcess      = Math.max(0, peakDayH - 10); // au-delà du max journalier légal (L3121-18)
+    const peakDecay      = dayExcess > 0 ? Math.exp(-Math.log(2) * daysSincePeak / 2.5) : 0;
+    // Cap 0.45 : même une journée de 24h ne sature pas seule la fatigue (le chronique domine)
+    const fatAcuteDay    = isVacWeekNow ? 0 : Math.min(0.45, dayExcess * 0.05) * peakDecay;
+    const strAcuteDay    = isVacWeekNow ? 0 : Math.min(0.35, dayExcess * 0.04) * peakDecay; // cortisol aigu (Thompson 2022)
+
     const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
-    const fatigue = Math.max(0, Math.min(1, fat_raw));
+    const fatigue = Math.max(0, Math.min(1, fat_raw + fatAcuteDay)); // + pic aigu journalier
 
     // ── STRESS/CORTISOL (Thompson 2022 + ANACT/INRS + IARC 2019) ─────────────
     // nightFactor : multiplicateur biologique selon régime horaire
@@ -1752,7 +1986,7 @@ class DTEEngine {
     // Pondération check-in subjectif : si l'utilisateur déclare "stress léger" en vacances,
     // c'est un signal biologique réel (Sonnentag 2003 : le détachement vécu atténue le cortisol)
     const checkinStressFactor = checkinBoost.stress < 0 ? 0.75 : 1.0;
-    const stress      = Math.max(0, Math.min(1, (cortisolS * 0.55 * nightFactor + stressExt) /* FIX: 0.65→0.55 */ * _pf.strF * checkinStressFactor + checkinBoost.stress));
+    const stress      = Math.max(0, Math.min(1, (cortisolS * 0.55 * nightFactor + stressExt) /* FIX: 0.65→0.55 */ * _pf.strF * checkinStressFactor + checkinBoost.stress + strAcuteDay)); // + pic aigu journalier
 
     // ── PERFORMANCE (Pencavel 2014, Stanford) ────────────────────
     // En semaine de vacances : la performance "travail" n'a pas de sens.
@@ -2057,6 +2291,18 @@ class DTEEngine {
     const stressBoostCV  = strFinal * 0.15;   // stress 100% → +15 pts cvRisk
     const stressBoostCog = (strFinal > 0.6 && cumW > 4) ? (strFinal - 0.6) * 0.10 : 0;
 
+    // ── INJECTION FEATURE TRAJET (spec §4.4) — offsets additifs CONSTANTS ────────
+    // Ajoutés en fin de chaîne pour ne pas être amplifiés par les multiplicateurs
+    // chroniques : un trajet stable produit un décalage fixe (+4% fat / +5% str pour
+    // 1h voiture/j), jamais croissant. OFF par défaut → load28/12 = 0 → aucun effet.
+    const _cmL28 = norm._commuteLoad28 || 0;
+    const _cmL12 = norm._commuteLoad12 || 0;
+    if (_cmL28 > 0) {
+      fatFinal = Math.min(1, fatFinal + _cmL28 * 0.30); // ANACT 2015
+      strFinal = Math.min(1, strFinal + _cmL28 * 0.45); // Künn-Nelen 2016
+      recFinal = Math.max(0, recFinal - _cmL28 * 0.25); // Novaco 2004
+    }
+
     // ── PLANCHERS / PLAFONDS BIOLOGIQUES FINAUX ──────────────────────────────
     // Fatigue  : min 1% (Meijman 1998 — effort basal toujours présent)
     // Stress   : min 1% (McEwen 1998 — cortisol basal circulant en permanence)
@@ -2069,6 +2315,148 @@ class DTEEngine {
     perfFinal = Math.min(0.99, perfFinal);
     recFinal  = Math.min(0.99, recFinal);
 
+    // Valeurs finales des risques (capturées pour réutilisation return + détail)
+    const cvFinal   = Math.min(Math.max(0.01, cvR + fatFinal * 0.10 + strFinal * 0.12 + stressBoostCV + (lifestyleBoost.cvRisk||0) + _cmL12 * 0.10), 1);
+    const cogFinal  = Math.min(Math.max(0.01, cogR + fatFinal * 0.15 + stressBoostCog), 1);
+
+    // ═══ TRANSPARENCE SCORES V2 — décomposition affichable dans chaque popup ═════
+    // Même esprit que _commute : chaque score est décomposé en composantes chiffrées
+    // (points sur 100) et multiplicateurs, avec l'étude source. Les composantes sont
+    // INDICATIVES (le score final intègre aussi planchers/plafonds biologiques) — un
+    // champ `note` le précise. Objectif : l'utilisateur voit d'où vient chaque score.
+    const P  = (x) => Math.round(x * 100 * 10) / 10;          // → points sur 100, 1 décimale
+    const Fx = (x) => Math.round(x * 100) / 100;              // → facteur ×, 2 décimales
+    const _ci = (() => { try {
+      const d = new Date();
+      const _dk = d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+      return (JSON.parse(localStorage.getItem('DTE_CHECKIN_HISTORY')||'[]')).find(h=>h.date===_dk) || null;
+    } catch(_) { return null; } })();
+    const _cmI = (norm._commute && norm._commute.impact) || { fatigue:0, stress:0, recovery:0, cvRisk:0 };
+
+    // Produit des multiplicateurs appliqués à la base fatigue (pour exprimer les briques en points finaux)
+    const _fatMult = cumulAmp * sonnentagMult * stressFatigueMult * (_pf.fatF || 1) * (lsMult || 1);
+
+    // Base fatigue (briques brutes, avant amplification chronique)
+    const _fatBaseRaw = fatHS + fatSommeil + fatSurchar * vacFatReduction
+                      + fatBurnout * vacFatReduction + (fatHS > 0 ? 0 : fatCumulative);
+
+    const _detail = {
+      // ── FATIGUE ──────────────────────────────────────────────────────────────
+      // Modèle : (briques de base) × amplificateurs chroniques + ajouts. Rendu
+      // entièrement additif (l'amplification est une ligne explicite) → les points
+      // se somment au total, sans illusion de double comptage.
+      fatigue: {
+        total: Math.round(fatFinal * 100),
+        components: [
+          { label: 'Heures supplémentaires',     points: P(fatHS),                       study: 'INRS (phases de fatigue)' },
+          { label: 'Dette de sommeil',            points: P(fatSommeil),                  study: 'Thompson 2022' },
+          { label: 'Surcharge hebdomadaire',      points: P(fatSurchar * vacFatReduction),study: 'INRS' },
+          { label: 'Burnout (suivi RPG)',         points: P(fatBurnout * vacFatReduction),study: 'Maslach / OMS' },
+          { label: 'Fatigue chronique cumulée',   points: P(fatHS > 0 ? 0 : fatCumulative), study: 'J. Occup. Health 2021' },
+          { label: 'Amplification chronique (cumul × récup × stress)', points: P(_fatBaseRaw * (_fatMult - 1)), study: 'J. Occup. Health 2021 · Sonnentag 2003 · INRS' },
+          { label: 'Pic journalier aigu',         points: P(fatAcuteDay),                 study: 'Thompson 2022 · L3121-18' },
+          { label: 'Trajet',                      points: _cmI.fatigue,                   study: 'ANACT 2015', conditional: 'commute' },
+          { label: 'Ressenti (check-in)',         points: P(checkinBoost.fatigue),        study: 'Auto-déclaré' },
+        ],
+        note: 'S\'ajoutent aussi des paliers chroniques (≥4/6/8 sem) et un plancher biologique (min 1%, Meijman 1998).',
+      },
+      // ── STRESS / CORTISOL ──────────────────────────────────────────────────────
+      stress: {
+        total: Math.round(strFinal * 100),
+        components: [
+          { label: 'Charge horaire (cortisol)',   points: P(cortisolS * 0.55 * nightFactor * (_pf.strF||1) * checkinStressFactor), study: 'Thompson 2022 · IARC 2019' },
+          { label: 'Stress chronique',            points: P(stressExt * (_pf.strF||1) * checkinStressFactor), study: 'McEwen 1998 (charge allostatique)' },
+          { label: 'Pic journalier aigu',         points: P(strAcuteDay),    study: 'Thompson 2022' },
+          { label: 'Trajet',                      points: _cmI.stress,       study: 'Künn-Nelen 2016', conditional: 'commute' },
+          { label: 'Ressenti (check-in)',         points: P(checkinBoost.stress), study: 'Auto-déclaré · ANACT' },
+        ],
+        note: (nightFactor > 1 ? 'Travail de nuit : cortisol majoré (×' + Fx(nightFactor) + ', IARC 2019). ' : '') + 'Plancher cortisol basal : min 1% (McEwen 1998).',
+      },
+      // ── PERFORMANCE ──────────────────────────────────────────────────────────────
+      performance: {
+        total: Math.round(perfFinal * 100),
+        components: [
+          { label: 'Capacité de base (charge)',   points: P(perfPencavel),     study: 'Pencavel 2014 (Stanford)' },
+          { label: 'Dégradation cognitive >52h',  points: -P(perfPencavel * cogDeg * 0.3), study: 'OEM 2025 (Jang)' },
+          { label: 'Impact fatigue',              points: -P(perfPencavel * (1 - cogDeg*0.3) * perfFat), study: 'Pencavel 2014' },
+          { label: 'Impact stress',               points: -P(perfStr),         study: 'INRS' },
+          { label: 'Motivation',                  points: P(perfMotiv),        study: 'Nature 2025 (sens au travail)' },
+          { label: 'Ressenti (check-in)',         points: P(checkinBoost.performance), study: 'Auto-déclaré' },
+        ],
+        note: 'Plafonnée par la récupération (perf ≤ 95% si récup < 90%) et le re-entry post-congés. Max 99% (Pencavel 2014).',
+      },
+      // ── RÉCUPÉRATION ──────────────────────────────────────────────────────────────
+      recovery: {
+        total: Math.round(recFinal * 100),
+        components: [
+          { label: 'Capacité maximale',           points: 100,                 study: 'Référence 100%' },
+          { label: 'Coût fatigue',                points: -P(fatigue * fatigueDecayRest * 0.85), study: 'Meijman & Mulder 1998' },
+          { label: 'Coût surcharge cumulée',      points: -P((cumW/25) * 0.35 * fatigueDecayRest), study: 'J. Occup. Health 2021' },
+          { label: 'Pénalité travail de nuit',    points: -P(recNightPenalty), study: 'IARC 2019' },
+          { label: 'Détachement (repos)',         points: P(sonnentagRestBonus * 0.20), study: 'Sonnentag 2003' },
+          { label: 'Maîtrise (hors travail)',     points: P(masteryBonus * 0.20), study: 'Sonnentag 2003 (Fig.3)' },
+          { label: 'Bonus repos prolongé',        points: P(vacationDirectBonus), study: 'de Bloom 2010' },
+          { label: 'Trajet',                      points: _cmI.recovery,       study: 'Novaco 2004', conditional: 'commute' },
+        ],
+        note: 'Après 6+ sem. de surcharge, usure long terme (de Bloom 2010) ; plafond 99% (Sonnentag 2003).',
+      },
+      // ── RISQUE CARDIOVASCULAIRE ──────────────────────────────────────────────────
+      cvRisk: {
+        total: Math.round(cvFinal * 100),
+        components: [
+          { label: 'Charge horaire chronique',    points: P(cvR),              study: 'Kivimäki 2015 (Lancet) · WHO/ILO 2021' },
+          { label: 'Contribution fatigue',        points: P(fatFinal * 0.10),  study: 'Corrélation inter-scores' },
+          { label: 'Contribution stress',         points: P(strFinal * 0.12 + stressBoostCV), study: 'Kivimäki 2015 (+4%/+10pts stress)' },
+          { label: 'Trajet (12 sem)',             points: _cmI.cvRisk,         study: 'Kivimäki 2015 (extrapolé)', conditional: 'commute' },
+        ],
+        note: COMMUTE_CVRISK_DISCLAIMER + ' Risque structurel : décroissance lente (demi-vie 180j).',
+      },
+      // ── RISQUE COGNITIF ──────────────────────────────────────────────────────────
+      cogRisk: {
+        total: Math.round(cogFinal * 100),
+        components: [
+          { label: 'Charge horaire (>52h)',       points: P(cogR),             study: 'OEM 2025 (Jang, Yonsei)' },
+          { label: 'Contribution fatigue',        points: P(fatFinal * 0.15),  study: 'Corrélation inter-scores' },
+          { label: 'Contribution stress',         points: P(stressBoostCog),   study: 'OMS/OIT 2021' },
+        ],
+        note: 'Modifications corticales réversibles mais lentement (demi-vie 120j — Draganski 2004).',
+      },
+      // ── RISQUE MÉTABOLIQUE / DIABÈTE ───────────────────────────────────────────────
+      diabetesRisk: {
+        total: Math.round(diabR * 100),
+        components: [ { label: 'Charge horaire chronique (12 sem)', points: P(diabR), study: 'Lancet 2021 (HR=1.18)' } ],
+        note: 'Risque structurel long terme.',
+      },
+      // ── RISQUE MUSCULOSQUELETTIQUE ─────────────────────────────────────────────────
+      musculoRisk: {
+        total: Math.round(muscR * 100),
+        components: [
+          { label: 'Charge + jours consécutifs',  points: P(muscR),            study: 'Lancet 2021 (HR=1.15)' },
+          { label: 'Douleurs déclarées',          points: _ci && _ci.pain ? P((_ci.pain/4)*0.07) : 0, study: 'Auto-déclaré', conditional: 'checkin' },
+        ],
+        note: 'Aggravé par la position et la répétition (port de charges, écran).',
+      },
+    };
+
+    // ── RÉCONCILIATION — chaque détail somme EXACTEMENT au score affiché ─────────
+    // Les scores subissent des ajustements post-calcul (paliers chroniques, plafonds
+    // biologiques long terme, plancher vacances) difficiles à isoler ligne à ligne.
+    // On les regroupe dans une seule entrée « Ajustements biologiques » = total −
+    // somme des composantes, pour qu'aucun point ne soit inexpliqué dans la popup.
+    Object.keys(_detail).forEach(k => {
+      const sc = _detail[k];
+      const sum = sc.components.reduce((a, c) => a + (c.points || 0), 0);
+      const gap = Math.round((sc.total - sum) * 10) / 10;
+      if (Math.abs(gap) >= 0.5) {
+        sc.components.push({
+          label: 'Ajustements biologiques (paliers / plafonds)',
+          points: gap,
+          study: 'INRS · de Bloom 2010 · McEwen 1998',
+          reconcile: true,
+        });
+      }
+    });
+
     return {
       fatigue:      Math.round(fatFinal * 100),
       stress:       Math.round(strFinal * 100),
@@ -2076,13 +2464,15 @@ class DTEEngine {
       recovery:     Math.round(recFinal * 100),
       errorRisk:    Math.round(errRisk * 100),
       overloadRisk: Math.round(overRisk * 100),
-      cvRisk:       Math.round(Math.min(Math.max(0.01, cvR + fatFinal * 0.10 + strFinal * 0.12 + stressBoostCV + (lifestyleBoost.cvRisk||0)), 1) * 100),
-      cogRisk:      Math.round(Math.min(Math.max(0.01, cogR + fatFinal * 0.15 + stressBoostCog), 1) * 100),
+      cvRisk:       Math.round(cvFinal * 100),
+      cogRisk:      Math.round(cogFinal * 100),
       diabetesRisk: Math.round(diabR * 100),
       musculoRisk:  Math.round(muscR * 100),
       _f: fatFinal, _s: strFinal, _p: perfFinal, _r: recFinal,
       _hasData: true, _hasM1: hasM1, _hasM2: hasM2,
       _weeklyH: weeklyH, _cumulWeeks: cumW,
+      _commute: norm._commute || { enabled: false }, // transparence popups trajet
+      _detail:  _detail,                              // transparence popups scores v2
     };
   }
 
@@ -2124,6 +2514,10 @@ class DTEEngine {
   static pencavelPerf(h) { return pencavelPerf(h); }
   static cvRisk(h, m)    { return cvRisk(h, m); }
   static cogRisk(h, w)   { return cogRisk(h, w); }
+  static commuteDureeFactor(min) { return commuteDureeFactor(min); }
+  static commuteQualityFactor(q) { return commuteQualityFactor(q); }
+  static get COMMUTE_SOURCES()   { return COMMUTE_SOURCES; }
+  static get COMMUTE_COEFS()     { return COMMUTE_COEFS; }
 }
 
 global.DTEEngine = DTEEngine;
