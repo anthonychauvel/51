@@ -1913,13 +1913,16 @@ class DTEEngine {
     const fatCumulative = fatCumulBase * fatCumulDecay;
 
     // J.Occup.Health 2021 — amplification dose-temps non-linéaire
-    let cumulAmp = cumW >= 24 ? 2.20   // 6 mois — seuil décisif étude Taiwan
-                   : cumW >= 16 ? 1.95   // 4 mois
-                   : cumW >= 12 ? 1.75   // 3 mois — risque OMS biologique établi
-                   : cumW >= 10 ? 1.65   // 2.5 mois
-                   : cumW >= 8  ? 1.55   // 2 mois
-                   : cumW >= 4  ? 1.25   // 1 mois
-                   : 1.0;
+    // FACTEUR cumulAmp — CORRECTIF MAJEUR.
+    // Avant : piloté par cumW (fenêtre 28j) qui PLAFONNE à ~4 sem → cumulAmp bloqué à 1.25
+    // quelle que soit la durée réelle de surcharge (les paliers 8/10/12/16/24 sem étaient
+    // du code mort, jamais atteints). C'est pourquoi 10 semaines paraissaient = 4 semaines.
+    // Maintenant : piloté par cumWLong (fenêtre 12 sem, atteint réellement 10-12) →
+    // l'amplification monte avec la durée de surcharge (J.Occup.Health 2021, Taiwan 6 mois).
+    // Interpolation CONTINUE (anti-falaise), calibrée sur les paliers d'origine :
+    //   0 sem → 1.00 · 4 sem → 1.25 · 8 sem → 1.50 · 10 sem → 1.625 · 12 sem → 1.75.
+    const _cAmpX = Math.min(cumWLong, 12);
+    let cumulAmp = _cAmpX <= 1 ? 1.0 : 1.0 + Math.min(0.75, (_cAmpX - 1) * 0.068);
 
     // FIX BUG 4 : en vacances, réduire cumulAmp (de Bloom 2010 : détachement actif)
     // 1 semaine vacances : cumulAmp × 0.70 | 2 semaines : × 0.55 | 3+ : × 0.40
