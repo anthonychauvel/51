@@ -269,26 +269,22 @@ const COMMUTE_CVRISK_DISCLAIMER = "Le lien trajet → risque cardio est une extr
  * Semaine < 52h → risque résiduel *= 0.50 (reset quasi complet après 5j repos)
  */
 function cogRisk(weeklyH, cumulWeeks) {
-  // Composante AIGUË : uniquement ≥52h (seuil réel des études OEM 2025)
+  // Composante AIGUË : uniquement ≥52h (seuil réel des études OEM 2025 Jang/Yonsei).
   let acuteRisk = 0;
   if (weeklyH >= D.H_CEREBRAL) {
     const excessH  = weeklyH - D.H_CEREBRAL;
     acuteRisk = excessH * 0.022;
   }
-  // Composante CUMULATIVE : trace résiduelle, mais le cerveau récupère vite
-  // Draganski 2004 (Nature) : neuroplasticité = semaines, pas mois
-  let cumulRisk = 0;
-  if (cumulWeeks > 0 && weeklyH < D.H_CEREBRAL) {
-    // Résidu cumulatif faible — le cerveau récupère beaucoup plus vite que le cardio
-    cumulRisk = Math.min(0.10, cumulWeeks * 0.008);
-    if (weeklyH < 40) {
-      cumulRisk *= 0.30; // semaine OFF → reset quasi complet
-    } else {
-      cumulRisk *= 0.50; // semaine normale → forte réduction
-    }
-  }
-  const durationF = Math.min(2.0, 1 + cumulWeeks * 0.05);
-  return Math.min(0.70, (acuteRisk * durationF) + cumulRisk);
+  // CORRECTIF : PAS de résidu structurel sous 52h. Le seuil Jang/OEM 2025 est ≥52h ;
+  // en dessous, il n'y a pas de modification cérébrale structurelle établie. Avant, un
+  // « résidu cumulatif » s'ajoutait dès qu'il y avait des semaines en surcharge (même à
+  // 45h) → le détail affichait « Charge horaire (>52h) +4.8 » alors qu'on est SOUS le
+  // seuil (incohérent avec le message « non actif <52h » et avec l'étude). L'impact
+  // cognitif des heures sous-seuil passe désormais UNIQUEMENT par la corrélation à la
+  // fatigue (cogFinal += fatFinal × 0.15), qui est réversible — pas par un faux résidu
+  // structurel. À 45h, la composante horaire du risque cérébral est donc nulle.
+  const durationF = Math.min(2.0, 1 + cumulWeeks * 0.05); // n'amplifie que l'aigu (≥52h)
+  return Math.min(0.70, acuteRisk * durationF);
 }
 
 /**
@@ -1331,8 +1327,16 @@ class DTEEngine {
     // seule l'accumulation compte (pas de réduction — le risque structurel ne décroît
     // pas à -0.12/sem, il requiert des mois de retour à la normale).
     //
+    // CORRECTIF STABILITÉ (fenêtre chronique). On compte les 12 dernières semaines
+    // COMPLÈTES (w=1 à 12), en EXCLUANT la semaine en cours (w=0, partielle). Raison :
+    // une mesure « chronique 12 sem » ne doit pas sauter selon le jour de la semaine ni
+    // selon que les heures du jour sont déjà saisies. Avant, la semaine en cours ne
+    // passait le seuil que le vendredi (5 jours saisis) → le compteur chutait le lundi
+    // et remontait le vendredi (score instable). Désormais il ne bouge qu'au passage
+    // d'une semaine (lundi→lundi). La réactivité au jour le jour reste portée par les
+    // composantes aiguës (heures de la semaine, fenêtre 7j, ressenti).
     let cumulWeeksLong = 0;
-    for (let w = 11; w >= 0; w--) {
+    for (let w = 12; w >= 1; w--) {
       let weekHLong = 0, hasAnyLong = false;
 
       for (let dd = 0; dd < workDaysPerWeek; dd++) {
@@ -1965,7 +1969,17 @@ class DTEEngine {
     const strAcuteDay    = isVacWeekNow ? 0 : Math.min(0.35, dayExcess * 0.04) * peakDecay; // cortisol aigu (Thompson 2022)
 
     const fat_raw = (fatHS + fatSommeil + (fatSurchar * vacFatReduction) + (fatBurnout * vacFatReduction) + (fatHS > 0 ? 0 : fatCumulative)) * cumulAmp * sonnentagMult * stressFatigueMult * _pf.fatF;
-    const fatigue = Math.max(0, Math.min(1, fat_raw + fatAcuteDay)); // + pic aigu journalier
+    // SOFT-SATURATION (haut de gamme). Avant : plafond DUR à 100 — dès ~48h la fatigue
+    // brute dépassait 1.0 et tout (48h, 52h, 55h, 60h) s'écrasait sur 100, sans résolution.
+    // Maintenant : au-delà d'un « coude », la fatigue approche 100 de façon ASYMPTOTIQUE —
+    // chaque heure compte encore mais à rendement décroissant. Le bas/milieu de courbe
+    // (≤ coude) est INCHANGÉ, donc le cas 45h n'est pas affecté ; seule la zone ≥48h est
+    // décompressée pour distinguer une grosse surcharge d'une surcharge extrême.
+    const _fatLin = Math.max(0, fat_raw + fatAcuteDay); // brut (peut dépasser 1.0)
+    const _fKnee = 0.70, _fSpan = 0.30, _fScale = 0.85;
+    const fatigue = _fatLin <= _fKnee
+      ? _fatLin
+      : Math.min(1, _fKnee + _fSpan * (1 - Math.exp(-(_fatLin - _fKnee) / _fScale)));
 
     // ── STRESS/CORTISOL (Thompson 2022 + ANACT/INRS + IARC 2019) ─────────────
     // nightFactor : multiplicateur biologique selon régime horaire
@@ -2436,7 +2450,7 @@ class DTEEngine {
       cogRisk: {
         total: Math.round(cogFinal * 100),
         components: [
-          { label: 'Charge horaire (>52h)',       points: P(cogR),             study: 'OEM 2025 (Jang, Yonsei)' },
+          { label: 'Charge horaire (≥52h)',       points: P(cogR),             study: 'OEM 2025 (Jang, Yonsei)' },
           { label: 'Contribution fatigue',        points: P(fatFinal * 0.15),  study: 'Corrélation inter-scores' },
           { label: 'Contribution stress',         points: P(stressBoostCog),   study: 'OMS/OIT 2021' },
         ],
