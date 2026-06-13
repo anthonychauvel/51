@@ -1060,9 +1060,9 @@ function renderCalendar(){
 /* POPUP HEURES */
 function openHours(d){currentDay=d;const c=document.getElementById("hoursChoices");c.innerHTML="";[0.25,0.5,0.75,1,1.25,1.5,2].forEach(v=>{const b=document.createElement("button");b.textContent="+"+fmtH(v);b.onclick=()=>applyHours(v);c.appendChild(b)});setM2SaisieMode(_m2SaisieMode);document.getElementById("hoursModal").classList.add("open");lockBodyScroll()}
 function closeHours(){document.getElementById("hoursModal").classList.remove("open");unlockBodyScroll()}
-function applyHours(h){if(h<=0)return;const[_y,_m]=currentKey.split("-").map(Number);if(isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;save();renderCalendar();recalc();const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)}
+function applyHours(h){if(h<=0)return;const[_y,_m]=currentKey.split("-").map(Number);if(isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;save();renderCalendar();recalc();maybeShowReliquatPopup();const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)}
 function confirmManual(){const inp=document.getElementById("manualHours"),h=parseFloat(inp.value);if(isNaN(h)||h<=0){toast("⛔ Valeur invalide","error");return}applyHours(h);inp.value=""}
-function deleteDayHours(){const[_y,_m]=currentKey.split("-").map(Number);if(currentDay&&isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{delete DATA[currentKey].days[currentDay];currentDay=null;save();renderCalendar();recalc();closeHours();},"Supprimer",true);return;currentDay=null;save();renderCalendar();recalc();closeHours()}
+function deleteDayHours(){const[_y,_m]=currentKey.split("-").map(Number);if(currentDay&&isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{delete DATA[currentKey].days[currentDay];currentDay=null;save();renderCalendar();recalc();maybeShowReliquatPopup();closeHours();},"Supprimer",true);return;currentDay=null;save();renderCalendar();recalc();closeHours()}
 /* ── MODE SAISIE M2 : HS directes / Heures travaillées ── */
 let _m2SaisieMode=localStorage.getItem('M2_SAISIE_MODE')||'hs';
 function setM2SaisieMode(mode){
@@ -1100,7 +1100,9 @@ function recalc(){
   recalcCascade(); // 1. Recalculer la chaîne carry + breakdown figé par taux EN PREMIER
   checkActivatePerTaux(); // 2. Détecter la migration avec des carry à jour
   updateFuturePaymentsAlert(); // Avertir si des paiements futurs existent sur cette période
-  updatePostMigrationAlert(); // Alerte si une période soldée a un reliquat réapparu
+  // NOTE : le pop-up de reliquat (updatePostMigrationAlert) n'est PLUS appelé ici.
+  // Il ne doit s'ouvrir QUE sur une action de saisie/suppression d'heures, jamais
+  // à la navigation entre périodes. Voir maybeShowReliquatPopup().
   const{start,end}=getPeriodBounds(currentKey);const weeks={};
   const rules=getCCNRules();
   Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const wk=getWeekKeyM2(date);weeks[wk]=(weeks[wk]||0)+h})});
@@ -1368,6 +1370,13 @@ function checkPostMigrationReliquat(){
    la période affichée. Mémorise la période concernée dans _reliquatKey. */
 let _reliquatKey = null;
 let _reliquatShownDelta = null;
+/* À appeler UNIQUEMENT après une saisie ou suppression d'heures (jamais à la
+   navigation). Ouvre le pop-up de choix du taux si une période passée a un
+   reliquat non routé. */
+function maybeShowReliquatPopup(){
+  updatePostMigrationAlert();
+}
+
 function updatePostMigrationAlert(){
   // Masquer l'ancien bandeau inline s'il existe (compat)
   const old = document.getElementById("postMigrationAlert");
