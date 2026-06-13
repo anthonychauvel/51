@@ -1313,6 +1313,22 @@ function reliquatSumAlloc(m){
   return (Number(a.t1)||0) + (Number(a.ti)||0) + (Number(a.t2)||0);
 }
 
+/* Borne l'allocation manuelle à un maximum d'heures (heures propres non payées).
+   Si l'utilisateur supprime des heures, l'allocation est réduite/effacée en
+   conséquence — ainsi re-saisir des heures redéclenche bien le pop-up. */
+function clampReliquatAlloc(m, maxHours){
+  if(!m || !m.reliquatAlloc) return;
+  let a1=Number(m.reliquatAlloc.t1)||0, ai=Number(m.reliquatAlloc.ti)||0, a2=Number(m.reliquatAlloc.t2)||0;
+  const sumA = a1+ai+a2;
+  if(sumA <= maxHours + 0.01) return;          // rien à borner
+  if(maxHours <= 0.01){ delete m.reliquatAlloc; return; }
+  let excess = sumA - maxHours;
+  const c2=Math.min(a2,excess); a2-=c2; excess-=c2; // retirer des hauts taux d'abord
+  const cI=Math.min(ai,excess); ai-=cI; excess-=cI;
+  const c1=Math.min(a1,excess); a1-=c1;
+  m.reliquatAlloc = {t1:a1, ti:ai, t2:a2};
+}
+
 /* Total des heures PROPRES d'une période (dans ses bornes de période). */
 function periodOwnHours(key){
   const {start,end} = getPeriodBounds(key);
@@ -1353,14 +1369,14 @@ function checkPostMigrationReliquat(){
   const cur = yd[currentKey];
   if(!cur) return null;
   // Période passée = il existe une période POSTÉRIEURE avec activité.
-  // (On ne se base PAS sur wasSettled, sinon la période courante soldée piège l'utilisateur.)
   if(!hasLaterActivity(currentKey)) return null;
   const ownH = periodOwnHours(currentKey);
   const ownPaid = Number(cur.paid)||0;
-  const ownBalance = ownH - ownPaid;       // heures propres non payées
-  const delta = ownBalance - reliquatSumAlloc(cur); // non encore routées
+  const ownUnpaid = ownH - ownPaid;        // heures propres non payées (le reliquat)
+  clampReliquatAlloc(cur, ownUnpaid);       // borner l'alloc aux heures réellement présentes
+  const delta = ownUnpaid - reliquatSumAlloc(cur); // non encore routées
   if(delta > 0.01){
-    return { key: currentKey, carry: ownBalance, delta };
+    return { key: currentKey, carry: ownUnpaid, delta };
   }
   return null;
 }
@@ -1426,8 +1442,9 @@ function handleReliquatTaux(which){
   const m = yd[key];
   if(!m) return;
   // delta = heures propres non payées et non encore routées
-  const ownBalance = periodOwnHours(key) - (Number(m.paid)||0);
-  const delta = ownBalance - reliquatSumAlloc(m);
+  const ownUnpaid = periodOwnHours(key) - (Number(m.paid)||0);
+  clampReliquatAlloc(m, ownUnpaid);
+  const delta = ownUnpaid - reliquatSumAlloc(m);
   if(delta <= 0.01) return;
   // Ajouter le delta à l'allocation CUMULATIVE du taux choisi (sans toucher au reste)
   if(!m.reliquatAlloc) m.reliquatAlloc = {t1:0, ti:0, t2:0};
@@ -1451,8 +1468,9 @@ function handleReliquatSolder(){
   const m = yd[key];
   if(!m) return;
   // delta = heures propres non payées et non encore routées
-  const ownBalance = periodOwnHours(key) - (Number(m.paid)||0);
-  const delta = ownBalance - reliquatSumAlloc(m);
+  const ownUnpaid = periodOwnHours(key) - (Number(m.paid)||0);
+  clampReliquatAlloc(m, ownUnpaid);
+  const delta = ownUnpaid - reliquatSumAlloc(m);
   if(delta <= 0.01) return;
   m.paid = (Number(m.paid)||0) + delta;
   const modal = document.getElementById("reliquatModal");
@@ -1907,54 +1925,35 @@ function recalcCascade(){
     // ── Breakdown par taux figé ──
     // 1. Heures PROPRES de cette période ventilées par paliers
     const {h25, hInter, h50} = calcWeeks(buildDayList(start, end));
-    let o1 = h25, oi = (hInter||0), o2 = h50; // ventilation propre par défaut
+    let o1 = h25, oi = (hInter||0), o2 = h50;
     const ownTotal = o1 + oi + o2;
+    const ownPaid = (m.paid1!==undefined || m.paid2!==undefined)
+      ? (Number(m.paid1)||0)+(Number(m.paidInter)||0)+(Number(m.paid2)||0)
+      : (Number(m.paid)||0);
+    const ownUnpaid = ownTotal - ownPaid; // heures propres restant dues (le reliquat)
 
-    // 2. Allocation manuelle : remplace la ventilation par paliers des heures PROPRES
-    //    par la répartition choisie par l'utilisateur (priorité absolue, pas de FIFO).
-    if(m.reliquatAlloc){
-      let a1 = Number(m.reliquatAlloc.t1)||0, ai = Number(m.reliquatAlloc.ti)||0, a2 = Number(m.reliquatAlloc.t2)||0;
-      let sumA = a1 + ai + a2;
-      // Clamp : l'allocation ne peut pas dépasser les heures propres (heures supprimées).
-      // Ainsi supprimer puis re-saisir des heures redéclenche bien le pop-up.
-      if(sumA > ownTotal + 0.01){
-        if(ownTotal <= 0.01){
-          delete m.reliquatAlloc; a1 = ai = a2 = 0; sumA = 0;
-        } else {
-          let excess = sumA - ownTotal;
-          const c2 = Math.min(a2, excess); a2 -= c2; excess -= c2;
-          const cI = Math.min(ai, excess); ai -= cI; excess -= cI;
-          const c1 = Math.min(a1, excess); a1 -= c1;
-          m.reliquatAlloc = {t1:a1, ti:ai, t2:a2}; sumA = a1 + ai + a2;
-        }
-      }
-      if(m.reliquatAlloc){
-        // Heures allouées sur leurs taux choisis ; le reste des heures propres
-        // garde la forme paliers (proportionnellement).
-        const leftover = Math.max(0, ownTotal - sumA);
-        const base = ownTotal || 1;
-        o1 = a1 + leftover * (o1 / base);
-        oi = ai + leftover * (oi / base);
-        o2 = a2 + leftover * (o2 / base);
-      }
-    }
-
-    // 3. Ajouter la ventilation propre au cumul reporté des périodes précédentes
-    due1 += o1; dueInter += (oi||0); due2 += o2;
-
-    // 4. Soustraire les paiements de CE mois (per-taux si dispo, sinon 50%→inter→25% prudent)
-    if(m.paid1!==undefined || m.paid2!==undefined){
-      due1     = Math.max(0, due1     - (Number(m.paid1)||0));
-      dueInter = Math.max(0, dueInter - (Number(m.paidInter)||0));
-      due2     = Math.max(0, due2     - (Number(m.paid2)||0));
-    } else if(m.paid){
-      let rem=Number(m.paid)||0;
+    if(ownUnpaid >= -0.01){
+      // 2. Cette période contribue ses heures NON PAYÉES au cumul, ventilées par
+      //    l'allocation manuelle (priorité absolue) + le reste par paliers.
+      clampReliquatAlloc(m, ownUnpaid); // l'alloc ne peut dépasser les heures non payées
+      let a1=0, ai=0, a2=0;
+      if(m.reliquatAlloc){ a1=Number(m.reliquatAlloc.t1)||0; ai=Number(m.reliquatAlloc.ti)||0; a2=Number(m.reliquatAlloc.t2)||0; }
+      const sumA = a1 + ai + a2;
+      const leftover = Math.max(0, ownUnpaid - sumA);
+      const base = ownTotal || 1; // forme paliers d'origine pour répartir le reste
+      due1     += a1 + leftover * (o1 / base);
+      dueInter += ai + leftover * (oi / base);
+      due2     += a2 + leftover * (o2 / base);
+    } else {
+      // Surpaiement : cette période paie plus que ses propres heures →
+      // l'excédent solde le report des périodes précédentes (50%→inter→25% prudent).
+      let rem = -ownUnpaid;
       const p2=Math.min(due2,rem); due2-=p2; rem-=p2;
       const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI;
       const p1=Math.min(due1,rem); due1-=p1;
     }
 
-    // 5. Réconciliation de sécurité : le total doit correspondre au carry réel.
+    // 3. Réconciliation de sécurité : le total doit correspondre au carry réel.
     const bdTotal = due1 + dueInter + due2;
     if(Math.abs(bdTotal - rc) > 0.01){
       if(bdTotal > 0){
@@ -1964,7 +1963,7 @@ function recalcCascade(){
         due1 = rc; dueInter = 0; due2 = 0;
       }
     }
-    // 6. Figer le snapshot dans le mois
+    // 4. Figer le snapshot dans le mois
     m.dueBreakdown = { due1, dueInter, due2 };
   });
 }
