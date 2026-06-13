@@ -1210,10 +1210,15 @@ function renderPaidInputs(rules){
   if(!container) return;
   const m = DATA[currentKey] || {};
 
+  // Réinitialiser le flag d'UI si on a changé de mois (évite contamination entre mois)
+  if(container.dataset.forKey !== currentKey){
+    container.dataset.forKey = currentKey;
+    container.dataset.legacyDetail = "0";
+    container.innerHTML = ''; // forcer reconstruction propre
+  }
+
   if(isLegacyMode()){
     /* ── MODE LEGACY : total unique OU détail par taux (au choix) ── */
-    // L'utilisateur peut détailler pour corriger précisément quelles heures
-    // ont été payées à quel taux (vraie migration, pas de FIFO imposé).
     const hasDetail = (m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined);
     const wantDetail = container.dataset.legacyDetail === "1" || hasDetail;
 
@@ -1243,12 +1248,10 @@ function renderPaidInputs(rules){
         };
         const btn = document.getElementById('legacyDetailBtn');
         if(btn) btn.onclick = () => {
+          // Ouvrir les champs détaillés VIDES (on n'attribue aucun taux par défaut).
+          // L'utilisateur saisit lui-même la vraie répartition.
           container.dataset.legacyDetail = "1";
-          // Initialiser les champs détaillés à partir du total (sur taux1 par défaut)
-          DATA[currentKey].paid1 = Number(m.paid)||0;
-          DATA[currentKey].paid2 = 0;
-          if(rules.taux_inter) DATA[currentKey].paidInter = 0;
-          container.innerHTML = ''; // forcer reconstruction
+          container.innerHTML = '';
           renderPaidInputs(rules);
         };
       }
