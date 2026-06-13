@@ -1122,17 +1122,23 @@ function recalc(){
   const prevCarryVal = getPreviousCarry(currentKey);
   const prevCarryEl = document.getElementById("prevCarry");
   if(prevCarryEl){
-    if(prevCarryVal <= 0 || isLegacyMode()){
+    if(prevCarryVal <= 0){
       prevCarryEl.innerHTML = fmtH(prevCarryVal);
     } else {
       const prevBd = computePrevBreakdown();
       let html = fmtH(prevCarryVal);
-      if(prevBd && prevBd.totalCarry > 0 && prevBd.reliable){
+      // Afficher la répartition par taux du report en attente (même en mode legacy
+      // si le mois précédent a un breakdown figé cohérent)
+      if(prevBd && prevBd.totalCarry > 0){
         const parts = [];
         if(prevBd.unpaid1 > 0) parts.push(`<span style="color:#f39c12">${fmtH(prevBd.unpaid1)} \u00e0 ${rules.taux1}%</span>`);
         if(prevBd.unpaidInter > 0 && rules.taux_inter) parts.push(`<span style="color:#e67e22">${fmtH(prevBd.unpaidInter)} \u00e0 ${rules.taux_inter}%</span>`);
         if(prevBd.unpaid2 > 0) parts.push(`<span style="color:#e74c3c">${fmtH(prevBd.unpaid2)} \u00e0 ${rules.taux2}%</span>`);
-        if(parts.length >= 1) html += `<br><span style="font-size:11px;font-weight:400;opacity:.8">${parts.join(' + ')}</span>`;
+        // N'afficher que si la répartition est cohérente avec le total (évite affichage trompeur)
+        const sumParts = (prevBd.unpaid1||0)+(prevBd.unpaidInter||0)+(prevBd.unpaid2||0);
+        if(parts.length >= 1 && Math.abs(sumParts - prevCarryVal) <= 0.01){
+          html += `<br><span style="font-size:11px;font-weight:400;opacity:.8">${parts.join(' + ')}</span>`;
+        }
       }
       prevCarryEl.innerHTML = html;
     }
@@ -1205,85 +1211,151 @@ function renderPaidInputs(rules){
   const m = DATA[currentKey] || {};
 
   if(isLegacyMode()){
-    /* ── MODE LEGACY : input total unique ── */
-    if(!container.querySelector('#paidHTot')){
-      container.innerHTML = `
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-          <label style="font-size:13px;font-weight:600;color:var(--muted);margin:0">Heures pay\u00e9es</label>
-          <input type="number" inputmode="decimal" id="paidHTot" step="0.25" value="0"
-            style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
-                   font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
-        </div>
-        <div style="font-size:10px;color:var(--muted);line-height:1.4">
-          Suivi per-taux disponible apr\u00e8s solde du reliquat pr\u00e9c\u00e9dent
-        </div>`;
+    /* ── MODE LEGACY : total unique OU détail par taux (au choix) ── */
+    // L'utilisateur peut détailler pour corriger précisément quelles heures
+    // ont été payées à quel taux (vraie migration, pas de FIFO imposé).
+    const hasDetail = (m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined);
+    const wantDetail = container.dataset.legacyDetail === "1" || hasDetail;
+
+    if(!wantDetail){
+      /* Vue simple : total unique */
+      if(!container.querySelector('#paidHTot')){
+        container.dataset.legacyDetail = "0";
+        container.innerHTML = `
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+            <label style="font-size:13px;font-weight:600;color:var(--muted);margin:0">Heures pay\u00e9es</label>
+            <input type="number" inputmode="decimal" id="paidHTot" step="0.25" value="0"
+              style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
+                     font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
+          </div>
+          <button type="button" id="legacyDetailBtn" style="background:none;border:none;color:var(--accent);font-size:12px;padding:4px 0;cursor:pointer;text-decoration:underline">\u2699\ufe0f D\u00e9tailler par taux (25% / 50%)</button>
+          <div style="font-size:10px;color:var(--muted);line-height:1.4;margin-top:4px">
+            Suivi per-taux complet apr\u00e8s solde du reliquat pr\u00e9c\u00e9dent
+          </div>`;
+        const inp = document.getElementById('paidHTot');
+        if(inp) inp.oninput = () => {
+          if(!DATA||!DATA[currentKey]) return;
+          const v = parseFloat(inp.value)||0;
+          DATA[currentKey].paid = v;
+          delete DATA[currentKey].paid1; delete DATA[currentKey].paid2; delete DATA[currentKey].paidInter;
+          const h = document.getElementById('paidHours'); if(h) h.value = v;
+          save(); recalc();
+        };
+        const btn = document.getElementById('legacyDetailBtn');
+        if(btn) btn.onclick = () => {
+          container.dataset.legacyDetail = "1";
+          // Initialiser les champs détaillés à partir du total (sur taux1 par défaut)
+          DATA[currentKey].paid1 = Number(m.paid)||0;
+          DATA[currentKey].paid2 = 0;
+          if(rules.taux_inter) DATA[currentKey].paidInter = 0;
+          container.innerHTML = ''; // forcer reconstruction
+          renderPaidInputs(rules);
+        };
+      }
       const inp = document.getElementById('paidHTot');
-      if(inp) inp.oninput = () => {
-        if(!DATA||!DATA[currentKey]) return;
-        const v = parseFloat(inp.value)||0;
-        DATA[currentKey].paid = v;
-        // Effacer données per-taux en mode legacy
-        delete DATA[currentKey].paid1;
-        delete DATA[currentKey].paid2;
-        delete DATA[currentKey].paidInter;
-        const h = document.getElementById('paidHours');
-        if(h) h.value = v;
-        save(); recalc();
-      };
+      if(inp) inp.value = m.paid||0;
+      const hid = document.getElementById('paidHours');
+      if(hid) hid.value = m.paid||0;
+      return;
     }
-    const inp = document.getElementById('paidHTot');
-    if(inp) inp.value = m.paid||0;
-    const hid = document.getElementById('paidHours');
-    if(hid) hid.value = m.paid||0;
-    return;
+    // sinon : tombe dans le rendu détaillé per-taux ci-dessous (avec bouton retour)
   }
 
-  /* ── MODE PER-TAUX : reliquat précédent = 0, base propre ── */
+  /* ── MODE PER-TAUX (ou legacy détaillé) : saisie séparée par taux ── */
   const paliers = [
     { id:'paidH1',  key:'paid1',     taux:rules.taux1,      color:'#f39c12', label:'\u00c0 '+rules.taux1+'%' },
     ...(rules.taux_inter ? [{ id:'paidHI', key:'paidInter', taux:rules.taux_inter, color:'#e67e22', label:'\u00c0 '+rules.taux_inter+'%' }] : []),
     { id:'paidH2',  key:'paid2',     taux:rules.taux2,      color:'#e74c3c', label:'\u00c0 '+rules.taux2+'%' },
   ];
 
+  const legacyDetail = isLegacyMode();
   const existingCount = container.querySelectorAll('input[type="number"]').length;
-  if(existingCount !== paliers.length || container.querySelector('#paidHTot')){
-    container.innerHTML = paliers.map(p => `
+  const needRebuild = existingCount !== paliers.length || container.querySelector('#paidHTot') ||
+                      (legacyDetail && !container.querySelector('#backToTotalBtn')) ||
+                      (!legacyDetail && container.querySelector('#backToTotalBtn'));
+  if(needRebuild){
+    let html = paliers.map(p => `
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
         <label style="font-size:13px;font-weight:600;color:${p.color};margin:0">${p.label} pay\u00e9es</label>
         <input type="number" inputmode="decimal" id="${p.id}" step="0.25" value="0"
           style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
                  font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
       </div>`).join('');
+    // En mode legacy détaillé, proposer un retour au total simple
+    if(legacyDetail){
+      html += `<button type="button" id="backToTotalBtn" style="background:none;border:none;color:var(--muted);font-size:12px;padding:4px 0;cursor:pointer;text-decoration:underline">\u2190 Revenir au total simple</button>`;
+    }
+    container.innerHTML = html;
 
     paliers.forEach(p => {
       const inp = document.getElementById(p.id);
       if(!inp) return;
       inp.oninput = () => {
         if(!DATA||!DATA[currentKey]) return;
+        // Matérialiser TOUS les paliers (passe le mois legacy en per-taux explicite)
+        paliers.forEach(pp => {
+          const el = document.getElementById(pp.id);
+          if(DATA[currentKey][pp.key] === undefined){
+            DATA[currentKey][pp.key] = parseFloat(el?.value)||0;
+          }
+        });
         DATA[currentKey][p.key] = parseFloat(inp.value)||0;
         DATA[currentKey].paid = paliers.reduce((s,t)=>s+(Number(DATA[currentKey][t.key])||0), 0);
         const h = document.getElementById('paidHours');
         if(h) h.value = DATA[currentKey].paid;
+        // Retirer la bannière migration une fois ventilé
+        const mb = document.getElementById('migrationHint');
+        if(mb) mb.remove();
         save(); recalc();
       };
     });
+
+    const backBtn = document.getElementById('backToTotalBtn');
+    if(backBtn) backBtn.onclick = () => {
+      container.dataset.legacyDetail = "0";
+      // Repasser en total : conserver la somme, effacer le détail
+      const tot = (Number(DATA[currentKey].paid1)||0)+(Number(DATA[currentKey].paidInter)||0)+(Number(DATA[currentKey].paid2)||0);
+      DATA[currentKey].paid = tot;
+      delete DATA[currentKey].paid1; delete DATA[currentKey].paid2; delete DATA[currentKey].paidInter;
+      container.innerHTML = '';
+      save(); recalc();
+    };
   }
 
-  paliers.forEach(p => {
+  // Affichage des valeurs par taux. Pour un mois "legacy" (total payé sans détail),
+  // on N'ATTRIBUE PAS le total à un taux précis : ce serait une supposition trompeuse.
+  // Les champs restent à 0 et une note neutre indique le total réellement payé.
+  const hasDetailVals = (m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined);
+  const legacyPaidNoDetail = !hasDetailVals && (Number(m.paid)||0) > 0;
+
+  paliers.forEach((p) => {
     const inp = document.getElementById(p.id);
     if(!inp) return;
     inp.value = m[p.key] !== undefined ? m[p.key] : 0;
   });
+
+  // Note neutre si un mois a un total payé non ventilé (sans affirmer un taux)
+  let migBanner = document.getElementById('migrationHint');
+  if(legacyPaidNoDetail){
+    if(!migBanner){
+      migBanner = document.createElement('div');
+      migBanner.id = 'migrationHint';
+      migBanner.style.cssText = 'font-size:10px;color:var(--muted);line-height:1.4;margin-top:6px';
+      container.appendChild(migBanner);
+    }
+    migBanner.innerHTML = `\u2139\ufe0f ${fmtH(Number(m.paid)||0)} d\u00e9j\u00e0 pay\u00e9es ce mois (saisies sans d\u00e9tail par taux). Renseignez la r\u00e9partition r\u00e9elle ci-dessus si vous la connaissez.`;
+  } else if(migBanner){
+    migBanner.remove();
+  }
+
   const hid = document.getElementById('paidHours');
   if(hid) hid.value = m.paid||0;
 }
 
-/* ─────────────────────────────────────────────────────────────────────
-   checkFuturePayments / updateFuturePaymentsAlert
+/* checkFuturePayments / updateFuturePaymentsAlert
    Détecte si des périodes FUTURES ont déjà des paiements enregistrés.
    Affiche un avertissement quand l'utilisateur consulte/modifie une
-   période passée (évite les incohérences silencieuses).
-───────────────────────────────────────────────────────────────────── */
+   période passée (évite les incohérences silencieuses). */
 function checkFuturePayments(){
   const yd = ALL_DATA[currentYear]||{};
   const found=[];
@@ -1531,16 +1603,17 @@ function recalcCascade(){
     dueInter += (hInter||0);
     due2     += h50;
     // 3. On SOUSTRAIT les paiements per-taux de CE mois (sur leur propre taux)
-    //    Si pas de données per-taux, on utilise paid total en FIFO LOCAL (25→inter→50)
+    //    Si pas de données per-taux, on solde du taux le PLUS ÉLEVÉ d'abord (50→inter→25).
+    //    Ainsi le restant dû penche vers les bas taux → on sous-estime plutôt que surestime.
     if(m.paid1!==undefined || m.paid2!==undefined){
       due1     = Math.max(0, due1     - (Number(m.paid1)||0));
       dueInter = Math.max(0, dueInter - (Number(m.paidInter)||0));
       due2     = Math.max(0, due2     - (Number(m.paid2)||0));
     } else if(m.paid){
       let rem=Number(m.paid)||0;
-      const p1=Math.min(due1,rem); due1-=p1; rem-=p1;
-      const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI;
-      const p2=Math.min(due2,rem); due2-=p2;
+      const p2=Math.min(due2,rem); due2-=p2; rem-=p2;       // 50% d'abord
+      const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI; // puis intermédiaire
+      const p1=Math.min(due1,rem); due1-=p1;                 // puis 25%
     }
     // 4. Réconciliation : le total du breakdown doit correspondre au carry réel.
     //    En cas d'écart (changement CCN, incohérence), on resynchronise sur le carry.
