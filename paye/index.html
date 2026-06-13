@@ -1341,15 +1341,18 @@ function hasLaterActivity(key){
 
 /* Détecte un reliquat à router = heures PROPRES non payées et non encore routées
    de la période actuellement éditée. Le pop-up cible TOUJOURS la période éditée
-   (le choix de l'utilisateur prime), à condition que ce soit une période passée
-   (déjà soldée OU suivie d'une période avec activité). */
+   (le choix de l'utilisateur prime), MAIS uniquement si c'est une période RÉELLEMENT
+   PASSÉE — c'est-à-dire suivie d'une période plus récente ayant de l'activité.
+   La période courante en cours (la plus récente) ne déclenche jamais le pop-up :
+   on y travaille normalement, la ventilation suit les paliers. */
 function checkPostMigrationReliquat(){
   if(!SETTINGS.migrationKey) return null;
   const yd = ALL_DATA[currentYear] || {};
   const cur = yd[currentKey];
   if(!cur) return null;
-  // Uniquement pour une période passée éditée rétroactivement
-  if(!(cur.wasSettled || hasLaterActivity(currentKey))) return null;
+  // Période passée = il existe une période POSTÉRIEURE avec activité.
+  // (On ne se base PAS sur wasSettled, sinon la période courante soldée piège l'utilisateur.)
+  if(!hasLaterActivity(currentKey)) return null;
   const ownH = periodOwnHours(currentKey);
   const ownPaid = Number(cur.paid)||0;
   const ownBalance = ownH - ownPaid;       // heures propres non payées
