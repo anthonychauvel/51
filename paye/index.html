@@ -548,6 +548,9 @@ document.addEventListener("DOMContentLoaded", function(){
     <!-- AVERTISSEMENT : paiements enregistrés dans les périodes futures -->
     <div id="futurePaymentsAlert" style="display:none;margin-top:10px;background:rgba(243,156,18,.1);border:1px solid rgba(243,156,18,.4);border-radius:14px;padding:12px 14px"></div>
 
+    <!-- ALERTE : reliquat réapparu après la mise à zéro (migration) -->
+    <div id="postMigrationAlert" style="display:none;margin-top:10px;background:rgba(231,76,60,.1);border:1px solid rgba(231,76,60,.4);border-radius:14px;padding:14px"></div>
+
     <!-- DETAIL PALIERS (caché dans stat-grid, gardé pour JS) -->
     <div style="display:none" id="hoursBreakdown">
       <p>Heures à 25 % : <b id="hours25">0.00</b></p>
@@ -1076,6 +1079,7 @@ function recalc(){
   checkActivatePerTaux();
   recalcCascade(); // Recalculer la chaîne carry + breakdown figé par taux
   updateFuturePaymentsAlert(); // Avertir si des paiements futurs existent sur cette période
+  updatePostMigrationAlert(); // Alerte si le mois de migration a un reliquat réapparu
   const{start,end}=getPeriodBounds(currentKey);const weeks={};
   const rules=getCCNRules();
   Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const wk=getWeekKeyM2(date);weeks[wk]=(weeks[wk]||0)+h})});
@@ -1217,23 +1221,106 @@ function recalc(){
    Met à jour paid (total) pour compatibilité recalcCascade.
 ───────────────────────────────────────────────────────────────────── */
 function isLegacyMode(){
-  /* Mode legacy = l'utilisateur n'a pas encore atteint un reliquat zéro
-     depuis l'introduction du suivi per-taux.
-     Le flag perTauxModeOn est activé dès que le carry précédent est 0
-     et reste actif pour toujours (migration irréversible). */
-  if(SETTINGS.perTauxModeOn) return false;
-  return getPreviousCarry(currentKey) > 0;
+  /* Mode legacy = AVANT la migration (le solde n'a jamais atteint zéro).
+     En legacy : total simple, pas de taux, pas de FIFO.
+     La migration s'enregistre sur la période où le solde atteint zéro (migrationKey).
+     Toute période <= migrationKey reste en mode simple ; les périodes > migrationKey sont per-taux. */
+  if(!SETTINGS.migrationKey) return true;          // pas encore migré → tout est legacy
+  return currentKey <= SETTINGS.migrationKey;       // période pré/migration → legacy simple
 }
 
 function checkActivatePerTaux(){
-  /* Appelé depuis recalc(). Active le mode per-taux définitivement
-     dès que le carry précédent est 0 (carry nul = point de départ propre). */
-  if(SETTINGS.perTauxModeOn) return;
-  if(getPreviousCarry(currentKey) <= 0){
-    SETTINGS.perTauxModeOn = true;
-    // Sauvegarde directe sans déclencher de recalc (évite boucle infinie)
-    try{ localStorage.setItem(kSettings(), JSON.stringify(SETTINGS)); }catch(_){}
+  /* Enregistre la période de migration = la PREMIÈRE période dont le carry atteint 0.
+     Une fois fixée, elle ne bouge plus (sauf reset manuel). */
+  if(SETTINGS.migrationKey) return;
+  // Parcourir les périodes dans l'ordre, trouver la 1ère dont le carry == 0
+  const yd = ALL_DATA[currentYear] || {};
+  const keys = Object.keys(yd).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort();
+  for(const k of keys){
+    const c = yd[k].carry;
+    if(c != null && c <= 0){
+      SETTINGS.migrationKey = k;
+      try{ localStorage.setItem(kSettings(), JSON.stringify(SETTINGS)); }catch(_){}
+      break;
+    }
   }
+}
+
+/* Détecte si le mois de migration a un carry redevenu positif
+   (= heures ajoutées rétroactivement après la mise à zéro).
+   Le flag reliquatHandledFor mémorise la valeur de carry déjà traitée :
+   si le carry change encore, l'alerte réapparaît. */
+function checkPostMigrationReliquat(){
+  if(!SETTINGS.migrationKey) return null;
+  const yd = ALL_DATA[currentYear] || {};
+  const m = yd[SETTINGS.migrationKey];
+  if(!m) return null;
+  const c = Number(m.carry)||0;
+  if(c > 0 && m.reliquatHandledFor !== c){
+    return { key: SETTINGS.migrationKey, carry: c };
+  }
+  return null;
+}
+
+/* Affiche l'alerte si le mois de migration a un reliquat réapparu,
+   avec choix : solder, ou reporter en choisissant le taux (pas de FIFO). */
+function updatePostMigrationAlert(){
+  const el = document.getElementById("postMigrationAlert");
+  if(!el) return;
+  const reliquat = checkPostMigrationReliquat();
+  // N'afficher que quand on est SUR le mois de migration (là où le reliquat est apparu)
+  if(!reliquat || currentKey !== reliquat.key){
+    el.style.display = "none";
+    return;
+  }
+  const rules = getCCNRules();
+  const c = reliquat.carry;
+
+  // Boutons de taux pour reporter le reliquat
+  let tauxBtns = `<button type="button" onclick="handleReliquatTaux('taux1')" style="flex:1;padding:8px;border-radius:10px;background:rgba(243,156,18,.2);border:1px solid #f39c12;color:#f39c12;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux1}%</button>`;
+  if(rules.taux_inter){
+    tauxBtns += `<button type="button" onclick="handleReliquatTaux('taux_inter')" style="flex:1;padding:8px;border-radius:10px;background:rgba(230,126,34,.2);border:1px solid #e67e22;color:#e67e22;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux_inter}%</button>`;
+  }
+  tauxBtns += `<button type="button" onclick="handleReliquatTaux('taux2')" style="flex:1;padding:8px;border-radius:10px;background:rgba(231,76,60,.2);border:1px solid #e74c3c;color:#e74c3c;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux2}%</button>`;
+
+  el.style.display = "block";
+  el.innerHTML = `
+    <div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:8px">⚠️ La validation de cette période a sauté</div>
+    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">
+      Vous avez ajouté des heures dans le passé. Cette période (déjà soldée) a de nouveau un solde de <b style="color:#e74c3c">${fmtH(c)}</b> à régler.
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Comment traiter ces ${fmtH(c)} ?</div>
+    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${tauxBtns}</div>
+    <button type="button" onclick="handleReliquatSolder()" style="width:100%;padding:8px;border-radius:10px;background:rgba(46,204,113,.2);border:1px solid #2ecc71;color:#2ecc71;font-weight:600;font-size:12px;cursor:pointer">✅ Je l'ai soldé (remettre à zéro)</button>`;
+}
+
+/* L'utilisateur choisit à quel taux reporter le reliquat post-migration. */
+function handleReliquatTaux(which){
+  if(!SETTINGS.migrationKey) return;
+  const yd = ALL_DATA[currentYear] || {};
+  const m = yd[SETTINGS.migrationKey];
+  if(!m) return;
+  const c = Number(m.carry)||0;
+  if(c <= 0) return;
+  // Mémoriser la valeur traitée et le taux choisi pour ce report
+  m.reliquatHandledFor = c;
+  m.reliquatTaux = which; // 'taux1' | 'taux_inter' | 'taux2'
+  save(); recalc();
+  toast(`Reliquat de ${fmtH(c)} reporté`, "success");
+}
+
+/* L'utilisateur confirme avoir soldé le reliquat → remet le mois à zéro. */
+function handleReliquatSolder(){
+  if(!SETTINGS.migrationKey) return;
+  const yd = ALL_DATA[currentYear] || {};
+  const m = yd[SETTINGS.migrationKey];
+  if(!m) return;
+  const c = Number(m.carry)||0;
+  // Ajouter un paiement égal au reliquat pour remettre à zéro
+  m.paid = (Number(m.paid)||0) + c;
+  m.reliquatHandledFor = 0;
+  save(); recalc();
+  toast("✅ Reliquat soldé", "success");
 }
 
 function togglePeriodLock(){
@@ -1308,50 +1395,35 @@ function renderPaidInputs(rules){
   }
 
   if(isLegacyMode()){
-    /* ── MODE LEGACY : total unique OU détail par taux (au choix) ── */
-    const hasDetail = (m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined);
-    const wantDetail = container.dataset.legacyDetail === "1" || hasDetail;
-
-    if(!wantDetail){
-      /* Vue simple : total unique */
-      if(!container.querySelector('#paidHTot')){
-        container.dataset.legacyDetail = "0";
-        container.innerHTML = `
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
-            <label style="font-size:13px;font-weight:600;color:var(--muted);margin:0">Heures pay\u00e9es</label>
-            <input type="number" inputmode="decimal" id="paidHTot" step="0.25" value="0"
-              style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
-                     font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
-          </div>
-          <button type="button" id="legacyDetailBtn" style="background:none;border:none;color:var(--accent);font-size:12px;padding:4px 0;cursor:pointer;text-decoration:underline">\u2699\ufe0f D\u00e9tailler par taux (25% / 50%)</button>
-          <div style="font-size:10px;color:var(--muted);line-height:1.4;margin-top:4px">
-            Suivi per-taux complet apr\u00e8s solde du reliquat pr\u00e9c\u00e9dent
-          </div>`;
-        const inp = document.getElementById('paidHTot');
-        if(inp) inp.oninput = () => {
-          if(!DATA||!DATA[currentKey]) return;
-          const v = parseFloat(inp.value)||0;
-          DATA[currentKey].paid = v;
-          delete DATA[currentKey].paid1; delete DATA[currentKey].paid2; delete DATA[currentKey].paidInter;
-          const h = document.getElementById('paidHours'); if(h) h.value = v;
-          save(); recalc();
-        };
-        const btn = document.getElementById('legacyDetailBtn');
-        if(btn) btn.onclick = () => {
-          // Ouvrir les champs détaillés VIDES (on n'attribue aucun taux par défaut).
-          // L'utilisateur saisit lui-même la vraie répartition.
-          container.dataset.legacyDetail = "1";
-          container.innerHTML = '';
-          renderPaidInputs(rules);
-        };
-      }
+    /* ── MODE LEGACY (avant migration) : TOTAL SIMPLE uniquement ──
+       Pas de distinction de taux, pas de FIFO. On fait des heures,
+       on paie un total, le reste va en carry. Jusqu'à la mise à zéro. */
+    if(!container.querySelector('#paidHTot')){
+      container.innerHTML = `
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px">
+          <label style="font-size:13px;font-weight:600;color:var(--muted);margin:0">Heures pay\u00e9es</label>
+          <input type="number" inputmode="decimal" id="paidHTot" step="0.25" value="0"
+            style="width:90px;text-align:right;margin:0;padding:6px 10px;border-radius:10px;
+                   font-size:14px;font-weight:600;background:#262a33;color:#fff;border:1px solid #333">
+        </div>
+        <div style="font-size:10px;color:var(--muted);line-height:1.4;margin-top:4px">
+          Suivi d\u00e9taill\u00e9 par taux d\u00e8s que le solde atteint z\u00e9ro
+        </div>`;
       const inp = document.getElementById('paidHTot');
-      if(inp) inp.value = m.paid||0;
-      const hid = document.getElementById('paidHours');
-      if(hid) hid.value = m.paid||0;
-      return;
+      if(inp) inp.oninput = () => {
+        if(!DATA||!DATA[currentKey]) return;
+        const v = parseFloat(inp.value)||0;
+        DATA[currentKey].paid = v;
+        delete DATA[currentKey].paid1; delete DATA[currentKey].paid2; delete DATA[currentKey].paidInter;
+        const h = document.getElementById('paidHours'); if(h) h.value = v;
+        save(); recalc();
+      };
     }
-    // sinon : tombe dans le rendu détaillé per-taux ci-dessous (avec bouton retour)
+    const inp = document.getElementById('paidHTot');
+    if(inp) inp.value = m.paid||0;
+    const hid = document.getElementById('paidHours');
+    if(hid) hid.value = m.paid||0;
+    return;
   }
 
   /* ── MODE PER-TAUX (ou legacy détaillé) : saisie séparée par taux ── */
@@ -1436,7 +1508,7 @@ function renderPaidInputs(rules){
       migBanner.style.cssText = 'background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:10px;padding:8px 10px;font-size:11px;color:#2ecc71;line-height:1.4;margin-top:8px';
       container.appendChild(migBanner);
     }
-    migBanner.innerHTML = `\u2705 ${fmtH(Number(m.paid)||0)} d\u00e9j\u00e0 pay\u00e9es ce mois <span style="color:var(--muted)">(total non ventil\u00e9 par taux)</span>.<br><span style="color:var(--muted)">Pour d\u00e9tailler : saisissez la r\u00e9partition dans les champs ci-dessus (le total sera remplac\u00e9).</span>`;
+    migBanner.innerHTML = `\u2705 ${fmtH(Number(m.paid)||0)} d\u00e9j\u00e0 pay\u00e9es sur cette p\u00e9riode <span style="color:var(--muted)">(total non ventil\u00e9 par taux)</span>.<br><span style="color:var(--muted)">Pour d\u00e9tailler : saisissez la r\u00e9partition dans les champs ci-dessus (le total sera remplac\u00e9).</span>`;
   } else if(migBanner){
     migBanner.remove();
   }
