@@ -897,6 +897,19 @@ async function wizFinish(){
 ;(function preloadAllYears(){const idx=JSON.parse(localStorage.getItem(kIndex())||"[]");if(!idx.includes(currentYear))idx.push(currentYear);idx.forEach(y=>{try{ALL_DATA[y]=loadYearData(y)}catch(e){ALL_DATA[y]={}}}); })();
 ;(function migrate(){const s=localStorage.getItem("CA_DATA_VERSION");if(s===DATA_VERSION)return;Object.entries(ALL_DATA).forEach(([y,yd])=>{Object.values(yd).forEach(m=>{if(typeof m.closing!=="number")m.closing=null;if(typeof m.locked!=="boolean")m.locked=false});saveYearData(y,yd)});localStorage.setItem("CA_DATA_VERSION",DATA_VERSION)})();
 
+/* Migration de l'ancien système (perTauxModeOn booléen) vers migrationKey (période).
+   On ne peut pas calculer les carry ici (recalcCascade pas encore exécuté), donc on
+   pose un flag _needMigrationResolve ; checkActivatePerTaux le résoudra avec les
+   carry à jour au premier recalc. */
+;(function migratePerTaux(){
+  try{
+    if(SETTINGS.migrationKey) return;
+    if(!SETTINGS.perTauxModeOn) return;
+    SETTINGS._needMigrationResolve = true;       // à résoudre après le 1er recalcCascade
+    localStorage.setItem(kSettings(), JSON.stringify(SETTINGS));
+  }catch(_){}
+})();
+
 window.addEventListener("load",()=>{
   const v=document.getElementById("versionBadge");if(v)v.textContent="v"+APP_VERSION;
   if(RECOVERY_ACTIVE){openRecovery();return}
@@ -1076,10 +1089,10 @@ function closeTutorial(){document.getElementById("tutorialModal").classList.remo
 /* CALCUL */
 function getPreviousCarry(mk){const am=[];const yd=ALL_DATA[currentYear]||{};Object.keys(yd).forEach(k=>{if(/^\d{4}-\d{2}$/.test(k))am.push({key:k,month:yd[k]})});am.sort((a,b)=>a.key.localeCompare(b.key));let pc=0;for(const item of am){if(item.key===mk)break;if(item.month.carry!=null)pc=item.month.carry}return pc}
 function recalc(){
-  checkActivatePerTaux();
-  recalcCascade(); // Recalculer la chaîne carry + breakdown figé par taux
+  recalcCascade(); // 1. Recalculer la chaîne carry + breakdown figé par taux EN PREMIER
+  checkActivatePerTaux(); // 2. Détecter la migration avec des carry à jour
   updateFuturePaymentsAlert(); // Avertir si des paiements futurs existent sur cette période
-  updatePostMigrationAlert(); // Alerte si le mois de migration a un reliquat réapparu
+  updatePostMigrationAlert(); // Alerte si une période soldée a un reliquat réapparu
   const{start,end}=getPeriodBounds(currentKey);const weeks={};
   const rules=getCCNRules();
   Object.entries(DATA).forEach(([mk,month])=>{Object.entries(month.days||{}).forEach(([d,h])=>{const date=new Date(mk.split("-")[0],mk.split("-")[1]-1,d);if(date<start||date>end)return;const wk=getWeekKeyM2(date);weeks[wk]=(weeks[wk]||0)+h})});
@@ -1231,11 +1244,32 @@ function isLegacyMode(){
 
 function checkActivatePerTaux(){
   /* Enregistre la période de migration = la PREMIÈRE période dont le carry atteint 0.
-     Une fois fixée, elle ne bouge plus (sauf reset manuel). */
-  if(SETTINGS.migrationKey) return;
-  // Parcourir les périodes dans l'ordre, trouver la 1ère dont le carry == 0
+     Gère aussi la résolution de l'ancien format (_needMigrationResolve) : dans ce cas
+     on prend la DERNIÈRE période soldée (carry 0), ou la 1ère période si aucune. */
+  if(SETTINGS.migrationKey && !SETTINGS._needMigrationResolve) return;
   const yd = ALL_DATA[currentYear] || {};
   const keys = Object.keys(yd).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort();
+
+  if(SETTINGS._needMigrationResolve){
+    // Ancien utilisateur : trouver la dernière période soldée comme point de migration
+    let chosen = null, firstKey = null;
+    // Parcourir TOUTES les années pour être complet
+    Object.keys(ALL_DATA).sort().forEach(y=>{
+      const yyd = ALL_DATA[y] || {};
+      Object.keys(yyd).filter(k=>/^\d{4}-\d{2}$/.test(k)).sort().forEach(k=>{
+        if(!firstKey) firstKey = k;
+        const c = yyd[k].carry;
+        if(c != null && c <= 0) chosen = k;
+      });
+    });
+    SETTINGS.migrationKey = chosen || firstKey;
+    delete SETTINGS._needMigrationResolve;
+    delete SETTINGS.perTauxModeOn;
+    try{ localStorage.setItem(kSettings(), JSON.stringify(SETTINGS)); }catch(_){}
+    return;
+  }
+
+  // Cas normal : 1ère période dont le carry atteint 0
   for(const k of keys){
     const c = yd[k].carry;
     if(c != null && c <= 0){
@@ -1250,25 +1284,43 @@ function checkActivatePerTaux(){
    (= heures ajoutées rétroactivement après la mise à zéro).
    Le flag reliquatHandledFor mémorise la valeur de carry déjà traitée :
    si le carry change encore, l'alerte réapparaît. */
+/* Détecte un reliquat à router par taux.
+   Deux situations couvertes :
+   1. La période de migration (mise à zéro initiale) est repassée positive.
+   2. Une période quelconque a un carry positif suite à un ajout rétroactif
+      et l'utilisateur n'a pas encore choisi comment le ventiler.
+   On regarde EN PRIORITÉ la période actuellement affichée (celle qu'on modifie),
+   puis à défaut la période de migration. Retourne {key, carry} ou null. */
 function checkPostMigrationReliquat(){
   if(!SETTINGS.migrationKey) return null;
   const yd = ALL_DATA[currentYear] || {};
-  const m = yd[SETTINGS.migrationKey];
-  if(!m) return null;
-  const c = Number(m.carry)||0;
-  if(c > 0 && m.reliquatHandledFor !== c){
-    return { key: SETTINGS.migrationKey, carry: c };
+  // 1. Période actuellement affichée : alerte SEULEMENT si elle a été soldée puis
+  //    repassée positive (reliquat anormal), pas une simple dette en cours.
+  const cur = yd[currentKey];
+  if(cur && cur.wasSettled){
+    const cc = Number(cur.carry)||0;
+    if(cc > 0 && cur.reliquatHandledFor !== cc){
+      return { key: currentKey, carry: cc };
+    }
+  }
+  // 2. Période de migration repassée positive (soldée par définition)
+  const mk = SETTINGS.migrationKey;
+  const m = yd[mk];
+  if(m && m.wasSettled){
+    const c = Number(m.carry)||0;
+    if(c > 0 && m.reliquatHandledFor !== c){
+      return { key: mk, carry: c };
+    }
   }
   return null;
 }
 
-/* Affiche l'alerte si le mois de migration a un reliquat réapparu,
-   avec choix : solder, ou reporter en choisissant le taux (pas de FIFO). */
+/* Affiche l'alerte de reliquat avec choix du taux, sur la période concernée. */
 function updatePostMigrationAlert(){
   const el = document.getElementById("postMigrationAlert");
   if(!el) return;
   const reliquat = checkPostMigrationReliquat();
-  // N'afficher que quand on est SUR le mois de migration (là où le reliquat est apparu)
+  // Afficher uniquement quand on est SUR la période concernée par le reliquat
   if(!reliquat || currentKey !== reliquat.key){
     el.style.display = "none";
     return;
@@ -1285,11 +1337,11 @@ function updatePostMigrationAlert(){
 
   el.style.display = "block";
   el.innerHTML = `
-    <div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:8px">⚠️ La validation de cette période a sauté</div>
+    <div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:8px">⚠️ Heures ajoutées dans le passé</div>
     <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">
-      Vous avez ajouté des heures dans le passé. Cette période (déjà soldée) a de nouveau un solde de <b style="color:#e74c3c">${fmtH(c)}</b> à régler.
+      Cette période a un solde de <b style="color:#e74c3c">${fmtH(c)}</b> à régler suite à votre modification. Choisissez à quel taux reporter ces heures.
     </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">Comment traiter ces ${fmtH(c)} ?</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">À quel taux reporter ces ${fmtH(c)} ?</div>
     <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${tauxBtns}</div>
     <button type="button" onclick="handleReliquatSolder()" style="width:100%;padding:8px;border-radius:10px;background:rgba(46,204,113,.2);border:1px solid #2ecc71;color:#2ecc71;font-weight:600;font-size:12px;cursor:pointer">✅ Je l'ai soldé (remettre à zéro)</button>`;
 }
@@ -1759,6 +1811,11 @@ function recalcCascade(){
     rc+=ph-(Number(m.paid)||0);
     if(rc<0)rc=0;
     m.carry=rc;
+    // Mémoriser qu'une période a été soldée (carry 0 avec au moins un paiement).
+    // Sert à distinguer un reliquat anormal (période re-positivée) d'une dette normale.
+    if(rc===0 && (Number(m.paid)||0) > 0){
+      m.wasSettled = true;
+    }
 
     // ── Breakdown par taux figé ──
     // 1. Heures de CE mois ventilées par taux (calcul hebdo sur la période)
