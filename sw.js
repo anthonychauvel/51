@@ -3,7 +3,7 @@
  * Version : 8.1.0 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.2.1"; // partage : deux liens (iOS + Android)
+const CACHE_NAME = "heuressup-cache-v10.2.0"; // partage : deux liens (iOS + Android)
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
@@ -112,60 +112,10 @@ const FILES_TO_CACHE = [
   "./mentions-legales.html",
   "./privacy.html",
   "./outils/articles-loi.js",
-  "./outils/module-activite-partielle/index.html",
-  "./outils/module-alternance/index.html",
-  "./outils/module-anciennete/index.html",
-  "./outils/module-archives/index.html",
-  "./outils/module-arret/index.html",
-  "./outils/module-astreintes/index.html",
-  "./outils/module-atmp/index.html",
-  "./outils/module-avantages-nature/index.html",
-  "./outils/module-bulletin/index.html",
-  "./outils/module-c2p/index.html",
-  "./outils/module-cet/index.html",
-  "./outils/module-chomage/index.html",
-  "./outils/module-conge-ss/index.html",
-  "./outils/module-conges/index.html",
-  "./outils/module-contrats/index.html",
-  "./outils/module-convertisseur/index.html",
-  "./outils/module-cse/index.html",
-  "./outils/module-cumul-retraite/index.html",
-  "./outils/module-delegation/index.html",
-  "./outils/module-demission-are/index.html",
-  "./outils/module-effectifs/index.html",
-  "./outils/module-egalite/index.html",
-  "./outils/module-entretien/index.html",
-  "./outils/module-epargne/index.html",
-  "./outils/module-essai/index.html",
-  "./outils/module-famille/index.html",
-  "./outils/module-feries/index.html",
-  "./outils/module-fincontrat/index.html",
-  "./outils/module-fincontrat2/index.html",
-  "./outils/module-formation/index.html",
-  "./outils/module-greve/index.html",
-  "./outils/module-inaptitude/index.html",
-  "./outils/module-invalidite/index.html",
-  "./outils/module-journal/index.html",
-  "./outils/module-lexique/index.html",
-  "./outils/module-miseapied/index.html",
-  "./outils/module-mobilites/index.html",
-  "./outils/module-modulation/index.html",
-  "./outils/module-mutuelle/index.html",
-  "./outils/module-nonconcurrence/index.html",
-  "./outils/module-parentalite/index.html",
-  "./outils/module-preavis/index.html",
-  "./outils/module-preavis-comp/index.html",
-  "./outils/module-precarite/index.html",
-  "./outils/module-proche-aidant/index.html",
-  "./outils/module-retraite/index.html",
-  "./outils/module-rupture/index.html",
-  "./outils/module-sabbatique/index.html",
-  "./outils/module-saisie/index.html",
-  "./outils/module-teletravail/index.html",
-  "./outils/module-temps/index.html",
-  "./outils/module-tr/index.html",
-  "./outils/module-transport/index.html",
-  "./outils/module8/index.html",
+  // ── Modules « outils » : NON pré-cachés ici (déploiement progressif).
+  //    Ils se mettent en cache à la volée quand l'utilisateur les ouvre,
+  //    via la stratégie cache-puis-réseau du handler fetch ci-dessous.
+  //    Le dashboard (outils.html) détecte par HEAD lesquels sont en ligne.
 ];
 
 // ── INSTALL ───────────────────────────────────────────────────────────────────

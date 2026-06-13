@@ -385,14 +385,30 @@ function togglePin(id,ev){if(ev)ev.stopPropagation();var p=getPinned();var i=p.i
 function isPinned(id){return getPinned().indexOf(id)>=0;}
 
 /* ===== Ouverture outil ===== */
-function openTool(id){var r=getRecent().filter(function(x){return x!==id;});r.unshift(id);r=r.slice(0,12);ls(LS.R,r);window.location.href='outils/'+id+'/index.html';}
+function openTool(id){
+  // Sécurité : si le module a été retiré du serveur depuis la dernière détection
+  // (fenêtre du cache 1 h), on re-teste à la volée avant d'ouvrir.
+  // Évite d'envoyer l'utilisateur sur une page 404.
+  probe(id).then(function(ok){
+    if(ok){
+      var r=getRecent().filter(function(x){return x!==id;});r.unshift(id);r=r.slice(0,12);ls(LS.R,r);
+      window.location.href='outils/'+id+'/index.html';
+    }else{
+      // Module supprimé entre-temps : on met à jour la dispo, on purge le cache et on re-render
+      if(AVAILABLE)AVAILABLE[id]=false;
+      try{localStorage.removeItem(DEPLOY_CHECK_KEY);}catch(e){}
+      toast('Cet outil n\'est plus disponible');
+      render();
+    }
+  });
+}
 
 /* ===== Ligne outil ===== */
 function rowHTML(id){var t=TOOLS[id];if(!t)return'';var on=isPinned(id);
   return'<div class="tool-row" onclick="openTool(\''+id+'\')">'+makeSvg(SVGP[CATS.find(function(c){return c.ids.indexOf(id)>=0;})?CATS.find(function(c){return c.ids.indexOf(id)>=0;}).icon:'doc'])+'<div class="tool-info"><div class="t">'+t.t+'</div><div class="s">'+t.s+'</div></div><button class="pin-btn'+( on?' on':'')+'" onclick="togglePin(\''+id+'\',event)">'+( on?'⭐':'☆')+'</button></div>';}
 
 /* ===== Grille favoris (accueil) ===== */
-function renderFavGrid(){var p=getPinned();var h=document.getElementById('favGrid');
+function renderFavGrid(){var p=getPinned().filter(isAvail);var h=document.getElementById('favGrid');
   if(!p.length){h.innerHTML='<div class="empty-msg"><span class="e">☆</span>Aucun favori pour l\'instant.<br>Touche l\'étoile d\'un outil pour l\'épingler ici.</div>';return;}
   h.innerHTML='<div class="fav-grid">'+p.slice(0,8).map(function(id){var t=TOOLS[id];if(!t)return'';return'<div class="fav-cell" onclick="openTool(\''+id+'\')"><div style="color:var(--txt)">'+makeSvg(SVGP[CATS.find(function(c){return c.ids.indexOf(id)>=0;})?CATS.find(function(c){return c.ids.indexOf(id)>=0;}).icon:'doc'],28)+'</div><div class="nm">'+t.t+'</div></div>';}).join('')+'</div>';}
 
@@ -404,9 +420,10 @@ function normSearch(s){ return s ? s.toLowerCase().normalize('NFD').replace(/[̀
 
 function renderCats(q){var h=document.getElementById('catList');var html='';
   CATS.forEach(function(cat){
-    var ids=q?cat.ids.filter(function(id){var t=TOOLS[id];return t&&(normSearch(t.t).indexOf(normSearch(q))>=0||normSearch(t.s).indexOf(normSearch(q))>=0);}):cat.ids;
-    if(q&&!ids.length)return;
-    var op=q||openCats[cat.id];' ';
+    var base=availIds(cat.ids);
+    var ids=q?base.filter(function(id){var t=TOOLS[id];return t&&(normSearch(t.t).indexOf(normSearch(q))>=0||normSearch(t.s).indexOf(normSearch(q))>=0);}):base;
+    if(!ids.length)return;
+    var op=q||openCats[cat.id];
     html+='<div class="cat'+( op?' open':'')+'" id="cat-'+cat.id+'">'
       +'<div class="cat-hd" onclick="togCat(\''+cat.id+'\')">'+
       '<div class="pill" style="background:'+cat.color+'38;">'+makeSvg(SVGP[cat.icon])+'</div>'+
@@ -414,17 +431,20 @@ function renderCats(q){var h=document.getElementById('catList');var html='';
       '<div class="cnt">'+ids.length+' outil'+(ids.length>1?'s':'')+'</div></div>'+
       '<svg class="chev" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><polyline points="9 6 15 12 9 18"/></svg></div>'+
       '<div class="cat-body"><div class="cat-body-in">'+ids.map(rowHTML).join('')+'</div></div></div>';});
-  if(q&&html==='')html='<div class="empty-msg"><span class="e">🔍</span>Aucun résultat pour « '+q+' ».</div>';
+  if(html===''){
+    html=q?'<div class="empty-msg"><span class="e">🔍</span>Aucun résultat pour « '+q+' ».</div>'
+          :'<div class="empty-msg"><span class="e">🦊</span>Les outils arrivent très bientôt…</div>';
+  }
   h.innerHTML=html;}
 function togCat(id){openCats[id]=!openCats[id];var el=document.getElementById('cat-'+id);if(el)el.classList.toggle('open',!!openCats[id]);}
 
 /* ===== Vue Favoris pleine page ===== */
-function renderFavFull(){var p=getPinned();var h=document.getElementById('favFull');
+function renderFavFull(){var p=getPinned().filter(isAvail);var h=document.getElementById('favFull');
   if(!p.length){h.innerHTML='<div class="empty-msg"><span class="e">⭐</span>Aucun favori.<br>Épingle des outils depuis l\'accueil.</div>';return;}
   h.innerHTML=p.map(rowHTML).join('');}
 
 /* ===== Vue Récents ===== */
-function renderRecents(){var r=getRecent();var h=document.getElementById('recentList');
+function renderRecents(){var r=getRecent().filter(isAvail);var h=document.getElementById('recentList');
   if(!r.length){h.innerHTML='<div class="empty-msg"><span class="e">🕐</span>Aucun outil récent.</div>';return;}
   h.innerHTML=r.map(rowHTML).join('');}
 
@@ -466,10 +486,54 @@ function startWiz(){document.getElementById('wizOv').classList.add('on');wShow(0
 document.getElementById('wNext').addEventListener('click',function(){if(wStep<wMax-1)wShow(wStep+1);else wClose();});
 document.getElementById('wSkip').addEventListener('click',wClose);
 
+/* ===== DÉTECTION DES MODULES DÉPLOYÉS =====
+   Teste l'existence de chaque outils/<id>/index.html via une requête HEAD.
+   Seuls les modules dont le fichier répond 200 restent visibles.
+   Permet une mise en prod progressive : un module absent du serveur
+   disparaît automatiquement du dashboard (catégories, favoris, récents). */
+var AVAILABLE=null;           // null = pas encore testé → on affiche tout
+var DEPLOY_CHECK_KEY='SH_DEPLOYED_CACHE';
+var DEPLOY_CHECK_TTL=3600000; // 1 h de cache pour éviter de re-tester à chaque visite
+
+function isAvail(id){ return AVAILABLE===null || AVAILABLE[id]===true; }
+
+/* Filtre une liste d'ids selon la disponibilité */
+function availIds(ids){ return ids.filter(isAvail); }
+
+/* Teste un module : résout true si index.html existe, false sinon */
+function probe(id){
+  return fetch('outils/'+id+'/index.html',{method:'HEAD',cache:'no-store'})
+    .then(function(r){return r.ok;})
+    .catch(function(){return false;});
+}
+
+/* Lance la détection de tous les modules en parallèle, puis re-render */
+function detectDeployed(){
+  // Cache court pour ne pas refaire 54 requêtes à chaque ouverture
+  try{
+    var c=JSON.parse(localStorage.getItem(DEPLOY_CHECK_KEY)||'null');
+    if(c&&c.t&&(Date.now()-c.t)<DEPLOY_CHECK_TTL&&c.map){
+      AVAILABLE=c.map; render(); return;
+    }
+  }catch(e){}
+
+  var ids=Object.keys(TOOLS);
+  Promise.all(ids.map(function(id){
+    return probe(id).then(function(ok){return [id,ok];});
+  })).then(function(results){
+    var map={};
+    results.forEach(function(pair){map[pair[0]]=pair[1];});
+    AVAILABLE=map;
+    try{localStorage.setItem(DEPLOY_CHECK_KEY,JSON.stringify({t:Date.now(),map:map}));}catch(e){}
+    render();
+  });
+}
+
 /* ===== RENDU GLOBAL ===== */
 function render(){renderFavGrid();renderCats(document.getElementById('srchIp').value.toLowerCase().trim());if(curTab==='favoris')renderFavFull();if(curTab==='recents')renderRecents();}
 
-render();
+render();              // 1er rendu immédiat (tout visible le temps du test)
+detectDeployed();      // puis détection → masque les modules non déployés
 if(!lg(LS.W,0))startWiz();
 </script>
 </body>
