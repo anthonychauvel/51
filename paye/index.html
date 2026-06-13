@@ -1202,13 +1202,19 @@ function recalc(){
   document.getElementById("carryOver").textContent=fmtH((DATA[currentKey].carry||0));
 
   // Stat-grid dynamique (s'adapte au nombre de paliers CCN)
+  // Affiche la ventilation RÉELLE du restant dû (dueBreakdown), cohérente avec
+  // le report et les choix de taux de l'utilisateur — pas la théorie par paliers.
   const sgc = document.getElementById("statGridContainer");
   if(sgc){
+    const bdReal = (DATA[currentKey] && DATA[currentKey].dueBreakdown) || null;
+    const g25 = bdReal ? (Number(bdReal.due1)||0) : t25;
+    const gInter = bdReal ? (Number(bdReal.dueInter)||0) : tInter;
+    const g50 = bdReal ? (Number(bdReal.due2)||0) : t50;
     const paliers = [
       { val: fmtH(ph),     lbl: 'Total<br>période', color: 'var(--accent)' },
-      { val: fmtH(t25),    lbl: 'À&nbsp;'+rules.taux1+'%',          color: '#f39c12' },
-      ...(rules.taux_inter !== null ? [{ val: fmtH(tInter), lbl: 'À&nbsp;'+rules.taux_inter+'%', color: '#e67e22' }] : []),
-      { val: fmtH(t50),    lbl: 'À&nbsp;'+rules.taux2+'%',          color: '#e74c3c' },
+      { val: fmtH(g25),    lbl: 'À&nbsp;'+rules.taux1+'%',          color: '#f39c12' },
+      ...(rules.taux_inter !== null ? [{ val: fmtH(gInter), lbl: 'À&nbsp;'+rules.taux_inter+'%', color: '#e67e22' }] : []),
+      { val: fmtH(g50),    lbl: 'À&nbsp;'+rules.taux2+'%',          color: '#e74c3c' },
     ];
     sgc.style.gridTemplateColumns = 'repeat('+paliers.length+',1fr)';
     sgc.innerHTML = paliers.map(p =>
@@ -1305,31 +1311,51 @@ function reliquatSumAlloc(m){
   return (Number(a.t1)||0) + (Number(a.ti)||0) + (Number(a.t2)||0);
 }
 
-/* Détecte un reliquat à traiter = le DELTA de nouvelles heures non encore routées.
-   delta = carry - (heures déjà allouées manuellement).
-   Ainsi chaque ajout est traité indépendamment : router/solder un nouvel ajout
-   ne touche pas aux heures déjà réparties à un taux lors d'un ajout précédent. */
+/* Total des heures PROPRES d'une période (dans ses bornes de période). */
+function periodOwnHours(key){
+  const {start,end} = getPeriodBounds(key);
+  let own = 0;
+  Object.entries(ALL_DATA).forEach(([,yyd])=>{
+    Object.entries(yyd||{}).forEach(([mk,mo])=>{
+      Object.entries(mo.days||{}).forEach(([d,h])=>{
+        const[y,mo2]=mk.split("-").map(Number);
+        const date=new Date(y,mo2-1,d);
+        if(date>=start&&date<=end) own += (Number(h)||0);
+      });
+    });
+  });
+  return own;
+}
+
+/* Vrai s'il existe une période POSTÉRIEURE avec de l'activité (heures ou paiement).
+   Sert à savoir si currentKey est une période "passée" éditée rétroactivement. */
+function hasLaterActivity(key){
+  const yd = ALL_DATA[currentYear] || {};
+  return Object.keys(yd).some(k=>{
+    if(!/^\d{4}-\d{2}$/.test(k) || k <= key) return false;
+    const m = yd[k];
+    const hasHours = m.days && Object.values(m.days).some(h=>(Number(h)||0)>0);
+    return hasHours || (Number(m.paid)||0)>0;
+  });
+}
+
+/* Détecte un reliquat à router = heures PROPRES non payées et non encore routées
+   de la période actuellement éditée. Le pop-up cible TOUJOURS la période éditée
+   (le choix de l'utilisateur prime), à condition que ce soit une période passée
+   (déjà soldée OU suivie d'une période avec activité). */
 function checkPostMigrationReliquat(){
   if(!SETTINGS.migrationKey) return null;
   const yd = ALL_DATA[currentYear] || {};
-  // 1. Période actuellement affichée (si déjà soldée puis repassée positive)
   const cur = yd[currentKey];
-  if(cur && cur.wasSettled){
-    const cc = Number(cur.carry)||0;
-    const delta = cc - reliquatSumAlloc(cur);
-    if(delta > 0.01){
-      return { key: currentKey, carry: cc, delta };
-    }
-  }
-  // 2. Période de migration repassée positive
-  const mk = SETTINGS.migrationKey;
-  const m = yd[mk];
-  if(m && m.wasSettled){
-    const c = Number(m.carry)||0;
-    const delta = c - reliquatSumAlloc(m);
-    if(delta > 0.01){
-      return { key: mk, carry: c, delta };
-    }
+  if(!cur) return null;
+  // Uniquement pour une période passée éditée rétroactivement
+  if(!(cur.wasSettled || hasLaterActivity(currentKey))) return null;
+  const ownH = periodOwnHours(currentKey);
+  const ownPaid = Number(cur.paid)||0;
+  const ownBalance = ownH - ownPaid;       // heures propres non payées
+  const delta = ownBalance - reliquatSumAlloc(cur); // non encore routées
+  if(delta > 0.01){
+    return { key: currentKey, carry: ownBalance, delta };
   }
   return null;
 }
@@ -1387,8 +1413,9 @@ function handleReliquatTaux(which){
   const yd = ALL_DATA[currentYear] || {};
   const m = yd[key];
   if(!m) return;
-  const c = Number(m.carry)||0;
-  const delta = c - reliquatSumAlloc(m); // SEULEMENT les nouvelles heures
+  // delta = heures propres non payées et non encore routées
+  const ownBalance = periodOwnHours(key) - (Number(m.paid)||0);
+  const delta = ownBalance - reliquatSumAlloc(m);
   if(delta <= 0.01) return;
   // Ajouter le delta à l'allocation CUMULATIVE du taux choisi (sans toucher au reste)
   if(!m.reliquatAlloc) m.reliquatAlloc = {t1:0, ti:0, t2:0};
@@ -1411,8 +1438,9 @@ function handleReliquatSolder(){
   const yd = ALL_DATA[currentYear] || {};
   const m = yd[key];
   if(!m) return;
-  const c = Number(m.carry)||0;
-  const delta = c - reliquatSumAlloc(m); // payer SEULEMENT les nouvelles heures
+  // delta = heures propres non payées et non encore routées
+  const ownBalance = periodOwnHours(key) - (Number(m.paid)||0);
+  const delta = ownBalance - reliquatSumAlloc(m);
   if(delta <= 0.01) return;
   m.paid = (Number(m.paid)||0) + delta;
   const modal = document.getElementById("reliquatModal");
@@ -1865,58 +1893,66 @@ function recalcCascade(){
     }
 
     // ── Breakdown par taux figé ──
-    // 1. Heures de CE mois ventilées par taux (calcul hebdo sur la période)
+    // 1. Heures PROPRES de cette période ventilées par paliers
     const {h25, hInter, h50} = calcWeeks(buildDayList(start, end));
-    // 2. On AJOUTE au snapshot reporté du mois précédent
-    due1     += h25;
-    dueInter += (hInter||0);
-    due2     += h50;
-    // 3. On SOUSTRAIT les paiements per-taux de CE mois (sur leur propre taux)
-    //    Si pas de données per-taux, on solde du taux le PLUS ÉLEVÉ d'abord (50→inter→25).
-    //    Ainsi le restant dû penche vers les bas taux → on sous-estime plutôt que surestime.
+    let o1 = h25, oi = (hInter||0), o2 = h50; // ventilation propre par défaut
+    const ownTotal = o1 + oi + o2;
+
+    // 2. Allocation manuelle : remplace la ventilation par paliers des heures PROPRES
+    //    par la répartition choisie par l'utilisateur (priorité absolue, pas de FIFO).
+    if(m.reliquatAlloc){
+      let a1 = Number(m.reliquatAlloc.t1)||0, ai = Number(m.reliquatAlloc.ti)||0, a2 = Number(m.reliquatAlloc.t2)||0;
+      let sumA = a1 + ai + a2;
+      // Clamp : l'allocation ne peut pas dépasser les heures propres (heures supprimées).
+      // Ainsi supprimer puis re-saisir des heures redéclenche bien le pop-up.
+      if(sumA > ownTotal + 0.01){
+        if(ownTotal <= 0.01){
+          delete m.reliquatAlloc; a1 = ai = a2 = 0; sumA = 0;
+        } else {
+          let excess = sumA - ownTotal;
+          const c2 = Math.min(a2, excess); a2 -= c2; excess -= c2;
+          const cI = Math.min(ai, excess); ai -= cI; excess -= cI;
+          const c1 = Math.min(a1, excess); a1 -= c1;
+          m.reliquatAlloc = {t1:a1, ti:ai, t2:a2}; sumA = a1 + ai + a2;
+        }
+      }
+      if(m.reliquatAlloc){
+        // Heures allouées sur leurs taux choisis ; le reste des heures propres
+        // garde la forme paliers (proportionnellement).
+        const leftover = Math.max(0, ownTotal - sumA);
+        const base = ownTotal || 1;
+        o1 = a1 + leftover * (o1 / base);
+        oi = ai + leftover * (oi / base);
+        o2 = a2 + leftover * (o2 / base);
+      }
+    }
+
+    // 3. Ajouter la ventilation propre au cumul reporté des périodes précédentes
+    due1 += o1; dueInter += (oi||0); due2 += o2;
+
+    // 4. Soustraire les paiements de CE mois (per-taux si dispo, sinon 50%→inter→25% prudent)
     if(m.paid1!==undefined || m.paid2!==undefined){
       due1     = Math.max(0, due1     - (Number(m.paid1)||0));
       dueInter = Math.max(0, dueInter - (Number(m.paidInter)||0));
       due2     = Math.max(0, due2     - (Number(m.paid2)||0));
     } else if(m.paid){
       let rem=Number(m.paid)||0;
-      const p2=Math.min(due2,rem); due2-=p2; rem-=p2;       // 50% d'abord
-      const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI; // puis intermédiaire
-      const p1=Math.min(due1,rem); due1-=p1;                 // puis 25%
+      const p2=Math.min(due2,rem); due2-=p2; rem-=p2;
+      const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI;
+      const p1=Math.min(due1,rem); due1-=p1;
     }
-    // 4. Allocation manuelle du reliquat (priorité absolue, pas de FIFO).
-    //    reliquatAlloc = répartition cumulative choisie par l'utilisateur pour les
-    //    heures ajoutées rétroactivement. Chaque ajout traité indépendamment.
-    if(m.reliquatAlloc && rc > 0){
-      const a = m.reliquatAlloc;
-      const a1 = Number(a.t1)||0, ai = Number(a.ti)||0, a2 = Number(a.t2)||0;
-      const sumA = a1 + ai + a2;
-      if(rc >= sumA){
-        // Les heures allouées vont sur leurs taux choisis ;
-        // l'excédent non encore traité (delta) reste sur taux1 en attendant le pop-up.
-        due1 = a1 + (rc - sumA);
-        dueInter = ai;
-        due2 = a2;
-      } else if(sumA > 0){
-        // Une partie des heures allouées a été payée → réduire proportionnellement.
-        const ratio = rc / sumA;
-        due1 = a1 * ratio; dueInter = ai * ratio; due2 = a2 * ratio;
+
+    // 5. Réconciliation de sécurité : le total doit correspondre au carry réel.
+    const bdTotal = due1 + dueInter + due2;
+    if(Math.abs(bdTotal - rc) > 0.01){
+      if(bdTotal > 0){
+        const ratio = rc / bdTotal;
+        due1 *= ratio; dueInter *= ratio; due2 *= ratio;
       } else {
         due1 = rc; dueInter = 0; due2 = 0;
       }
-    } else {
-      // Réconciliation normale : le total du breakdown doit correspondre au carry réel.
-      const bdTotal = due1 + dueInter + due2;
-      if(Math.abs(bdTotal - rc) > 0.01){
-        if(bdTotal > 0){
-          const ratio = rc / bdTotal;
-          due1 *= ratio; dueInter *= ratio; due2 *= ratio;
-        } else {
-          due1 = rc; dueInter = 0; due2 = 0;
-        }
-      }
     }
-    // 5. Figer le snapshot dans le mois
+    // 6. Figer le snapshot dans le mois
     m.dueBreakdown = { due1, dueInter, due2 };
   });
 }
