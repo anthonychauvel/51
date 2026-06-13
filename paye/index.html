@@ -537,7 +537,10 @@ document.addEventListener("DOMContentLoaded", function(){
   <div class="calendar card" id="calendar"></div>
 
   <div class="card">
-    <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted);margin-bottom:12px">Récapitulatif</div>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <div style="font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--muted)">Récapitulatif</div>
+      <button type="button" id="periodLockBtn" onclick="togglePeriodLock()" style="display:flex;align-items:center;gap:6px;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);border-radius:99px;padding:6px 12px;font-size:12px;font-weight:600;color:var(--muted);cursor:pointer">🔓 Verrouiller</button>
+    </div>
 
     <!-- STAT GRID — rendue dynamiquement par recalc() selon les paliers CCN -->
     <div id="statGridContainer" class="stat-grid"></div>
@@ -970,6 +973,32 @@ function getPeriodBounds(monthKey){
   let closing=cm.closing;if(typeof closing!=="number"||new Date(y,m-1,closing).getDay()!==getClosingDow())closing=getLastClosingDay(y,m-1);
   return{start,end:new Date(y,m-1,closing)};
 }
+
+/* Détermine la clé de période (YYYY-MM) à laquelle appartient une date donnée.
+   Une période "YYYY-MM" couvre de (clôture mois précédent +1) à (clôture mois M).
+   Un jour de fin de mois peut donc appartenir à la période du mois SUIVANT. */
+function getPeriodKeyForDate(date){
+  const y=date.getFullYear(), m=date.getMonth()+1;
+  const thisKey=y+"-"+String(m).padStart(2,"0");
+  const {start,end}=getPeriodBounds(thisKey);
+  if(date>=start && date<=end) return thisKey;
+  // Si après la clôture de ce mois → appartient à la période du mois suivant
+  if(date>end){
+    const nd=new Date(y,m,1); // mois suivant
+    return nd.getFullYear()+"-"+String(nd.getMonth()+1).padStart(2,"0");
+  }
+  // Si avant le début → période du mois précédent (rare, sécurité)
+  const pd=new Date(y,m-2,1);
+  return pd.getFullYear()+"-"+String(pd.getMonth()+1).padStart(2,"0");
+}
+
+/* Vrai si la période à laquelle appartient cette date est verrouillée. */
+function isDateLocked(date){
+  const pk=getPeriodKeyForDate(date);
+  const yd=ALL_DATA[getYearFromMonth(pk)]||{};
+  return !!(yd[pk] && yd[pk].locked);
+}
+
 function goMenu(){localStorage.removeItem("lastApp");window.location.href="../menu.html"}
 function loadMonth(){updateYearLabel();
   currentKey=monthPicker.value;const year=getYearFromMonth(currentKey);registerYear(year);
@@ -993,12 +1022,13 @@ function renderCalendar(){
   for(let d=1;d<=dim;d++){
     const div=document.createElement("div");div.className="day";
     const date=new Date(y,m-1,d);
+    const dayLocked = isDateLocked(date); // verrou basé sur la PÉRIODE du jour
     if(date>end)div.classList.add("after-closing");
-    if(isLocked)div.classList.add("locked");
+    if(dayLocked)div.classList.add("locked");
     if(isCurMonth&&d===today.getDate()){div.classList.add("today");div.id="todayCell"}
     const val=DATA[currentKey].days[d];
     div.innerHTML=`<b style="font-size:13px">${d}</b><br><span style="color:#fff;font-weight:600;font-size:11px;display:block;line-height:1.2">${val?fmtH(val):""}</span>`;
-    div.onclick=()=>{if(isLocked){toast("🔒 Mois verrouillé","warn");return}openHours(d)};
+    div.onclick=()=>{if(dayLocked){toast("🔒 Période verrouillée","warn");return}openHours(d)};
     cal.appendChild(div);
   }
 }
@@ -1006,9 +1036,9 @@ function renderCalendar(){
 /* POPUP HEURES */
 function openHours(d){currentDay=d;const c=document.getElementById("hoursChoices");c.innerHTML="";[0.25,0.5,0.75,1,1.25,1.5,2].forEach(v=>{const b=document.createElement("button");b.textContent="+"+fmtH(v);b.onclick=()=>applyHours(v);c.appendChild(b)});setM2SaisieMode(_m2SaisieMode);document.getElementById("hoursModal").classList.add("open");lockBodyScroll()}
 function closeHours(){document.getElementById("hoursModal").classList.remove("open");unlockBodyScroll()}
-function applyHours(h){if(h<=0)return;DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;save();renderCalendar();recalc();const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)}
+function applyHours(h){if(h<=0)return;const[_y,_m]=currentKey.split("-").map(Number);if(isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;save();renderCalendar();recalc();const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)}
 function confirmManual(){const inp=document.getElementById("manualHours"),h=parseFloat(inp.value);if(isNaN(h)||h<=0){toast("⛔ Valeur invalide","error");return}applyHours(h);inp.value=""}
-function deleteDayHours(){if(DATA[currentKey].locked){toast("🔒 Mois verrouillé","warn");return}if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{delete DATA[currentKey].days[currentDay];currentDay=null;save();renderCalendar();recalc();closeHours();},"Supprimer",true);return;currentDay=null;save();renderCalendar();recalc();closeHours()}
+function deleteDayHours(){const[_y,_m]=currentKey.split("-").map(Number);if(currentDay&&isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{delete DATA[currentKey].days[currentDay];currentDay=null;save();renderCalendar();recalc();closeHours();},"Supprimer",true);return;currentDay=null;save();renderCalendar();recalc();closeHours()}
 /* ── MODE SAISIE M2 : HS directes / Heures travaillées ── */
 let _m2SaisieMode=localStorage.getItem('M2_SAISIE_MODE')||'hs';
 function setM2SaisieMode(mode){
@@ -1163,6 +1193,7 @@ function recalc(){
 
   // Inputs heures payées par taux (dynamiques selon CCN)
   renderPaidInputs(rules);
+  updatePeriodLockUI(); // Refléter l'état du verrou de période
 
   // Restant dû
   updateRestantDu();
@@ -1205,6 +1236,44 @@ function checkActivatePerTaux(){
   }
 }
 
+function togglePeriodLock(){
+  if(!DATA||!DATA[currentKey]) return;
+  const willLock = !DATA[currentKey].locked;
+  if(willLock){
+    DATA[currentKey].locked = true;
+    save(); 
+    updatePeriodLockUI();
+    renderCalendar();
+    renderPaidInputs(getCCNRules());
+    toast("🔒 Période verrouillée", "success");
+  } else {
+    // Déverrouillage : confirmation légère pour éviter déverrouillage accidentel
+    DATA[currentKey].locked = false;
+    save();
+    updatePeriodLockUI();
+    renderCalendar();
+    renderPaidInputs(getCCNRules());
+    toast("🔓 Période déverrouillée", "info");
+  }
+}
+
+function updatePeriodLockUI(){
+  const btn = document.getElementById("periodLockBtn");
+  if(!btn || !DATA || !DATA[currentKey]) return;
+  const locked = DATA[currentKey].locked;
+  if(locked){
+    btn.innerHTML = "🔒 Verrouillé";
+    btn.style.background = "rgba(243,156,18,.15)";
+    btn.style.borderColor = "rgba(243,156,18,.4)";
+    btn.style.color = "#f39c12";
+  } else {
+    btn.innerHTML = "🔓 Verrouiller";
+    btn.style.background = "rgba(255,255,255,.06)";
+    btn.style.borderColor = "rgba(255,255,255,.12)";
+    btn.style.color = "var(--muted)";
+  }
+}
+
 function renderPaidInputs(rules){
   const container = document.getElementById("paidInputsContainer");
   if(!container) return;
@@ -1215,6 +1284,27 @@ function renderPaidInputs(rules){
     container.dataset.forKey = currentKey;
     container.dataset.legacyDetail = "0";
     container.innerHTML = ''; // forcer reconstruction propre
+  }
+
+  // ── PÉRIODE VERROUILLÉE : affichage en lecture seule, pas de saisie ──
+  if(m.locked){
+    const r = rules;
+    const rows = [];
+    if(m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined){
+      if((Number(m.paid1)||0) > 0) rows.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:#f39c12">À ${r.taux1}% payées</span><b>${fmtH(Number(m.paid1)||0)}</b></div>`);
+      if((Number(m.paidInter)||0) > 0 && r.taux_inter) rows.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:#e67e22">À ${r.taux_inter}% payées</span><b>${fmtH(Number(m.paidInter)||0)}</b></div>`);
+      if((Number(m.paid2)||0) > 0) rows.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:#e74c3c">À ${r.taux2}% payées</span><b>${fmtH(Number(m.paid2)||0)}</b></div>`);
+    }
+    if(rows.length === 0 && (Number(m.paid)||0) > 0){
+      rows.push(`<div style="display:flex;justify-content:space-between;font-size:13px;padding:3px 0"><span style="color:var(--muted)">Heures payées</span><b>${fmtH(Number(m.paid)||0)}</b></div>`);
+    }
+    container.dataset.forKey = currentKey; // garder synchro
+    container.innerHTML = `
+      <div style="opacity:.7;pointer-events:none">${rows.join('') || '<div style="font-size:13px;color:var(--muted)">Aucun paiement enregistré</div>'}</div>
+      <div style="font-size:10px;color:#f39c12;margin-top:8px">🔒 Période verrouillée — déverrouillez en haut pour modifier.</div>`;
+    const hid = document.getElementById('paidHours');
+    if(hid) hid.value = m.paid||0;
+    return;
   }
 
   if(isLegacyMode()){
@@ -1295,7 +1385,7 @@ function renderPaidInputs(rules){
       if(!inp) return;
       inp.oninput = () => {
         if(!DATA||!DATA[currentKey]) return;
-        // Matérialiser TOUS les paliers (passe le mois legacy en per-taux explicite)
+        // Matérialiser TOUS les paliers (passe le mois en per-taux explicite)
         paliers.forEach(pp => {
           const el = document.getElementById(pp.id);
           if(DATA[currentKey][pp.key] === undefined){
@@ -1303,10 +1393,11 @@ function renderPaidInputs(rules){
           }
         });
         DATA[currentKey][p.key] = parseFloat(inp.value)||0;
+        // Le total payé devient la somme des paliers ventilés
         DATA[currentKey].paid = paliers.reduce((s,t)=>s+(Number(DATA[currentKey][t.key])||0), 0);
         const h = document.getElementById('paidHours');
         if(h) h.value = DATA[currentKey].paid;
-        // Retirer la bannière migration une fois ventilé
+        // Retirer le bandeau total non-ventilé (désormais ventilé)
         const mb = document.getElementById('migrationHint');
         if(mb) mb.remove();
         save(); recalc();
@@ -1325,9 +1416,7 @@ function renderPaidInputs(rules){
     };
   }
 
-  // Affichage des valeurs par taux. Pour un mois "legacy" (total payé sans détail),
-  // on N'ATTRIBUE PAS le total à un taux précis : ce serait une supposition trompeuse.
-  // Les champs restent à 0 et une note neutre indique le total réellement payé.
+  // Affichage des valeurs par taux.
   const hasDetailVals = (m.paid1 !== undefined || m.paid2 !== undefined || m.paidInter !== undefined);
   const legacyPaidNoDetail = !hasDetailVals && (Number(m.paid)||0) > 0;
 
@@ -1337,16 +1426,17 @@ function renderPaidInputs(rules){
     inp.value = m[p.key] !== undefined ? m[p.key] : 0;
   });
 
-  // Note neutre si un mois a un total payé non ventilé (sans affirmer un taux)
+  // Si un total a été payé sans ventilation par taux (mois saisi avant le détail),
+  // on l'affiche clairement pour ne pas donner l'impression d'une perte de données.
   let migBanner = document.getElementById('migrationHint');
   if(legacyPaidNoDetail){
     if(!migBanner){
       migBanner = document.createElement('div');
       migBanner.id = 'migrationHint';
-      migBanner.style.cssText = 'font-size:10px;color:var(--muted);line-height:1.4;margin-top:6px';
+      migBanner.style.cssText = 'background:rgba(46,204,113,.08);border:1px solid rgba(46,204,113,.25);border-radius:10px;padding:8px 10px;font-size:11px;color:#2ecc71;line-height:1.4;margin-top:8px';
       container.appendChild(migBanner);
     }
-    migBanner.innerHTML = `\u2139\ufe0f ${fmtH(Number(m.paid)||0)} d\u00e9j\u00e0 pay\u00e9es ce mois (saisies sans d\u00e9tail par taux). Renseignez la r\u00e9partition r\u00e9elle ci-dessus si vous la connaissez.`;
+    migBanner.innerHTML = `\u2705 ${fmtH(Number(m.paid)||0)} d\u00e9j\u00e0 pay\u00e9es ce mois <span style="color:var(--muted)">(total non ventil\u00e9 par taux)</span>.<br><span style="color:var(--muted)">Pour d\u00e9tailler : saisissez la r\u00e9partition dans les champs ci-dessus (le total sera remplac\u00e9).</span>`;
   } else if(migBanner){
     migBanner.remove();
   }
