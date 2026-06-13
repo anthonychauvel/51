@@ -2426,8 +2426,11 @@ function _analyzeLegalSituation() {
   try {
     const year      = localStorage.getItem('ACTIVE_YEAR_SUFFIX') || String(new Date().getFullYear());
     const ccnRules  = _kitsuneGetCCN();
-    const baseHebdo = ccnRules.seuil;
-    const baseJour  = ccnRules.seuil / 5;
+    const _seuilLegal = ccnRules.seuil; // seuil LÉGAL de déclenchement des HS (35h en droit commun)
+    // Base CONTRACTUELLE réelle (ex: 39h) — lue depuis M1 (clé BASE_HEBDO_<année>),
+    // même source que module-reader.js. Fallback sur le seuil légal si non défini.
+    const baseHebdo = Number(localStorage.getItem('BASE_HEBDO_' + year)) || _seuilLegal;
+    const baseJour  = baseHebdo / 5;
     const contingentMax = ccnRules.contingent;
 
     function isoWeekKey(dk) {
@@ -2630,12 +2633,14 @@ function _analyzeLegalSituation() {
   } catch(e) {
     console.warn('_analyzeLegalSituation:', e);
     const fallbackCCN = _kitsuneGetCCN();
+    const _fbYear = localStorage.getItem('ACTIVE_YEAR_SUFFIX') || String(new Date().getFullYear());
+    const _fbBase = Number(localStorage.getItem('BASE_HEBDO_' + _fbYear)) || fallbackCCN.seuil;
     return {
-      daily:  { hasDailyCrit:false, hasDailyRisk:false, maxDayTotal:0, maxDayExtra:0, baseJour:fallbackCCN.seuil/5, daysOver10:0, daysOver12:0 },
+      daily:  { hasDailyCrit:false, hasDailyRisk:false, maxDayTotal:0, maxDayExtra:0, baseJour:_fbBase/5, daysOver10:0, daysOver12:0 },
       weekly: { hasWeekViol:false, hasAvgViol:false, hasWeekAlert:false, maxWeekTotal:0, maxAvg12:0, weeksOver48:0, weeksOver44:0, totalWeeks:0 },
       period: { current:null, lastClosed:null, hasClosure:false, all:[] },
       annual: { annualOT:0, contingentMax:fallbackCCN.contingent, contingentPct:0, contingentRem:fallbackCCN.contingent, hasContingentAlert:false, hasContingentDanger:false },
-      globalLevel:'ok', baseHebdo:fallbackCCN.seuil, baseJour:fallbackCCN.seuil/5
+      globalLevel:'ok', baseHebdo:_fbBase, baseJour:_fbBase/5
     };
   }
 }
@@ -2790,7 +2795,7 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
   // Corrige le bug : maxWeekTotal = max historique, pas la semaine en cours
   // Ex: samedi avec 10h HS (45h total) → message "semaine à 45h"
   // ══════════════════════════════════════════════════════════════
-  if (s.weekly && s.weekly.currentWeekTotal > 35) {
+  if (s.weekly && s.weekly.currentWeekTotal > (s.baseHebdo || 35)) {
     const cwTotal = s.weekly.currentWeekTotal;
     const cwHS    = s.weekly.currentWeekHS || 0;
     const cwDays  = s.weekly.currentWeekDays || 0;
@@ -2836,7 +2841,7 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
       const hs50 = Math.max(0, cwHS - 8);
       return {
         titre: `${jourNow} — semaine à ${_fmtH(cwTotal)}`,
-        message: `${pr_pr}${_fmtH(cwTotal)} cette semaine (base 35h + ${_fmtH(cwHS)} de HS). ${hs50 > 0 ? `Majorations : ${_fmtH(hs25)} à +25% et ${_fmtH(hs50)} à +50%` : `Majoration : ${_fmtH(hs25)} à +25%`} (Art. L3121-36).`,
+        message: `${pr_pr}${_fmtH(cwTotal)} cette semaine (base ${_fmtH(s.baseHebdo || 35)} + ${_fmtH(cwHS)} de HS). ${hs50 > 0 ? `Majorations : ${_fmtH(hs25)} à +25% et ${_fmtH(hs50)} à +50%` : `Majoration : ${_fmtH(hs25)} à +25%`} (Art. L3121-36).`,
         actions: [
           'Saisies enregistrées dans FOX ✓',
           'Vérifier les majorations sur ta prochaine fiche de paie',
@@ -3788,7 +3793,7 @@ function _generateDynamicMessage(situation, deltaH, burnoutScore) {
         const _hsf_g = _fmtH(_cwHS_g);
         msg = {
           titre: `Semaine en cours — ${_hsf_g} sup déjà posées`,
-          message: `${_prn_g}on est ${_jr_g}, la semaine n'est pas terminée. Tu as déjà ${_hsf_g} d'heures sup sur ${_cwDay_g} jour${_cwDay_g > 1 ? 's' : ''}. Le total réel et les majorations ne seront connus qu'une fois les jours restants saisis — donc pas de bilan « 35h » tant que la semaine n'est pas bouclée.`,
+          message: `${_prn_g}on est ${_jr_g}, la semaine n'est pas terminée. Tu as déjà ${_hsf_g} d'heures sup sur ${_cwDay_g} jour${_cwDay_g > 1 ? 's' : ''}. Le total réel et les majorations ne seront connus qu'une fois les jours restants saisis — donc pas de bilan « base atteinte » tant que la semaine n'est pas bouclée.`,
           actions: [
             `${_hsf_g} sup déjà enregistrées cette semaine`,
             'Reviens en fin de semaine pour le total réel et les majorations',
@@ -4472,7 +4477,9 @@ function kitsuneNarrateOvertime(deltaH, source) {
         _weekHSKey += _ex;
       }
     } catch(_ek) {}
-    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_ci' + (localStorage.getItem('DTE_CHECKIN_HISTORY')||'').length + '_wk' + Math.round(_weekHSKey*10) + '_r6';
+    const _yr_pk   = new Date().getFullYear().toString();
+    const _baseKey = Number(localStorage.getItem('BASE_HEBDO_' + _yr_pk)) || 35;
+    const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_ci' + (localStorage.getItem('DTE_CHECKIN_HISTORY')||'').length + '_wk' + Math.round(_weekHSKey*10) + '_b' + _baseKey + '_r7';
     let _cachedPopup  = null;
     try {
       const _pc = JSON.parse(localStorage.getItem('FOX_POPUP_DAILY') || '{}');
@@ -4487,7 +4494,10 @@ function kitsuneNarrateOvertime(deltaH, source) {
       const _yr_cw  = _now_cw.getFullYear().toString();
       const _rawM1_cw = JSON.parse(localStorage.getItem('DATA_REPORT_' + _yr_cw) || '{}');
       const _rawM2_cw = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + _yr_cw) || '{}');
-      const _baseJ_cw = (typeof _kitsuneGetCCN === 'function') ? (_kitsuneGetCCN().seuil / 5) : 7;
+      // Base contractuelle réelle (BASE_HEBDO_<année>, ex: 39h) / 5 jours. Fallback seuil CCN.
+      const _baseHebdo_cw = Number(localStorage.getItem('BASE_HEBDO_' + _yr_cw))
+        || ((typeof _kitsuneGetCCN === 'function') ? _kitsuneGetCCN().seuil : 35);
+      const _baseJ_cw = _baseHebdo_cw / 5;
       // Lundi de la semaine courante
       const _dow_cw = (_now_cw.getDay() + 6) % 7; // 0=lun, 6=dim
       let _weekHS_cw = 0;
