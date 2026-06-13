@@ -274,6 +274,14 @@ document.addEventListener("DOMContentLoaded", function(){
   <p style="font-size:12px;color:#aaa;margin-top:10px">&#x26A0;&#xFE0F; La réinitialisation complète supprime les données locales.</p>
 </div></div>
 
+<!-- MODAL : reliquat post mise à zéro, choix du taux -->
+<div class="modal" id="reliquatModal"><div class="modal-content" style="max-width:440px">
+  <h2 style="color:#e74c3c">&#x26A0;&#xFE0F; Heures ajoutées dans le passé</h2>
+  <p style="font-size:14px;line-height:1.5" id="reliquatModalText">Une période déjà soldée a de nouveau un solde à régler.</p>
+  <p style="font-size:13px;color:var(--muted);margin:10px 0 6px" id="reliquatModalQuestion">À quel taux reporter ces heures ?</p>
+  <div id="reliquatModalBtns" style="display:flex;flex-direction:column;gap:8px"></div>
+</div></div>
+
 <div class="modal" id="legalModal"><div class="modal-content">
   <h2>&#x26A0;&#xFE0F; Avertissement important</h2>
   <p style="font-size:14px">Cet outil est un <b>simulateur personnel</b>.<br><br>Les calculs sont indicatifs et peuvent différer de votre bulletin de paie réel.<br><br><b>Seuls les documents de l'employeur font foi.</b></p>
@@ -1291,88 +1299,127 @@ function checkActivatePerTaux(){
       et l'utilisateur n'a pas encore choisi comment le ventiler.
    On regarde EN PRIORITÉ la période actuellement affichée (celle qu'on modifie),
    puis à défaut la période de migration. Retourne {key, carry} ou null. */
+function reliquatSumAlloc(m){
+  const a = m && m.reliquatAlloc;
+  if(!a) return 0;
+  return (Number(a.t1)||0) + (Number(a.ti)||0) + (Number(a.t2)||0);
+}
+
+/* Détecte un reliquat à traiter = le DELTA de nouvelles heures non encore routées.
+   delta = carry - (heures déjà allouées manuellement).
+   Ainsi chaque ajout est traité indépendamment : router/solder un nouvel ajout
+   ne touche pas aux heures déjà réparties à un taux lors d'un ajout précédent. */
 function checkPostMigrationReliquat(){
   if(!SETTINGS.migrationKey) return null;
   const yd = ALL_DATA[currentYear] || {};
-  // 1. Période actuellement affichée : alerte SEULEMENT si elle a été soldée puis
-  //    repassée positive (reliquat anormal), pas une simple dette en cours.
+  // 1. Période actuellement affichée (si déjà soldée puis repassée positive)
   const cur = yd[currentKey];
   if(cur && cur.wasSettled){
     const cc = Number(cur.carry)||0;
-    if(cc > 0 && cur.reliquatHandledFor !== cc){
-      return { key: currentKey, carry: cc };
+    const delta = cc - reliquatSumAlloc(cur);
+    if(delta > 0.01){
+      return { key: currentKey, carry: cc, delta };
     }
   }
-  // 2. Période de migration repassée positive (soldée par définition)
+  // 2. Période de migration repassée positive
   const mk = SETTINGS.migrationKey;
   const m = yd[mk];
   if(m && m.wasSettled){
     const c = Number(m.carry)||0;
-    if(c > 0 && m.reliquatHandledFor !== c){
-      return { key: mk, carry: c };
+    const delta = c - reliquatSumAlloc(m);
+    if(delta > 0.01){
+      return { key: mk, carry: c, delta };
     }
   }
   return null;
 }
 
-/* Affiche l'alerte de reliquat avec choix du taux, sur la période concernée. */
+/* Affiche le POP-UP modal de reliquat avec choix du taux.
+   Le modal s'ouvre dès qu'un reliquat non traité est détecté, peu importe
+   la période affichée. Mémorise la période concernée dans _reliquatKey. */
+let _reliquatKey = null;
+let _reliquatShownDelta = null;
 function updatePostMigrationAlert(){
-  const el = document.getElementById("postMigrationAlert");
-  if(!el) return;
+  // Masquer l'ancien bandeau inline s'il existe (compat)
+  const old = document.getElementById("postMigrationAlert");
+  if(old) old.style.display = "none";
+
+  const modal = document.getElementById("reliquatModal");
+  if(!modal) return;
   const reliquat = checkPostMigrationReliquat();
-  // Afficher uniquement quand on est SUR la période concernée par le reliquat
-  if(!reliquat || currentKey !== reliquat.key){
-    el.style.display = "none";
+
+  if(!reliquat){
+    _reliquatKey = null;
+    _reliquatShownDelta = null;
+    modal.classList.remove("open");
     return;
   }
+  // Rafraîchir si la période OU le delta change (nouvelles heures ajoutées entre-temps)
+  if(modal.classList.contains("open") && _reliquatKey === reliquat.key && _reliquatShownDelta === reliquat.delta) return;
+
+  _reliquatKey = reliquat.key;
+  _reliquatShownDelta = reliquat.delta;
   const rules = getCCNRules();
-  const c = reliquat.carry;
+  const d = reliquat.delta; // les NOUVELLES heures à traiter (pas tout le carry)
 
-  // Boutons de taux pour reporter le reliquat
-  let tauxBtns = `<button type="button" onclick="handleReliquatTaux('taux1')" style="flex:1;padding:8px;border-radius:10px;background:rgba(243,156,18,.2);border:1px solid #f39c12;color:#f39c12;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux1}%</button>`;
-  if(rules.taux_inter){
-    tauxBtns += `<button type="button" onclick="handleReliquatTaux('taux_inter')" style="flex:1;padding:8px;border-radius:10px;background:rgba(230,126,34,.2);border:1px solid #e67e22;color:#e67e22;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux_inter}%</button>`;
+  const txt = document.getElementById("reliquatModalText");
+  const q = document.getElementById("reliquatModalQuestion");
+  const btns = document.getElementById("reliquatModalBtns");
+  if(txt) txt.innerHTML = `Vous venez d'ajouter <b style="color:#e74c3c">${fmtH(d)}</b> dans la période <b>${reliquat.key}</b> (déjà soldée). Comment traiter ces nouvelles heures ?`;
+  if(q) q.textContent = `À quel taux reporter ces ${fmtH(d)} ?`;
+  if(btns){
+    let html = `<button type="button" onclick="handleReliquatTaux('taux1')" style="padding:12px;border-radius:12px;background:rgba(243,156,18,.2);border:1px solid #f39c12;color:#f39c12;font-weight:700;font-size:14px;cursor:pointer">Reporter à ${rules.taux1}%</button>`;
+    if(rules.taux_inter){
+      html += `<button type="button" onclick="handleReliquatTaux('taux_inter')" style="padding:12px;border-radius:12px;background:rgba(230,126,34,.2);border:1px solid #e67e22;color:#e67e22;font-weight:700;font-size:14px;cursor:pointer">Reporter à ${rules.taux_inter}%</button>`;
+    }
+    html += `<button type="button" onclick="handleReliquatTaux('taux2')" style="padding:12px;border-radius:12px;background:rgba(231,76,60,.2);border:1px solid #e74c3c;color:#e74c3c;font-weight:700;font-size:14px;cursor:pointer">Reporter à ${rules.taux2}%</button>`;
+    html += `<button type="button" onclick="handleReliquatSolder()" style="padding:12px;border-radius:12px;background:rgba(46,204,113,.2);border:1px solid #2ecc71;color:#2ecc71;font-weight:700;font-size:14px;cursor:pointer;margin-top:4px">✅ Ces ${fmtH(d)} ont été payées</button>`;
+    btns.innerHTML = html;
   }
-  tauxBtns += `<button type="button" onclick="handleReliquatTaux('taux2')" style="flex:1;padding:8px;border-radius:10px;background:rgba(231,76,60,.2);border:1px solid #e74c3c;color:#e74c3c;font-weight:600;font-size:12px;cursor:pointer">Reporter à ${rules.taux2}%</button>`;
-
-  el.style.display = "block";
-  el.innerHTML = `
-    <div style="font-size:12px;font-weight:700;color:#e74c3c;margin-bottom:8px">⚠️ Heures ajoutées dans le passé</div>
-    <div style="font-size:12px;color:var(--muted);line-height:1.5;margin-bottom:10px">
-      Cette période a un solde de <b style="color:#e74c3c">${fmtH(c)}</b> à régler suite à votre modification. Choisissez à quel taux reporter ces heures.
-    </div>
-    <div style="font-size:11px;color:var(--muted);margin-bottom:8px">À quel taux reporter ces ${fmtH(c)} ?</div>
-    <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px">${tauxBtns}</div>
-    <button type="button" onclick="handleReliquatSolder()" style="width:100%;padding:8px;border-radius:10px;background:rgba(46,204,113,.2);border:1px solid #2ecc71;color:#2ecc71;font-weight:600;font-size:12px;cursor:pointer">✅ Je l'ai soldé (remettre à zéro)</button>`;
+  modal.classList.add("open");
 }
 
-/* L'utilisateur choisit à quel taux reporter le reliquat post-migration. */
+/* L'utilisateur choisit à quel taux reporter le reliquat. Cible la période _reliquatKey. */
 function handleReliquatTaux(which){
-  if(!SETTINGS.migrationKey) return;
+  const key = _reliquatKey || SETTINGS.migrationKey;
+  if(!key) return;
+  recalcCascade(); // carry à jour
   const yd = ALL_DATA[currentYear] || {};
-  const m = yd[SETTINGS.migrationKey];
+  const m = yd[key];
   if(!m) return;
   const c = Number(m.carry)||0;
-  if(c <= 0) return;
-  // Mémoriser la valeur traitée et le taux choisi pour ce report
-  m.reliquatHandledFor = c;
-  m.reliquatTaux = which; // 'taux1' | 'taux_inter' | 'taux2'
+  const delta = c - reliquatSumAlloc(m); // SEULEMENT les nouvelles heures
+  if(delta <= 0.01) return;
+  // Ajouter le delta à l'allocation CUMULATIVE du taux choisi (sans toucher au reste)
+  if(!m.reliquatAlloc) m.reliquatAlloc = {t1:0, ti:0, t2:0};
+  const slot = which==='taux2' ? 't2' : which==='taux_inter' ? 'ti' : 't1';
+  m.reliquatAlloc[slot] = (Number(m.reliquatAlloc[slot])||0) + delta;
+  const modal = document.getElementById("reliquatModal");
+  if(modal) modal.classList.remove("open");
+  _reliquatKey = null; _reliquatShownDelta = null;
   save(); recalc();
-  toast(`Reliquat de ${fmtH(c)} reporté`, "success");
+  toast(`${fmtH(delta)} reportées à ${rules2pct(which)}`, "success");
 }
+function rules2pct(which){const r=getCCNRules();return which==='taux2'?r.taux2+'%':which==='taux_inter'?(r.taux_inter||0)+'%':r.taux1+'%'}
 
-/* L'utilisateur confirme avoir soldé le reliquat → remet le mois à zéro. */
+/* L'utilisateur confirme avoir payé UNIQUEMENT les nouvelles heures (le delta).
+   Les heures déjà reportées à un taux lors d'ajouts précédents restent intactes. */
 function handleReliquatSolder(){
-  if(!SETTINGS.migrationKey) return;
+  const key = _reliquatKey || SETTINGS.migrationKey;
+  if(!key) return;
+  recalcCascade(); // carry à jour
   const yd = ALL_DATA[currentYear] || {};
-  const m = yd[SETTINGS.migrationKey];
+  const m = yd[key];
   if(!m) return;
   const c = Number(m.carry)||0;
-  // Ajouter un paiement égal au reliquat pour remettre à zéro
-  m.paid = (Number(m.paid)||0) + c;
-  m.reliquatHandledFor = 0;
+  const delta = c - reliquatSumAlloc(m); // payer SEULEMENT les nouvelles heures
+  if(delta <= 0.01) return;
+  m.paid = (Number(m.paid)||0) + delta;
+  const modal = document.getElementById("reliquatModal");
+  if(modal) modal.classList.remove("open");
+  _reliquatKey = null; _reliquatShownDelta = null;
   save(); recalc();
-  toast("✅ Reliquat soldé", "success");
+  toast(`✅ ${fmtH(delta)} marquées payées`, "success");
 }
 
 function togglePeriodLock(){
@@ -1837,16 +1884,36 @@ function recalcCascade(){
       const pI=Math.min(dueInter,rem); dueInter-=pI; rem-=pI; // puis intermédiaire
       const p1=Math.min(due1,rem); due1-=p1;                 // puis 25%
     }
-    // 4. Réconciliation : le total du breakdown doit correspondre au carry réel.
-    //    En cas d'écart (changement CCN, incohérence), on resynchronise sur le carry.
-    const bdTotal = due1 + dueInter + due2;
-    if(Math.abs(bdTotal - rc) > 0.01){
-      // Resynchroniser proportionnellement, ou tout mettre au taux1 si bdTotal=0
-      if(bdTotal > 0){
-        const ratio = rc / bdTotal;
-        due1 *= ratio; dueInter *= ratio; due2 *= ratio;
+    // 4. Allocation manuelle du reliquat (priorité absolue, pas de FIFO).
+    //    reliquatAlloc = répartition cumulative choisie par l'utilisateur pour les
+    //    heures ajoutées rétroactivement. Chaque ajout traité indépendamment.
+    if(m.reliquatAlloc && rc > 0){
+      const a = m.reliquatAlloc;
+      const a1 = Number(a.t1)||0, ai = Number(a.ti)||0, a2 = Number(a.t2)||0;
+      const sumA = a1 + ai + a2;
+      if(rc >= sumA){
+        // Les heures allouées vont sur leurs taux choisis ;
+        // l'excédent non encore traité (delta) reste sur taux1 en attendant le pop-up.
+        due1 = a1 + (rc - sumA);
+        dueInter = ai;
+        due2 = a2;
+      } else if(sumA > 0){
+        // Une partie des heures allouées a été payée → réduire proportionnellement.
+        const ratio = rc / sumA;
+        due1 = a1 * ratio; dueInter = ai * ratio; due2 = a2 * ratio;
       } else {
         due1 = rc; dueInter = 0; due2 = 0;
+      }
+    } else {
+      // Réconciliation normale : le total du breakdown doit correspondre au carry réel.
+      const bdTotal = due1 + dueInter + due2;
+      if(Math.abs(bdTotal - rc) > 0.01){
+        if(bdTotal > 0){
+          const ratio = rc / bdTotal;
+          due1 *= ratio; dueInter *= ratio; due2 *= ratio;
+        } else {
+          due1 = rc; dueInter = 0; due2 = 0;
+        }
       }
     }
     // 5. Figer le snapshot dans le mois
