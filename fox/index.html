@@ -1001,13 +1001,32 @@ function _kitsuneGetCCN() {
   // Fallback par défaut (droit commun)
   const defaultCCN = { contingent: 220, seuil: 35, taux1: 25, palier1: 8, taux_inter: null, palier_inter: 0, taux2: 50, nom: null };
 
-  if (typeof CCN_API === 'undefined') return defaultCCN;
+  // PRIORITE 1 : accord entreprise ou CCN personnalise (CCN_IDCC supprime, seul CCN_CUSTOM ecrit)
+  try {
+    const _rawCustom = localStorage.getItem('CCN_CUSTOM');
+    if (_rawCustom) {
+      const _c = JSON.parse(_rawCustom);
+      if (_c && typeof _c.seuil === 'number' && _c.seuil > 0) {
+        return Object.assign({}, defaultCCN, _c);
+      }
+    }
+  } catch(_) {}
 
-  const idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
+  // PRIORITE 2 : CCN standard via API
+  if (typeof CCN_API !== 'undefined') {
+    const idcc = parseInt((localStorage.getItem('CCN_IDCC') || '0'));
+    const ccnData = CCN_API.getGroupeForCCN(idcc);
+    if (ccnData && ccnData.contingent) return ccnData;
+  }
 
-  // getGroupeForCCN retourne directement l'objet de règles (pas un nom de groupe)
-  const ccnData = CCN_API.getGroupeForCCN(idcc);
-  return (ccnData && ccnData.contingent) ? ccnData : defaultCCN;
+  // PRIORITE 3 : base contractuelle M1 (BASE_HEBDO_<annee>) sans CCN definie
+  try {
+    const _yr = localStorage.getItem('ACTIVE_YEAR_SUFFIX') || String(new Date().getFullYear());
+    const _bh = Number(localStorage.getItem('BASE_HEBDO_' + _yr));
+    if (_bh >= 35) return Object.assign({}, defaultCCN, { seuil: _bh });
+  } catch(_) {}
+
+  return defaultCCN;
 }
 function _kitsuneFormatMsg(msg, h) {
   const r = _kitsuneGetCCN();
@@ -5310,13 +5329,29 @@ function startSyncPolling() {
 
 // \u2500\u2500 \u00C9couter les changements localStorage (depuis M1/M2) \u2500\u2500\u2500\u2500\u2500\u2500\u2500
 window.addEventListener('storage', (e) => {
-  // R\u00E9agir si M1, M2 ou l'ann\u00E9e active changent
-  if (e.key && (
+  if (!e.key) return;
+
+  // Reagir si M1, M2 ou l'annee active changent
+  if (
     e.key.startsWith('DATA_REPORT_') ||
     e.key.startsWith('CA_HS_TRACKER_V1_DATA_') ||
     e.key === 'ACTIVE_YEAR_SUFFIX'
-  )) {
+  ) {
     setTimeout(() => syncModulesAndAwardXP('storage-event'), 300);
+  }
+
+  // Invalider le cache popup Kitsune si CCN, accord entreprise ou base M1 changent.
+  // Sans ca, le message 35h nickel / base 35h persistait toute la journee
+  // meme apres un changement d'accord dans le menu.
+  const _yr_se = localStorage.getItem('ACTIVE_YEAR_SUFFIX') || String(new Date().getFullYear());
+  if (
+    e.key === 'CCN_IDCC'   ||
+    e.key === 'CCN_NOM'    ||
+    e.key === 'CCN_CUSTOM' ||
+    e.key === ('BASE_HEBDO_' + _yr_se)
+  ) {
+    try { localStorage.removeItem('FOX_POPUP_DAILY'); } catch(_) {}
+    console.log('[Kitsune] CCN/base change -> cache popup invalide');
   }
 });
 
