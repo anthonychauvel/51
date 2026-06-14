@@ -4496,8 +4496,7 @@ function kitsuneNarrateOvertime(deltaH, source) {
         _weekHSKey += _ex;
       }
     } catch(_ek) {}
-    const _yr_pk   = new Date().getFullYear().toString();
-    const _baseKey = Number(localStorage.getItem('BASE_HEBDO_' + _yr_pk)) || 35;
+    const _baseKey = (typeof _kitsuneGetCCN === 'function') ? _kitsuneGetCCN().seuil : 35;
     const _popupKey   = _todayStr + '_' + Math.round((_todayOT ? _todayOT.extra : h) * 10) + '_v' + _vacKeyCount + '_' + _recoveryKey + '_h' + _globalHash + '_ci' + (localStorage.getItem('DTE_CHECKIN_HISTORY')||'').length + '_wk' + Math.round(_weekHSKey*10) + '_b' + _baseKey + '_r7';
     let _cachedPopup  = null;
     try {
@@ -4513,9 +4512,9 @@ function kitsuneNarrateOvertime(deltaH, source) {
       const _yr_cw  = _now_cw.getFullYear().toString();
       const _rawM1_cw = JSON.parse(localStorage.getItem('DATA_REPORT_' + _yr_cw) || '{}');
       const _rawM2_cw = JSON.parse(localStorage.getItem('CA_HS_TRACKER_V1_DATA_' + _yr_cw) || '{}');
-      // Base contractuelle réelle (BASE_HEBDO_<année>, ex: 39h) / 5 jours. Fallback seuil CCN.
-      const _baseHebdo_cw = Number(localStorage.getItem('BASE_HEBDO_' + _yr_cw))
-        || ((typeof _kitsuneGetCCN === 'function') ? _kitsuneGetCCN().seuil : 35);
+      // Base contractuelle : priorite CCN_CUSTOM > CCN_API > BASE_HEBDO_ (via _kitsuneGetCCN).
+      // Ne pas relire BASE_HEBDO_ directement : si accord change, CCN_CUSTOM.seuil doit gagner.
+      const _baseHebdo_cw = (typeof _kitsuneGetCCN === 'function') ? _kitsuneGetCCN().seuil : 35;
       const _baseJ_cw = _baseHebdo_cw / 5;
       // Lundi de la semaine courante
       const _dow_cw = (_now_cw.getDay() + 6) % 7; // 0=lun, 6=dim
@@ -4883,7 +4882,7 @@ function _cappedHoursForXP(years) {
     // ── M1 : DATA_REPORT_YYYY → { "YYYY-MM-DD": { extra, recup, absent } } ──
     try {
       const raw = JSON.parse(localStorage.getItem('DATA_REPORT_' + year) || '{}');
-      const baseHebdo = Number(localStorage.getItem('BASE_HEBDO_' + year)) || 35;
+      const baseHebdo = (typeof _kitsuneGetCCN === 'function') ? _kitsuneGetCCN().seuil : 35;
 
       // 1. Grouper par semaine avec plafond journalier
       const weeks = {};
