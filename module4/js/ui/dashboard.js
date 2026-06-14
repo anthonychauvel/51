@@ -8,6 +8,7 @@ class Dashboard {
   constructor(){}
 
   render(state, risks, advice){
+    this._lastRisks = risks || []; // mémorisé pour _renderHero (score global stable)
     // Pas de données M1/M2 → bandeau info
     const noData = state && state.scores && !state.scores._hasData;
     const noDataBanner = document.getElementById('no-data-banner');
@@ -22,7 +23,7 @@ class Dashboard {
     }
         if(!state||!state.scores) return;
     const {scores, norm, raw}=state;
-    this._renderHero(scores, norm, raw);
+    this._renderHero(scores, norm, raw, risks||[]);
     this._renderScores(scores);
     this._renderCommuteActivation(scores);
     this._renderRisks(risks||[]);
@@ -37,7 +38,18 @@ class Dashboard {
     if(!el) return;
     // Pas de données → afficher "--" et pas CRITIQUE
     const hasData = scores && scores._hasData;
-    const sg = hasData ? (window.DTE&&window.DTE.app ? window.DTE.app.scoreGlobal : this._calcGlobal(scores)) : null;
+    // CORRECTIF : formule unique identique à app.js (avec pénalités risques).
+    // Avant : DTE.app.scoreGlobal (défini après sync) vs _calcGlobal (sans pénalités)
+    // → score sautait de 41 à l'ouverture à 35 après sync.
+    // Maintenant : risks est passé depuis render(), même formule dès le premier affichage.
+    const _risks = this._lastRisks || [];
+    const sg = hasData ? (() => {
+      const worst = Math.max(scores.fatigue||0, scores.stress||0, scores.cogRisk||0);
+      const base  = Math.max(0, 100 - worst);
+      const dangers = _risks.filter(x => x.level === 'CRITIQUE').length;
+      const alertes = _risks.filter(x => x.level !== 'CRITIQUE').length;
+      return Math.max(0, Math.min(99, Math.round(base - dangers*5 - alertes*2)));
+    })() : null;
     el.textContent = sg !== null ? sg : '--';
     const levelMap={EXCELLENT:'excellent',BON:'bon',MOYEN:'moyen',FAIBLE:'faible',CRITIQUE:'critique'};
     const level = sg === null ? 'En attente de données' : sg>=80?'EXCELLENT':sg>=60?'BON':sg>=40?'MOYEN':sg>=20?'FAIBLE':'CRITIQUE';
