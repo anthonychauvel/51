@@ -1671,9 +1671,15 @@ class DTEEngine {
         const _todayE = _byDate[localDK(today)];
         if (_hasCommute(_todayE)) _commuteToday = _todayE;
 
+        // CORRECTIF : si l'utilisateur a renseigné commuteH dans son profil (DTE_SETTINGS)
+        // mais n'a pas encore fait de check-in trajet, commuteLoad reste à 0 → impact 0.
+        // On utilise le profil comme FALLBACK pour les jours ouvrés sans saisie explicite.
+        // Qualité par défaut : 1.0 (neutre — Evans 2002 "normal").
+        const _defaultCommuteContrib = _commuteProfileH > 0
+          ? commuteDureeFactor(_commuteProfileH * 60) * 1.0
+          : 0;
+
         // ── Moyenne mobile 28 JOURS OUVRÉS (hors week-ends, hors fériés) ──────────
-        // Numérateur = somme des contributions ; dénominateur = jours ouvrés AVEC
-        // donnée (entrée commute OU jour de congé déclaré → contrib 0, dilue → récup).
         let _sum28 = 0, _count28 = 0, _seen = 0;
         for (let i = 0; i < 60 && _seen < 28; i++) { // borne calendaire de sécurité
           const d = new Date(today); d.setDate(today.getDate() - i);
@@ -1684,7 +1690,10 @@ class DTEEngine {
           const e = _byDate[k];
           if (_hasCommute(e)) { _sum28 += _contrib(e); _count28++; }
           else if (vacances[k]) { _count28++; }           // congé : contrib 0, compté → récupération
-          // sinon (jour ouvré non renseigné) → ni numérateur ni dénominateur
+          else if (_defaultCommuteContrib > 0) {          // fallback profil
+            _sum28 += _defaultCommuteContrib; _count28++;
+          }
+          // sinon (jour ouvré non renseigné, pas de profil) → ni numérateur ni dénominateur
         }
         _commuteNbDays28 = _count28;
         commuteLoad28 = _count28 > 0 ? (_sum28 / _count28) : 0;
@@ -1701,6 +1710,7 @@ class DTEEngine {
             const e = _byDate[k];
             if (_hasCommute(e)) { _ws += _contrib(e); _wc++; }
             else if (vacances[k]) { _wc++; }
+            else if (_defaultCommuteContrib > 0) { _ws += _defaultCommuteContrib; _wc++; }
           }
           if (_wc > 0) _weekVals.push(_ws / _wc);
         }
