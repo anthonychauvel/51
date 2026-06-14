@@ -1364,8 +1364,11 @@ class DTEEngine {
 
       if (!hasAnyLong) continue;
 
+      // Contribution progressive (pas de seuil dur). Avant : threshold >= 5h/sem → falaise
+      // à 40h (cumWLong sautait de 0 à 8.6 en 1h). Maintenant : ramp depuis la 1ère heure
+      // supplémentaire. 1h/sem=0.14 contribution, 5h/sem=0.71, ≥7h/sem=1.0.
       const hs35Long = Math.max(0, weekHLong - _ccnSeuilW);
-      if (hs35Long >= 5) {
+      if (hs35Long > 0) {
         const contrib = Math.min(1.0, hs35Long / (_ccnSeuilW * 0.20));
         cumulWeeksLong = Math.round((cumulWeeksLong + contrib) * 1e9) / 1e9;
       }
@@ -1975,7 +1978,21 @@ class DTEEngine {
     // chaque heure compte encore mais à rendement décroissant. Le bas/milieu de courbe
     // (≤ coude) est INCHANGÉ, donc le cas 45h n'est pas affecté ; seule la zone ≥48h est
     // décompressée pour distinguer une grosse surcharge d'une surcharge extrême.
-    const _fatLin = Math.max(0, fat_raw + fatAcuteDay); // brut (peut dépasser 1.0)
+    // PLANCHER CHRONIQUE (McEwen 1998 — charge allostatique).
+    // Problème : cumulAmp est un MULTIPLICATEUR de fat_raw. Si fat_raw ≈ 0 (semaine en
+    // cours non saisie, samedi sans données, lundi avant pointage), cumulAmp×0 = 0 →
+    // la fatigue s'effondre à ~4 même après 12 semaines de surcharge à 45h. Incohérent :
+    // McEwen 1998 montre que la charge allostatique PERSISTE sur les jours de repos,
+    // elle ne s'annule pas instantanément. On ajoute donc un plancher ADDITIF qui
+    // représente cette fatigue résiduelle structurelle, indépendant du signal aigu.
+    // Calibration : 4 sem → +10%, 8 sem → +22%, 12 sem → +35% (planchers biologiques).
+    // IMPORTANT : isVacWeekNow est vrai aussi le WEEKEND — on teste donc consecRest ≥ 5
+    // (vraie semaine de congé) pour appliquer la réduction de Bloom 2010. Un weekend
+    // normal (consecRest 1-2) laisse le plancher intact : la fatigue résiduelle persiste.
+    const _isRealVac = isVacWeekNow && (consecRest >= 5);
+    const _chronicFloor = cumWLong <= 1 ? 0
+      : Math.min(0.38, (cumWLong - 1) * 0.032) * (_isRealVac ? 0.30 : 1.0);
+    const _fatLin = Math.max(_chronicFloor, fat_raw + fatAcuteDay);
     const _fKnee = 0.70, _fSpan = 0.30, _fScale = 0.85;
     const fatigue = _fatLin <= _fKnee
       ? _fatLin
@@ -1993,7 +2010,15 @@ class DTEEngine {
     // Meijman & Mulder 1998 : récupération commence dès que charge ≤ baseline, WE ou pas.
     // → on utilise consecNonOT (jours sans HS, inclut semaines normales)
     // PATCH : couplage fatigue→stress renforcé (0.40 vs 0.30) — cohérence physiologique
-    const stressExtBase = fatigue * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12; // FIX 0.40→0.30 (anti double-comptage cortisol+fat)
+    // _fatForPerf : plancher chronique pour stress, perf et recBase (défini ici,
+    // utilisé dans stress, performance et récupération).
+    const _fatForPerf   = Math.max(fatigue, _chronicFloor);
+    const _floorDominates = _chronicFloor > 0 && _chronicFloor > fatigue;
+
+    // CORRECTIF : utilise _fatForPerf (max(fatigue, _chronicFloor)) comme base du stress.
+    // Même raison que pour la performance : fatigue ≈ 0 sans données → stressExt ≈ 0.
+    // Après 12 sem de surcharge, le couplage fatigue→stress doit refléter la charge réelle.
+    const stressExtBase = _fatForPerf * 0.30 + norm.extStress * 0.20 + norm.variab * 0.12;
     // stressExtDecay : demi-vie 10j (McEwen 1998) — PATCH : vacances ×1.1 (vs ×1.5 trop rapide)
     // Cortisol basal reste élevé plusieurs semaines après surcharge (Sluiter 2001)
     const _consecForStress = Math.max(consecNonOT, isVacWeekNow ? Math.round(consecRest * 1.1) : consecRest);
@@ -2018,8 +2043,16 @@ class DTEEngine {
     // cogDeg pour perf → risque long terme (Jang/OEM 2025)
     const cogDeg       = cogRisk(weeklyH, cumWLong);
     const perfMotiv    = norm.motiv * 0.12;
-    const perfFat      = fatigue * 0.50; // FIX 0.65→0.50 : Pencavel 2014 — lien fatigue→perf moins punitif
-    const perfStr      = stress  * 0.10;
+    // PÉNALITÉ FATIGUE : utilise le plancher chronique comme minimum.
+    // Problème identique au plancher fatigue : si la semaine courante n'est pas saisie,
+    // fatigue ≈ 0 → perfFat = 0 → performance à 99 après 12 sem de surcharge. Incohérent.
+    // On prend max(fatigue_brute, _chronicFloor) comme base de la pénalité fatigue/perf.
+    // Quand c'est le plancher qui domine (données absentes), le coef est durci à 0.70
+    // (vs 0.50 normal) : Pencavel 2014 montre que la fatigue accumulée dégrade plus la
+    // capacité cognitive qu'un effort ponctuel, même hors des heures de surcharge actives.
+    const _perfFatCoef  = _floorDominates ? 0.70 : 0.50;
+    const perfFat       = _fatForPerf * _perfFatCoef;
+    const perfStr       = stress  * 0.10;
     // En vacances : perf = capacité de repos (Pencavel 35h = 100%) sans drag cumulatif.
     // Hors vacances : formule normale avec fatigue/stress/cognitif.
     const perf = isVacWeekNow
@@ -2073,9 +2106,11 @@ class DTEEngine {
       : 0.04;
 
     // CORRECTION : la récupération part de 1.0 (100%) et descend avec fatigue/cumul
+    // CORRECTIF : _fatForPerf (max(fatigue, _chronicFloor)) pour que recBase reflète
+    // la fatigue résiduelle chronique même quand la semaine n'est pas saisie.
     const recBase = 1.0
-      - (fatigue * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998) — calibré pour rec 70-80 à fat 30%
-      - (cumW / 25) * 0.35 * fatigueDecayRest  // cumul surcharge (J.Occup.Health 2021)
+      - (_fatForPerf * fatigueDecayRest) * 0.85     // fatigue (Meijman & Mulder 1998)
+      - (cumWLong / 25) * 0.35 * fatigueDecayRest   // cumul sur 12 sem (J.Occup.Health 2021)
       - recNightPenalty;
     // FIX BUG 6 + BUG 3 : bonus vacances direct — différencié semaine 1 vs 2+
     // Avant : max 0.10 quelle que soit la durée → plafond perçu dès la 2e semaine
@@ -2218,27 +2253,24 @@ class DTEEngine {
     // FIX PLANCHERS PROGRESSIFS — dès cumW>=1 (anti-falaise cumW=2.9→3.0)
     // Avant : rien à 2.9 sem, saut brutal à 3.0 sem. Après : progressif linéaire.
     // fatInertia /8 (douce) | recInertia /4 (réactive dès P1)
-    if (cumW >= 1) {
-      const t = Math.min(1, (cumW - 1) / 7);
-      const fatInertia = Math.min(1, cumW / 8);
+    if (cumWLong >= 1) {
+      // CORRECTIF : cumWLong (fenêtre 12 sem, atteint réellement 12) au lieu de cumW
+      // (fenêtre 28j, plafonne à ~4) → le plafond récup et le plancher fatigue reflètent
+      // maintenant la durée réelle de surcharge. À 12 sem : recCeiling ~68%, fatFloor ~40%.
+      const t = Math.min(1, (cumWLong - 1) / 7);
+      const fatInertia = Math.min(1, cumWLong / 8);
       const fatFloor   = fatInertia * (0.15 + t * 0.25); // 0.15→0.40 sur 1→8 sem
       if (fatFinal < fatFloor) fatFinal = fatFloor;
-      const recInertia = Math.min(1, cumW / 4); // sature à P2 entry (4 sem)
+      const recInertia = Math.min(1, cumWLong / 4); // sature à P2 entry (4 sem)
       const recCeiling = 1.0 - recInertia * (0.08 + t * 0.24); // 0.08→0.32
       if (recFinal > recCeiling) recFinal = recCeiling;
     }
 
-    // ── PLANCHER STRESS — allostatic load résiduel (McEwen 1998 + Sluiter 2001) ──────
-    // Le cortisol basal reste chroniquement élevé après surcharge prolongée.
-    // McEwen 1998 : allostatic load → seuil de stress physiologique durablement rehaussé.
-    // Sluiter 2001 : "neuroendocrine recovery from sustained work demands = several weeks"
-    // → stress ne peut pas tomber à 0 dès la 1ère semaine de repos après P2/P3.
-    // Plancher : 28% à 8 sem (cible post-surcharge : 25–40%).
-    // Même logique que fatFloor dans l'inertia block — appliquer même pendant vacances.
-    // FIX plancher stress progressif dès cumW>=1 (McEwen 1998)
-    if (cumW >= 1) {
-      const t2 = Math.min(1, (cumW - 1) / 7);
-      const stressInertia = Math.min(1, cumW / 8);
+    // CORRECTIF : cumWLong pour que le plancher stress reflète la durée réelle.
+    // Avant : cumW capote à 4 → stressFloor ≈ 8%. Après : 12 sem → stressFloor ≈ 28%.
+    if (cumWLong >= 1) {
+      const t2 = Math.min(1, (cumWLong - 1) / 7);
+      const stressInertia = Math.min(1, cumWLong / 8);
       const stressFloor = stressInertia * (0.08 + t2 * 0.20); // 0.08→0.28 sur 1→8 sem
       strFinal = Math.max(strFinal, stressFloor);
     }
@@ -2250,8 +2282,10 @@ class DTEEngine {
     // Seuil : > 6 semaines (P2 bien installée). Amplitude : 6%/sem au-delà de 6 sem.
     // Plancher : 50 (même en surcharge chronique, il reste de la capacité de récup).
     // En vacances : pas d'usure supplémentaire (le repos prolongé brise le cycle).
-    if (cumW > 6 && !isVacWeekNow) {
-      const usure = Math.min(0.45, (cumW - 6) * 0.06); // 6%/sem au-delà du seuil
+    // CORRECTIF : cumWLong. cumW capote à 4 → "cumW > 6" était du code mort, l'usure
+    // ne s'appliquait jamais. Maintenant elle s'active à partir de 6 sem réelles.
+    if (cumWLong > 6 && !isVacWeekNow) {
+      const usure = Math.min(0.45, (cumWLong - 6) * 0.06); // 6%/sem au-delà du seuil
       recFinal = Math.max(0.50, recFinal - usure);
     }
 
@@ -2266,10 +2300,22 @@ class DTEEngine {
     // INRS phase P2/P3 : retour à P1 = 2-6 semaines minimum (pas 1 weekend).
     // McEwen 1998 (allostatic load) : charge chronique → seuil de stress basal élevé.
     // Guard !isVacWeekNow : évite conflit avec vacationFloor (0.80-0.92 en vacances).
-    if (cumW >= 6 && !isVacWeekNow) {
-      recFinal  = Math.min(recFinal,  0.45); // rec  ≤ 45% — cible surcharge chronique INRS P2/P3
-      perfFinal = Math.min(perfFinal, 0.75); // perf ≤ 75% — Pencavel 2014 (abaissé vs 0.85)
-      strFinal  = Math.max(strFinal,  0.20); // stress ≥ 20% — McEwen 1998 allostatic load
+    // CORRECTIF : cumWLong. Le bloc s'applique maintenant :
+    // • En semaine active (!isVacWeekNow) : caps stricts (rec≤45%, perf≤75%, str≥20%)
+    // • Le weekend (isVacWeekNow + consecRest<5) : plafond récup 60% (repos réel mais
+    //   charge chronique persiste) + perf 70% si plancher chronique domine.
+    // • Vraies vacances (consecRest≥5) : pas de cap — le repos prolongé est légitime.
+    if (cumWLong >= 6) {
+      const _isWeekend = isVacWeekNow && consecRest < 5;
+      if (!isVacWeekNow) {
+        recFinal  = Math.min(recFinal,  0.45);
+        perfFinal = Math.min(perfFinal, 0.75);
+        strFinal  = Math.max(strFinal,  0.20);
+      } else if (_isWeekend) {
+        recFinal  = Math.min(recFinal,  0.60); // repos partiel weekend (vs 45% semaine active)
+        perfFinal = Math.min(perfFinal, _floorDominates ? 0.70 : 0.75);
+        strFinal  = Math.max(strFinal,  0.20);
+      }
     }
 
     // ── PLAFOND DYNAMIQUE PERFORMANCE — inertie post-surcharge (Pencavel 2014) ───
