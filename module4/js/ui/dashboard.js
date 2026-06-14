@@ -132,7 +132,7 @@ class Dashboard {
             if (!v || v <= 0) return '0h sup. cette semaine';
             return '+'+v.toFixed(1)+'h sup. cette semaine';
         }},
-        { label:'Moyenne quotidienne (28j)', key:'_avgExtra7', fmt: (v, get) => {
+        { label:'Moyenne quotidienne (28j)', key:'_avgExtraDay28', fmt: (v, get) => {
             if (v <= 0) return '0h/j — rythme légal';
             const isProj = get && get('_isProjection');
             const impact = v < 1 ? 'impact léger' : v < 2 ? 'impact modéré' : 'impact élevé';
@@ -274,8 +274,17 @@ class Dashboard {
       facteurs_heures: [
         { label:'Seuil ≥52h/sem', key:'_recentWeeklyH', fmt: (v, n) => {
             const src = n('_weeklyHSource');
-            const badge = src==='live'?' <span style="font-size:8px;color:#00ccaa;">● LIVE</span>':src==='avg'?' <span style="font-size:8px;color:#c89a18;">◐ MOY. 28J</span>':' <span style="font-size:8px;color:rgba(255,255,255,0.3);">— SEUIL</span>';
-            return (v>=52?'Actif : '+v.toFixed(0)+'h/sem':'Sous le seuil ('+v.toFixed(0)+'h < 52h)')+badge;
+            // CORRECTIF : si source='seuil' (semaine non saisie), afficher la moyenne
+            // 28j réelle plutôt que 35h (base) qui induit en erreur "35h < 52h" alors
+            // que l'historique récent est à 45h.
+            const dispH = (src === 'seuil' && (n('_avgExtraDay28')||0) > 0)
+              ? (35 + (n('_avgExtraDay28')||0) * 5) : v;
+            const badge = src==='live'?' <span style="font-size:8px;color:#00ccaa;">● LIVE</span>'
+              : src==='avg' ?' <span style="font-size:8px;color:#c89a18;">◐ MOY. 28J</span>'
+              : (n('_avgExtraDay28')||0) > 0
+                ? ' <span style="font-size:8px;color:#c89a18;">◐ MOY. 28J</span>'
+                : ' <span style="font-size:8px;color:rgba(255,255,255,0.3);">— SEUIL</span>';
+            return (dispH>=52?'Actif : '+dispH.toFixed(0)+'h/sem':'Sous le seuil ('+dispH.toFixed(0)+'h < 52h)')+badge;
           } },
         { label:'Durée exposition (12 sem.)', key:'_cumulWeeksLong', fmt: v => {
             const vR = Math.round(v * 10) / 10;
