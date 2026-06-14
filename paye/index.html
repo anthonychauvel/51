@@ -1087,9 +1087,34 @@ function renderCalendar(){
 /* POPUP HEURES */
 function openHours(d){currentDay=d;const c=document.getElementById("hoursChoices");c.innerHTML="";[0.25,0.5,0.75,1,1.25,1.5,2].forEach(v=>{const b=document.createElement("button");b.textContent="+"+fmtH(v);b.onclick=()=>applyHours(v);c.appendChild(b)});setM2SaisieMode(_m2SaisieMode);document.getElementById("hoursModal").classList.add("open");lockBodyScroll()}
 function closeHours(){document.getElementById("hoursModal").classList.remove("open");unlockBodyScroll()}
-function applyHours(h){if(h<=0)return;const[_y,_m]=currentKey.split("-").map(Number);if(isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;save();renderCalendar();recalc();maybeShowReliquatPopup();const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)}
+function applyHours(h){
+  if(h<=0)return;
+  const[_y,_m]=currentKey.split("-").map(Number);
+  if(isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}
+  // Tracker l'incrément pour le popup reliquat (seules les heures NOUVELLEMENT ajoutées)
+  if(hasLaterActivity(currentKey)){
+    DATA[currentKey]._reliquatIncrement=(DATA[currentKey]._reliquatIncrement||0)+h;
+  }
+  DATA[currentKey].days[currentDay]=(DATA[currentKey].days[currentDay]||0)+h;
+  save();renderCalendar();recalc();maybeShowReliquatPopup();
+  const _sd=currentDay;closeHours();setTimeout(()=>showSaveFeedback(_sd),50)
+}
 function confirmManual(){const inp=document.getElementById("manualHours"),h=parseFloat(inp.value);if(isNaN(h)||h<=0){toast("⛔ Valeur invalide","error");return}applyHours(h);inp.value=""}
-function deleteDayHours(){const[_y,_m]=currentKey.split("-").map(Number);if(currentDay&&isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{delete DATA[currentKey].days[currentDay];currentDay=null;save();renderCalendar();recalc();maybeShowReliquatPopup();closeHours();},"Supprimer",true);return;currentDay=null;save();renderCalendar();recalc();closeHours()}
+function deleteDayHours(){
+  const[_y,_m]=currentKey.split("-").map(Number);
+  if(currentDay&&isDateLocked(new Date(_y,_m-1,currentDay))){toast("🔒 Période verrouillée","warn");return}
+  if(!currentDay||!DATA[currentKey].days[currentDay]){toast("ℹ️ Aucune heure à supprimer","info");return}
+  confirmModal(`Supprimer les heures du ${currentDay} ?`,()=>{
+    // Réduire l'incrément si on supprime des heures récemment ajoutées
+    if(hasLaterActivity(currentKey)){
+      const deleted=DATA[currentKey].days[currentDay]||0;
+      DATA[currentKey]._reliquatIncrement=Math.max(0,(DATA[currentKey]._reliquatIncrement||0)-deleted);
+    }
+    delete DATA[currentKey].days[currentDay];
+    currentDay=null;save();renderCalendar();recalc();maybeShowReliquatPopup();closeHours();
+  },"Supprimer",true);
+  return;currentDay=null;save();renderCalendar();recalc();closeHours()
+}
 /* ── MODE SAISIE M2 : HS directes / Heures travaillées ── */
 let _m2SaisieMode=localStorage.getItem('M2_SAISIE_MODE')||'hs';
 function setM2SaisieMode(mode){
@@ -1418,15 +1443,18 @@ function checkPostMigrationReliquat(){
   if(!cur) return null;
   // Période passée = il existe une période POSTÉRIEURE avec activité.
   if(!hasLaterActivity(currentKey)) return null;
-  const ownH = periodOwnHours(currentKey);
+  // IMPORTANT : on ne montre le pop-up QUE si des heures ont été ajoutées dans
+  // cette session (incrément > 0).  Les anciennes heures non routées restent
+  // silencieusement à 25% (prudent) et ne déclenchent pas de pop-up intempestif.
+  const newHours = Number(cur._reliquatIncrement)||0;
+  if(newHours <= 0.01) return null;
+  // Vérifier que l'incrément ne dépasse pas les heures propres non payées
+  const ownH   = periodOwnHours(currentKey);
   const ownPaid = Number(cur.paid)||0;
-  const ownUnpaid = ownH - ownPaid;        // heures propres non payées (le reliquat)
-  clampReliquatAlloc(cur, ownUnpaid);       // borner l'alloc aux heures réellement présentes
-  const delta = ownUnpaid - reliquatSumAlloc(cur); // non encore routées
-  if(delta > 0.01){
-    return { key: currentKey, carry: ownUnpaid, delta };
-  }
-  return null;
+  const ownUnpaid = Math.max(0, ownH - ownPaid);
+  const effectiveDelta = Math.min(newHours, ownUnpaid);
+  if(effectiveDelta <= 0.01) return null;
+  return { key: currentKey, carry: ownUnpaid, delta: effectiveDelta };
 }
 
 /* Affiche le POP-UP modal de reliquat avec choix du taux.
@@ -1481,51 +1509,60 @@ function updatePostMigrationAlert(){
   modal.classList.add("open");
 }
 
-/* L'utilisateur choisit à quel taux reporter le reliquat. Cible la période _reliquatKey. */
+/* L'utilisateur choisit à quel taux reporter le reliquat. Cible la période _reliquatKey.
+   IMPORTANT : on route UNIQUEMENT les heures nouvellement ajoutées (_reliquatIncrement),
+   pas l'ensemble du reliquat non routé. Les anciennes heures non routées restent
+   affectées à leur taux par défaut (25%, prudent). */
 function handleReliquatTaux(which){
   const key = _reliquatKey || SETTINGS.migrationKey;
   if(!key) return;
-  recalcCascade(); // carry à jour
   const yd = ALL_DATA[currentYear] || {};
   const m = yd[key];
   if(!m) return;
-  // delta = heures propres non payées et non encore routées
-  const ownUnpaid = periodOwnHours(key) - (Number(m.paid)||0);
-  clampReliquatAlloc(m, ownUnpaid);
-  const delta = ownUnpaid - reliquatSumAlloc(m);
-  if(delta <= 0.01) return;
-  // Ajouter le delta à l'allocation CUMULATIVE du taux choisi (sans toucher au reste)
+  // Seules les heures NOUVELLEMENT ajoutées dans cette session sont routées
+  const toRoute = Number(m._reliquatIncrement)||0;
+  if(toRoute <= 0.01){ _reliquatKey=null; _reliquatShownDelta=null; return; }
+  // Vérifier qu'on ne route pas plus que les heures non payées réelles
+  const ownUnpaid = Math.max(0, periodOwnHours(key) - (Number(m.paid)||0));
+  const effectiveRoute = Math.min(toRoute, ownUnpaid);
+  if(effectiveRoute <= 0.01){ _reliquatKey=null; _reliquatShownDelta=null; return; }
+  // Ajouter au taux choisi
   if(!m.reliquatAlloc) m.reliquatAlloc = {t1:0, ti:0, t2:0};
   const slot = which==='taux2' ? 't2' : which==='taux_inter' ? 'ti' : 't1';
-  m.reliquatAlloc[slot] = (Number(m.reliquatAlloc[slot])||0) + delta;
+  m.reliquatAlloc[slot] = (Number(m.reliquatAlloc[slot])||0) + effectiveRoute;
+  // Effacer le compteur d'incrément
+  m._reliquatIncrement = 0;
   const modal = document.getElementById("reliquatModal");
   if(modal) modal.classList.remove("open");
   _reliquatKey = null; _reliquatShownDelta = null;
   save(); recalc();
-  toast(`${fmtH(delta)} reportées à ${rules2pct(which)}`, "success");
+  toast(`${fmtH(effectiveRoute)} reportées à ${rules2pct(which)}`, "success");
 }
 function rules2pct(which){const r=getCCNRules();return which==='taux2'?r.taux2+'%':which==='taux_inter'?(r.taux_inter||0)+'%':r.taux1+'%'}
 
-/* L'utilisateur confirme avoir payé UNIQUEMENT les nouvelles heures (le delta).
-   Les heures déjà reportées à un taux lors d'ajouts précédents restent intactes. */
+/* L'utilisateur confirme que les nouvelles heures ont été payées directement.
+   On augmente UNIQUEMENT m.paid de l'incrément (_reliquatIncrement),
+   sans toucher aux heures précédemment non routées. */
 function handleReliquatSolder(){
   const key = _reliquatKey || SETTINGS.migrationKey;
   if(!key) return;
-  recalcCascade(); // carry à jour
   const yd = ALL_DATA[currentYear] || {};
   const m = yd[key];
   if(!m) return;
-  // delta = heures propres non payées et non encore routées
-  const ownUnpaid = periodOwnHours(key) - (Number(m.paid)||0);
-  clampReliquatAlloc(m, ownUnpaid);
-  const delta = ownUnpaid - reliquatSumAlloc(m);
-  if(delta <= 0.01) return;
-  m.paid = (Number(m.paid)||0) + delta;
+  // Seules les heures nouvellement ajoutées sont soldées
+  const toSolder = Number(m._reliquatIncrement)||0;
+  if(toSolder <= 0.01){ _reliquatKey=null; _reliquatShownDelta=null; return; }
+  const ownUnpaid = Math.max(0, periodOwnHours(key) - (Number(m.paid)||0));
+  const effectiveSolder = Math.min(toSolder, ownUnpaid);
+  if(effectiveSolder <= 0.01){ _reliquatKey=null; _reliquatShownDelta=null; return; }
+  m.paid = (Number(m.paid)||0) + effectiveSolder;
+  // Effacer le compteur d'incrément
+  m._reliquatIncrement = 0;
   const modal = document.getElementById("reliquatModal");
   if(modal) modal.classList.remove("open");
   _reliquatKey = null; _reliquatShownDelta = null;
   save(); recalc();
-  toast(`✅ ${fmtH(delta)} marquées payées`, "success");
+  toast(`✅ ${fmtH(effectiveSolder)} marquées payées`, "success");
 }
 
 function togglePeriodLock(){
