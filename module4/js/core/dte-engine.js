@@ -1760,6 +1760,7 @@ class DTEEngine {
       sleepDebt:      sleepDebtVal,
       // Valeurs brutes pour les calculs
       _avgExtra7:     avgExtra7,
+      _avgExtraDay28: avgExtraPerDay28, // HS/jour réelle sur 28j — pour affichage "Moyenne (28j)"
       _currentWeekExtra: sumExtra7, // HS RÉELLES saisies cette semaine (pas projection historique)
       _hasCurrentWeekData: hasAnyEntryThisWeek, // true si saisie réelle cette semaine
       _isProjection: !hasAnyEntryThisWeek && (count7 === 0), // avgExtra7 = projection 28j historique
