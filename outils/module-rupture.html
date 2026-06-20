@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Rupture Conventionnelle — Indemnité & Procédure</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -51,7 +52,7 @@ header .hbtn{background:var(--card);border:1px solid var(--card-edge);color:#fff
 .ip{width:100%;max-width:100%;box-sizing:border-box;background:rgba(255,255,255,0.07);border:1.5px solid var(--card-edge);border-radius:10px;
   padding:12px;color:#fff;font-size:16px;font-family:'Plus Jakarta Sans',sans-serif;font-weight:700;}
 .ip:focus{outline:none;border-color:var(--acc-l);}
-input.ip[type="date"]{-webkit-appearance:none;appearance:none;width:100%;}
+input.ip[type="date"]{-webkit-appearance:none;appearance:none;width:100%;color:#fff;-webkit-text-fill-color:#fff;color-scheme:dark;}
 select.ip{appearance:none;-webkit-appearance:none;
   background-image:url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12'%3E%3Cpath d='M2 4l4 4 4-4' stroke='%23f09050' stroke-width='1.6' fill='none'/%3E%3C/svg%3E");
   background-repeat:no-repeat;background-position:right 12px center;padding-right:30px;background-color:rgba(255,255,255,0.07);}
@@ -285,9 +286,14 @@ function calcAnc(start, end){
   var y = end.getFullYear() - start.getFullYear();
   var m = end.getMonth() - start.getMonth();
   var d = end.getDate() - start.getDate();
-  if(d < 0){ m--; }
+  if(d < 0){
+    // jours restants dans le mois précédent la date de fin (purement informatif)
+    var prevMonth = new Date(end.getFullYear(), end.getMonth(), 0).getDate();
+    d += prevMonth;
+    m--;
+  }
   if(m < 0){ y--; m += 12; }
-  return { years: y, months: Math.abs(m), totalMonths: y*12 + Math.abs(m) };
+  return { years: y, months: Math.abs(m), days: d, totalMonths: y*12 + Math.abs(m) };
 }
 
 function calcIndem(salRef, totalMonths){
@@ -323,9 +329,11 @@ function recalc(){
 
   var ancTxt = anc.years + ' an' + (anc.years!==1?'s':'');
   if(anc.months > 0) ancTxt += ' et ' + anc.months + ' mois';
+  if(anc.days > 0) ancTxt += ' et ' + anc.days + ' jour' + (anc.days>1?'s':'');
   $('rAnc').textContent = ancTxt;
-  $('rAncDetail').textContent = 'Soit ' + anc.totalMonths + ' mois · ' +
-    (anc.totalMonths >= 120 ? 'Tranche 10+ ans appliquée (⅓/an)' : 'Tranche ≤ 10 ans (¼/an)');
+  $('rAncDetail').textContent = 'Soit ' + anc.totalMonths + ' mois complets' +
+    (anc.days>0 ? ' + ' + anc.days + ' j non comptés (l\'indemnité légale s\'arrête aux mois complets, art. R1234-2)' : '') +
+    ' · ' + (anc.totalMonths >= 120 ? 'Tranche 10+ ans appliquée (⅓/an)' : 'Tranche ≤ 10 ans (¼/an)');
 
   $('results').style.display = 'block';
 }
@@ -361,7 +369,7 @@ function shConfirm(msg, cb){
     shConfirm('Tout remettre à zero ?', function(){
     localStorage.removeItem(LS.STATE);
     localStorage.removeItem(LS.WELCOME);
-    location.reload();
+    document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50);
     });
   }
   var state=get(LS.STATE,{start:'',end:'',sal:'',base:'12'});

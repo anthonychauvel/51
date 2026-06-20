@@ -94,7 +94,7 @@
     perco_abondement_max:{ v: 7689.6,u:'€/an',   maj: '2026-01-01', src: '16 % PASS — PERCO/PER collectif' },
 
     /* ----- Invalidité (montants revalorisés — À VÉRIFIER ameli.fr) ----- */
-    invalidite_plancher:{ v: 341.02, u: '€/mois',  maj: '2026-04-01', src: 'pension minimale cat. 1/2 — 338,31 € (avr. 2025) +0,8 % au 1er avr. 2026 (instruction DSS/2A/2026/36)' },
+    invalidite_plancher:{ v: 338.31, u: '€/mois',  maj: '2026-04-01', src: 'pension minimale cat. 1/2 — 335,62 € (2025) +0,8 % au 1er avr. 2026 = 338,31 €' },
     invalidite_mtp:   { v: 1298.44, u: '€/mois',  maj: '2026-04-01', src: 'majoration tierce personne (régime général) — +0,8 % au 1er avr. 2026' },
 
     /* ----- Proche aidant / AJPA ----- */
@@ -228,6 +228,8 @@
       texte:"Fixe le crédit d'heures du délégué syndical : 12 h/mois (50 à 150 salariés), 18 h/mois (151 à 499), 24 h/mois (500 et plus)." },
     'L2315-7':  { code:'CT', titre:'Heures de délégation des membres du CSE',
       texte:"Détermine le crédit d'heures des élus titulaires du CSE selon l'effectif (à partir de 18 h/mois pour 50-74 salariés)." },
+    'R2314-1':  { code:'CT', titre:'Barème des heures de délégation des titulaires du CSE',
+      texte:"Fixe le crédit d'heures mensuel par titulaire selon l'effectif : 10 h (11-49), 18 h (50-74), 19 h (75-99), 21 h (100-199), 22 h (200-499), 24 h (500-1499), puis 26 h et plus au-delà." },
     'R2315-5':  { code:'CT', titre:'Report et mutualisation des heures',
       texte:"Autorise le report des heures de délégation non utilisées dans la limite de l'année civile (12 mois) et leur mutualisation entre élus, dans la limite de 1,5 fois le crédit mensuel." },
     'L2311-2':  { code:'CT', titre:'Seuil de mise en place du CSE',

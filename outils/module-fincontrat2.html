@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Solde de Tout Compte — La Checklist</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -166,6 +167,7 @@ body.pageBlancheGuard>*{display:block!important;}
 .sh-disclaimer a{color:rgba(255,255,255,0.55);text-decoration:underline;}
 
 @media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}}
+.wiz-legal{color:rgba(255,255,255,.55);}
 </style>
 <body>
 
@@ -269,7 +271,7 @@ body.pageBlancheGuard>*{display:block!important;}
       {id:'preavis',t:'Indemnité compensatrice de préavis',d:'Si l\'employeur dispense le salarié d\'effectuer son préavis, la loi prévoit en principe le versement d\'une indemnité équivalente.',badge:'obl',bl:'Si applicable'},
   
     {id:'delais',t:'Délais légaux de remise',d:'Tous les documents doivent être remis le dernier jour de travail ou au plus tard avec le dernier bulletin de salaire. Pas de délai légal de grâce — la remise est immédiate à la rupture.',badge:'obl',bl:'Immédiat'},
-    {id:'contestation',t:'Contester le solde de tout compte',d:'Si tu signes : délai de 6 mois pour contester par LRAR. Si tu ne signes pas : le reçu n\'a aucun effet libératoire — tu as 3 ans pour réclamer des rappels de salaire, heures sup ou indemnités devant les Prud\'hommes. Signatureature pour dénoncer le solde par lettre recommandée avec accusé de réception. Après ce délai, le reçu est libératoire pour les sommes qui y figurent.',badge:'warn',bl:'⚠ 6 mois max'},
+      {id:'contestation',t:'Contester le solde de tout compte',d:'Si tu signes : délai de 6 mois pour contester par LRAR. Passé ce délai, le reçu devient libératoire pour les seules sommes qui y figurent. Si tu ne signes pas : le reçu n\'a aucun effet libératoire — tu as 3 ans pour réclamer des rappels de salaire, heures sup ou indemnités devant les Prud\'hommes.',badge:'warn',bl:'⚠ 6 mois max'},
     {id:'cpf',t:'Compte Personnel de Formation',d:'Le CPF n\'est pas lié au contrat de travail : les droits acquis restent disponibles à vie, quel que soit le motif de rupture. Consultables sur moncompteformation.gouv.fr.',badge:'opt',bl:'Droits conservés'},
     {id:'retraite',t:'Portabilité retraite complémentaire',d:'Les points de retraite complémentaire AGIRC-ARRCO acquis sont définitivement acquis. Ils sont reportés sur le compte individuel via la DSN. Aucune démarche à faire.',badge:'obl',bl:'Acquis définitivement'},
     {id:'frais',t:'Remboursement de frais en attente',d:'Notes de frais, frais kilométriques ou avances non encore remboursées.',badge:'opt',bl:'Si applicable'}
@@ -356,7 +358,7 @@ function shConfirm(msg, cb){
   window.resetState = function(){
     shConfirm('Tout remettre à zero ?', function(){
     try{ localStorage.removeItem('STC_DATA'); localStorage.removeItem('STC_WELCOMED'); }catch(e){}
-    location.reload();
+    document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50);
     });
   };
 </script>

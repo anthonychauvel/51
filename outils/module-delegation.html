@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Heures de Délégation — Mandats & Crédits</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -203,17 +204,28 @@ body.pageBlancheGuard>*{display:block!important;}
   <!-- Tableau des mandats -->
   <div class="sec-t" style="margin-top:14px;">📊 Crédits d'heures par mandat</div>
   <div class="mandats">
-    <div class="mrow hd"><span>Mandat</span><span>≥11 sal.</span><span>≥50 sal.</span></div>
-    <div class="mrow"><span>Membre élu CSE (titulaire)</span><span>10 h/mois</span><span>22 h/mois</span></div>
-    <div class="mrow"><span>Secrétaire du CSE</span><span class="note">Pas de crédit spécif.</span><span class="hi">+heures conven.</span></div>
-    <div class="mrow"><span>DS (50-149 sal.)</span><span class="note"><span data-art="L2143-13"></span></span><span>12 h/mois</span></div>
-    <div class="mrow"><span>DS (150-499 sal.)</span><span class="note"><span data-art="L2143-13"></span></span><span>18 h/mois</span></div>
-    <div class="mrow"><span>DS (≥ 500 sal.)</span><span class="note"><span data-art="L2143-13"></span></span><span>24 h/mois</span></div>
-    <div class="mrow"><span>Représentant syndical CSE</span><span class="note">—</span><span>20 h/mois</span></div>
-    <div class="mrow"><span>Membre CSSCT (titulaire)</span><span class="note">—</span><span>Fixé par accord</span></div>
-    <div class="mrow"><span>Représentant de proximité</span><span class="note">—</span><span>Fixé par accord</span></div>
+    <div class="mrow hd"><span>Membre élu CSE titulaire — effectif</span><span>Crédit / mois</span></div>
+    <div class="mrow"><span>11 à 49 salariés</span><span>10 h/mois</span></div>
+    <div class="mrow"><span>50 à 74 salariés</span><span>18 h/mois</span></div>
+    <div class="mrow"><span>75 à 99 salariés</span><span>19 h/mois</span></div>
+    <div class="mrow"><span>100 à 199 salariés</span><span>21 h/mois</span></div>
+    <div class="mrow"><span>200 à 499 salariés</span><span>22 h/mois</span></div>
+    <div class="mrow"><span>500 à 1 499 salariés</span><span>24 h/mois</span></div>
+    <div class="mrow"><span>1 500 à 1 999 salariés</span><span>26 h/mois</span></div>
+    <div class="mrow"><span>2 000 salariés et plus</span><span>28 à 34 h/mois</span></div>
   </div>
-  <div style="font-size:11px;color:var(--faded);margin-top:6px;line-height:1.4;"><span data-art="L2315-7"></span>. Les heures varient selon l'effectif et les accords de branche/entreprise.</div>
+  <div style="font-size:11px;color:var(--faded);margin-top:6px;line-height:1.4;">Barème de l'<span data-art="R2314-1"></span> (titulaires CSE). Plancher légal : 10 h (&lt; 50 sal.) ou 16 h (≥ 50 sal.) — <span data-art="L2315-7"></span>.</div>
+
+  <div class="mandats" style="margin-top:10px;">
+    <div class="mrow hd"><span>Autres mandats</span><span>Crédit / mois</span></div>
+    <div class="mrow"><span>Délégué syndical (50 à 149 sal.)</span><span>12 h/mois</span></div>
+    <div class="mrow"><span>Délégué syndical (150 à 499 sal.)</span><span>18 h/mois</span></div>
+    <div class="mrow"><span>Délégué syndical (≥ 500 sal.)</span><span>24 h/mois</span></div>
+    <div class="mrow"><span>Représentant syndical au CSE (≥ 501 sal.)</span><span>20 h/mois</span></div>
+    <div class="mrow"><span>Membre CSSCT · Représentant de proximité</span><span class="note">Fixé par accord</span></div>
+    <div class="mrow"><span>Secrétaire du CSE</span><span class="note">Pas de crédit spécifique</span></div>
+  </div>
+  <div style="font-size:11px;color:var(--faded);margin-top:6px;line-height:1.4;">DS : <span data-art="L2143-13"></span>. Ces crédits sont des minima, améliorables par accord de branche ou d'entreprise.</div>
 
   <!-- Simulateur -->
   <div class="panel">
@@ -222,12 +234,17 @@ body.pageBlancheGuard>*{display:block!important;}
       <label>Mon mandat</label>
       <select class="ip" id="fMandat" onchange="calcDeleg()" aria-label="Mon mandat">
         <option value="0">— Sélectionne ton mandat —</option>
-        <option value="10">Membre CSE titulaire (11-49 salariés) · 10h</option>
-        <option value="22">Membre CSE titulaire (≥50 salariés) · 22h</option>
-        <option value="12">Délégué syndical (50-149 salariés) · 12h</option>
-        <option value="18">Délégué syndical (150-499 salariés) · 18h</option>
-        <option value="24">Délégué syndical (≥500 salariés) · 24h</option>
-        <option value="20">Représentant syndical CSE · 20h</option>
+        <option value="10">CSE titulaire · 11-49 salariés · 10h</option>
+        <option value="18">CSE titulaire · 50-74 salariés · 18h</option>
+        <option value="19">CSE titulaire · 75-99 salariés · 19h</option>
+        <option value="21">CSE titulaire · 100-199 salariés · 21h</option>
+        <option value="22">CSE titulaire · 200-499 salariés · 22h</option>
+        <option value="24">CSE titulaire · 500-1499 salariés · 24h</option>
+        <option value="26">CSE titulaire · 1500-1999 salariés · 26h</option>
+        <option value="12">Délégué syndical · 50-149 salariés · 12h</option>
+        <option value="18">Délégué syndical · 150-499 salariés · 18h</option>
+        <option value="24">Délégué syndical · ≥500 salariés · 24h</option>
+        <option value="20">Représentant syndical au CSE · 20h</option>
       </select>
     </div>
     <div class="field">
@@ -337,7 +354,7 @@ function shConfirm(msg, cb){
     shConfirm('Tout remettre à zero ?', function(){
     localStorage.removeItem(LS.STATE);
     localStorage.removeItem(LS.WELCOME);
-    location.reload();
+    document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50);
     });
   }
   var state=get(LS.STATE,{mandat:'0',taux:''});

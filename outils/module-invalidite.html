@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Invalidité — Catégories & Droits</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -253,6 +254,7 @@ body.pageBlancheGuard>*{display:block!important;}
         <div class="rsub" id="rPlancherDetail"></div>
       </div>
     </div>
+    <div class="rsub" id="rPlancherNote" style="display:none;margin-top:8px;padding:10px 12px;background:rgba(255,200,80,0.12);border-radius:10px;"></div>
   </div>
 
   <!-- Les 3 catégories -->
@@ -314,7 +316,7 @@ body.pageBlancheGuard>*{display:block!important;}
   </a>
 
   <div class="note"><span data-artn="L341-1"></span> à <span data-artn="L341-16"></span> CSS · Outil indicatif & pédagogique.<br>
-    Valeurs à jour juin 2026 : taux 30 % (cat.1) / 50 % (cat.2-3). Plancher ≈ 338 €/mois (+0,9 % jan. 2026 — instr. DSS/3A/DB 2025/174). MTP : 1 298,44 €/mois (1er avril 2026 — signal-alpha.fr). Plafond cat.1 : 1 201,50 € · cat.2 : 2 002,50 €. SAM = moy. 10 meilleures années plafonné PASS (48 060 €/an). La catégorie est fixée par le médecin-conseil de la CPAM — seule la CPAM fait foi.<br>
+    Valeurs à jour juin 2026 : taux 30 % (cat.1) / 50 % (cat.2-3). Plancher 338,31 €/mois (335,62 € en 2025, +0,8 % au 1er avril 2026). MTP : 1 298,44 €/mois (1er avril 2026). Plancher cat.3 : 1 636,75 €/mois (plancher + MTP). Plafond cat.1 : 1 201,50 € · cat.2 : 2 002,50 € · cat.3 : ≈ 3 300,94 € (plafond + MTP). SAM = moy. 10 meilleures années plafonné PASS (48 060 €/an). La catégorie est fixée par le médecin-conseil de la CPAM — seule la CPAM fait foi.<br>
     ♿ Tout reste sur ton appareil.
     <button onclick="resetState()" style="background:none;border:none;color:var(--faded);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:10px;">🔄 Réinitialiser</button></div>
   <div class="foot">Outil pédagogique · <span data-art="L341-1"></span> · ni avis médical ni juridique</div>
@@ -336,9 +338,9 @@ body.pageBlancheGuard>*{display:block!important;}
 (function(){
 // Taux et planchers catégorie 1/2/3 — Art. L341-3 à L341-5 CSS 2026
 var CONFIG = {
-  '1': { taux:0.30, plancher:338.31, plafond:1201.50, label:'30% du SAM · Plancher ≈ 338,31 €/mois · Plafond 1 201,50 €/mois (2026 — source : signal-alpha.fr, art. L341-3 CSS)' },
-  '2': { taux:0.50, plancher:338.31, plafond:2002.50, label:'50% du SAM · Plancher ≈ 338,31 €/mois · Plafond 2 002,50 €/mois (2026 — art. L341-4 CSS)' },
-  '3': { taux:0.50, mtp:1298.44, label:'50% du SAM + MTP 1 298,44 €/mois (revalorisation 1er avril 2026 — source : signal-alpha.fr, art. L341-5 CSS)' },
+  '1': { taux:0.30, plancher:338.31, plafond:1201.50, label:'30% du SAM · Plancher 338,31 €/mois · Plafond 1 201,50 €/mois (2026 — ameli.fr, art. L341-3 CSS)' },
+  '2': { taux:0.50, plancher:338.31, plafond:2002.50, label:'50% du SAM · Plancher 338,31 €/mois · Plafond 2 002,50 €/mois (2026 — art. L341-4 CSS)' },
+  '3': { taux:0.50, plancher:338.31, mtp:1298.44, label:'50% du SAM + MTP 1 298,44 €/mois (revalorisation 1er avril 2026 — ameli.fr, art. L341-5 CSS)' },
 };
 
 function calc(){
@@ -349,10 +351,14 @@ function calc(){
   var pension = sal * c.taux / 12;
   if(c.plancher && pension < c.plancher) {
     pension = c.plancher;
-    document.getElementById('rPlancherNote').textContent = 'Pension minimale légale appliquée (votre calcul théorique de ' + (sam * c.taux / 12).toFixed(2) + ' € étant inférieur au minimum légal de ' + c.plancher.toFixed(2) + ' €).';
-    document.getElementById('rPlancherNote').style.display = 'block';
+    var pn = document.getElementById('rPlancherNote');
+    if(pn){
+      pn.textContent = 'Pension minimale légale appliquée (votre calcul théorique de ' + (sal * c.taux / 12).toFixed(2) + ' € étant inférieur au minimum légal de ' + c.plancher.toFixed(2) + ' €).';
+      pn.style.display = 'block';
+    }
   } else {
-    if(document.getElementById('rPlancherNote')) document.getElementById('rPlancherNote').style.display = 'none';
+    var pn2 = document.getElementById('rPlancherNote');
+    if(pn2) pn2.style.display = 'none';
   }
   var total = cat==='3' ? pension + c.mtp : pension;
 
@@ -360,10 +366,10 @@ function calc(){
   document.getElementById('rPensionDetail').textContent = c.label+(cat==='3'?' · Pension '+pension.toLocaleString('fr-FR',{minimumFractionDigits:0,maximumFractionDigits:0})+'€ + MTP '+c.mtp+'€':'');
   document.getElementById('rTaux').textContent = (c.taux*100)+'%';
   if(cat==='3'){
-    document.getElementById('rPlancher').textContent = '≈ 338 €';
-    document.getElementById('rPlancherDetail').textContent = '+ MTP ≈ 1 266 €/mois (actualisé)';
+    document.getElementById('rPlancher').textContent = '338,31 €';
+    document.getElementById('rPlancherDetail').textContent = '+ MTP 1 298,44 €/mois (soit 1 636,75 € au total)';
   } else {
-    document.getElementById('rPlancher').textContent = '≈ 338 €';
+    document.getElementById('rPlancher').textContent = '338,31 €';
     document.getElementById('rPlancherDetail').textContent = 'Montant minimum légal';
   }
   document.getElementById('pensionResults').style.display='block';
@@ -392,7 +398,7 @@ function shConfirm(msg, cb){
     shConfirm('Tout remettre à zero ?', function(){
     localStorage.removeItem(LS.STATE);
     localStorage.removeItem(LS.WELCOME);
-    location.reload();
+    document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50);
     });
   }
   var state=get(LS.STATE,{cat:'',salaire:''});

@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Jours Fériés 2026</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -125,8 +126,8 @@ body.pageBlancheGuard>*{display:block!important;}
 .feat-btn{display:block;width:100%;background:linear-gradient(135deg,#1a237e,#3949ab);color:#fff;border:none;border-radius:12px;padding:13px;font-size:14px;font-weight:700;cursor:pointer;margin-top:6px;}
 .feat-btn:disabled{opacity:.6;cursor:default;}
 .feat-status{font-size:12px;line-height:1.5;margin-top:10px;color:rgba(255,255,255,0.65);}
-.feat-input{width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.18);border-radius:10px;padding:11px 12px;font-size:16px;color:#fff;margin-top:6px;color-scheme:dark;}
-.pose-verdict{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:13.5px;line-height:1.55;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);}
+.feat-input{width:100%;background:rgba(255,255,255,0.08);border:1.5px solid rgba(255,255,255,0.18);border-radius:10px;padding:11px 12px;font-size:16px;color:#fff;-webkit-text-fill-color:#fff;margin-top:6px;color-scheme:dark;}
+.pose-verdict{margin-top:12px;padding:12px 14px;border-radius:10px;font-size:13.5px;line-height:1.55;background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.12);color:rgba(255,255,255,0.88);}
 .feat-reset{background:none;border:none;color:rgba(255,255,255,0.5);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:12px;}
 
 /* ── SimulHeures disclaimer footer ── */
@@ -370,7 +371,7 @@ function simulatePose(){
 // ── Réinitialiser ──
 function resetState(){
   try{localStorage.removeItem('FER_WELCOMED');}catch(e){}
-  location.reload(); // remet à zéro + rouvre le wizard d'accueil
+  document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50); // remet à zéro + rouvre le wizard d'accueil
 }
 window.importFeriesGouv=importFeriesGouv;
 window.simulatePose=simulatePose;

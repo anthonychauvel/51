@@ -1,7 +1,8 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
-<script src="../articles-loi.js"></script>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
+<script src="articles-loi.js"></script>
 <meta charset="UTF-8">
 <title>Retraite — Comprendre ses Droits</title>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
@@ -264,10 +265,16 @@ body.pageBlancheGuard>*{display:block!important;}
     </div>
     <div class="gen-row" data-min="1900" data-max="1957"><span>Avant 1958</span><span>62 ans</span><span>67 ans</span><span>166</span></div>
     <div class="gen-row" data-min="1958" data-max="1960"><span>1958–1960</span><span>62 ans</span><span>67 ans</span><span>167</span></div>
-    <div class="gen-row" data-min="1961" data-max="1963"><span>1961–1963</span><span>62 ans</span><span>67 ans</span><span>168</span></div>
-    <div class="gen-row" data-min="1964" data-max="1968"><span>1964–1968</span><span>62 ans 9 mois ★</span><span>67 ans</span><span>170</span></div>
+    <div class="gen-row" data-min="1961" data-max="1961"><span>1961 †</span><span>62 ans 3 mois</span><span>67 ans</span><span>169</span></div>
+    <div class="gen-row" data-min="1962" data-max="1962"><span>1962</span><span>62 ans 6 mois</span><span>67 ans</span><span>169</span></div>
+    <div class="gen-row" data-min="1963" data-max="1963"><span>1963</span><span>62 ans 9 mois</span><span>67 ans</span><span>170</span></div>
+    <div class="gen-row" data-min="1964" data-max="1964"><span>1964 ★</span><span>62 ans 9 mois</span><span>67 ans</span><span>170</span></div>
+    <div class="gen-row" data-min="1965" data-max="1965"><span>1965 ★‡</span><span>63 ans</span><span>67 ans</span><span>171</span></div>
+    <div class="gen-row" data-min="1966" data-max="1966"><span>1966 ★</span><span>63 ans 3 mois</span><span>67 ans</span><span>172</span></div>
+    <div class="gen-row" data-min="1967" data-max="1967"><span>1967 ★</span><span>63 ans 6 mois</span><span>67 ans</span><span>172</span></div>
+    <div class="gen-row" data-min="1968" data-max="1968"><span>1968 ★</span><span>63 ans 9 mois</span><span>67 ans</span><span>172</span></div>
     <div class="gen-row" data-min="1969" data-max="2010"><span>1969 et +</span><span>64 ans</span><span>67 ans</span><span>172</span></div>
-    <div style="font-size:11px;color:var(--ink2);padding:8px 12px;line-height:1.5;">★ LFSS 2026 : âge légal gelé à <b>62 ans 9 mois</b> et durée à <b>170 trimestres</b> pour les générations <b>1964 à 1968</b>, pour les retraites prenant effet à compter du <b>1er septembre 2026</b>. Le calendrier de la réforme 2023 reprend en janvier 2028 ; les générations 1969 et suivantes restent à 64 ans / 172 trimestres. À jour juin 2026. Sources : LFSS 2026, OFCE jan. 2026, service-public.fr.</div>
+    <div style="font-size:11px;color:var(--ink2);padding:8px 12px;line-height:1.5;">★ LFSS 2026 : suspension de la réforme pour les retraites prenant effet à compter du <b>1er septembre 2026</b> — générations <b>1964 à 1968</b>, âge légal réduit de 3 mois (seules 1964 et janv-mars 1965 gagnent aussi des trimestres). Le calendrier 2023 reprend en janvier 2028. Les générations <b>1969 et +</b> restent à 64 ans / 172 trimestres, inchangées.<br>† Né janv-août 1961 : 62 ans / 168 trim. ‡ Né janv-mars 1965 : 62 ans 9 mois / 170 trim (cas ★ ci-dessus) ; né avr-déc 1965 : valeurs affichées. À jour juin 2026 — vérifie ton cas exact sur info-retraite.fr. Sources : LFSS 2026 (loi n°2025-1403), service-public.fr.</div>
   </div>
 
   <!-- Concepts clés -->
@@ -374,17 +381,23 @@ body.pageBlancheGuard>*{display:block!important;}
 <script>
 (function(){
 'use strict';
-// Données réforme 2023 (loi n°2023-270) + suspension LFSS 2026 (loi n°2025-1403)
-// Gen. 1964-1968 gelées à 62 ans 9 mois dès le 1er septembre 2026
+// Données réforme 2023 (loi n°2023-270) + suspension LFSS 2026 (loi n°2025-1403, en vigueur 1er sept. 2026)
+// Catégorie sédentaire (régime général). Suspension : générations 1964-1968 gagnent 3 mois d'âge légal ;
+// seules 1964 et janv-mars 1965 gagnent aussi 1-2 trimestres. Repère né en 1961 (janv-août) ou 1965 (janv-mars) :
+// ta situation exacte dépend du mois de naissance — vérifie sur info-retraite.fr.
 // [annéeMin, annéeMax, âgeLégal(mois), âgeTauxPlein(mois), trimestres requis]
 var GEN = [
   [1900,1957, 62*12, 65*12, 166],
   [1958,1960, 62*12, 67*12, 167],
-  [1961,1963, 62*12, 67*12, 168],
-  [1964,1968, 62*12+9, 67*12, 170], // LFSS 2026 — gel à 62 ans 9 mois
-  
-  [1970,1972, 64*12, 67*12, 171],
-  [1973,2010, 64*12, 67*12, 172]
+  [1961,1961, 62*12+3, 67*12, 169],   // né sept-déc 1961 ; né janv-août 1961 : 62 ans/168 trim
+  [1962,1962, 62*12+6, 67*12, 169],
+  [1963,1963, 62*12+9, 67*12, 170],
+  [1964,1964, 62*12+9, 67*12, 170],   // suspension LFSS 2026
+  [1965,1965, 63*12,   67*12, 171],   // né avr-déc 1965 (suspension) ; né janv-mars 1965 : 62 ans 9 mois/170 trim
+  [1966,1966, 63*12+3, 67*12, 172],   // suspension
+  [1967,1967, 63*12+6, 67*12, 172],   // suspension
+  [1968,1968, 63*12+9, 67*12, 172],   // suspension
+  [1969,2010, 64*12,   67*12, 172]    // inchangé par la suspension
 ];
 
 function moisStr(m){
@@ -462,7 +475,7 @@ function shConfirm(msg, cb){
     shConfirm('Tout remettre à zero ?', function(){
     localStorage.removeItem(LS.STATE);
     localStorage.removeItem(LS.WELCOME);
-    location.reload();
+    document.querySelectorAll('input,select,textarea').forEach(function(el){if(el.type==='checkbox'||el.type==='radio'){el.checked=false;}else{el.value='';}});setTimeout(function(){location.reload();},50);
     });
   }
   var state=get(LS.STATE,{naiss:'',trim:''});
