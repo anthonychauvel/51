@@ -19,7 +19,7 @@
 <style>
 :root{
   --paper:#f8f4ee; --paper2:#f0e8dc; --paper3:#e8ddd0;
-  --ink:#2c3a4a; --ink2:#4a5a6a; --faded:#8a9aaa;
+  --ink:#2c3a4a; --ink2:#4a5a6a; --faded:#65707c;
   --blue:#4a7fa8; --blue-d:#2d5f8a; --blue-l:#c8dff0;
   --red:#c8443a; --green:#4a8a5a; --orange:#d4783a;
   --stamp-red:#c8443a; --stamp-blue:#2d5f8a; --stamp-green:#2d6a3a;
@@ -27,7 +27,7 @@
   --line:rgba(44,58,74,0.12); --line2:rgba(44,58,74,0.06);
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{min-height:100%;}
+html,body{overflow-wrap:break-word;word-break:break-word;min-height:100%;}
 body{
   font-family:'Courier Prime','Courier New',monospace;color:var(--ink);padding-bottom:60px;min-height:100vh;
   background:
@@ -197,6 +197,7 @@ body.pageBlancheGuard>*{display:block!important;}
 .sh-disclaimer strong{color:rgba(255,255,255,0.75);}
 .sh-disclaimer a{color:rgba(255,255,255,0.55);text-decoration:underline;}
 
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}}
 </style>
 <body>
 
@@ -209,7 +210,7 @@ body.pageBlancheGuard>*{display:block!important;}
     <div class="ti">ARRÊT MALADIE</div>
     <div class="su">IJSS & MAINTIEN DE SALAIRE · v1.0</div>
   </div>
-  <button class="hbtn" id="helpBtn" title="Aide">?</button>
+  <button class="hbtn" id="helpBtn" title="Aide" aria-label="Aide">?</button>
 </header>
 
 <!-- WIZARD -->
@@ -248,7 +249,7 @@ body.pageBlancheGuard>*{display:block!important;}
 <!-- HELP -->
 <div class="ov" id="help">
   <div class="box"><div class="hd"><div class="t">MODE D'EMPLOI</div><div class="s">Comment lire l'estimation</div>
-    <button class="x" data-close="help">✕</button></div>
+    <button class="x" data-close="help" aria-label="Fermer">✕</button></div>
   <div class="bd">
     <div class="feat"><div class="ic">💰</div><div class="tx"><b>Salaire brut mensuel</b>Ton salaire habituel (sans les primes non récurrentes).</div></div>
     <div class="feat"><div class="ic">⏳</div><div class="tx"><b>Délai de carence</b>3 premiers jours sans IJSS. Ton employeur peut les couvrir selon ta convention.</div></div>
@@ -278,10 +279,10 @@ body.pageBlancheGuard>*{display:block!important;}
   <div class="panel">
     <div class="panel-t">📋 Ta situation</div>
     <div class="field"><label>Salaire brut mensuel habituel</label>
-      <div class="inline"><input class="ip" id="fSal" type="number" inputmode="decimal" placeholder="ex. 2 200"><span class="unit">€</span></div>
+      <div class="inline"><input class="ip" id="fSal" type="number" inputmode="decimal" placeholder="ex. 2 200" aria-label="Salaire brut mensuel habituel"><span class="unit">€</span></div>
       <div class="hint">Hors primes non récurrentes. Plafonné à ≈ 2 522 € pour le calcul IJSS.</div></div>
     <div class="field"><label>Ancienneté dans l'entreprise</label>
-      <select class="ip" id="fAnc">
+      <select class="ip" id="fAnc" aria-label="Ancienneté dans l'entreprise">
         <option value="0">Moins d'1 an</option>
         <option value="1">1 an à 5 ans</option>
         <option value="6">6 ans à 10 ans</option>
@@ -289,10 +290,10 @@ body.pageBlancheGuard>*{display:block!important;}
       </select>
       <div class="hint">Détermine le droit au maintien de salaire employeur.</div></div>
     <div class="field"><label>Durée de l'arrêt à simuler</label>
-      <div class="inline"><input class="ip" id="fDur" type="number" inputmode="numeric" value="14" min="1" max="360"><span class="unit">jours</span></div>
+      <div class="inline"><input class="ip" id="fDur" type="number" inputmode="numeric" value="14" min="1" max="360" aria-label="Durée de l'arrêt à simuler"><span class="unit">jours</span></div>
       <div class="hint">Max 360 jours sur 3 ans pour un arrêt ordinaire.</div></div>
     <div class="field"><label>Carence couverte par l'employeur ?</label>
-      <select class="ip" id="fCar">
+      <select class="ip" id="fCar" aria-label="Carence couverte par l'employeur ?">
         <option value="0">Non — carence Sécu 3 j (carence employeur légale : 7 j — <span data-art="D1226-3"></span>)</option>
         <option value="1">Oui (convention ou accord)</option>
       </select>
@@ -368,7 +369,7 @@ body.pageBlancheGuard>*{display:block!important;}
           </tr>
         </tbody>
       </table>
-      <div style="font-size:10.5px;color:var(--faded);margin-top:6px;"><span data-art="D1226-1"></span> et <span data-art="D1226-3"></span> CT (carence employeur légale : 7 j ; la CCN ou l'accord d'entreprise peuvent réduire ce délai à 3 j ou 0). Les IJSS viennent en déduction du maintien employeur. Convention peut être plus favorable.</div>
+      <div style="font-size:10.5px;color:var(--faded);margin-top:6px;"><span data-artn="D1226-1"></span> et <span data-artn="D1226-3"></span> CT (carence employeur légale : 7 j ; la CCN ou l'accord d'entreprise peuvent réduire ce délai à 3 j ou 0). Les IJSS viennent en déduction du maintien employeur. Convention peut être plus favorable.</div>
     </div>
   </div>
   <div class="panel" style="margin-top:14px;">
@@ -603,7 +604,7 @@ function shConfirm(msg, cb){
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension de la législation du travail. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de litige ou de décision importante, consultez un conseiller juridique, votre service RH ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>, DREETS).<br>
-  <span style="opacity:.7">Données 100 % locales · Aucune information n'est transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
+  <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 </body>
 </html>
