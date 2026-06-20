@@ -1,6 +1,7 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Le Terrier — La trousse à outils</title>
@@ -177,29 +178,25 @@ body{font-family:'Manrope',-apple-system,sans-serif;background:var(--ink);color:
 </style>
 <style id="atelier-skin">
 /* ============ PEAU « ATELIER » — décor en fond + menu en verre dépoli ============ */
-:root{ --glass:rgba(22,15,8,.60); --edge:rgba(240,192,64,.20); }
+:root{ --ink:#0a1626; --ink-2:#11273e; --ink-3:#1b3a5c; --glass:rgba(10,22,40,.60); --edge:rgba(240,192,64,.20); }
 
 /* fond fixe : le décor reste en place pendant que le menu défile par-dessus */
-body{ background:#0f0a04; }
+body{ background:#0a1626; }
 .atelier-bg{ position:fixed; inset:0; z-index:-2;
-  background:#0f0a04 url('atelier-bg.jpg') center top / cover no-repeat; }
+  background:#0a1626 url('atelier-bg.jpg') center top / cover no-repeat; }
 .atelier-bg::after{ content:''; position:absolute; inset:0; pointer-events:none;
-  background:linear-gradient(180deg, rgba(10,7,3,0) 30%, rgba(10,7,3,.32) 50%,
-                                     rgba(11,8,4,.74) 74%, rgba(11,8,4,.93) 100%); }
+  background:linear-gradient(180deg, rgba(7,14,26,0) 30%, rgba(7,14,26,.34) 50%,
+                                     rgba(8,16,30,.76) 74%, rgba(8,16,30,.94) 100%); }
 
 /* header transparent superposé (ne pousse plus le contenu) */
-.hdr{ position:absolute; top:0; left:0; right:0; z-index:30; background:transparent; }
+.hdr{ position:fixed; top:0; left:0; right:0; z-index:30; background:transparent; }
 .hdr-title{ display:none; }                 /* le titre vit sur l'enseigne */
-.hdr-btn{ background:rgba(15,10,4,.42);
+.hdr-btn{ background:rgba(9,18,32,.45);
   -webkit-backdrop-filter:blur(8px); backdrop-filter:blur(8px);
   border:1px solid rgba(240,192,64,.28); }
 
-/* hero : titre posé sur l'enseigne en bois — réserve l'espace haut du décor */
+/* hero : simple réserve d'espace pour laisser respirer le haut du décor */
 .atelier-hero{ position:relative; height:42vh; }
-.atelier-title{ position:absolute; left:0; right:0; top:clamp(52px,9vh,96px); margin:0;
-  text-align:center; font-family:'Playfair Display',serif; font-style:italic;
-  font-weight:700; font-size:clamp(24px,7vw,34px); letter-spacing:.5px; color:#f6d98a;
-  text-shadow:0 1px 0 rgba(0,0,0,.35), 0 4px 18px rgba(0,0,0,.55); }
 
 /* le bandeau renard est masqué : le renard est déjà dans le décor */
 .fox-wrap{ display:none !important; }
@@ -209,7 +206,7 @@ body{ background:#0f0a04; }
 .light{ background:transparent; border-radius:0; min-height:0; margin-top:0; padding-top:4px; }
 
 /* barre de recherche en verre */
-.srch{ background:rgba(18,12,6,.56);
+.srch{ background:rgba(11,22,38,.56);
   -webkit-backdrop-filter:blur(14px); backdrop-filter:blur(14px);
   border:1px solid var(--edge); box-shadow:0 8px 24px rgba(0,0,0,.30); }
 .srch svg{ color:var(--gold-soft); }
@@ -245,11 +242,42 @@ body{ background:#0f0a04; }
 .empty-msg{ color:rgba(247,242,232,.8); }
 
 /* barre d'onglets en verre */
-.tabbar{ background:rgba(13,9,4,.72);
+.tabbar{ background:rgba(8,16,28,.74);
   -webkit-backdrop-filter:blur(20px) saturate(1.1); backdrop-filter:blur(20px) saturate(1.1);
   border-top:1px solid rgba(240,192,64,.16); }
 .tab{ color:rgba(247,242,232,.55); }
 .tab.on{ color:var(--gold); }
+
+/* wizard d'accueil accordé au thème bleu nuit */
+.wiz-ov{ background:rgba(6,12,22,.95); }
+.wiz-box{ background:linear-gradient(180deg,#13283f,#0d1d2f);
+  border:1px solid rgba(240,192,64,.22); box-shadow:0 22px 60px rgba(0,0,0,.55); }
+.wiz-h{ color:#f6d98a; }
+.wiz-p{ color:rgba(247,242,232,.82); }
+.wiz-dots span{ background:rgba(247,242,232,.22); }
+.wiz-dots span.on{ background:var(--gold); }
+.wiz-sk{ color:rgba(247,242,232,.55); }
+
+/* le header est désormais fixed : sur les vues sans hero (Favoris/Récents/Plus),
+   on réserve l'espace pour qu'il ne chevauche pas le texte */
+#vFavoris, #vRecents, #vPlus{ padding-top:calc(86px + env(safe-area-inset-top)); }
+#vFavoris .view-t, #vRecents .view-t, #vPlus .view-t,
+#vFavoris .view-s, #vRecents .view-s, #vPlus .view-s{ position:relative; z-index:1; }
+#vFavoris::before, #vRecents::before, #vPlus::before{
+  content:''; position:absolute; left:0; right:0; top:0; height:120px;
+  background:linear-gradient(180deg, rgba(7,14,26,.62), rgba(7,14,26,0)); pointer-events:none; }
+#vFavoris, #vRecents, #vPlus{ position:relative; }
+
+/* étoile favoris : le ☆ (non épinglé) héritait d'une couleur sombre, invisible sur le verre nuit */
+.pin-btn{ color:rgba(247,242,232,.6); }
+.pin-btn.on{ color:#ffd966; }
+
+/* disclaimer en pied de menu (vue Accueil) */
+.menu-disclaimer{ margin:22px 4px 6px; padding:13px 15px; border-radius:13px;
+  background:rgba(10,22,40,.55); border:1px solid rgba(240,192,64,.18);
+  font-size:10.5px; line-height:1.6; color:rgba(247,242,232,.6); text-align:center; }
+.menu-disclaimer strong{ color:rgba(247,242,232,.8); }
+.menu-disclaimer a{ color:rgba(247,242,232,.6); text-decoration:underline; }
 
 @media (prefers-reduced-motion: reduce){ .cat-body{ transition:none; } }
 </style>
@@ -288,10 +316,8 @@ body{ background:#0f0a04; }
   </div>
 </div>
 
-<!-- HERO ATELIER (titre posé sur l'enseigne en bois du décor) -->
-<div class="atelier-hero" id="atelierHero">
-  <h1 class="atelier-title">Le Terrier</h1>
-</div>
+<!-- HERO ATELIER (espace qui révèle le haut du décor : renard + enseigne) -->
+<div class="atelier-hero" id="atelierHero" aria-hidden="true"></div>
 
 <!-- RECHERCHE (visible sur accueil seulement) -->
 <div class="srch-wrap" id="srchWrap">
@@ -317,6 +343,11 @@ body{ background:#0f0a04; }
   <div class="view on" id="vAccueil">
     <div class="sec-sep">Catégories</div>
     <div id="catList"></div>
+
+    <div class="menu-disclaimer">
+      <strong>⚠️ Outil pédagogique — pas un avis juridique.</strong><br>
+      Le Terrier aide à comprendre la législation du travail et tes finances perso. Tous les résultats sont fournis à titre indicatif uniquement et ne sauraient engager la responsabilité de l'auteur. Vos saisies restent sur votre appareil. <a href="mentions-legales.html">Mentions légales</a>
+    </div>
 
   </div>
 
