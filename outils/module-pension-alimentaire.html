@@ -88,9 +88,16 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 <div class="card">
 <div class="field"><label for="revenu">Revenu net mensuel du parent débiteur (€)</label><input class="ip" id="revenu" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Revenu net mensuel du parent débiteur (€)"></div>
 <div class="row"><div class="field"><label for="enfants">Nombre d'enfants</label><input class="ip" id="enfants" type="number" inputmode="decimal" step="any" placeholder="1" aria-label="Nombre d'enfants"></div></div>
-<div class="field"><label for="garde">Mode de garde</label><select class="ip" id="garde" aria-label="Mode de garde"><option value="classique">Classique (visite/hébergement)</option><option value="alternee">Résidence alternée</option></select></div>
+<div class="field"><label for="garde">Mode de garde</label><select class="ip" id="garde" aria-label="Mode de garde"><option value="classique">Classique (1 week-end/2 + vacances)</option><option value="reduit">Droit de visite réduit (moins fréquent)</option><option value="alternee">Résidence alternée</option></select></div>
 </div>
 <div id="result"></div>
+
+<div class="card" style="margin-top:18px;">
+<div class="field" style="margin-bottom:10px;"><label style="font-size:13px;color:var(--text);">📈 Revalorisation annuelle de la pension</label></div>
+<div class="field"><label for="pensionActuelle">Montant actuel de la pension (€/mois)</label><input class="ip" id="pensionActuelle" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Montant actuel de la pension"></div>
+<div class="row"><div class="field"><label for="indiceAncien">Indice de référence au jugement</label><input class="ip" id="indiceAncien" type="number" inputmode="decimal" step="any" placeholder="Ex. 119,5" aria-label="Indice de référence au jugement"></div><div class="field"><label for="indiceNouveau">Indice de référence actuel</label><input class="ip" id="indiceNouveau" type="number" inputmode="decimal" step="any" placeholder="Ex. 122,3" aria-label="Indice de référence actuel"></div></div>
+</div>
+<div id="resultIndex"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
@@ -104,8 +111,9 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <div class="wico" aria-hidden="true">⚖️</div>
     <h2>Pension alimentaire</h2>
     <div class="step">Ce barème est un simple <b>repère indicatif</b> ; le juge aux affaires familiales reste libre de s'en écarter.</div>
-    <div class="step">Saisis le <b>revenu net</b> du parent débiteur, le <b>nombre d'enfants</b> et le <b>mode de garde</b>.</div>
-    <div class="step">Le calcul déduit d'abord un minimum vital (≈646 €), puis applique un taux par enfant.</div>
+    <div class="step">Saisis le <b>revenu net</b> du parent débiteur, le <b>nombre d'enfants</b> et le <b>mode de garde</b> (classique, réduit ou alterné).</div>
+    <div class="step">Le calcul déduit d'abord un minimum vital (646 €), puis applique un taux par enfant.</div>
+    <div class="step">En bas : calcule la <b>revalorisation annuelle</b> de ta pension à partir des indices de référence.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
 </div>
@@ -121,10 +129,17 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
 function saveState(){
-  try{var o={};o['revenu']=val('revenu');o['enfants']=val('enfants');o['garde']=val('garde');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['revenu']=val('revenu');o['enfants']=val('enfants');o['garde']=val('garde');o['pensionActuelle']=val('pensionActuelle');o['indiceAncien']=val('indiceAncien');o['indiceNouveau']=val('indiceNouveau');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];if(o['enfants']!=null)document.getElementById('enfants').value=o['enfants'];if(o['garde']!=null)document.getElementById('garde').value=o['garde'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');
+    if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];
+    if(o['enfants']!=null)document.getElementById('enfants').value=o['enfants'];
+    if(o['garde']!=null)document.getElementById('garde').value=o['garde'];
+    if(o['pensionActuelle']!=null)document.getElementById('pensionActuelle').value=o['pensionActuelle'];
+    if(o['indiceAncien']!=null)document.getElementById('indiceAncien').value=o['indiceAncien'];
+    if(o['indiceNouveau']!=null)document.getElementById('indiceNouveau').value=o['indiceNouveau'];
+  }catch(e){}
 }
 function calc(){
   saveState();
@@ -132,14 +147,28 @@ function calc(){
   var r=num('revenu'), n=Math.round(num('enfants')), garde=val('garde');
   if(!r||!n){hint('Saisis le revenu et le nombre d\'enfants.');return;}
   var minVital=646, dispo=Math.max(0,r-minVital);
-  var tauxClassique={1:13.5,2:11.5,3:10}, tauxAlternee={1:9,2:7.8,3:6.7};
-  var taux=(garde==='alternee'?tauxAlternee:tauxClassique)[Math.min(n,3)];
+  var tauxClassique={1:13.5,2:11.5,3:10};
+  var tauxAlternee={1:9,2:7.8,3:6.7};
+  var tauxReduit={1:18,2:15.3,3:13.3}; // extrapolé depuis le taux classique (ratio ~1,33) — pas de table officielle 2-3 enfants pour ce mode
+  var tables={classique:tauxClassique, alternee:tauxAlternee, reduit:tauxReduit};
+  var taux=tables[garde][Math.min(n,3)];
   if(!taux){hint('Barème disponible pour 1 à 3 enfants avec ce calcul simplifié. Au-delà, vois le simulateur officiel.');return;}
   var parEnfant=dispo*taux/100, total=parEnfant*n;
   box('<div class="lbl">Pension totale estimée</div><div class="big">'+eur(total)+'</div>'
    +'<div class="sub">Soit '+eur(parEnfant)+' par enfant ('+fmt(taux,1)+' % du revenu disponible)</div>'
-   +'<div class="line" style="margin-top:8px;"><span>Revenu disponible (− minimum vital)</span><b>'+eur(dispo)+'</b></div>');
+   +'<div class="line" style="margin-top:8px;"><span>Revenu disponible (− minimum vital)</span><b>'+eur(dispo)+'</b></div>'
+   + (garde==='reduit' ? '<div class="sub" style="margin-top:6px;color:var(--accent);">⚠️ Taux extrapolé pour 2-3 enfants (pas de table officielle pour ce mode au-delà de 1 enfant) — vérifie sur justice.fr.</div>' : ''));
 
+}
+function calcIndex(){
+  var pension = num('pensionActuelle'), iAncien = num('indiceAncien'), iNouveau = num('indiceNouveau');
+  var rIndex = document.getElementById('resultIndex');
+  if(!pension || !iAncien || !iNouveau){ rIndex.innerHTML=''; return; }
+  var nouveauMontant = pension * (iNouveau/iAncien);
+  var diff = nouveauMontant - pension;
+  rIndex.innerHTML = '<div class="res"><div class="lbl">Nouveau montant indexé</div><div class="big">'+eur(nouveauMontant)+'</div>'
+    +'<div class="sub">Soit '+(diff>=0?'+':'')+eur(diff)+' par mois ('+fmt(diff/pension*100,2)+' %)</div>'
+    +'<div class="sub" style="margin-top:6px;">Formule : pension actuelle × (indice actuel / indice au jugement). Indices disponibles sur insee.fr.</div></div>';
 }
 function resetState(){
   try{localStorage.removeItem(LS.STATE);localStorage.removeItem(LS.WELCOME);}catch(e){}
@@ -153,9 +182,11 @@ document.addEventListener('DOMContentLoaded',function(){
   Array.prototype.forEach.call(document.querySelectorAll('[data-close="help"]'),function(b){b.addEventListener('click',closeHelp);});
   Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
     el.addEventListener('input',calc); el.addEventListener('change',calc);
+    el.addEventListener('input',calcIndex); el.addEventListener('change',calcIndex);
   });
   restoreState();
   calc();
+  calcIndex();
   try{if(!localStorage.getItem(LS.WELCOME))openHelp();}catch(e){openHelp();}
 });
 window.resetState=resetState;

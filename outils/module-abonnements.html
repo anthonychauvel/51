@@ -86,9 +86,10 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Additionne tes abonnements pour voir le total réel — souvent sous-estimé.</p>
 </div>
 <div class="card">
-<div class="row"><div class="field"><label for="a1">Abonnement 1 (€/mois)</label><input class="ip" id="a1" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Abonnement 1 (€/mois)"></div><div class="field"><label for="a2">Abonnement 2 (€/mois)</label><input class="ip" id="a2" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Abonnement 2 (€/mois)"></div></div>
-<div class="row"><div class="field"><label for="a3">Abonnement 3 (€/mois)</label><input class="ip" id="a3" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Abonnement 3 (€/mois)"></div><div class="field"><label for="a4">Abonnement 4 (€/mois)</label><input class="ip" id="a4" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Abonnement 4 (€/mois)"></div></div>
-<div class="row"><div class="field"><label for="a5">Abonnement 5 (€/mois)</label><input class="ip" id="a5" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Abonnement 5 (€/mois)"></div></div>
+<div id="abosList"></div>
+<button id="addAboBtn" type="button" style="width:100%;margin-top:8px;padding:11px;border-radius:11px;
+  border:1.5px dashed var(--line);background:transparent;color:var(--accent);font-size:13.5px;font-weight:700;
+  cursor:pointer;font-family:inherit;">+ Ajouter un abonnement</button>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
@@ -104,7 +105,7 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <div class="wico" aria-hidden="true">📱</div>
     <h2>Coût des abonnements</h2>
     <div class="step">Streaming, salle de sport, apps : pris un par un, ça paraît peu.</div>
-    <div class="step">Saisis jusqu'à 5 abonnements et leur coût mensuel.</div>
+    <div class="step">Saisis tes abonnements et leur coût mensuel — ajoute-en autant que tu veux avec le bouton « + ».</div>
     <div class="step">L'outil additionne et projette sur l'année.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
@@ -120,20 +121,59 @@ function show(h){var r=document.getElementById('result');r.innerHTML=h;}
 function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res"><div class="res-screen">'+h+'</div></div>');}
 
+var aboCount = 0;
+function addAbo(nom, montant){
+  aboCount++;
+  var id = 'abo'+aboCount;
+  var row = document.createElement('div');
+  row.className = 'row abo-row';
+  row.dataset.id = id;
+  row.style.alignItems = 'flex-end';
+  row.innerHTML =
+    '<div class="field" style="flex:1.4;"><label>Nom (optionnel)</label>'+
+    '<input class="ip" id="'+id+'_n" type="text" placeholder="Ex. Netflix" value="'+(nom?nom.replace(/"/g,'&quot;'):'')+'"></div>'+
+    '<div class="field" style="flex:1;"><label>€/mois</label>'+
+    '<input class="ip" id="'+id+'_m" type="number" inputmode="decimal" step="any" placeholder="0" value="'+(montant!=null?montant:'')+'"></div>'+
+    '<button type="button" class="abo-del" aria-label="Supprimer" style="flex-shrink:0;width:38px;height:44px;'+
+    'border:1.5px solid var(--line);border-radius:11px;background:transparent;color:var(--faded);font-size:16px;cursor:pointer;">✕</button>';
+  document.getElementById('abosList').appendChild(row);
+  var nameInp = row.querySelector('input[type="text"]'), amtInp = row.querySelector('input[type="number"]');
+  nameInp.addEventListener('input',calc); nameInp.addEventListener('change',calc);
+  amtInp.addEventListener('input',calc); amtInp.addEventListener('change',calc);
+  row.querySelector('.abo-del').addEventListener('click',function(){ row.remove(); calc(); });
+}
+
 function saveState(){
-  try{var o={};o['a1']=val('a1');o['a2']=val('a2');o['a3']=val('a3');o['a4']=val('a4');o['a5']=val('a5');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{
+    var rows = Array.prototype.map.call(document.querySelectorAll('.abo-row'), function(r){
+      return { n: r.querySelector('input[type="text"]').value, m: r.querySelector('input[type="number"]').value };
+    });
+    localStorage.setItem(LS.STATE, JSON.stringify(rows));
+  }catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['a1']!=null)document.getElementById('a1').value=o['a1'];if(o['a2']!=null)document.getElementById('a2').value=o['a2'];if(o['a3']!=null)document.getElementById('a3').value=o['a3'];if(o['a4']!=null)document.getElementById('a4').value=o['a4'];if(o['a5']!=null)document.getElementById('a5').value=o['a5'];}catch(e){}
+  try{
+    var rows = JSON.parse(localStorage.getItem(LS.STATE)||'[]');
+    if(rows.length){ rows.forEach(function(r){ addAbo(r.n, r.m); }); }
+    else { addAbo('',''); addAbo('',''); addAbo('',''); }
+  }catch(e){ addAbo(''); addAbo(''); addAbo(''); }
 }
 function calc(){
   saveState();
-
-  var tot=num('a1')+num('a2')+num('a3')+num('a4')+num('a5');
+  var rows = document.querySelectorAll('.abo-row');
+  var tot = 0, detail = [];
+  rows.forEach(function(r){
+    var m = parseFloat(String(r.querySelector('input[type="number"]').value).replace(',','.'))||0;
+    var n = r.querySelector('input[type="text"]').value.trim();
+    if(m>0){ tot += m; detail.push({n: n||'Abonnement', m: m}); }
+  });
   if(!tot){hint('Saisis le coût d\'au moins un abonnement.');return;}
+  var lines = detail.sort(function(a,b){return b.m-a.m;}).map(function(d){
+    return '<div class="line"><span>'+d.n+'</span><b>'+eur(d.m)+'</b></div>';
+  }).join('');
   box('<div class="lbl">Total mensuel</div><div class="big">'+eur(tot)+'</div>'
-   +'<div class="sub">Soit <b>'+eur(tot*12)+'</b> par an</div>');
-
+   +'<div class="sub">Soit <b>'+eur(tot*12)+'</b> par an</div>'
+   + (detail.length>1 ? '<div style="margin-top:10px;text-align:left;">'+lines+'</div>' : ''));
 }
 function resetState(){
   try{localStorage.removeItem(LS.STATE);localStorage.removeItem(LS.WELCOME);}catch(e){}
@@ -145,9 +185,7 @@ function closeHelp(){document.getElementById('help').classList.remove('show');tr
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('helpBtn').addEventListener('click',openHelp);
   Array.prototype.forEach.call(document.querySelectorAll('[data-close="help"]'),function(b){b.addEventListener('click',closeHelp);});
-  Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
-    el.addEventListener('input',calc); el.addEventListener('change',calc);
-  });
+  document.getElementById('addAboBtn').addEventListener('click',function(){ addAbo('',''); calc(); });
   restoreState();
   calc();
   try{if(!localStorage.getItem(LS.WELCOME))openHelp();}catch(e){openHelp();}

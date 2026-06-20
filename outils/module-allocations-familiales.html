@@ -87,13 +87,15 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 </div>
 <div class="card">
 <div class="field"><label for="enfants">Nombre d'enfants à charge (< 20 ans)</label><input class="ip" id="enfants" type="number" inputmode="decimal" step="any" placeholder="2" aria-label="Nombre d'enfants à charge (< 20 ans)"></div>
+<div class="field"><label for="ressources">Ressources annuelles du foyer (revenus N-2, €)</label><input class="ip" id="ressources" type="number" inputmode="decimal" step="any" placeholder="Laisse vide si inconnu" aria-label="Ressources annuelles du foyer"></div>
+<div class="field"><label for="majores">Enfants bénéficiant de la majoration âge</label><input class="ip" id="majores" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Enfants bénéficiant de la majoration âge"></div>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension du droit du travail et de la vie quotidienne. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de décision importante, consultez un professionnel ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>).<br>
-  Montants de base 2026 (tranche de ressources la plus favorable), avant majorations et réductions selon revenus. Utilise le simulateur officiel caf.fr pour un montant exact.<br>
+  Montants 2026 revalorisés +0,8% (1er avril 2026), 3 tranches de ressources (revenus N-2 = 2024). Le complément dégressif en cas de léger dépassement de plafond n'est pas modélisé. La majoration ne s'applique jamais à l'aîné d'une famille de 2 enfants. Utilise le simulateur officiel caf.fr pour un montant exact.<br>
   <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 <div class="ov" id="help" role="dialog" aria-modal="true" aria-label="Aide">
@@ -103,7 +105,8 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <h2>Allocations familiales</h2>
     <div class="step">Versées à partir de 2 enfants à charge de moins de 20 ans, sans condition de ressources.</div>
     <div class="step">Le montant est <b>réduit</b> si les ressources du foyer dépassent certains plafonds (3 tranches).</div>
-    <div class="step">Indique ton nombre d'enfants pour voir le montant de base (tranche la plus favorable).</div>
+    <div class="step">Indique ton nombre d'enfants, tes <b>ressources</b> (revenus N-2) pour la vraie tranche, et le nombre d'enfants ayant droit à la <b>majoration âge</b>.</div>
+    <div class="step">⚠️ Depuis mars 2026, la majoration se déclenche à 18 ans (au lieu de 14 ans) pour les enfants nés à partir du 1ᵉʳ mars 2012.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
 </div>
@@ -119,20 +122,45 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
 function saveState(){
-  try{var o={};o['enfants']=val('enfants');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['enfants']=val('enfants');o['ressources']=val('ressources');o['majores']=val('majores');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['enfants']!=null)document.getElementById('enfants').value=o['enfants'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['enfants']!=null)document.getElementById('enfants').value=o['enfants'];if(o['ressources']!=null)document.getElementById('ressources').value=o['ressources'];if(o['majores']!=null)document.getElementById('majores').value=o['majores'];}catch(e){}
+}
+// Montants/plafonds 2026 (revalorisés +0,8% au 1er avril 2026, revenus N-2 = 2024)
+var BASE2 = 153.01, SUPP = 196.04;       // montant tranche 1 : 2 enfants puis +SUPP/enfant
+var PLAFOND2_T1 = 79980, ECART_ENFANT = 6664;  // plafond tranche 1 : 2 enfants puis +ECART/enfant
+var ECART_T1_T2 = 26624;                  // plafond tranche 2 = plafond tranche 1 + cet écart
+var MAJO_T1 = 76.13;                      // majoration âge par enfant, tranche 1 (T2=/2, T3=/4)
+
+function calcAF(n, ressources){
+  var montantT1 = n===2 ? BASE2 : BASE2 + (n-2)*SUPP;
+  var plafondT1 = n===2 ? PLAFOND2_T1 : PLAFOND2_T1 + (n-2)*ECART_ENFANT;
+  var plafondT2 = plafondT1 + ECART_T1_T2;
+  var tranche=1, montant=montantT1;
+  if(ressources>0){
+    if(ressources>plafondT2){ tranche=3; montant=montantT1/4; }
+    else if(ressources>plafondT1){ tranche=2; montant=montantT1/2; }
+  }
+  return { tranche:tranche, montant:montant, plafondT1:plafondT1, plafondT2:plafondT2 };
 }
 function calc(){
   saveState();
 
-  var n=num('enfants');
+  var n=num('enfants'), ressources=num('ressources'), majores=num('majores');
   if(n<2){hint('Les allocations familiales sont versées à partir de 2 enfants à charge.');return;}
-  var base2=152.25, supp=195.07;
-  var montant = n===2?base2 : base2+(n-2)*supp;
-  box('<div class="lbl">Montant de base mensuel (tranche 1)</div><div class="big">'+eur(montant)+'</div>'
-   +'<div class="sub">Pour '+n+' enfants, sous le 1er plafond de ressources.<br>Ce montant est réduit si tes ressources dépassent ce plafond (2 tranches supplémentaires).<br>Majoration possible selon l\'âge des enfants.</div>');
+  var r = calcAF(n, ressources);
+  var majoUnit = r.tranche===1 ? MAJO_T1 : r.tranche===2 ? MAJO_T1/2 : MAJO_T1/4;
+  var majoTotal = majores>0 ? majores*majoUnit : 0;
+  var total = r.montant + majoTotal;
+
+  var trancheLabel = ressources>0 ? ('Tranche '+r.tranche+(r.tranche===1?' (revenus ≤ '+eur(r.plafondT1)+')':r.tranche===2?' (entre '+eur(r.plafondT1)+' et '+eur(r.plafondT2)+')':' (revenus > '+eur(r.plafondT2)+')')) : 'Tranche 1 (par défaut — ressources non saisies)';
+
+  box('<div class="lbl">Montant mensuel total</div><div class="big">'+eur(total)+'</div>'
+   +'<div class="line" style="margin-top:8px;"><span>Montant de base</span><b>'+eur(r.montant)+'</b></div>'
+   + (majoTotal>0 ? '<div class="line"><span>Majoration âge ('+majores+' enfant'+(majores>1?'s':'')+')</span><b>+'+eur(majoTotal)+'</b></div>' : '')
+   +'<div class="sub">'+trancheLabel+' · '+n+' enfants</div>'
+   +'<div class="sub" style="margin-top:8px;color:var(--accent);">⚠️ Depuis le 1ᵉʳ mars 2026, la majoration âge ne se déclenche qu\'à 18 ans pour les enfants nés à partir du 1ᵉʳ mars 2012 (14 ans pour les enfants nés avant cette date). Dans une famille de 2 enfants, l\'aîné n\'ouvre jamais droit à la majoration.</div>');
 
 }
 function resetState(){

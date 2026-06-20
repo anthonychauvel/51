@@ -86,9 +86,16 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Compare le coût réel de plusieurs forfaits sur la durée d'engagement.</p>
 </div>
 <div class="card">
-<div class="row"><div class="field"><label for="pA1">Offre A : prix promo (€/mois)</label><input class="ip" id="pA1" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre A : prix promo (€/mois)"></div><div class="field"><label for="dA">Offre A : durée promo (mois)</label><input class="ip" id="dA" type="number" inputmode="decimal" step="any" placeholder="12" aria-label="Offre A : durée promo (mois)"></div></div>
-<div class="row"><div class="field"><label for="pA2">Offre A : prix après promo (€/mois)</label><input class="ip" id="pA2" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre A : prix après promo (€/mois)"></div><div class="field"><label for="pB1">Offre B : prix promo (€/mois)</label><input class="ip" id="pB1" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre B : prix promo (€/mois)"></div></div>
-<div class="row"><div class="field"><label for="dB">Offre B : durée promo (mois)</label><input class="ip" id="dB" type="number" inputmode="decimal" step="any" placeholder="12" aria-label="Offre B : durée promo (mois)"></div><div class="field"><label for="pB2">Offre B : prix après promo (€/mois)</label><input class="ip" id="pB2" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre B : prix après promo (€/mois)"></div></div>
+  <div class="field" style="margin-bottom:10px;"><label style="font-size:14px;color:var(--accent);">📦 Offre A</label></div>
+  <div class="field"><label for="nomA">Nom (optionnel)</label><input class="ip" id="nomA" type="text" placeholder="Ex. SFR" aria-label="Nom de l'offre A"></div>
+  <div class="row"><div class="field"><label for="pA1">Prix les premiers mois (€/mois)</label><input class="ip" id="pA1" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre A : prix promo (€/mois)"></div><div class="field"><label for="dA">Pendant combien de mois ?</label><input class="ip" id="dA" type="number" inputmode="decimal" step="any" placeholder="12" aria-label="Offre A : durée promo (mois)"></div></div>
+  <div class="field"><label for="pA2">Prix ensuite (€/mois) — laisse vide si prix unique</label><input class="ip" id="pA2" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre A : prix après promo (€/mois)"></div>
+</div>
+<div class="card">
+  <div class="field" style="margin-bottom:10px;"><label style="font-size:14px;color:var(--accent2);">📦 Offre B</label></div>
+  <div class="field"><label for="nomB">Nom (optionnel)</label><input class="ip" id="nomB" type="text" placeholder="Ex. Bouygues" aria-label="Nom de l'offre B"></div>
+  <div class="row"><div class="field"><label for="pB1">Prix les premiers mois (€/mois)</label><input class="ip" id="pB1" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre B : prix promo (€/mois)"></div><div class="field"><label for="dB">Pendant combien de mois ?</label><input class="ip" id="dB" type="number" inputmode="decimal" step="any" placeholder="12" aria-label="Offre B : durée promo (mois)"></div></div>
+  <div class="field"><label for="pB2">Prix ensuite (€/mois) — laisse vide si prix unique</label><input class="ip" id="pB2" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Offre B : prix après promo (€/mois)"></div>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
@@ -121,10 +128,19 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
 function saveState(){
-  try{var o={};o['pA1']=val('pA1');o['dA']=val('dA');o['pA2']=val('pA2');o['pB1']=val('pB1');o['dB']=val('dB');o['pB2']=val('pB2');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['nomA']=val('nomA');o['pA1']=val('pA1');o['dA']=val('dA');o['pA2']=val('pA2');o['nomB']=val('nomB');o['pB1']=val('pB1');o['dB']=val('dB');o['pB2']=val('pB2');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['pA1']!=null)document.getElementById('pA1').value=o['pA1'];if(o['dA']!=null)document.getElementById('dA').value=o['dA'];if(o['pA2']!=null)document.getElementById('pA2').value=o['pA2'];if(o['pB1']!=null)document.getElementById('pB1').value=o['pB1'];if(o['dB']!=null)document.getElementById('dB').value=o['dB'];if(o['pB2']!=null)document.getElementById('pB2').value=o['pB2'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');
+    if(o['nomA']!=null)document.getElementById('nomA').value=o['nomA'];
+    if(o['pA1']!=null)document.getElementById('pA1').value=o['pA1'];
+    if(o['dA']!=null)document.getElementById('dA').value=o['dA'];
+    if(o['pA2']!=null)document.getElementById('pA2').value=o['pA2'];
+    if(o['nomB']!=null)document.getElementById('nomB').value=o['nomB'];
+    if(o['pB1']!=null)document.getElementById('pB1').value=o['pB1'];
+    if(o['dB']!=null)document.getElementById('dB').value=o['dB'];
+    if(o['pB2']!=null)document.getElementById('pB2').value=o['pB2'];
+  }catch(e){}
 }
 function calc(){
   saveState();
@@ -134,12 +150,14 @@ function calc(){
     d=Math.min(d,PERIOD);
     return p1*d + (p2||p1)*(PERIOD-d);
   }
+  var nomA = val('nomA').trim() || 'Offre A', nomB = val('nomB').trim() || 'Offre B';
   var pa1=num('pA1'),da=num('dA')||PERIOD,pa2=num('pA2'),cA=cout(pa1,da,pa2);
   var pb1=num('pB1'),db=num('dB')||PERIOD,pb2=num('pB2'),cB=cout(pb1,db,pb2);
-  if(!pa1&&!pb1){hint('Saisis au moins les prix de l\'offre A.');return;}
-  box('<div class="line"><span>Offre A — coût sur 24 mois</span><b>'+eur(cA)+'</b></div>'
-   +'<div class="line"><span>Offre B — coût sur 24 mois</span><b>'+eur(cB)+'</b></div>'
-   +'<div class="sub" style="margin-top:8px;">'+(pb1?('La '+(cA<cB?'A':'B')+' revient moins chère de '+eur(Math.abs(cA-cB))+' sur 24 mois.'):'Ajoute l\'offre B pour comparer.')+'</div>');
+  if(!pa1&&!pb1){hint('Saisis au moins le prix de l\'offre A.');return;}
+  box('<div class="lbl">Coût réel sur 24 mois</div>'
+   +'<div class="line" style="margin-top:6px;"><span>'+nomA+'</span><b>'+eur(cA)+'</b></div>'
+   + (pb1 ? '<div class="line"><span>'+nomB+'</span><b>'+eur(cB)+'</b></div>' : '')
+   +'<div class="sub" style="margin-top:8px;">'+(pb1?('<b>'+(cA<cB?nomA:nomB)+'</b> revient moins chère de '+eur(Math.abs(cA-cB))+' sur 24 mois (soit '+eur(Math.abs(cA-cB)/24)+'/mois en moyenne).'):'Remplis aussi l\'offre B pour comparer.')+'</div>');
 
 }
 function resetState(){

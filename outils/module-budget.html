@@ -88,6 +88,12 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 <div class="card">
 <div class="field"><label for="revenu">Revenu mensuel net (€)</label><input class="ip" id="revenu" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Revenu mensuel net (€)"></div>
 </div>
+<div class="card">
+<div class="field" style="margin-bottom:10px;"><label style="font-size:13px;color:var(--text);">Tes dépenses réelles (optionnel)</label></div>
+<div class="field"><label for="reelBesoins">🏠 Besoins (loyer, courses, factures…)</label><input class="ip" id="reelBesoins" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Besoins réels"></div>
+<div class="field"><label for="reelEnvies">🎉 Envies (sorties, loisirs, shopping…)</label><input class="ip" id="reelEnvies" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Envies réelles"></div>
+<div class="field"><label for="reelEpargne">💰 Épargne déjà mise de côté</label><input class="ip" id="reelEpargne" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Épargne réelle"></div>
+</div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
 <div class="sh-disclaimer">
@@ -103,7 +109,8 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <h2>Budget 50/30/20</h2>
     <div class="step">La règle 50/30/20 : un repère simple pour équilibrer son budget.</div>
     <div class="step"><b>50 %</b> besoins (loyer, courses) · <b>30 %</b> envies · <b>20 %</b> épargne.</div>
-    <div class="step">Saisis ton revenu mensuel net. C'est un repère, pas une obligation.</div>
+    <div class="step">Saisis ton revenu mensuel net pour voir la répartition repère.</div>
+    <div class="step">Ajoute tes <b>dépenses réelles</b> pour comparer et voir ton reste à vivre exact.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
 </div>
@@ -119,21 +126,51 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
 function saveState(){
-  try{var o={};o['revenu']=val('revenu');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['revenu']=val('revenu');o['reelBesoins']=val('reelBesoins');o['reelEnvies']=val('reelEnvies');o['reelEpargne']=val('reelEpargne');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');
+    if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];
+    if(o['reelBesoins']!=null)document.getElementById('reelBesoins').value=o['reelBesoins'];
+    if(o['reelEnvies']!=null)document.getElementById('reelEnvies').value=o['reelEnvies'];
+    if(o['reelEpargne']!=null)document.getElementById('reelEpargne').value=o['reelEpargne'];
+  }catch(e){}
+}
+function ecartLine(label, repere, reel){
+  if(!reel) return '';
+  var diff = reel - repere;
+  var signe = diff > 0 ? '+' : '';
+  var couleur = diff > 0 ? '#ff8a80' : '#7ddb7d';
+  return '<div class="line"><span>'+label+' réel</span><b>'+eur(reel)+' <span style="color:'+couleur+';font-weight:700;font-size:11.5px;">('+signe+fmt(diff,0)+' €)</span></b></div>';
 }
 function calc(){
   saveState();
 
   var r=num('revenu'); if(!r){hint('Saisis ton revenu mensuel net.');return;}
-  box('<div class="lbl">Répartition repère</div>'
-   +'<div class="line"><span>🏠 Besoins (50 %)</span><b>'+eur(r*0.5)+'</b></div>'
-   +'<div class="line"><span>🎉 Envies (30 %)</span><b>'+eur(r*0.3)+'</b></div>'
-   +'<div class="line"><span>💰 Épargne (20 %)</span><b>'+eur(r*0.2)+'</b></div>'
-   +'<div class="sub">Repère indicatif — adapte-le à ta situation</div>');
+  var repereB=r*0.5, repereE=r*0.3, repereEp=r*0.2;
+  var reelB=num('reelBesoins'), reelE=num('reelEnvies'), reelEp=num('reelEpargne');
+  var hasReel = reelB>0 || reelE>0 || reelEp>0;
 
+  var html = '<div class="lbl">Répartition repère</div>'
+   +'<div class="line"><span>🏠 Besoins (50 %)</span><b>'+eur(repereB)+'</b></div>'
+   + ecartLine('🏠 Besoins', repereB, reelB)
+   +'<div class="line"><span>🎉 Envies (30 %)</span><b>'+eur(repereE)+'</b></div>'
+   + ecartLine('🎉 Envies', repereE, reelE)
+   +'<div class="line"><span>💰 Épargne (20 %)</span><b>'+eur(repereEp)+'</b></div>'
+   + ecartLine('💰 Épargne', repereEp, reelEp);
+
+  if(hasReel){
+    var totalReel = reelB + reelE + reelEp;
+    var resteAVivre = r - totalReel;
+    html += '<div class="line" style="border-top:1.5px solid var(--accent);margin-top:4px;padding-top:10px;">'
+      +'<span>Total dépensé/épargné</span><b>'+eur(totalReel)+'</b></div>'
+      +'<div class="sub" style="margin-top:8px;font-weight:700;color:'+(resteAVivre>=0?'#7ddb7d':'#ff8a80')+';">'
+      + (resteAVivre>=0 ? '✅ Reste à vivre : '+eur(resteAVivre) : '⚠️ Dépassement de '+eur(-resteAVivre))
+      +'</div>';
+  } else {
+    html += '<div class="sub">Repère indicatif — ajoute tes dépenses réelles ci-dessus pour comparer</div>';
+  }
+  box(html);
 }
 function resetState(){
   try{localStorage.removeItem(LS.STATE);localStorage.removeItem(LS.WELCOME);}catch(e){}

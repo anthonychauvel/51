@@ -86,7 +86,12 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Comprends comment se calcule ton impôt à partir du barème par tranches.</p>
 </div>
 <div class="card">
-<div class="field"><label for="revenu">Revenu net imposable annuel (€)</label><input class="ip" id="revenu" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Revenu net imposable annuel (€)"></div>
+<div class="field"><label for="methode">Comment calculer le revenu imposable ?</label><select class="ip" id="methode" aria-label="Méthode"><option value="direct">J'ai déjà mon revenu net imposable</option><option value="brut">Calculer à partir de mon salaire brut</option></select></div>
+<div id="champDirect" class="field"><label for="revenu">Revenu net imposable annuel (€)</label><input class="ip" id="revenu" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Revenu net imposable annuel (€)"></div>
+<div id="champBrut" style="display:none;">
+  <div class="field"><label for="brut">Salaire brut annuel (€)</label><input class="ip" id="brut" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Salaire brut annuel"></div>
+  <div class="field"><label for="fraisReels">Frais professionnels réels annuels (€, optionnel)</label><input class="ip" id="fraisReels" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Frais réels"></div>
+</div>
 <div class="row"><div class="field"><label for="parts">Nombre de parts fiscales</label><input class="ip" id="parts" type="number" inputmode="decimal" step="any" placeholder="1" aria-label="Nombre de parts fiscales"></div></div>
 <div class="field"><label for="situation">Situation</label><select class="ip" id="situation" aria-label="Situation"><option value="seul">Célibataire / seul</option><option value="couple">Couple (imposition commune)</option></select></div>
 </div>
@@ -95,7 +100,7 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension du droit du travail et de la vie quotidienne. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de décision importante, consultez un professionnel ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>).<br>
-  Estimation simplifiée (barème 2026 sur revenus 2025 + décote). N'inclut pas le plafonnement du quotient familial, les crédits/réductions d'impôt ni les revenus annexes. Utilise le simulateur officiel impots.gouv.fr pour un calcul exact.<br>
+  Estimation simplifiée (barème 2026 sur revenus 2025 + décote). Abattement 10% plafonné à 14 171 € / plancher 495 € — les sources divergent légèrement sur ce plafond (14 171 à 14 555 € selon les sites), vérifie sur impots.gouv.fr si tu es proche de ce seuil. N'inclut pas le plafonnement du quotient familial, les crédits/réductions d'impôt ni les revenus annexes. Utilise le simulateur officiel impots.gouv.fr pour un calcul exact.<br>
   <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 <div class="ov" id="help" role="dialog" aria-modal="true" aria-label="Aide">
@@ -104,8 +109,8 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <div class="wico" aria-hidden="true">🧮</div>
     <h2>Impôt sur le revenu</h2>
     <div class="step">L'impôt est calculé par tranches : seule la part dans chaque tranche est taxée à son taux.</div>
-    <div class="step">Saisis ton <b>revenu net imposable</b> annuel et ton nombre de <b>parts</b> fiscales.</div>
-    <div class="step">Calcul simplifié (barème + décote) — ne tient pas compte des crédits/réductions d'impôt ni du plafonnement du quotient familial.</div>
+    <div class="step">Saisis directement ton <b>revenu net imposable</b>, ou calcule-le à partir de ton <b>salaire brut</b> (frais réels vs abattement 10% automatique).</div>
+    <div class="step">Le détail par tranche s'affiche pour comprendre le calcul. Ne tient pas compte des crédits/réductions d'impôt ni du plafonnement du quotient familial.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
 </div>
@@ -120,39 +125,84 @@ function show(h){var r=document.getElementById('result');r.innerHTML=h;}
 function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
+var ABATTEMENT_MIN = 495, ABATTEMENT_MAX = 14171; // 2026 (revenus 2025) — à vérifier sur impots.gouv.fr, sources divergentes 14171-14555€
+
 function saveState(){
-  try{var o={};o['revenu']=val('revenu');o['parts']=val('parts');o['situation']=val('situation');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['methode']=val('methode');o['revenu']=val('revenu');o['brut']=val('brut');o['fraisReels']=val('fraisReels');o['parts']=val('parts');o['situation']=val('situation');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];if(o['parts']!=null)document.getElementById('parts').value=o['parts'];if(o['situation']!=null)document.getElementById('situation').value=o['situation'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');
+    if(o['methode']!=null)document.getElementById('methode').value=o['methode'];
+    if(o['revenu']!=null)document.getElementById('revenu').value=o['revenu'];
+    if(o['brut']!=null)document.getElementById('brut').value=o['brut'];
+    if(o['fraisReels']!=null)document.getElementById('fraisReels').value=o['fraisReels'];
+    if(o['parts']!=null)document.getElementById('parts').value=o['parts'];
+    if(o['situation']!=null)document.getElementById('situation').value=o['situation'];
+  }catch(e){}
 }
+function updateMethode(){
+  var m = val('methode');
+  document.getElementById('champDirect').style.display = m==='direct' ? 'block' : 'none';
+  document.getElementById('champBrut').style.display = m==='brut' ? 'block' : 'none';
+}
+function getRevenuImposable(){
+  var m = val('methode');
+  if(m==='brut'){
+    var brut = num('brut'), fr = num('fraisReels');
+    var abattement10 = Math.min(ABATTEMENT_MAX, Math.max(ABATTEMENT_MIN, brut*0.10));
+    var deduction = Math.max(abattement10, fr);
+    return { revenu: Math.max(0, brut-deduction), detail: { brut:brut, abattement10:abattement10, fraisReels:fr, deduction:deduction, optionReel: fr>abattement10 } };
+  }
+  return { revenu: num('revenu'), detail: null };
+}
+var TRANCHES = [[11600,0],[29580,0.11],[84580,0.30],[181920,0.41],[Infinity,0.45]];
 function calc(){
   saveState();
 
-  var r=num('revenu'), p=num('parts')||1, sit=val('situation');
-  if(!r){hint('Saisis ton revenu net imposable annuel.');return;}
+  var ri = getRevenuImposable();
+  var r = ri.revenu, p=num('parts')||1, sit=val('situation');
+  if(!r){hint('Saisis ton revenu (ou ton salaire brut).');return;}
   var qf=r/p;
   function bareme(q){
-    var tr=[[11600,0],[29580,0.11],[84580,0.30],[181920,0.41],[Infinity,0.45]];
-    var imp=0, prev=0;
-    for(var i=0;i<tr.length;i++){
-      var seuil=tr[i][0], taux=tr[i][1];
-      if(q>prev){ imp+=(Math.min(q,seuil)-prev)*taux; prev=seuil; }
+    var imp=0, prev=0, parTranche=[];
+    for(var i=0;i<TRANCHES.length;i++){
+      var seuil=TRANCHES[i][0], taux=TRANCHES[i][1];
+      var part=0;
+      if(q>prev){ part=(Math.min(q,seuil)-prev)*taux; imp+=part; prev=seuil; }
+      parTranche.push(part);
       if(q<=seuil) break;
     }
-    return imp;
+    return {imp:imp, parTranche:parTranche};
   }
-  var impPart=bareme(qf), impBrut=impPart*p;
+  var b = bareme(qf), impPart=b.imp, impBrut=impPart*p;
   var decoteBase = sit==='couple' ? 1483 : 897;
   var decote=Math.max(0, decoteBase-0.4525*impBrut);
   var impNet=Math.max(0, impBrut-decote);
   var tmi=qf<=11600?0:qf<=29580?11:qf<=84580?30:qf<=181920?41:45;
+
+  var detailHtml = '';
+  if(ri.detail){
+    detailHtml += '<div class="line"><span>Salaire brut</span><b>'+eur(ri.detail.brut)+'</b></div>'
+     + '<div class="line"><span>Déduction appliquée</span><b>-'+eur(ri.detail.deduction)+(ri.detail.optionReel?' (frais réels)':' (abattement 10%)')+'</b></div>'
+     + (ri.detail.fraisReels>0 ? '<div class="sub" style="margin-top:4px;">Frais réels '+eur(ri.detail.fraisReels)+' vs abattement 10% '+eur(ri.detail.abattement10)+' → '+(ri.detail.optionReel?'frais réels plus avantageux':'abattement 10% plus avantageux')+'</div>' : '');
+  }
+
+  var labelsT = ['0 %','11 %','30 %','41 %','45 %'];
+  var tranchesHtml = '<div class="sub" style="margin-top:10px;font-weight:700;">Détail par tranche (par part) :</div>';
+  for(var i=0;i<b.parTranche.length;i++){
+    if(b.parTranche[i]>0 || i===0){
+      tranchesHtml += '<div class="line"><span>Tranche à '+labelsT[i]+'</span><b>'+eur(b.parTranche[i])+'</b></div>';
+    }
+  }
+
   box('<div class="lbl">Impôt net estimé</div><div class="big">'+eur(impNet)+'</div>'
+   + detailHtml
    +'<div class="line" style="margin-top:8px;"><span>Impôt brut (avant décote)</span><b>'+eur(impBrut)+'</b></div>'
    +(decote>0?('<div class="line"><span>Décote</span><b>-'+eur(decote)+'</b></div>'):'')
    +'<div class="line"><span>Taux marginal (TMI)</span><b>'+tmi+' %</b></div>'
    +'<div class="line"><span>Taux moyen</span><b>'+(r?fmt(impNet/r*100,1):'0')+' %</b></div>'
-   +'<div class="sub">Soit environ '+eur(impNet/12)+'/mois en prélèvement à la source</div>');
+   + tranchesHtml
+   +'<div class="sub" style="margin-top:8px;">Soit environ '+eur(impNet/12)+'/mois en prélèvement à la source</div>');
 
 }
 function resetState(){
@@ -168,7 +218,9 @@ document.addEventListener('DOMContentLoaded',function(){
   Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
     el.addEventListener('input',calc); el.addEventListener('change',calc);
   });
+  document.getElementById('methode').addEventListener('change',function(){ updateMethode(); calc(); });
   restoreState();
+  updateMethode();
   calc();
   try{if(!localStorage.getItem(LS.WELCOME))openHelp();}catch(e){openHelp();}
 });

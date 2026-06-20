@@ -87,7 +87,9 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 </div>
 <div class="card">
 <div class="field"><label for="montant">Montant emprunté (€)</label><input class="ip" id="montant" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Montant emprunté (€)"></div>
-<div class="row"><div class="field"><label for="taux">Taux annuel (%)</label><input class="ip" id="taux" type="number" inputmode="decimal" step="any" placeholder="4" aria-label="Taux annuel (%)"></div><div class="field"><label for="annees">Durée (années)</label><input class="ip" id="annees" type="number" inputmode="decimal" step="any" placeholder="5" aria-label="Durée (années)"></div></div>
+<div class="row"><div class="field"><label for="taux">Taux annuel (%)</label><input class="ip" id="taux" type="number" inputmode="decimal" step="any" placeholder="4" aria-label="Taux annuel (%)"></div><div class="field"><label for="duree">Durée</label><input class="ip" id="duree" type="number" inputmode="decimal" step="any" placeholder="5" aria-label="Durée"></div></div>
+<div class="field"><label for="dureeUnit">Unité de durée</label><select class="ip" id="dureeUnit" aria-label="Unité de durée"><option value="annees">Années</option><option value="mois">Mois</option></select></div>
+<div class="field"><label for="mode">Mode d'intérêt</label><select class="ip" id="mode" aria-label="Mode d'intérêt"><option value="compose">Intérêt composé mensuel (crédit classique)</option><option value="continu">Intérêt continu (comparaison théorique)</option></select></div>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
@@ -103,7 +105,8 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
     <div class="wico" aria-hidden="true">🏛️</div>
     <h2>Coût d'un crédit</h2>
     <div class="step">Avant de signer un prêt, vois ce qu'il coûte vraiment.</div>
-    <div class="step">Saisis le <b>montant</b>, le <b>taux annuel</b> et la <b>durée</b>.</div>
+    <div class="step">Saisis le <b>montant</b>, le <b>taux annuel</b> et la <b>durée</b> (en années ou en mois).</div>
+    <div class="step">Choisis le mode <b>intérêt composé</b> (le calcul réel d'un crédit) ou <b>intérêt continu</b> (comparaison théorique).</div>
     <div class="step">Calcul à taux fixe, hors assurance et frais de dossier. Indicatif.</div>
     <button class="ok" data-close="help">Compris</button>
   </div>
@@ -120,24 +123,40 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res">'+h+'</div>');}
 
 function saveState(){
-  try{var o={};o['montant']=val('montant');o['taux']=val('taux');o['annees']=val('annees');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['montant']=val('montant');o['taux']=val('taux');o['duree']=val('duree');o['dureeUnit']=val('dureeUnit');o['mode']=val('mode');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['montant']!=null)document.getElementById('montant').value=o['montant'];if(o['taux']!=null)document.getElementById('taux').value=o['taux'];if(o['annees']!=null)document.getElementById('annees').value=o['annees'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['montant']!=null)document.getElementById('montant').value=o['montant'];if(o['taux']!=null)document.getElementById('taux').value=o['taux'];if(o['duree']!=null)document.getElementById('duree').value=o['duree'];if(o['dureeUnit']!=null)document.getElementById('dureeUnit').value=o['dureeUnit'];if(o['mode']!=null)document.getElementById('mode').value=o['mode'];}catch(e){}
 }
 function calc(){
   saveState();
 
-  var P=num('montant'),ta=num('taux'),an=num('annees');
-  if(!P||!an){hint('Saisis au moins un montant et une durée.');return;}
-  var n=Math.round(an*12), im=ta/100/12, M;
-  if(im===0){M=P/n;}else{M=P*im/(1-Math.pow(1+im,-n));}
-  var tot=M*n, inter=tot-P;
-  box('<div class="lbl">Mensualité</div><div class="big">'+eur(M)+'</div>'
-   +'<div class="line" style="margin-top:8px;"><span>Coût total du crédit</span><b>'+eur(tot)+'</b></div>'
-   +'<div class="line"><span>Dont intérêts</span><b>'+eur(inter)+'</b></div>'
-   +'<div class="sub">'+n+' mensualités · hors assurance et frais</div>');
+  var P=num('montant'),ta=num('taux'),duree=num('duree'),unit=val('dureeUnit'),mode=val('mode');
+  if(!P||!duree){hint('Saisis au moins un montant et une durée.');return;}
+  var n = unit==='mois' ? Math.round(duree) : Math.round(duree*12);   // nombre de mensualités
+  var anneesEq = n/12;
+  var im = ta/100/12;
 
+  if(mode==='continu'){
+    // Intérêt continu : capitalisation continue e^(r·t) — comparaison théorique, PAS un mode de tarification réel des crédits.
+    var r = ta/100;
+    var totContinu = P * Math.exp(r*anneesEq);
+    var interContinu = totContinu - P;
+    var Mcontinu = totContinu/n;
+    box('<div class="lbl">Mensualité équivalente</div><div class="big">'+eur(Mcontinu)+'</div>'
+     +'<div class="line" style="margin-top:8px;"><span>Coût total (intérêt continu)</span><b>'+eur(totContinu)+'</b></div>'
+     +'<div class="line"><span>Dont intérêts</span><b>'+eur(interContinu)+'</b></div>'
+     +'<div class="sub">'+n+' mensualités · capitalisation continue e^(r·t)</div>'
+     +'<div class="sub" style="margin-top:6px;color:var(--accent);">⚠️ Modèle théorique de comparaison — aucun crédit à la consommation en France n\'est tarifé selon ce mode. Pour un vrai prêt, utilise « Intérêt composé mensuel ».</div>');
+  } else {
+    var M;
+    if(im===0){M=P/n;}else{M=P*im/(1-Math.pow(1+im,-n));}
+    var tot=M*n, inter=tot-P;
+    box('<div class="lbl">Mensualité</div><div class="big">'+eur(M)+'</div>'
+     +'<div class="line" style="margin-top:8px;"><span>Coût total du crédit</span><b>'+eur(tot)+'</b></div>'
+     +'<div class="line"><span>Dont intérêts</span><b>'+eur(inter)+'</b></div>'
+     +'<div class="sub">'+n+' mensualités · hors assurance et frais</div>');
+  }
 }
 function resetState(){
   try{localStorage.removeItem(LS.STATE);localStorage.removeItem(LS.WELCOME);}catch(e){}

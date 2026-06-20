@@ -381,7 +381,7 @@ body.pageBlancheGuard>*{display:block!important;}
   </div>
 
   <div class="note"><span data-art="L411-1"></span> à <span data-art="L452-5"></span> · <span data-art="L461-1"></span> à <span data-art="L461-7"></span> — Conforme au Code de la sécurité sociale, à jour juin 2026.<br>
-    IJ AT/MP 2026 : 60% (J1–J28) puis 80% (J29+). Sans délai de carence.<br>
+    IJ AT/MP 2026 : 60% (J1–J28, plafond 240,49 €/j) puis 80% (J29+, plafond 320,66 €/j). Sans délai de carence.<br>
     🦺 Tout reste sur ton appareil.
     <button onclick="resetState()" style="background:none;border:none;color:var(--faded);font-size:11px;cursor:pointer;text-decoration:underline;margin-top:10px;">🔄 Réinitialiser</button></div>
   <div class="foot">Outil indicatif & pédagogique · Seule la CPAM fait foi pour la reconnaissance et l'indemnisation</div>
@@ -422,10 +422,13 @@ function calcIndem(){
   var per = $('fPeriode').value;
   if(sal<=0){$('indemResults').style.display='none';return;}
   var taux = per==='j1_28' ? 0.60 : 0.80;
-  var ij = sal * taux;
+  var plafond = per==='j1_28' ? 240.49 : 320.66; // plafonds IJ AT/MP 2026 (1er janvier 2026)
+  var ijBrute = sal * taux;
+  var ij = Math.min(ijBrute, plafond);
   $('rIJ').textContent = eur(ij)+' / jour';
   $('rIJDetail').textContent = eur(sal)+'/j × '+(taux*100)+'% · '+
-    (per==='j1_28'?'Jours 1 à 28':'À partir du 29e jour');
+    (per==='j1_28'?'Jours 1 à 28':'À partir du 29e jour') +
+    (ijBrute>plafond ? ' · plafond légal '+eur(plafond)+'/j appliqué (calcul théorique : '+eur(ijBrute)+')' : '');
   $('rTaux').textContent = (taux*100)+'%';
   $('indemResults').style.display='block';
 }
