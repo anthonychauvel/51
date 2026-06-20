@@ -87,8 +87,13 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 </div>
 <div class="card">
 <div class="field"><label for="cat">Catégorie</label><select class="ip" id="cat" aria-label="Catégorie"><option value="temp">Température</option><option value="dist">Distance</option><option value="poids">Poids/Masse</option><option value="vol">Volume (cuisine)</option></select></div>
-<div class="field"><label for="unite">Unité de départ</label><select class="ip" id="unite" aria-label="Unité de départ"><option value="c">°Celsius</option><option value="f">°Fahrenheit</option><option value="km">Kilomètres</option><option value="mi">Miles</option><option value="m">Mètres</option><option value="ft">Pieds (feet)</option><option value="in">Pouces (inch)</option><option value="cm">Centimètres</option><option value="kg">Kilogrammes</option><option value="lb">Livres (pounds)</option><option value="g">Grammes</option><option value="oz">Onces (oz)</option><option value="l">Litres</option><option value="cup">Cup (US)</option><option value="tbsp">Tablespoon</option><option value="tsp">Teaspoon</option><option value="floz">Fl oz (US)</option></select></div>
+<div class="field"><label for="unite">De</label><select class="ip" id="unite" aria-label="Unité de départ"></select></div>
+<div class="field"><label for="uniteVers">Vers</label><select class="ip" id="uniteVers" aria-label="Unité d'arrivée"></select></div>
 <div class="field"><label for="valeur">Valeur à convertir</label><input class="ip" id="valeur" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Valeur à convertir"></div>
+</div>
+<div id="resultMain" class="card" style="text-align:center;padding:18px;display:none;">
+  <div style="font-size:12px;color:var(--faded);" id="resultMainLabel"></div>
+  <div style="font-size:30px;font-weight:800;margin-top:4px;" id="resultMainValue">—</div>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
@@ -121,36 +126,81 @@ function hint(t){show('<div class="hint">'+t+'</div>');}
 function box(h){show('<div class="res"><div class="res-screen">'+h+'</div></div>');}
 
 function saveState(){
-  try{var o={};o['cat']=val('cat');o['unite']=val('unite');o['valeur']=val('valeur');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
+  try{var o={};o['cat']=val('cat');o['unite']=val('unite');o['uniteVers']=val('uniteVers');o['valeur']=val('valeur');localStorage.setItem(LS.STATE,JSON.stringify(o));}catch(e){}
 }
 function restoreState(){
-  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['cat']!=null)document.getElementById('cat').value=o['cat'];if(o['unite']!=null)document.getElementById('unite').value=o['unite'];if(o['valeur']!=null)document.getElementById('valeur').value=o['valeur'];}catch(e){}
+  try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['cat']!=null)document.getElementById('cat').value=o['cat'];if(o['valeur']!=null)document.getElementById('valeur').value=o['valeur'];}catch(e){}
 }
+function restoreUnitChoice(){
+  try{
+    var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');
+    if(o['unite']!=null) document.getElementById('unite').value=o['unite'];
+    if(o['uniteVers']!=null) document.getElementById('uniteVers').value=o['uniteVers'];
+  }catch(e){}
+}
+// Unités par catégorie : { id: [label, suffixe, →base, base→] } — base = °C / mètre / gramme / mL
+var UNITS = {
+  temp: {
+    c: ['Celsius','°C', function(v){return v;}, function(v){return v;}],
+    f: ['Fahrenheit','°F', function(v){return (v-32)*5/9;}, function(v){return v*9/5+32;}]
+  },
+  dist: {
+    km: ['Kilomètres','km', function(v){return v*1000;}, function(m){return m/1000;}],
+    mi: ['Miles','mi', function(v){return v*1609.344;}, function(m){return m/1609.344;}],
+    m:  ['Mètres','m', function(v){return v;}, function(m){return m;}],
+    ft: ['Pieds (feet)','ft', function(v){return v*0.3048;}, function(m){return m/0.3048;}],
+    in: ['Pouces (inch)','in', function(v){return v*0.0254;}, function(m){return m/0.0254;}],
+    cm: ['Centimètres','cm', function(v){return v/100;}, function(m){return m*100;}]
+  },
+  poids: {
+    kg: ['Kilogrammes','kg', function(v){return v*1000;}, function(g){return g/1000;}],
+    lb: ['Livres (pounds)','lb', function(v){return v*453.592;}, function(g){return g/453.592;}],
+    g:  ['Grammes','g', function(v){return v;}, function(g){return g;}],
+    oz: ['Onces (oz)','oz', function(v){return v*28.3495;}, function(g){return g/28.3495;}]
+  },
+  vol: {
+    l:    ['Litres','L', function(v){return v*1000;}, function(ml){return ml/1000;}],
+    cup:  ['Cup (US)','cup', function(v){return v*236.588;}, function(ml){return ml/236.588;}],
+    tbsp: ['Tablespoon','tbsp', function(v){return v*14.787;}, function(ml){return ml/14.787;}],
+    tsp:  ['Teaspoon','tsp', function(v){return v*4.929;}, function(ml){return ml/4.929;}],
+    floz: ['Fl oz (US)','fl oz', function(v){return v*29.574;}, function(ml){return ml/29.574;}]
+  }
+};
+
+function populateUnitSelects(){
+  var cat = val('cat');
+  var units = UNITS[cat];
+  var ids = Object.keys(units);
+  var fromSel = document.getElementById('unite'), toSel = document.getElementById('uniteVers');
+  var prevFrom = fromSel.value, prevTo = toSel.value;
+  fromSel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+units[id][0]+'</option>'; }).join('');
+  toSel.innerHTML = ids.map(function(id){ return '<option value="'+id+'">'+units[id][0]+'</option>'; }).join('');
+  // par défaut : "De" = première unité, "Vers" = deuxième unité (jamais la même des deux côtés)
+  fromSel.value = ids.indexOf(prevFrom) >= 0 ? prevFrom : ids[0];
+  toSel.value = (ids.indexOf(prevTo) >= 0 && prevTo !== fromSel.value) ? prevTo : (ids[1] || ids[0]);
+}
+
 function calc(){
   saveState();
+  var cat=val('cat'), u=val('unite'), uv=val('uniteVers'), v=num('valeur');
+  if(document.getElementById('valeur').value===''){hint('Saisis une valeur à convertir.');document.getElementById('resultMain').style.display='none';return;}
+  var units = UNITS[cat];
+  if(!units[u] || !units[uv]) return;
+  var base = units[u][2](v);          // valeur → unité de base
+  var resultVal = units[uv][3](base);  // base → unité cible
 
-  var cat=val('cat'),u=val('unite'),v=num('valeur');
-  if(document.getElementById('valeur').value===''){hint('Saisis une valeur à convertir.');return;}
+  document.getElementById('resultMain').style.display='block';
+  document.getElementById('resultMainLabel').textContent = v+' '+units[u][1]+' =';
+  document.getElementById('resultMainValue').textContent = fmt(resultVal,4).replace(/\.?0+$/,'').replace(/,$/, '')+' '+units[uv][1];
+
+  // Liste complète (toutes les unités de la catégorie) en complément
   var out=[];
-  function add(label,n,suf){out.push('<div class="line"><span>'+label+'</span><b>'+fmt(n,3).replace(/\\.?0+$/,'').replace(/,$/, '')+' '+suf+'</b></div>');}
-  if(cat==='temp'){
-    if(u==='c'){add('°Fahrenheit', v*9/5+32,'°F');}
-    else{add('°Celsius', (v-32)*5/9,'°C');}
-  } else if(cat==='dist'){
-    var m;
-    if(u==='km')m=v*1000; else if(u==='mi')m=v*1609.344; else if(u==='m')m=v; else if(u==='ft')m=v*0.3048; else if(u==='in')m=v*0.0254; else if(u==='cm')m=v/100;
-    add('Mètres', m,'m'); add('Kilomètres', m/1000,'km'); add('Miles', m/1609.344,'mi'); add('Pieds', m/0.3048,'ft'); add('Pouces', m/0.0254,'in');
-  } else if(cat==='poids'){
-    var g;
-    if(u==='kg')g=v*1000; else if(u==='lb')g=v*453.592; else if(u==='g')g=v; else if(u==='oz')g=v*28.3495;
-    add('Grammes', g,'g'); add('Kilogrammes', g/1000,'kg'); add('Livres', g/453.592,'lb'); add('Onces', g/28.3495,'oz');
-  } else {
-    var ml;
-    if(u==='l')ml=v*1000; else if(u==='cup')ml=v*236.588; else if(u==='tbsp')ml=v*14.787; else if(u==='tsp')ml=v*4.929; else if(u==='floz')ml=v*29.574;
-    add('Millilitres', ml,'mL'); add('Litres', ml/1000,'L'); add('Cup (US)', ml/236.588,'cup'); add('Tablespoon', ml/14.787,'tbsp'); add('Teaspoon', ml/4.929,'tsp');
-  }
+  Object.keys(units).forEach(function(id){
+    if(id===u) return;
+    var n = units[id][3](base);
+    out.push('<div class="line"><span>'+units[id][0]+'</span><b>'+fmt(n,3).replace(/\.?0+$/,'').replace(/,$/, '')+' '+units[id][1]+'</b></div>');
+  });
   box(out.join(''));
-
 }
 function resetState(){
   try{localStorage.removeItem(LS.STATE);localStorage.removeItem(LS.WELCOME);}catch(e){}
@@ -162,10 +212,13 @@ function closeHelp(){document.getElementById('help').classList.remove('show');tr
 document.addEventListener('DOMContentLoaded',function(){
   document.getElementById('helpBtn').addEventListener('click',openHelp);
   Array.prototype.forEach.call(document.querySelectorAll('[data-close="help"]'),function(b){b.addEventListener('click',closeHelp);});
+  restoreState();
+  populateUnitSelects();
+  restoreUnitChoice();
   Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
     el.addEventListener('input',calc); el.addEventListener('change',calc);
   });
-  restoreState();
+  document.getElementById('cat').addEventListener('change',function(){ populateUnitSelects(); calc(); });
   calc();
   try{if(!localStorage.getItem(LS.WELCOME))openHelp();}catch(e){openHelp();}
 });

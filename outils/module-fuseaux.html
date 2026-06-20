@@ -86,6 +86,24 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Calcule l'heure ailleurs à partir d'un décalage horaire.</p>
 </div>
 <div class="card">
+<div class="field"><label for="ville">Ville visée (optionnel)</label><select class="ip" id="ville" aria-label="Ville visée">
+  <option value="">— Saisie manuelle du décalage —</option>
+  <option value="-9">Los Angeles, San Francisco (UTC−7, PDT)</option>
+  <option value="-8">Mexico, Denver (UTC−6)</option>
+  <option value="-7">Chicago, Houston (UTC−5, CDT)</option>
+  <option value="-6">New York, Toronto, Miami (UTC−4, EDT)</option>
+  <option value="-5">São Paulo, Buenos Aires (UTC−3)</option>
+  <option value="-1">Londres, Dublin, Lisbonne (UTC+1, BST)</option>
+  <option value="0">Madrid, Berlin, Rome, Bruxelles (UTC+2, CEST)</option>
+  <option value="0">Le Caire, Johannesburg (UTC+2)</option>
+  <option value="1">Moscou, Istanbul (UTC+3)</option>
+  <option value="2">Dubaï, Abou Dabi (UTC+4)</option>
+  <option value="3.5">New Delhi, Mumbai (UTC+5:30)</option>
+  <option value="5">Bangkok, Jakarta (UTC+7)</option>
+  <option value="6">Pékin, Shanghai, Singapour (UTC+8)</option>
+  <option value="7">Tokyo, Séoul (UTC+9)</option>
+  <option value="8">Sydney, Melbourne (UTC+10)</option>
+</select></div>
 <div class="field"><label for="heure">Heure ici</label><input class="ip" id="heure" type="time" placeholder="" aria-label="Heure ici"></div>
 <div class="field"><label for="decalage">Décalage de la ville visée (h)</label><input class="ip" id="decalage" type="number" inputmode="decimal" step="any" placeholder="+1 ou -5" aria-label="Décalage de la ville visée (h)"></div>
 </div>
@@ -94,7 +112,7 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension du droit du travail et de la vie quotidienne. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de décision importante, consultez un professionnel ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>).<br>
-  Outil indicatif. Vérifie le décalage actuel (heure d'été/hiver) de la ville visée.<br>
+  Outil indicatif. Décalages des villes pré-remplis pour l'été 2026 (heure d'été en vigueur dans l'hémisphère nord) — vérifie le décalage actuel si tu lis ceci à une autre saison.<br>
   <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 <div class="ov" id="help" role="dialog" aria-modal="true" aria-label="Aide">
@@ -151,6 +169,10 @@ document.addEventListener('DOMContentLoaded',function(){
   Array.prototype.forEach.call(document.querySelectorAll('[data-close="help"]'),function(b){b.addEventListener('click',closeHelp);});
   Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
     el.addEventListener('input',calc); el.addEventListener('change',calc);
+  });
+  document.getElementById('ville').addEventListener('change',function(){
+    var v = this.value;
+    if(v!==''){ document.getElementById('decalage').value = v; calc(); }
   });
   restoreState();
   calc();

@@ -86,8 +86,8 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Pourcentage d'un montant, évolution, hausse ou baisse — tout en un.</p>
 </div>
 <div class="card">
-<div class="field"><label for="mode">Type de calcul</label><select class="ip" id="mode" aria-label="Type de calcul"><option value="pct">X % de Y</option><option value="evo">Évolution de A à B</option><option value="plus">Augmenter A de X %</option><option value="moins">Réduire A de X %</option></select></div>
-<div class="row"><div class="field"><label for="a">Valeur A</label><input class="ip" id="a" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Valeur A"></div><div class="field"><label for="b">Valeur B / pourcentage</label><input class="ip" id="b" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Valeur B / pourcentage"></div></div>
+<div class="field"><label for="mode">Que veux-tu calculer ?</label><select class="ip" id="mode" aria-label="Type de calcul"><option value="pct">Combien fait X % d'une valeur ?</option><option value="evo">Quelle évolution entre deux valeurs ?</option><option value="plus">Augmenter une valeur d'un certain %</option><option value="moins">Réduire une valeur d'un certain %</option></select></div>
+<div class="row"><div class="field"><label for="a" id="labelA">Valeur A</label><input class="ip" id="a" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Valeur A"></div><div class="field"><label for="b" id="labelB">Valeur B / pourcentage</label><input class="ip" id="b" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Valeur B"></div></div>
 </div>
 <div id="result"></div>
 <button class="reset" onclick="resetState()">🔄 Réinitialiser</button>
@@ -125,6 +125,20 @@ function saveState(){
 function restoreState(){
   try{var o=JSON.parse(localStorage.getItem(LS.STATE)||'{}');if(o['mode']!=null)document.getElementById('mode').value=o['mode'];if(o['a']!=null)document.getElementById('a').value=o['a'];if(o['b']!=null)document.getElementById('b').value=o['b'];}catch(e){}
 }
+var LABELS = {
+  pct:   { a:'Pourcentage à appliquer (%)', b:'Sur quelle valeur ?', ph_a:'Ex. 20', ph_b:'Ex. 150' },
+  evo:   { a:'Valeur de départ', b:'Valeur d\'arrivée', ph_a:'Ex. 1500', ph_b:'Ex. 1800' },
+  plus:  { a:'Valeur de départ', b:'Augmenter de combien de % ?', ph_a:'Ex. 1500', ph_b:'Ex. 10' },
+  moins: { a:'Valeur de départ', b:'Réduire de combien de % ?', ph_a:'Ex. 1500', ph_b:'Ex. 10' }
+};
+function updateLabels(){
+  var m = val('mode'), L = LABELS[m];
+  if(!L) return;
+  document.getElementById('labelA').textContent = L.a;
+  document.getElementById('labelB').textContent = L.b;
+  document.getElementById('a').placeholder = L.ph_a;
+  document.getElementById('b').placeholder = L.ph_b;
+}
 function calc(){
   saveState();
 
@@ -151,7 +165,9 @@ document.addEventListener('DOMContentLoaded',function(){
   Array.prototype.forEach.call(document.querySelectorAll('.ip'),function(el){
     el.addEventListener('input',calc); el.addEventListener('change',calc);
   });
+  document.getElementById('mode').addEventListener('change',updateLabels);
   restoreState();
+  updateLabels();
   calc();
   try{if(!localStorage.getItem(LS.WELCOME))openHelp();}catch(e){openHelp();}
 });

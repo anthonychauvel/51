@@ -86,7 +86,7 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
   <p>Quel produit est vraiment le moins cher ? Compare le prix ramené à l'unité.</p>
 </div>
 <div class="card">
-<div class="field"><label for="unit">Unité de quantité</label><select class="ip" id="unit" aria-label="Unité de quantité"><option value="kg">au kilo (kg)</option><option value="L">au litre (L)</option><option value="g">aux 100 g</option><option value="piece">à la pièce</option></select></div>
+<div class="field"><label for="unit">Unité de quantité</label><select class="ip" id="unit" aria-label="Unité de quantité"><option value="kg">au kilo (kg)</option><option value="L">au litre (L)</option><option value="g100">aux 100 g</option><option value="g">au gramme (g)</option><option value="piece">à la pièce</option></select></div>
 <div class="row"><div class="field"><label for="pA">Prix produit A (€)</label><input class="ip" id="pA" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Prix produit A (€)"></div><div class="field"><label for="qA">Quantité A</label><input class="ip" id="qA" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Quantité A"></div></div>
 <div class="row"><div class="field"><label for="pB">Prix produit B (€)</label><input class="ip" id="pB" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Prix produit B (€)"></div><div class="field"><label for="qB">Quantité B</label><input class="ip" id="qB" type="number" inputmode="decimal" step="any" placeholder="0" aria-label="Quantité B"></div></div>
 </div>
@@ -131,14 +131,14 @@ function calc(){
 
   var pa=num('pA'),qa=num('qA'),pb=num('pB'),qb=num('qB');
   if(!pa||!qa||!pb||!qb){hint('Saisis le prix et la quantité des deux produits pour les comparer.');return;}
-  var u=val('unit'), suf={kg:'/kg',L:'/L',g:'/100 g',piece:'/pièce'}[u]||'';
+  var u=val('unit'), suf={kg:'/kg',L:'/L',g100:'/100 g',g:'/g',piece:'/pièce'}[u]||'';
   var ua=pa/qa, ub=pb/qb;
-  if(u==='g'){ua=pa/qa*100; ub=pb/qb*100;}
+  if(u==='g100'){ua=pa/qa*100; ub=pb/qb*100;}
   var cheap=ua<=ub?'A':'B', hi=Math.max(ua,ub), lo=Math.min(ua,ub);
   var ec=hi>0?(hi-lo)/hi*100:0;
   box('<div class="lbl">Le moins cher</div><div class="big">Produit '+cheap+'</div>'
    +'<div class="sub">A : '+fmt(ua,3)+' €'+suf+' &nbsp;·&nbsp; B : '+fmt(ub,3)+' €'+suf+'</div>'
-   +'<div class="sub">Soit <b>'+fmt(ec,1)+' %</b> moins cher au '+ (u==='piece'?'pièce':(u==='g'?'100 g':u)) +'</div>');
+   +'<div class="sub">Soit <b>'+fmt(ec,1)+' %</b> moins cher au '+ (u==='piece'?'pièce':(u==='g100'?'100 g':(u==='g'?'gramme':u))) +'</div>');
 
 }
 function resetState(){
