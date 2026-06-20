@@ -21,12 +21,12 @@
   --green:#1a6b3a; --green-l:#2a9b55; --green-ll:#4ab870; --green-bg:#e8f5ee;
   --red:#b03030; --orange:#c87820;
   --paper:#f8faf8; --paper2:#edf5ef; --paper3:#dceee2;
-  --ink:#1a2e1a; --ink2:#3a5a3a; --faded:#7a9a7a;
+  --ink:#1a2e1a; --ink2:#3a5a3a; --faded:#5d755d;
   --card:#ffffff; --card-edge:#c8ddc8;
   --stamp:#1a6b3a;
 }
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
-html,body{min-height:100%;}
+html,body{overflow-wrap:break-word;word-break:break-word;min-height:100%;}
 body{
   font-family:'IBM Plex Sans',-apple-system,sans-serif;color:var(--ink);padding-bottom:60px;min-height:100vh;
   background:
@@ -165,6 +165,7 @@ body.pageBlancheGuard>*{display:block!important;}
 .sh-disclaimer strong{color:rgba(255,255,255,0.75);}
 .sh-disclaimer a{color:rgba(255,255,255,0.55);text-decoration:underline;}
 
+@media (prefers-reduced-motion: reduce){*,*::before,*::after{animation-duration:.001ms!important;animation-iteration-count:1!important;transition-duration:.001ms!important;scroll-behavior:auto!important;}}
 </style>
 <body>
 
@@ -177,7 +178,7 @@ body.pageBlancheGuard>*{display:block!important;}
     <div class="ti">Solde de Tout Compte</div>
     <div class="su">LA CHECKLIST · V1.0</div>
   </div>
-  <button class="hbtn" id="helpBtn">?</button>
+  <button class="hbtn" id="helpBtn" aria-label="Aide">?</button>
 </header>
 
 <!-- WIZARD -->
@@ -211,7 +212,7 @@ body.pageBlancheGuard>*{display:block!important;}
 <!-- HELP -->
 <div class="ov" id="help">
   <div class="box"><div class="hd"><div class="t">Mode d'emploi</div><div class="s">Utiliser la checklist</div>
-    <button class="x" data-close="help">✕</button></div>
+    <button class="x" data-close="help" aria-label="Fermer">✕</button></div>
   <div class="bd">
     <div class="feat"><div class="ic">✅</div><div class="tx"><b>Cocher les items</b>Tape sur chaque document pour le marquer comme reçu. La barre de progression se met à jour.</div></div>
     <div class="feat"><div class="ic">⚠️</div><div class="tx"><b>Ne signe pas sans avoir tout</b>Le reçu pour solde de tout compte a une valeur libératoire. Vérifie chaque ligne avant de signer.</div></div>
@@ -379,7 +380,7 @@ function shConfirm(msg, cb){
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension de la législation du travail. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de litige ou de décision importante, consultez un conseiller juridique, votre service RH ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>, DREETS).<br>
-  <span style="opacity:.7">Données 100 % locales · Aucune information n'est transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
+  <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 </body>
 </html>
