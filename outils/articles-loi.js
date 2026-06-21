@@ -34,7 +34,7 @@
   var VALEURS = {
 
     /* ----- SMIC (revalorisé au 1er janvier + ajustement inflation en cours d'année) ----- */
-    smic_h:        { v: 12.31,    u: '€/h',    maj: '2026-06-01', src: 'Arrêté 22/05/2026' },
+    smic_h:        { v: 12.31,    u: '€/h',    maj: '2026-06-01', src: 'Arrêté 22/05/2026 — ⚠️ 2e revalorisation 2026 (après celle du 1er janvier) ; inflation repartant à la hausse cet été (énergie), re-vérifier en juillet-août si une 3e revalorisation automatique est déclenchée (seuil légal +2% depuis mai 2026, art. L3231-5)' },
     smic_h_net:    { v: 9.75,     u: '€/h net',maj: '2026-06-01', src: '≈ SMIC net mensuel 1 477,93 € ÷ 151,67 h — info.gouv.fr' },
     smic_mensuel:  { v: 1867.02,  u: '€/mois', maj: '2026-06-01', src: 'JO arrêté 22/05/2026 — base 151,67 h × 12,31 €' },
     smic_mensuel_net:{ v: 1477.93, u: '€/mois net', maj: '2026-06-01', src: 'SMIC net mensuel — info.gouv.fr (1er juin 2026)' },

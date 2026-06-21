@@ -227,6 +227,14 @@ body.pageBlancheGuard>*{display:block!important;}
         <option value="">— Sélectionne ton année —</option>
       </select>
     </div>
+    <div class="field" id="champDateDepart">
+      <label>Date de départ envisagée</label>
+      <select class="ip" id="fDateDepart" aria-label="Date de départ envisagée">
+        <option value="avant">Avant le 1ᵉʳ septembre 2026</option>
+        <option value="apres">À partir du 1ᵉʳ septembre 2026</option>
+      </select>
+      <div class="hint" style="font-size:11px;color:var(--ink2);margin-top:4px;">La suspension de la réforme (LFSS 2026) ne s'applique qu'aux retraites prenant effet à partir du 1ᵉʳ septembre 2026. Avant cette date, le calendrier 2023 d'origine s'applique encore — concerne les générations 1964 à 1968 uniquement.</div>
+    </div>
     <div class="field">
       <label>Trimestres cotisés (estimation)</label>
       <select class="ip" id="fTrim" aria-label="Trimestres cotisés (estimation)">
@@ -268,13 +276,13 @@ body.pageBlancheGuard>*{display:block!important;}
     <div class="gen-row" data-min="1961" data-max="1961"><span>1961 †</span><span>62 ans 3 mois</span><span>67 ans</span><span>169</span></div>
     <div class="gen-row" data-min="1962" data-max="1962"><span>1962</span><span>62 ans 6 mois</span><span>67 ans</span><span>169</span></div>
     <div class="gen-row" data-min="1963" data-max="1963"><span>1963</span><span>62 ans 9 mois</span><span>67 ans</span><span>170</span></div>
-    <div class="gen-row" data-min="1964" data-max="1964"><span>1964 ★</span><span>62 ans 9 mois</span><span>67 ans</span><span>170</span></div>
-    <div class="gen-row" data-min="1965" data-max="1965"><span>1965 ★‡</span><span>63 ans</span><span>67 ans</span><span>171</span></div>
-    <div class="gen-row" data-min="1966" data-max="1966"><span>1966 ★</span><span>63 ans 3 mois</span><span>67 ans</span><span>172</span></div>
-    <div class="gen-row" data-min="1967" data-max="1967"><span>1967 ★</span><span>63 ans 6 mois</span><span>67 ans</span><span>172</span></div>
-    <div class="gen-row" data-min="1968" data-max="1968"><span>1968 ★</span><span>63 ans 9 mois</span><span>67 ans</span><span>172</span></div>
+    <div class="gen-row" data-min="1964" data-max="1964"><span>1964 ★</span><span>63 ans → 62 a. 9 m. (dès 1ᵉʳ sept. 26)</span><span>67 ans</span><span>171 → 170</span></div>
+    <div class="gen-row" data-min="1965" data-max="1965"><span>1965 ★‡</span><span>63 a. 3 m. → 63 ans (dès 1ᵉʳ sept. 26)</span><span>67 ans</span><span>172 → 171</span></div>
+    <div class="gen-row" data-min="1966" data-max="1966"><span>1966 ★</span><span>63 a. 6 m. → 63 a. 3 m. (dès 1ᵉʳ sept. 26)</span><span>67 ans</span><span>172</span></div>
+    <div class="gen-row" data-min="1967" data-max="1967"><span>1967 ★</span><span>63 a. 9 m. → 63 a. 6 m. (dès 1ᵉʳ sept. 26)</span><span>67 ans</span><span>172</span></div>
+    <div class="gen-row" data-min="1968" data-max="1968"><span>1968 ★</span><span>64 ans → 63 a. 9 m. (dès 1ᵉʳ sept. 26)</span><span>67 ans</span><span>172</span></div>
     <div class="gen-row" data-min="1969" data-max="2010"><span>1969 et +</span><span>64 ans</span><span>67 ans</span><span>172</span></div>
-    <div style="font-size:11px;color:var(--ink2);padding:8px 12px;line-height:1.5;">★ LFSS 2026 : suspension de la réforme pour les retraites prenant effet à compter du <b>1er septembre 2026</b> — générations <b>1964 à 1968</b>, âge légal réduit de 3 mois (seules 1964 et janv-mars 1965 gagnent aussi des trimestres). Le calendrier 2023 reprend en janvier 2028. Les générations <b>1969 et +</b> restent à 64 ans / 172 trimestres, inchangées.<br>† Né janv-août 1961 : 62 ans / 168 trim. ‡ Né janv-mars 1965 : 62 ans 9 mois / 170 trim (cas ★ ci-dessus) ; né avr-déc 1965 : valeurs affichées. À jour juin 2026 — vérifie ton cas exact sur info-retraite.fr. Sources : LFSS 2026 (loi n°2025-1403), service-public.fr.</div>
+    <div style="font-size:11px;color:var(--ink2);padding:8px 12px;line-height:1.5;">★ LFSS 2026 : pour les générations <b>1964 à 1968</b>, l'âge légal et les trimestres affichés en flèche (→) ne s'appliquent qu'aux retraites prenant effet <b>à partir du 1ᵉʳ septembre 2026</b> (suspension de la réforme). <b>Avant cette date</b> (y compris tout l'été 2026), c'est la valeur de gauche — le calendrier 2023 d'origine — qui s'applique encore. Le calendrier 2023 reprend en janvier 2028. Les générations <b>1969 et +</b> restent à 64 ans / 172 trimestres, inchangées dans tous les cas.<br>† Né janv-août 1961 : 62 ans / 168 trim. ‡ Né janv-mars 1965 : bascule à 62 ans 9 mois / 170 trim (au lieu de 63 ans/171) à partir du 1ᵉʳ sept. 2026 ; né avr-déc 1965 : valeurs affichées. À jour juin 2026 — vérifie ta date d'effet exacte sur info-retraite.fr. Sources : LFSS 2026 (loi n°2025-1403), meilleurtaux.com, service-public.fr.</div>
   </div>
 
   <!-- Concepts clés -->
@@ -381,12 +389,30 @@ body.pageBlancheGuard>*{display:block!important;}
 <script>
 (function(){
 'use strict';
-// Données réforme 2023 (loi n°2023-270) + suspension LFSS 2026 (loi n°2025-1403, en vigueur 1er sept. 2026)
-// Catégorie sédentaire (régime général). Suspension : générations 1964-1968 gagnent 3 mois d'âge légal ;
-// seules 1964 et janv-mars 1965 gagnent aussi 1-2 trimestres. Repère né en 1961 (janv-août) ou 1965 (janv-mars) :
-// ta situation exacte dépend du mois de naissance — vérifie sur info-retraite.fr.
+// Données réforme 2023 (loi n°2023-270) + suspension LFSS 2026 (loi n°2025-1403).
+// IMPORTANT : la suspension ne s'applique qu'aux retraites prenant EFFET à partir du
+// 1er septembre 2026 (pensions, pas la date de naissance). Avant cette date, le calendrier
+// 2023 d'origine s'applique encore, même pour les générations 1964-1968.
+// Catégorie sédentaire (régime général).
 // [annéeMin, annéeMax, âgeLégal(mois), âgeTauxPlein(mois), trimestres requis]
-var GEN = [
+
+// Calendrier ORIGINAL (loi 2023-270), applicable pour un départ avant le 1er sept. 2026 :
+var GEN_ORIGINAL = [
+  [1900,1957, 62*12, 65*12, 166],
+  [1958,1960, 62*12, 67*12, 167],
+  [1961,1961, 62*12+3, 67*12, 169],   // né sept-déc 1961 ; né janv-août 1961 : 62 ans/168 trim
+  [1962,1962, 62*12+6, 67*12, 169],
+  [1963,1963, 62*12+9, 67*12, 170],
+  [1964,1964, 63*12,   67*12, 171],   // calendrier d'origine, pas encore suspendu
+  [1965,1965, 63*12+3, 67*12, 172],
+  [1966,1966, 63*12+6, 67*12, 172],
+  [1967,1967, 63*12+9, 67*12, 172],
+  [1968,1968, 64*12,   67*12, 172],
+  [1969,2010, 64*12,   67*12, 172]
+];
+
+// Calendrier SUSPENDU (LFSS 2026), applicable pour un départ à partir du 1er sept. 2026 :
+var GEN_SUSPENDU = [
   [1900,1957, 62*12, 65*12, 166],
   [1958,1960, 62*12, 67*12, 167],
   [1961,1961, 62*12+3, 67*12, 169],   // né sept-déc 1961 ; né janv-août 1961 : 62 ans/168 trim
@@ -408,6 +434,8 @@ function moisStr(m){
 }
 
 function getGen(y){
+  var dateDepart = document.getElementById('fDateDepart') ? document.getElementById('fDateDepart').value : 'avant';
+  var GEN = dateDepart === 'apres' ? GEN_SUSPENDU : GEN_ORIGINAL;
   for(var i=0;i<GEN.length;i++) if(y>=GEN[i][0]&&y<=GEN[i][1]) return GEN[i];
   return null;
 }
@@ -452,6 +480,7 @@ function recalc(){
 
 sel.addEventListener('change',recalc);
 document.getElementById('fTrim').addEventListener('change',recalc);
+document.getElementById('fDateDepart').addEventListener('change',recalc);
 })();
 
   // ── LocalStorage ──────────────────────────────────────────────

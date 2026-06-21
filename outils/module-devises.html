@@ -103,7 +103,7 @@ header{display:flex;align-items:center;gap:10px;padding:calc(14px + env(safe-are
 <div class="sh-disclaimer">
   <strong>⚠️ Outil pédagogique — pas un avis juridique</strong><br>
   SimulHeures est un outil d'information et d'aide à la compréhension du droit du travail et de la vie quotidienne. <strong>Tous les résultats, montants et calculs sont fournis à titre indicatif uniquement</strong> et ne constituent pas un avis juridique, fiscal ou comptable. Ils ne sauraient engager la responsabilité de l'auteur. En cas de décision importante, consultez un professionnel ou les services officiels (<a href="https://www.service-public.fr" target="_blank">service-public.fr</a>).<br>
-  Conversion à titre indicatif — les taux fluctuent en continu, vérifie auprès de ta banque avant toute opération réelle. Taux saisi manuellement par défaut. Le bouton « Importer le taux du jour » est optionnel : si tu l'utilises, ton appareil contacte frankfurter.app (taux BCE) et/ou coingecko.com (cryptomonnaies) pour récupérer le taux — ces services reçoivent alors ton adresse IP. Sans ce bouton, rien n'est transmis.<br>
+  Conversion à titre indicatif — les taux fluctuent en continu, vérifie auprès de ta banque avant toute opération réelle. Taux saisi manuellement par défaut. Le bouton « Importer le taux du jour » est optionnel : si tu l'utilises, ton appareil contacte frankfurter.app (taux BCE) et/ou coingecko.com (cryptomonnaies) pour récupérer le taux — ces services reçoivent alors ton adresse IP. Sans ce bouton, rien n'est transmis. La source crypto (gratuite, sans compte) peut occasionnellement être indisponible selon ses propres conditions d'accès ; dans ce cas, saisis le taux manuellement.<br>
   <span style="opacity:.7">Vos données restent sur votre appareil · Aucune saisie transmise · <a href="../mentions-legales.html">Mentions légales</a></span>
 </div>
 <div class="ov" id="help" role="dialog" aria-modal="true" aria-label="Aide">
@@ -180,44 +180,58 @@ function appliquerTauxAuto(){
 function importerTaux(){
   var status = document.getElementById('importStatus');
   status.textContent = '⏳ Récupération du taux en cours…';
+  status.style.color = '';
   var de = val('devDe'), vers = val('devVers');
   var needFiat = FIAT[de]!=null || FIAT[vers]!=null;
   var needCrypto = CRYPTO[de]!=null || CRYPTO[vers]!=null;
-  var promises = [];
 
-  if(needFiat){
-    promises.push(
-      fetch('https://api.frankfurter.app/latest?from=EUR')
-        .then(function(r){ if(!r.ok) throw new Error('frankfurter'); return r.json(); })
-        .then(function(data){
-          Object.keys(data.rates||{}).forEach(function(code){
-            if(FIAT[code]!=null) eurPerUnit[code] = 1/data.rates[code];
-          });
-        })
-    );
-  }
-  if(needCrypto){
-    var ids = Object.keys(CRYPTO).join(',');
-    promises.push(
-      fetch('https://api.coingecko.com/api/v3/simple/price?ids='+ids+'&vs_currencies=eur')
-        .then(function(r){ if(!r.ok) throw new Error('coingecko'); return r.json(); })
-        .then(function(data){
-          Object.keys(data||{}).forEach(function(id){
-            if(data[id] && data[id].eur!=null) eurPerUnit[id] = data[id].eur;
-          });
-        })
-    );
-  }
+  // Chaque source réussit ou échoue indépendamment : si l'une des deux est indisponible
+  // (clé requise, hors-service, hors-ligne...), l'autre continue de fonctionner normalement.
+  var fiatOk = !needFiat, cryptoOk = !needCrypto; // true par défaut si pas demandé du tout
 
-  Promise.all(promises).then(function(){
-    lastImportDate = new Date();
-    appliquerTauxAuto();
-    var h = lastImportDate.toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
-    status.textContent = '✅ Taux importé à ' + h + ' (frankfurter.app / coingecko.com)';
-    status.style.color = '#7ddb7d';
-  }).catch(function(){
-    status.textContent = '⚠️ Import impossible (hors-ligne ?). Saisis le taux manuellement ci-dessus.';
-    status.style.color = '#ffb86b';
+  var pFiat = !needFiat ? Promise.resolve() :
+    fetch('https://api.frankfurter.app/latest?from=EUR')
+      .then(function(r){ if(!r.ok) throw new Error('frankfurter http '+r.status); return r.json(); })
+      .then(function(data){
+        Object.keys(data.rates||{}).forEach(function(code){
+          if(FIAT[code]!=null) eurPerUnit[code] = 1/data.rates[code];
+        });
+        fiatOk = true;
+      })
+      .catch(function(e){ console.warn('Import devises (frankfurter.app) :', e); });
+
+  var pCrypto = !needCrypto ? Promise.resolve() :
+    fetch('https://api.coingecko.com/api/v3/simple/price?ids='+Object.keys(CRYPTO).join(',')+'&vs_currencies=eur')
+      .then(function(r){ if(!r.ok) throw new Error('coingecko http '+r.status); return r.json(); })
+      .then(function(data){
+        var any=false;
+        Object.keys(data||{}).forEach(function(id){
+          if(data[id] && data[id].eur!=null){ eurPerUnit[id] = data[id].eur; any=true; }
+        });
+        cryptoOk = any;
+        if(!any) console.warn('Import cryptos (coingecko.com) : réponse vide — clé API probablement requise désormais.');
+      })
+      .catch(function(e){ console.warn('Import cryptos (coingecko.com) :', e); });
+
+  Promise.all([pFiat, pCrypto]).then(function(){
+    var h = new Date().toLocaleTimeString('fr-FR',{hour:'2-digit',minute:'2-digit'});
+    if(fiatOk && cryptoOk){
+      lastImportDate = new Date();
+      appliquerTauxAuto();
+      status.textContent = '✅ Taux importé à ' + h + ' (frankfurter.app / coingecko.com)';
+      status.style.color = '#7ddb7d';
+    } else if(fiatOk && !cryptoOk){
+      appliquerTauxAuto();
+      status.textContent = '⚠️ Devises importées, mais cryptos indisponibles pour le moment (service externe). Saisis le taux crypto manuellement si besoin.';
+      status.style.color = '#ffb86b';
+    } else if(!fiatOk && cryptoOk){
+      appliquerTauxAuto();
+      status.textContent = '⚠️ Cryptos importées, mais devises indisponibles pour le moment. Saisis le taux manuellement si besoin.';
+      status.style.color = '#ffb86b';
+    } else {
+      status.textContent = '⚠️ Import impossible (hors-ligne ou service externe indisponible). Saisis le taux manuellement ci-dessus.';
+      status.style.color = '#ffb86b';
+    }
   });
 }
 
