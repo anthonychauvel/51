@@ -1,7 +1,7 @@
 /**
  * BASE COMPLÈTE CCN FRANCE — HEURES SUPPLÉMENTAIRES
  * ==================================================
- * Version : 5.5.2 — 3 avril 2026
+ * Version : 5.6.0 — 3 avril 2026
  * Source  : Légifrance, DGT, Code du travail numérique, convention.fr, DARES
  *
  * BUG FIX v5.5.1 — DOUBLONS IDCC CRITIQUES CORRIGÉS :
@@ -18,7 +18,7 @@
  *   • IDCC 3090 : Edition livres + Spectacle vivant → IDCCs distincts à vérifier
  *   (IDCC 1979 multi-entrées HCR : intentionnel — toutes pointent vers HCR)
  *
- * BUG FIX v5.5.2 — DOUBLONS QUALITÉ DONNÉES CORRIGÉS :
+ * BUG FIX v5.6.0 — DOUBLONS QUALITÉ DONNÉES CORRIGÉS :
  *   A) 4 alias IDCC (même groupe DC → double résultat recherche) :
  *      489→4890, 2120→21200, 2596→25960, 3090→30900
  *   B) 3 noms identiques distingués (Gardiens, Librairie, Transport aérien sol)
@@ -34,7 +34,7 @@
  *     • ASSUR70 : contingent corrigé 70h (pas 200h), IDCC 1672 (pas 763)
  *     • BOULAN329: contingent corrigé 329h (pas 270h), IDCC 843 (pas 54)
  *     • ANIM70  : contingent corrigé 70h (pas 90h)
- *     • CSS100  : contingent corrigé 100h (pas 130h)
+ *     • CSS60 : ALISFA contingent 60 h (100 h = CDI intermittents) — Légifrance art. 1.4
  *     • IDCC 1501 = Restauration rapide (pas Grande distribution)
  *     • IDCC 2216 = Grande distribution (ajouté, était absent)
  *     • IDCC 843 = Boulangerie artisanale (pas 54)
@@ -101,30 +101,30 @@ const REGLES_HS = {
   },
 
   PETRO: {
-    id:'PETRO', nom:'Pétrole — taux1=30%, contingent 130h',
-    seuil:35, taux1:30, palier1:8, taux_inter:null, palier_inter:null, taux2:50,
+    id:'PETRO', nom:'Pétrole — 25%/50%, contingent 130h',
+    seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50,
     contingent:130, maxHebdo:48, debutSemaine:1,
     feriesChomes: 11, feriesMajoration: 100,
     feries1erMaiMajoration: 100, feriesAlsaceMoselle: false,
-    notes:'Industrie du pétrole IDCC 669. TAUX1=30% plus favorable. Contingent 130h.'
+    notes:'Industrie du pétrole IDCC 1388 (brochure 3001), art. 413 : 25%/50%, contingent 130h. Le 33% = majoration d\'incommodité nuit/dimanche/férié, distincte des HS.'
   },
 
   PHARMA: {
-    id:'PHARMA', nom:'Pharmaceutique — contingent 145h',
+    id:'PHARMA', nom:'Pharmaceutique — contingent 220h (droit commun)',
     seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50,
-    contingent:145, maxHebdo:48, debutSemaine:1,
+    contingent:220, maxHebdo:48, debutSemaine:1,
     feriesChomes: 11, feriesMajoration: 0,
     feries1erMaiMajoration: 100, feriesAlsaceMoselle: false,
-    notes:'Industrie pharmaceutique IDCC 216. Contingent 145h.'
+    notes:'Industrie pharmaceutique IDCC 176 (brochure 3104). Contingent 220h droit commun (code.travail.gouv.fr/176), 25%/50%.'
   },
 
-  CSS100: {
-    id:'CSS100', nom:'Centres sociaux — contingent 100h',
+  CSS60: {
+    id:'CSS60', nom:'Centres sociaux — contingent 60h',
     seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50,
-    contingent:100, maxHebdo:48, debutSemaine:1,
+    contingent:60, maxHebdo:48, debutSemaine:1,
     feriesChomes: 11, feriesMajoration: 0,
     feries1erMaiMajoration: 100, feriesAlsaceMoselle: false,
-    notes:'Centres sociaux et socio-culturels IDCC 1261 (brochure 3218). Contingent 100h.'
+    notes:'Centres sociaux et socio-culturels IDCC 1261 (brochure 3218). Contingent 60h (art.1.4 CCN, Légifrance).'
   },
 
   ASSUR70: {
@@ -227,12 +227,12 @@ const REGLES_HS = {
   },
 
   MEDSO110: {
-    id:'MEDSO110', nom:'Médico-social CCNT 66 — contingent 110h',
+    id:'MEDSO110', nom:'Médico-social — contingent 110h',
     seuil:35, taux1:25, palier1:8, taux_inter:null, palier_inter:null, taux2:50,
     contingent:110, maxHebdo:48, debutSemaine:1,
     feriesChomes: 11, feriesMajoration: 0,
     feries1erMaiMajoration: 100, feriesAlsaceMoselle: false,
-    notes:'CCNT 66 inadaptés handicapés IDCC 1921 (brochure 3248). Contingent 110h. Accord ARTT 1999.'
+    notes:'Médico-social FEHAP CCN 51 (IDCC 29, brochure 3198) et UNISSS (IDCC 405). Contingent 110h (Légifrance art.21 / CCN51).'
   },
 
   // ─────────────────────────────────────────────────────────
@@ -255,7 +255,7 @@ const REGLES_HS = {
 // ═══════════════════════════════════════════════════
 const CCN_ALIASES = [
   // ── AGRICULTURE (IDCC 9xxx) ──
-  {i:9811,b:null,n:"Accord national agriculture salariés",s:"Agriculture",g:"DC",fj:false},
+  {i:9811,b:null,n:"Exploitations agricoles du Tarn (convention départementale)",s:"Agriculture 81",g:"DC",fj:false},
   {i:9001,b:null,n:"Exploitations agricoles national",s:"Agriculture",g:"DC",fj:false},
   {i:9011,b:null,n:"Exploitations agricoles Ain",s:"Agriculture",g:"DC",fj:false},
   {i:9021,b:null,n:"Exploitations agricoles Aisne",s:"Agriculture",g:"DC",fj:false},
@@ -347,11 +347,11 @@ const CCN_ALIASES = [
   {i:9901,b:null,n:"Exploitations agricoles Seine-Saint-Denis",s:"Agriculture",g:"DC",fj:false},
   {i:9911,b:null,n:"Exploitations agricoles Val-de-Marne",s:"Agriculture",g:"DC",fj:false},
   {i:9921,b:null,n:"Exploitations agricoles Val-d-Oise",s:"Agriculture",g:"DC",fj:false},
-  {i:1686,b:3269,n:"Entreprises du paysage",s:"Paysage",g:"DC",fj:false},
+  {i:7018,b:3269,n:"Entreprises du paysage",s:"Paysage",g:"DC",fj:false},
   {i:7016,b:null,n:"Coopératives agricoles céréales meunerie alimentation bétail",s:"Coopératives agricoles",g:"DC",fj:false},
   {i:7025,b:null,n:"Coopératives fruitières et légumières",s:"Coopératives agricoles",g:"DC",fj:false},
-  {i:7024,b:null,n:"Vins et spiritueux commerce de gros",s:"Commerce vins",g:"DC",fj:false},
-  {i:2075,b:3200,n:"Caves coopératives vinicoles",s:"Viticulture",g:"DC",fj:false},
+  {i:7024,b:null,n:"Production agricole et CUMA",s:"Agriculture",g:"DC",fj:false},
+  {i:7005,b:3200,n:"Caves coopératives vinicoles",s:"Viticulture",g:"DC",fj:false},
   {i:7502,b:null,n:"Pépinières horticoles nationales",s:"Horticulture",g:"DC",fj:false},
   {i:7503,b:null,n:"Entreprises de jardinage",s:"Jardinage",g:"DC",fj:false},
   {i:7504,b:null,n:"Champignonnières",s:"Agriculture champignons",g:"DC",fj:false},
@@ -366,17 +366,17 @@ const CCN_ALIASES = [
   {i:7514,b:null,n:"Serres horticoles",s:"Agriculture serres",g:"DC",fj:false},
 
   // ── INDUSTRIES ALIMENTAIRES ──
-  {i:86,b:3044,n:"Sucre sucreries distilleries raffineries",s:"IAA sucre",g:"DC",fj:false},
+  {i:2728,b:3044,n:"Sucre sucreries distilleries raffineries",s:"IAA sucre",g:"DC",fj:false},
   {i:112,b:3079,n:"Industrie laitière",s:"IAA laitier",g:"DC",fj:false},
   {i:843,b:3117,n:"Boulangerie-pâtisserie artisanale",s:"Artisanat alimentaire",g:"BOULAN329",fj:false},  // CORRIGÉ: IDCC 843 (pas 54), contingent 329h
-  {i:846,b:3058,n:"Boulangerie-pâtisserie industrielle",s:"IAA boulangerie",g:"DC",fj:false},
-  {i:1555,b:3144,n:"Boucherie boucherie-charcuterie",s:"Artisanat boucherie",g:"DC",fj:false},
-  {i:211,b:3126,n:"Industries et commerces en gros des viandes",s:"IAA viandes",g:"DC",fj:false},
-  {i:993,b:3073,n:"Charcuterie de détail",s:"Artisanat charcuterie",g:"DC",fj:false},
-  {i:1000,b:3075,n:"Confiserie chocolaterie biscuiterie",s:"IAA confiserie",g:"DC",fj:false},
+  
+  
+  
+  {i:953,b:3073,n:"Charcuterie de détail",s:"Artisanat charcuterie",g:"DC",fj:false},
+  {i:1000,b:3078,n:"Cabinets d'avocats (personnel salarié)",s:"Avocats",g:"DC",fj:false},
   {i:1702,b:3194,n:"Conserves légumes viandes poissons",s:"IAA conserves",g:"DC",fj:false},
   {i:207,b:3124,n:"Meunerie",s:"IAA meunerie",g:"DC",fj:false},
-  {i:1044,b:3080,n:"Pâtes alimentaires",s:"IAA pâtes",g:"DC",fj:false},
+  {i:1987,b:3080,n:"Pâtes alimentaires",s:"IAA pâtes",g:"DC",fj:false},
   {i:1182,b:3093,n:"Corps gras huiles margarines",s:"IAA corps gras",g:"DC",fj:false},
   {i:1586,b:3151,n:"Poissonnerie artisanat commerce de détail",s:"Artisanat poissonnerie",g:"DC",fj:false},
   {i:1396,b:null,n:"Chocolaterie confiserie biscuiterie (industrie)",s:"IAA chocolaterie",g:"DC",fj:false},
@@ -391,39 +391,38 @@ const CCN_ALIASES = [
   {i:1769,b:3005,n:"Travaux publics ETAM",s:"Travaux publics",g:"DC",fj:true},
   {i:2420,b:3258,n:"BTP ETAM employés techniciens agents maîtrise",s:"BTP ETAM",g:"DC",fj:true},
   {i:3326,b:3258,n:"Bâtiment agents de maîtrise et techniciens",s:"Bâtiment AM",g:"DC",fj:true},
-  {i:2609,b:3290,n:"Architecture cabinets",s:"Architecture",g:"IAA180",fj:true},  // CORRIGÉ v5.5.2: brochure 3290 (pas 3090)
+  {i:2332,b:3290,n:"Architecture cabinets",s:"Architecture",g:"DC",fj:true},  // CORRIGÉ v5.6.0: brochure 3290 (pas 3090)
   {i:803,b:3060,n:"Béton et produits du béton",s:"BTP matériaux",g:"DC",fj:false},
-  {i:184,b:3103,n:"Carrières et matériaux",s:"Industrie extractive",g:"DC",fj:false},
-  {i:489,b:3017,n:"Tuiles et briques",s:"Industrie matériaux",g:"DC",fj:false},
+  
+  
   {i:1147,b:3086,n:"Chaux industrie",s:"Industrie extractive",g:"DC",fj:false},
   {i:3236,b:null,n:"Menuisiers facteurs orgue et pianos",s:"Artisanat musical",g:"DC",fj:false},
 
   // ── CHIMIE / PHARMA / PÉTROLE ──
   {i:44,b:3108,n:"Industries chimiques",s:"Industrie chimique",g:"CHIM130",fj:true},  // CORRIGÉ: une seule entrée pour IDCC 44
-  {i:669,b:3050,n:"Industrie du pétrole",s:"Energie pétrolière",g:"PETRO",fj:true},
-  {i:1031,b:3078,n:"Industrie du caoutchouc",s:"Industrie caoutchouc",g:"DC",fj:false},
+  {i:1388,b:3001,n:"Industrie du pétrole",s:"Energie pétrolière",g:"PETRO",fj:true},
+  
   {i:292,b:3316,n:"Plasturgie",s:"Industrie plastique",g:"DC",fj:true},
-  {i:216,b:3104,n:"Industrie pharmaceutique",s:"Industrie pharmaceutique",g:"PHARMA",fj:true},
-  {i:1592,b:null,n:"Industrie pharmaceutique vétérinaire",s:"Pharmacie vétérinaire",g:"PHARMA",fj:true},
+  {i:176,b:3104,n:"Industrie pharmaceutique",s:"Industrie pharmaceutique",g:"PHARMA",fj:true},
+  {i:1555,b:null,n:"Fabrication commerce produits pharma para-pharma vétérinaire",s:"Pharmacie vétérinaire",g:"PHARMA",fj:true},
   {i:700,b:3054,n:"Détergents et produits entretien",s:"Industrie chimique",g:"DC",fj:false},
 
   // ── MATÉRIAUX / TEXTILE / DIVERS INDUSTRIE ──
-  {i:200,b:3120,n:"Industrie du verre",s:"Industrie verrière",g:"DC",fj:false},
   {i:1540,b:3226,n:"Céramique industries",s:"Industrie céramique",g:"DC",fj:false},
   {i:1561,b:null,n:"Fabrication de meubles en bois",s:"Industrie bois",g:"DC",fj:false},
-  {i:493,b:3017,n:"Bois scieries raboteries résinage",s:"Industrie bois",g:"DC",fj:false},
+  {i:493,b:3029,n:"Vins, cidres, jus de fruits, sirops, spiritueux et liqueurs de France",s:"Vins spiritueux",g:"DC",fj:false},
   {i:3238,b:3156,n:"Papiers et cartons industries",s:"Industrie papier",g:"DC",fj:false},
-  {i:4890,b:3135,n:"Cartonnage industries",s:"Industrie cartonnage",g:"DC",fj:false},  // i:4890 alias (IDCC réel à vérifier Légifrance) — startsWith("489") remonte les deux ✓
+  {i:489,b:3135,n:"Cartonnage industries",s:"Industrie cartonnage",g:"DC",fj:false},  // i:4890 alias (IDCC réel à vérifier Légifrance) — startsWith("489") remonte les deux ✓
   {i:3248,b:3399,n:"Métallurgie accord national unique 2023",s:"Métallurgie",g:"DC",fj:true},
   {i:2614,b:3310,n:"Mécanique",s:"Industrie mécanique",g:"DC",fj:false},
   {i:1821,b:3234,n:"Horlogerie",s:"Horlogerie",g:"DC",fj:false},
-  {i:2046,b:3268,n:"Ameublement industrie",s:"Industrie ameublement",g:"DC",fj:false},
+  {i:2046,b:3283,n:"Centres de lutte contre le cancer (CLCC)",s:"Santé oncologie",g:"DC",fj:false},
   {i:1370,b:3030,n:"Equipements thermiques installations entretien",s:"Génie climatique",g:"DC",fj:false},
   {i:1489,b:3090,n:"Cordonnerie multiservice",s:"Artisanat cordonnerie",g:"DC",fj:false},
-  {i:247,b:3106,n:"Industries textiles",s:"Industrie textile",g:"DC",fj:false},
-  {i:176,b:3098,n:"Chaussure industrie",s:"Industrie chaussure",g:"DC",fj:false},
-  {i:1404,b:3201,n:"Maroquinerie gainerie bracelets cuir",s:"Industrie maroquinerie",g:"DC",fj:false},
-  {i:2070,b:3047,n:"Couture parisienne haute couture",s:"Mode couture",g:"DC",fj:true},
+  {i:247,b:null,n:"Industries de l'habillement",s:"Habillement",g:"DC",fj:false},
+  {i:1580,b:3163,n:"Chaussure industrie",s:"Industrie chaussure",g:"DC",fj:false},
+  {i:2528,b:3201,n:"Maroquinerie gainerie bracelets cuir",s:"Industrie maroquinerie",g:"DC",fj:false},
+  
   {i:1316,b:3178,n:"Blanchisserie laverie teinturerie nettoyage",s:"Blanchisserie",g:"DC",fj:false},
   {i:567,b:3049,n:"Jouets jeux articles de puériculture",s:"Industrie jouets",g:"DC",fj:false},
   {i:1499,b:3114,n:"Industrie du gaz",s:"Industrie gaz",g:"DC",fj:false},
@@ -440,7 +439,7 @@ const CCN_ALIASES = [
 
   // ── ÉNERGIE / ENVIRONNEMENT ──
   {i:5001,b:null,n:"Industries électriques et gazières IEG",s:"Energie EDF GDF",g:"DC",fj:false},
-  {i:1413,b:3207,n:"Gaz naturel distributeurs opérateurs",s:"Energie gaz",g:"DC",fj:false},
+  {i:1413,b:3212,n:"Salariés permanents des entreprises de travail temporaire",s:"Travail temporaire",g:"DC",fj:false},
   {i:2230,b:3277,n:"Eau assainissement propreté urbaine",s:"Eau Environnement",g:"DC",fj:false},
   {i:637,b:3139,n:"Récupération industrie et commerces",s:"Recyclage récupération",g:"DC",fj:false},
   {i:2098,b:3264,n:"Récupération des métaux industries",s:"Recyclage métaux",g:"DC",fj:false},
@@ -455,103 +454,101 @@ const CCN_ALIASES = [
   {i:1611,b:3162,n:"Commerce de gros alimentaire entreposage",s:"Commerce gros alimentaire",g:"IAA180",fj:true},  // CORRIGÉ v5.1: contingent 180h. v5.5.1: doublon DC supprimé (même IDCC wrong)
   {i:1517,b:3251,n:"Commerce de détail non alimentaire",s:"Commerce de détail",g:"IAA180",fj:false},  // CORRIGÉ v5.4: contingent 180h
   {i:1483,b:3251,n:"Habillement commerce de détail",s:"Commerce textile",g:"DC",fj:false},  // CORRIGÉ: IDCC 1483 = commerce détail non alim
-  {i:1870,b:3241,n:"Habillement textiles commerce de détail",s:"Commerce textile",g:"DC",fj:false},
-  {i:1383,b:3212,n:"Chaussure commerce succursaliste",s:"Commerce chaussures",g:"DC",fj:false},
-  {i:1624,b:3249,n:"Optique lunetterie de détail",s:"Optique",g:"DC",fj:false},
+  
+  {i:468,b:3212,n:"Chaussure commerce succursaliste",s:"Commerce chaussures",g:"DC",fj:false},
+  {i:1431,b:3249,n:"Optique lunetterie de détail",s:"Optique",g:"DC",fj:false},
   {i:1985,b:3261,n:"Combustibles solides liquides gazeux négoce",s:"Distribution énergie",g:"DC",fj:false},
-  {i:1747,b:3239,n:"Librairie",s:"Commerce culturel",g:"DC",fj:false},
-  {i:2104,b:3064,n:"Pharmacies officine",s:"Pharmacie",g:"PHARMO150",fj:false},  // CORRIGÉ v5.4: contingent 150h
+  {i:1747,b:null,n:"Activités industrielles de boulangerie et pâtisserie",s:"Boulangerie industrielle",g:"DC",fj:false},
+  {i:1996,b:3052,n:"Pharmacies officine",s:"Pharmacie",g:"PHARMO150",fj:false},  // CORRIGÉ v5.4: contingent 150h
   {i:2583,b:3100,n:"Fleuristes jardineries animaleries",s:"Commerce floral",g:"DC",fj:false},
-  {i:1311,b:3017,n:"Négoce de bois oeuvre et produits dérivés",s:"Commerce bois",g:"DC",fj:false},
-  {i:2564,b:3301,n:"Bricolage commerce de détail",s:"Commerce bricolage",g:"DC",fj:false},
+  {i:1947,b:3017,n:"Négoce de bois oeuvre et produits dérivés",s:"Commerce bois",g:"DC",fj:false},
+  {i:1606,b:3232,n:"Bricolage commerce de détail",s:"Commerce bricolage",g:"DC",fj:false},
   {i:1862,b:3240,n:"Jardineries et graineteries commerce de détail",s:"Commerce jardinage",g:"DC",fj:false},
   {i:1177,b:3089,n:"Meubles commerce de détail",s:"Commerce ameublement",g:"DC",fj:false},
   {i:1411,b:3218,n:"Quincaillerie fournitures industrielles",s:"Commerce matériaux",g:"DC",fj:false},
   {i:1538,b:3224,n:"Bijouterie joaillerie orfèvrerie",s:"Artisanat bijouterie",g:"DC",fj:false},
-  {i:2537,b:3306,n:"Prothèse dentaire laboratoires",s:"Santé dentaire labo",g:"DC",fj:false},
+  {i:993,b:3306,n:"Prothèse dentaire laboratoires",s:"Santé dentaire labo",g:"DC",fj:false},
   {i:3237,b:null,n:"Commerce de détail alimentaire spécialisé",s:"Commerce alim spécialisé",g:"DC",fj:false},
 
   // ── SERVICES PERSONNE / COIFFURE / BEAUTÉ ──
-  {i:1040,b:3133,n:"Coiffure entreprises",s:"Coiffure",g:"COIF200",fj:false},  // CORRIGÉ v5.4: contingent 200h
-  {i:2596,b:3073,n:"Esthétique cosmétique parfumerie enseignement",s:"Esthétique beauté",g:"DC",fj:false},
+  {i:2596,b:3159,n:"Coiffure entreprises",s:"Coiffure",g:"COIF200",fj:false},  // CORRIGÉ v5.4: contingent 200h
+  
 
   // ── BANQUE / ASSURANCE / FINANCE ──
   {i:675,b:3032,n:"Banque AFB",s:"Banque",g:"DC",fj:true},
   {i:1672,b:3265,n:"Sociétés assurances",s:"Assurance",g:"ASSUR70",fj:true},  // CORRIGÉ: IDCC 1672 (pas 763), contingent 70h
   {i:2120,b:3281,n:"Banques populaires",s:"Banque mutualiste",g:"DC",fj:true},
-  {i:1850,b:3250,n:"Expertise comptable et commissariat aux comptes",s:"Finance audit",g:"DC",fj:true},
+  {i:1850,b:null,n:"Avocats salariés (cabinets d'avocats)",s:"Avocats",g:"DC",fj:true},
   {i:2615,b:3110,n:"Courtage en assurances et réassurances",s:"Assurance courtage",g:"DC",fj:true},
   {i:3082,b:3110,n:"Agents généraux assurances personnel",s:"Assurance agences",g:"DC",fj:false},
 
   // ── SÉCURITÉ / PROPRETÉ / IMMOBILIER ──
   {i:1351,b:3196,n:"Prévention et sécurité privée gardiennage",s:"Sécurité privée",g:"SECU329",fj:false},  // CORRIGÉ v5.3: contingent 329h
-  {i:3186,b:3405,n:"Nettoyage entreprises de propreté",s:"Propreté",g:"PROP190",fj:false},  // CORRIGÉ v5.3: contingent 190h
-  {i:1285,b:3144,n:"Gardiens concierges employés immeubles",s:"Gardiennage immeuble",g:"DC",fj:false},
+  {i:3043,b:3173,n:"Nettoyage entreprises de propreté",s:"Propreté",g:"PROP190",fj:false},  // CORRIGÉ v5.3: contingent 190h
+  
   {i:1527,b:3144,n:"Immobilier agents gestionnaires syndics",s:"Immobilier",g:"DC",fj:true},
-  {i:1966,b:3256,n:"Promotion immobilière",s:"Promotion immobilière",g:"DC",fj:true},
+  {i:1512,b:3256,n:"Promotion immobilière",s:"Promotion immobilière",g:"DC",fj:true},
 
   // ── JURIDIQUE ──
-  {i:218,b:3078,n:"Cabinets avocats",s:"Avocats",g:"DC",fj:true},
+  {i:218,b:null,n:"Organismes de Sécurité sociale (UCANSS)",s:"Sécurité sociale",g:"DC",fj:true},
   {i:1965,b:3016,n:"Notariat",s:"Notariat",g:"DC",fj:true},
-  {i:2372,b:3289,n:"Commissaires de justice ex huissiers",s:"Juridique",g:"DC",fj:false},
+  {i:1921,b:3289,n:"Commissaires de justice ex huissiers",s:"Juridique",g:"DC",fj:false},
 
   // ── IT / INGÉNIERIE / CONSEIL ──
   {i:1486,b:3018,n:"Syntec bureaux études techniques informatique ingénierie conseil",s:"IT ingénierie conseil",g:"SYNTEC130",fj:true},  // CORRIGÉ v5.2: contingent 130h ETAM
   {i:2642,b:3348,n:"Publicité régies et agences",s:"Publicité communication",g:"DC",fj:true},
-  {i:2264,b:null,n:"Télécommunications",s:"Télécoms",g:"DC",fj:true},
+  {i:2264,b:3307,n:"Hospitalisation privée",s:"Santé privée",g:"HOSPI130",fj:false},
 
   // ── PRESSE / MÉDIAS / ÉDITION ──
   {i:1480,b:3307,n:"Presse quotidienne nationale",s:"Presse nationale",g:"DC",fj:true},
   {i:1309,b:3175,n:"Presse quotidienne régionale",s:"Presse régionale",g:"DC",fj:true},
-  {i:1780,b:3221,n:"Radiodiffusion audiovisuel public et privé",s:"Audiovisuel",g:"DC",fj:true},
-  {i:405,b:3142,n:"Imprimerie de labeur et industries graphiques",s:"Imprimerie",g:"IAA180",fj:false},
+  {i:1922,b:3221,n:"Radiodiffusion audiovisuel public et privé",s:"Audiovisuel",g:"DC",fj:true},
+  {i:184,b:3142,n:"Imprimerie de labeur industries graphiques",s:"Imprimerie",g:"IAA180",fj:false},
   {i:1790,b:3225,n:"Edition phonographique et musicale",s:"Musique édition",g:"DC",fj:true},
-  {i:3090,b:3391,n:"Edition livres presse multimédia",s:"Edition",g:"DC",fj:true},
+  {i:2121,b:3391,n:"Edition livres presse multimédia",s:"Edition",g:"DC",fj:true},
 
   // ── SANTÉ / MÉDICO-SOCIAL ──
-  {i:413,b:3034,n:"Hospitalisation privée à but lucratif cliniques",s:"Santé privée",g:"HOSPI130",fj:false},  // CORRIGÉ v5.3: contingent 130h
+    // CORRIGÉ v5.3: contingent 130h
   {i:776,b:3033,n:"Cabinets médicaux",s:"Santé libérale",g:"DC",fj:false},
-  {i:2128,b:3275,n:"Cabinets dentaires",s:"Santé dentaire",g:"DC",fj:false},
+  {i:1619,b:3275,n:"Cabinets dentaires",s:"Santé dentaire",g:"DC",fj:false},
   {i:2941,b:3370,n:"Aide accompagnement soins à domicile BASS",s:"Aide à domicile",g:"DC",fj:false},
-  {i:1921,b:3248,n:"CCNT 66 inadaptés handicapés",s:"Médico-social CCNT 66",g:"DC",fj:false},
-  {i:2190,b:3283,n:"Centres de lutte contre le cancer CLCC",s:"Santé oncologie",g:"DC",fj:false},
-  {i:3217,b:3406,n:"Transport sanitaire ambulanciers",s:"Transport sanitaire",g:"DC",fj:false},
-  {i:2205,b:3274,n:"Laboratoires de biologie médicale privés",s:"Biologie médicale",g:"DC",fj:false},
-  {i:1996,b:3260,n:"Vétérinaires praticiens salariés",s:"Santé vétérinaire",g:"DC",fj:false},
-  {i:2344,b:3296,n:"Pompes funèbres et marbrerie funéraire",s:"Services funéraires",g:"DC",fj:false},
+  {i:413,b:3116,n:"CCN 66 inadaptés handicapés",s:"Médico-social CCN 66",g:"MEDSO110",fj:false},
+  {i:3217,b:null,n:"Branche ferroviaire (CCN du 31 mai 2016)",s:"Transport ferroviaire",g:"DC",fj:false},
+  {i:2205,b:null,n:"Notariat",s:"Notariat",g:"DC",fj:false},
+  {i:2564,b:3332,n:"Vétérinaires praticiens salariés",s:"Santé vétérinaire",g:"DC",fj:false},
+  
 
   // ── TRANSPORT / LOGISTIQUE ──
   {i:16,b:3085,n:"Transport routier de marchandises",s:"Transport routier marchandises",g:"TRANSP",fj:false},  // CORRIGÉ v5.2: contingent 195h roulant
   {i:650,b:null,n:"Transport routier de voyageurs",s:"Transport routier voyageurs",g:"TRANSP",fj:false},
   {i:412,b:3025,n:"Transport aérien personnel navigant technique PNT",s:"Transport aérien PNT",g:"DC",fj:false},
-  {i:673,b:3028,n:"Transport aérien personnel au sol",s:"Transport aérien sol",g:"DC",fj:false},
-  {i:2002,b:null,n:"Transport ferroviaire opérateurs privés",s:"Transport ferroviaire",g:"DC",fj:false},
+  
+  {i:2002,b:null,n:"Blanchisserie, teinturerie et nettoyage (pressing)",s:"Blanchisserie pressing",g:"DC",fj:false},
   // BUG FIX v5.5.1: Logistique entreposage déplacée sur i:16110 (alias interne) pour éviter conflit avec IDCC 1611 = alimentaire IAA180
   {i:16110,b:null,n:"Logistique entreposage",s:"Logistique",g:"DC",fj:true},  // startsWith("1611") remonte les deux entrées ✓
   {i:5021,b:null,n:"Navigation intérieure bateliers",s:"Transport fluvial",g:"DC",fj:false},
 
   // ── TOURISME / LOISIRS / SPORT ──
   {i:1631,b:3186,n:"Organismes de tourisme et hôtellerie de plein air",s:"Tourisme",g:"DC",fj:false},
-  {i:2528,b:3230,n:"Hôtellerie de plein air campings",s:"Tourisme camping",g:"DC",fj:false},
+  
   {i:2511,b:3306,n:"Sport entreprises du secteur sportif",s:"Sport",g:"DC",fj:false},
-  {i:2378,b:3298,n:"Casinos",s:"Jeux casinos",g:"DC",fj:false},
+  {i:2257,b:3298,n:"Casinos",s:"Jeux casinos",g:"DC",fj:false},
   {i:3139,b:3270,n:"Parcs de loisirs jardins zoologiques",s:"Tourisme loisirs",g:"DC",fj:false},
 
   // ── SERVICES TERTIAIRES / TRAVAIL TEMPORAIRE ──
   {i:1734,b:3210,n:"Prestataires de services du secteur tertiaire",s:"Services tertiaire",g:"DC",fj:true},
-  {i:25960,b:3304,n:"Portage salarial",s:"Portage freelance",g:"DC",fj:true},  // i:25960 alias — startsWith("2596") remonte les deux ✓
-  {i:1321,b:3216,n:"Entreprises de travail temporaire intérim",s:"Travail temporaire",g:"DC",fj:false},  // BUG FIX v5.5.1: était sur IDCC 2609 (=Architecture) par erreur. IDCC 1321 + brochure 3216 (à vérifier Légifrance)
+  {i:25960,b:3304,n:"Portage salarial",s:"Portage freelance",g:"DC",fj:true},  // i:25960 alias — startsWith("2596") remonte les deux ✓  // BUG FIX v5.5.1: était sur IDCC 2609 (=Architecture) par erreur. IDCC 1321 + brochure 3216 (à vérifier Légifrance)
   {i:3220,b:3415,n:"Particuliers employeurs et emploi à domicile FEPEM",s:"Emploi à domicile",g:"DC",fj:false},
   {i:2247,b:null,n:"Services automobile garages concessions",s:"Automobile",g:"DC",fj:false},
 
   // ── FORMATION / ENSEIGNEMENT ──
   {i:1516,b:null,n:"Formation professionnelle continue",s:"Formation professionnelle",g:"DC",fj:true},
-  {i:2582,b:3306,n:"Enseignement privé hors contrat",s:"Education privée hors contrat",g:"DC",fj:true},
+  
   {i:2409,b:3299,n:"Enseignement privé sous contrat CPPN CPPE",s:"Education privée",g:"DC",fj:true},
 
   // ── ANIMATION / ACTION SOCIALE ──
   {i:1518,b:3246,n:"Animation ÉCLAT structures employant animateurs",s:"Animation ESS",g:"ANIM70",fj:false},  // CORRIGÉ: contingent 70h
-  {i:1261,b:3177,n:"Centres sociaux et socio-culturels",s:"Action sociale",g:"CSS100",fj:false},  // CORRIGÉ: contingent 100h
+  {i:1261,b:3177,n:"Centres sociaux et socio-culturels",s:"Action sociale",g:"CSS60",fj:false},  // CORRIGÉ: contingent 100h
   {i:3381,b:null,n:"Acteurs du lien social et familial ALISFA",s:"Action sociale ESS",g:"DC",fj:false},
 
   // ── SPECTACLE / CULTURE ──
@@ -581,10 +578,10 @@ const CCN_ALIASES = [
 
   // ── COMMERCE SPÉCIALISÉ (suite) ──
   {i:1636,b:null,n:"Agents commerciaux VRP multicarte",s:"VRP commercial",g:"DC",fj:false},
-  {i:1659,b:null,n:"Vente à distance e-commerce",s:"Commerce distance",g:"DC",fj:true},
+  {i:2198,b:null,n:"Vente à distance e-commerce",s:"Commerce distance",g:"DC",fj:true},
   {i:1661,b:null,n:"Location de véhicules",s:"Location véhicules",g:"DC",fj:false},
-  {i:1666,b:null,n:"Contrôle technique automobile",s:"Contrôle technique",g:"DC",fj:false},
-  {i:1673,b:null,n:"Auto-écoles",s:"Auto-écoles",g:"DC",fj:false},
+  
+  
   {i:1678,b:null,n:"Services informatiques et numérique",s:"Services numériques",g:"DC",fj:true},
   {i:1680,b:null,n:"Conseil en gestion entreprise",s:"Conseil gestion",g:"DC",fj:true},
   {i:1682,b:null,n:"Etudes de marché et sondages",s:"Etudes marché",g:"DC",fj:true},
@@ -594,7 +591,7 @@ const CCN_ALIASES = [
   {i:1691,b:null,n:"Traiteurs organisation de réceptions",s:"Traiteurs",g:"DC",fj:false},
   {i:1692,b:null,n:"Blanchisserie industrielle collectivités",s:"Blanchisserie industrielle",g:"DC",fj:false},
   {i:1694,b:null,n:"Messageries et livraison dernier kilomètre",s:"Livraison dernier km",g:"DC",fj:false},
-  {i:1706,b:null,n:"Diagnostic immobilier",s:"Diagnostic immobilier",g:"DC",fj:false},
+  
   {i:1712,b:null,n:"Services de courrier express",s:"Courrier express",g:"DC",fj:false},
   {i:1720,b:null,n:"Cabinets de recrutement",s:"Recrutement",g:"DC",fj:true},
   {i:1721,b:null,n:"Conseil en ressources humaines",s:"RH conseil",g:"DC",fj:true},
@@ -617,7 +614,7 @@ const CCN_ALIASES = [
   {i:1760,b:null,n:"Services aide aux toxicomanes",s:"Addictologie",g:"DC",fj:false},
   {i:1761,b:null,n:"Services aide personnes sans abri",s:"Hébergement social",g:"DC",fj:false},
   {i:1762,b:null,n:"Associations intermédiaires insertion",s:"Insertion professionnelle",g:"DC",fj:false},
-  {i:1763,b:null,n:"Chantiers insertion",s:"Insertion chantiers",g:"DC",fj:false},
+  
   {i:1764,b:null,n:"Entreprises adaptées",s:"Entreprises adaptées",g:"DC",fj:false},
   {i:1765,b:null,n:"ESAT établissements aide par le travail",s:"ESAT",g:"DC",fj:false},
   {i:1767,b:null,n:"Crèches associatives",s:"Crèches associatives",g:"DC",fj:false},
@@ -625,7 +622,6 @@ const CCN_ALIASES = [
   {i:1770,b:null,n:"Maisons familiales rurales",s:"Maisons familiales rurales",g:"DC",fj:false},
   {i:1771,b:null,n:"Etablissements privés enseignement agricole",s:"Enseignement agricole",g:"DC",fj:false},
   {i:1775,b:null,n:"Organismes de gestion écoles catholiques OGEC",s:"OGEC écoles",g:"DC",fj:false},
-  {i:1776,b:null,n:"Foyers de jeunes travailleurs FJT",s:"FJT jeunes",g:"DC",fj:false},
   {i:1779,b:null,n:"Fédérations sportives nationales",s:"Sport fédérations",g:"DC",fj:false},
   {i:1782,b:null,n:"Clubs sportifs professionnels",s:"Sport clubs pro",g:"DC",fj:false},
   {i:1783,b:null,n:"Professions libérales diverses",s:"Professions libérales",g:"DC",fj:true},
@@ -633,21 +629,20 @@ const CCN_ALIASES = [
 
   // ── BANQUE / MUTUALITÉ (suite) ──
   {i:1978,b:null,n:"Crédit mutuel",s:"Banque mutuelle",g:"DC",fj:true},
-  {i:3257,b:null,n:"Mutuelles organismes mutualistes",s:"Assurance mutualiste",g:"DC",fj:true},
-  {i:21200,b:null,n:"Organismes de sécurité sociale",s:"Sécurité sociale",g:"DC",fj:true},  // i:21200 alias — startsWith("2120") remonte les deux ✓
+  {i:3257,b:null,n:"Mutuelles organismes mutualistes",s:"Assurance mutualiste",g:"DC",fj:true},  // i:21200 alias — startsWith("2120") remonte les deux ✓
   {i:1851,b:null,n:"Personnels APEC",s:"Emploi cadres",g:"DC",fj:true},
   {i:1266,b:null,n:"Sociétés de recherche",s:"Recherche",g:"DC",fj:true},
   {i:2148,b:null,n:"Cabinets experts comptables petits cabinets",s:"Finance petits cabinets",g:"DC",fj:true},
 
   // ── CCN NATIONALES COMPLÉMENTAIRES (DC 220h) — ajoutées v5.5 ──
-  {i:29,b:null,n:"Hospitalisation privée non lucratif FEHAP CCN 51",s:"Médico-social FEHAP",g:"DC",fj:false},
+  {i:29,b:3198,n:"Médico-social FEHAP CCN 51",s:"Médico-social FEHAP",g:"MEDSO110",fj:false},
   {i:43,b:null,n:"Import-export et commerce international",s:"Commerce international",g:"DC",fj:false},
   {i:45,b:null,n:"Caoutchouc industrie",s:"Industrie caoutchouc",g:"DC",fj:false},
   {i:83,b:null,n:"Menuiseries charpentes constructions industrialisées",s:"Industrie bois",g:"DC",fj:false},
   {i:87,b:null,n:"Ouvriers industries carrières matériaux UNICEM",s:"Industrie extractive",g:"DC",fj:false},
   {i:135,b:null,n:"ETAM industries carrières matériaux UNICEM",s:"Industrie extractive",g:"DC",fj:false},
   {i:158,b:null,n:"Bois scieries négoce importation",s:"Industrie bois négoce",g:"DC",fj:false},
-  {i:179,b:null,n:"Coopératives de consommation",s:"Coopératives",g:"DC",fj:false},
+  {i:3205,b:null,n:"Coopératives de consommation",s:"Coopératives",g:"DC",fj:false},
   {i:240,b:null,n:"Personnel greffes tribunaux de commerce",s:"Juridique greffes",g:"DC",fj:false},
   {i:275,b:null,n:"Transport aérien personnel au sol accord national",s:"Transport aérien sol",g:"DC",fj:false},
   {i:303,b:null,n:"Couture parisienne",s:"Mode couture",g:"DC",fj:false},
@@ -655,8 +650,8 @@ const CCN_ALIASES = [
   {i:354,b:null,n:"Ganterie de peau",s:"Industrie ganterie",g:"DC",fj:false},
   {i:363,b:null,n:"Cadres industrie fabrication ciments",s:"Industrie ciment cadres",g:"DC",fj:false},
   {i:388,b:null,n:"Auditoriums cinématographiques",s:"Cinéma",g:"DC",fj:false},
-  {i:398,b:null,n:"Ouvriers négoce matériaux construction",s:"Négoce matériaux",g:"DC",fj:false},
-  {i:435,b:null,n:"Production cinématographique acteurs",s:"Cinéma production",g:"DC",fj:false},
+  {i:3216,b:null,n:"Ouvriers négoce matériaux construction",s:"Négoce matériaux",g:"DC",fj:false},
+  {i:3097,b:null,n:"Production cinématographique acteurs",s:"Cinéma production",g:"DC",fj:false},
   {i:438,b:null,n:"Echelons intermédiaires assurances production",s:"Assurance production",g:"DC",fj:false},
   {i:454,b:null,n:"Remontées mécaniques domaines skiables",s:"Tourisme ski",g:"DC",fj:false},
   {i:478,b:null,n:"Sociétés financières établissements financiers",s:"Finance",g:"DC",fj:false},
@@ -665,6 +660,14 @@ const CCN_ALIASES = [
   {i:506,b:null,n:"Fabricants importateurs produits exotiques",s:"IAA exotique",g:"DC",fj:false},
   {i:533,b:null,n:"ETAM négoce matériaux construction",s:"Négoce matériaux ETAM",g:"DC",fj:false},
   {i:538,b:null,n:"Manutention ferroviaire travaux connexes",s:"Transport ferroviaire manut.",g:"DC",fj:false},
+  {i:18,b:3106,n:"Industries textiles",s:"Industrie textile",g:"DC",fj:false},
+  {i:669,b:3079,n:"Industries de fabrication mécanique du verre",s:"Industrie verrière",g:"DC",fj:false},
+  {i:1930,b:3060,n:"Métiers de la transformation des grains (meunerie)",s:"Meunerie",g:"DC",fj:false},
+  {i:2104,b:null,n:"Thermalisme",s:"Thermalisme thalasso",g:"DC",fj:false},
+  {i:2336,b:null,n:"Habitat et logement accompagnés (ex-foyers de jeunes travailleurs)",s:"FJT habitat jeunes",g:"DC",fj:true},
+  {i:2378,b:null,n:"Salariés intérimaires des entreprises de travail temporaire",s:"Travail temporaire",g:"DC",fj:false},
+  {i:2717,b:null,n:"Entreprises techniques au service de la création et de l'événement",s:"Audiovisuel technique",g:"DC",fj:false},
+  {i:5619,b:null,n:"Pêche professionnelle maritime (CCN provisoire)",s:"Pêche maritime",g:"DC",fj:false},
   {i:598,b:null,n:"Ouvriers presse quotidienne régionale",s:"Presse régionale ouvriers",g:"DC",fj:false},
   {i:614,b:null,n:"Sérigraphie et impression numérique",s:"Imprimerie sérigraphie",g:"DC",fj:false},
   {i:625,b:null,n:"Cadres services généraux théâtres cinématographiques",s:"Cinéma cadres",g:"DC",fj:false},
@@ -720,17 +723,17 @@ const CCN_ALIASES = [
   {i:3016,b:null,n:"Ateliers chantiers insertion",s:"Insertion professionnelle",g:"DC",fj:false},
   {i:3017,b:null,n:"Ports et manutention unifiée",s:"Transport maritime port",g:"DC",fj:false},
   {i:3032,b:null,n:"Esthétique cosmétique parfumerie",s:"Esthétique beauté",g:"DC",fj:false},
-  {i:3043,b:null,n:"Entreprises propreté services associés",s:"Propreté services",g:"DC",fj:false},
+  
   {i:3109,b:null,n:"Métiers du commerce détail alimentaire spécialisé 5 branches",s:"Commerce alim spécialisé 5B",g:"DC",fj:false},
   {i:3127,b:null,n:"Entreprises services à la personne",s:"Services personne",g:"DC",fj:false},
   {i:3160,b:null,n:"Associations gestion comptabilité",s:"Gestion comptable asso",g:"DC",fj:false},
   {i:3203,b:null,n:"Structures coopératives agricoles bétail viande",s:"Coopérative viande",g:"DC",fj:false},
-  {i:3205,b:null,n:"Cabinets géomètres-experts topographes",s:"Géomètre expert",g:"DC",fj:false},
+  {i:2543,b:null,n:"Cabinets géomètres-experts topographes",s:"Géomètre expert",g:"DC",fj:false},
   {i:3218,b:null,n:"Sociétés course par course",s:"Transport course",g:"DC",fj:false},
   {i:3219,b:null,n:"Doublage postsynchronisation oeuvres audiovisuelles",s:"Audiovisuel doublage",g:"DC",fj:false},
   {i:3227,b:null,n:"FNSEA exploitations entreprises agricoles",s:"Agriculture FNSEA",g:"DC",fj:false},
   {i:3230,b:null,n:"Presse quotidienne et hebdomadaire",s:"Presse",g:"DC",fj:false},
-  {i:3233,b:null,n:"Organismes formation professionnelle",s:"Formation pro",g:"DC",fj:false},
+  
   {i:3239,b:null,n:"Particuliers employeurs emploi à domicile",s:"Emploi domicile",g:"DC",fj:false},
 ];
 
@@ -908,7 +911,7 @@ function getFeriesLegaux(year, alsace) {
 if (typeof localStorage !== 'undefined') loadCustomFromStorage();
 
 const CCN_API = {
-  version: '5.5.2',
+  version: '5.6.0',
   REGLES_HS, CCN_ALIASES,
   getRules, getGroupeForCCN, findCCN,
   search: (terme, limit = 60) => findCCN(terme).slice(0, limit),
