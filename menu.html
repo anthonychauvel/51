@@ -274,6 +274,7 @@
       cursor:pointer; transition:background .15s;
       font-size:13px; color:#fff; margin-bottom:6px;
       width:90%; max-width:420px; box-sizing:border-box;
+      align-self:center;
     }
     #ccn-badge:hover { background:rgba(255,255,255,0.2); }
     #ccn-badge .ccn-name { font-weight:600; white-space:normal; word-break:break-word; flex:1; min-width:0; }
@@ -1299,6 +1300,13 @@
   <!-- Guide de démarrage : sous le favoris (inchangé) -->
   <button class="info-btn" onclick="reopenWizard()" style="width:100%;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
 
+  <!-- Badge CCN : juste sous le guide de démarrage (pas en bas) -->
+  <div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
+    <span>⚖️</span>
+    <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
+    <span class="ccn-edit">✎ modifier</span>
+  </div>
+
   <!-- 2 pills noires, côte à côte : Personnaliser (fonction existante) + Ma to-do list (Taiko)
        flex-wrap:nowrap + min-width:0 sur chaque bouton : même correctif que .row2 dans taiko.html,
        pour éviter le bug déjà rencontré (rangée qui s'empile sur Android au lieu de rester côte à côte) -->
@@ -1371,12 +1379,6 @@
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
 </div><!-- /mod-grid -->
-
-<div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
-  <span>⚖️</span>
-  <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
-  <span class="ccn-edit">✎ modifier</span>
-</div>
 
 <script>
 (function(){
