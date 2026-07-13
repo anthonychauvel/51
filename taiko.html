@@ -335,7 +335,7 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
 
 <div class="hero">
   <div class="hd">
-    <a class="back" href="../menu.html">‹ Menu</a>
+    <a class="back" href="menu.html">‹ Menu</a>
     <div class="wordmark">TAIKO<small>Le rythme de ton travail</small></div>
     <div style="display:flex;gap:7px;flex-shrink:0;">
       <button class="hbtn" id="btn-help" aria-label="Revoir le tutoriel">?</button>
@@ -381,7 +381,7 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
       <p class="sub">Choisis un gabarit, puis touche les cases : chaque touche fait défiler le poste du jour. Appui long = repos direct.</p>
       <div class="chips" id="tpl-chips" style="margin-bottom:12px;"></div>
       <div class="cyc-legend" id="cyc-legend"></div>
-      <div class="cyc-head"><span></span><span>L</span><span>M</span><span>M</span><span>J</span><span>V</span><span>S</span><span>D</span><span>h/sem</span></div>
+      <div class="cyc-head" id="cyc-head"></div>
       <div id="cyc-grid"></div>
       <div class="wk-btns">
         <button class="mini" id="wk-add">＋ Semaine</button>
@@ -393,7 +393,7 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
         <button class="mini" id="lib-open">📂 Mes cycles</button>
       </div>
       <div class="anchor-row">
-        <label for="anchor">La semaine 1 du cycle commence le lundi :</label>
+        <label for="anchor">Le cycle démarre le (n\u2019importe quel jour) :</label>
         <input type="date" class="ip" id="anchor">
       </div>
     </div>
@@ -646,7 +646,7 @@ function load(){
       ['M','A','N','J'].forEach(function(k){if(s.cycle.postes[k]&&!s.cycle.postes[k].c)s.cycle.postes[k].c=PCOL[k];});
       return s;}}catch(e){}
   return {v:2,wiz:0,
-    cycle:{anchor:iso(mondayOf(new Date())),weeks:clone(TPL.libre.w),postes:defPostes()},
+    cycle:{anchor:iso(today()),weeks:clone(TPL.libre.w),postes:defPostes()},
     exc:{},notes:{},todos:[],doneRec:{},events:{},lib:[],hist:{}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
@@ -660,6 +660,13 @@ function pISO(s){var a=s.split('-');return new Date(+a[0],+a[1]-1,+a[2]);}
 function addD(d,n){var x=new Date(d);x.setDate(x.getDate()+n);return x;}
 function mondayOf(d){var x=new Date(d.getFullYear(),d.getMonth(),d.getDate());return addD(x,-((x.getDay()+6)%7));}
 function dowIdx(d){return (d.getDay()+6)%7;}
+/* L'ancre du cycle n'est plus forcément un lundi : ces helpers dérivent le
+   jour réel de chaque case à partir du jour de semaine de l'ancre, pour que
+   repères légaux, libellés et suggestions restent corrects quel que soit
+   le jour de départ choisi. */
+function anchorDow(){return dowIdx(pISO(S.cycle.anchor));}
+function cellAt(absPos){var L=S.cycle.weeks.length*7;if(!L)return '';
+  var p=((absPos%L)+L)%L;return S.cycle.weeks[Math.floor(p/7)][p%7];}
 function daysBetween(a,b){return Math.round((b-a)/864e5);}
 function fmtD(d){return d.toLocaleDateString('fr-FR',{weekday:'short',day:'numeric',month:'short'});}
 function fmtDL(d){return d.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'});}
@@ -791,7 +798,8 @@ function analyseState(st){
   for(k in dayAmp)if(!m.maxSpan||dayAmp[k]>m.maxSpan.span)
     m.maxSpan={span:dayAmp[k],p:dayFirst[k].p,st:dayFirst[k].st,cut:dayFirst[k]!==dayLast[k]};
   m.sundays=0;var wq=st.cycle.weeks;
-  for(i=0;i<wq.length;i++)if(wq[i][6]!=='R')m.sundays++;
+  var sunCol=(6-anchorDow()+7)%7;
+  for(i=0;i<wq.length;i++)if(wq[i][sunCol]!=='R')m.sundays++;
   var L2=wq.length*7;m.maxRun=null;
   var run=0,r0=0;
   for(i=0;i<L2*2;i++){
@@ -853,7 +861,7 @@ function buildChecks(m){
         i:sug('shift',function(){pc.s=toHM(ns);pc.e=toHM(ne);})};
     }else{
       var ci=cycIdx(m.minGap.b.d);
-      c.sug={tx:'Passer le <b>'+DOWS[ci.d]+' de la S'+(ci.w+1)+'</b> en repos pour casser l\u2019enchaînement.',
+      c.sug={tx:'Passer le <b>'+DOWS[(anchorDow()+ci.d)%7]+' de la S'+(ci.w+1)+'</b> en repos pour casser l\u2019enchaînement.',
         i:sug('off',function(){S.cycle.weeks[ci.w][ci.d]='R';})};
     }
     res.push(c);
@@ -868,7 +876,7 @@ function buildChecks(m){
     var c2={t:'Repos hebdomadaire (35 h d\u2019affilée)',s:'warn',
       d:'Semaine du '+fmtD(m.minWeekRest.w)+' : la plus longue coupure continue est de '+fmtMin(m.minWeekRest.m)+'.',
       r:'Repère : 24 h + 11 h = 35 h consécutives par semaine — art. L3132-2 (le dimanche est le jour de référence, art. L3132-3).'};
-    if(b.d>=0)c2.sug={tx:'Passer le <b>'+DOWS[b.d]+' de la S'+(wIdx+1)+'</b> en repos → coupure portée à '+(b.v===Infinity?'une semaine':fmtMin(b.v))+'.',
+    if(b.d>=0)c2.sug={tx:'Passer le <b>'+DOWS[(anchorDow()+b.d)%7]+' de la S'+(wIdx+1)+'</b> en repos → coupure portée à '+(b.v===Infinity?'une semaine':fmtMin(b.v))+'.',
       i:sug('off35',function(){S.cycle.weeks[wIdx][b.d]='R';})};
     res.push(c2);
   }else if(m.minWeekRest)res.push({t:'Repos hebdomadaire (35 h d\u2019affilée)',s:'ok',
@@ -877,13 +885,22 @@ function buildChecks(m){
 
   /* 3 · 6 jours max */
   if(m.week7){
-    var w3=cycIdx(m.week7).w,d3=6;
-    if(S.cycle.weeks[w3][6]==='R'){d3=5;if(S.cycle.weeks[w3][5]==='R'){d3=0;
-      for(var dd=0;dd<7;dd++)if(S.cycle.weeks[w3][dd]!=='R'){d3=dd;break;}}}
+    // Ancre pas forcément lundi : on résout dimanche/samedi/1er jour travaillé
+    // de CETTE semaine civile via leurs vraies dates, pas via des colonnes fixes.
+    function pick7(off){var d=addD(pISO(m.week7),off);return {c:cycIdx(iso(d)),dow:dowIdx(d)};}
+    var cand=pick7(6); // dimanche de la semaine civile en violation
+    if(S.cycle.weeks[cand.c.w][cand.c.d]==='R'){
+      cand=pick7(5); // samedi
+      if(S.cycle.weeks[cand.c.w][cand.c.d]==='R'){
+        for(var dd=0;dd<7;dd++){var c2=pick7(dd);
+          if(S.cycle.weeks[c2.c.w][c2.c.d]!=='R'){cand=c2;break;}}
+      }
+    }
+    var w3=cand.c.w,d3=cand.c.d;
     res.push({t:'Jours travaillés par semaine',s:'warn',
       d:'7 jours travaillés sur la semaine du '+fmtD(pISO(m.week7))+'.',
       r:'Repère : 6 jours maximum par semaine civile — art. L3132-1.',
-      sug:{tx:'Passer le <b>'+DOWS[d3]+' de la S'+(w3+1)+'</b> en repos.',
+      sug:{tx:'Passer le <b>'+DOWS[cand.dow]+' de la S'+(w3+1)+'</b> en repos.',
         i:sug('off6',function(){S.cycle.weeks[w3][d3]='R';})}});
   }else res.push({t:'Jours travaillés par semaine',s:'ok',
     d:'Jamais plus de 6 jours travaillés par semaine civile.',r:'Repère : art. L3132-1.'});
@@ -895,7 +912,7 @@ function buildChecks(m){
     res.push({t:'Jours travaillés d\u2019affilée',s:'warn',
       d:(m.maxRun.full?'Le cycle n\u2019a aucun jour de repos : série continue.':m.maxRun.n+' jours travaillés d\u2019affilée (du '+fmtD(m.maxRun.start)+' au '+fmtD(m.maxRun.end)+'), à cheval sur plusieurs semaines civiles.'),
       r:'Chaque semaine civile reste sous les 6 jours, mais un enchaînement long mérite un œil — art. L3132-1 et s.',
-      sug:{tx:'Casser la série : passer le <b>'+DOWS[cR.d]+' de la S'+(cR.w+1)+'</b> en repos.',
+      sug:{tx:'Casser la série : passer le <b>'+DOWS[(anchorDow()+cR.d)%7]+' de la S'+(cR.w+1)+'</b> en repos.',
         i:sug('run',function(){S.cycle.weeks[cR.w][cR.d]='R';})}});
   }
 
@@ -932,7 +949,7 @@ function buildChecks(m){
     var c5={t:'Semaine la plus chargée (48 h)',s:'warn',
       d:fmtMin(m.wk[m.maxWeek])+' sur la semaine du '+fmtD(pISO(m.maxWeek))+'.',
       r:'Repère : 48 h absolues sur une semaine — art. L3121-20.'};
-    if(b5.d>=0)c5.sug={tx:'Passer le <b>'+DOWS[b5.d]+' de la S'+(w5+1)+'</b> en repos → semaine max ramenée à '+fmtMin(-b5.v)+'.',
+    if(b5.d>=0)c5.sug={tx:'Passer le <b>'+DOWS[(anchorDow()+b5.d)%7]+' de la S'+(w5+1)+'</b> en repos → semaine max ramenée à '+fmtMin(-b5.v)+'.',
       i:sug('off48',function(){S.cycle.weeks[w5][b5.d]='R';})};
     res.push(c5);
   }else if(m.maxWeek)res.push({t:'Semaine la plus chargée (48 h)',s:'ok',
@@ -951,7 +968,7 @@ function buildChecks(m){
     var c6={t:'Moyenne sur 12 semaines (44 h)',s:'warn',
       d:fmtMin(m.maxAvg.v)+' de moyenne (semaines du '+fmtD(pISO(m.wkKeys[m.maxAvg.i]))+' au '+fmtD(addD(pISO(m.wkKeys[m.maxAvg.i]),83))+').',
       r:'Repère : 44 h en moyenne sur 12 semaines consécutives — art. L3121-22 (46 h par accord).'};
-    if(b6.d>=0)c6.sug={tx:'Alléger la semaine la plus lourde : <b>'+DOWS[b6.d]+' de la S'+(heavyW+1)+'</b> en repos → moyenne ramenée à '+fmtMin(-b6.v)+'.',
+    if(b6.d>=0)c6.sug={tx:'Alléger la semaine la plus lourde : <b>'+DOWS[(anchorDow()+b6.d)%7]+' de la S'+(heavyW+1)+'</b> en repos → moyenne ramenée à '+fmtMin(-b6.v)+'.',
       i:sug('off44',function(){S.cycle.weeks[heavyW][b6.d]='R';})};
     res.push(c6);
   }else if(m.maxAvg)res.push({t:'Moyenne sur 12 semaines (44 h)',s:'ok',
@@ -964,8 +981,9 @@ function buildChecks(m){
     r:'Repère : art. L3132-3 — contreparties selon la convention.'});
 
   /* 6ter · Week-ends jamais libres (info) */
-  if(oneCycW>1){var weT=0;
-    for(var wq2=0;wq2<oneCycW;wq2++)if(S.cycle.weeks[wq2][5]!=='R'||S.cycle.weeks[wq2][6]!=='R')weT++;
+  if(oneCycW>1){var weT=0,satOff=(5-anchorDow()+7)%7;
+    for(var wq2=0;wq2<oneCycW;wq2++){var pS=satOff+wq2*7;
+      if(cellAt(pS)!=='R'||cellAt(pS+1)!=='R')weT++;}
     if(weT===oneCycW)res.push({t:'Week-ends',s:'info',
       d:'Aucun week-end entièrement libre sur le cycle : chaque samedi-dimanche est touché au moins une fois.',
       r:'Certaines conventions garantissent un minimum de week-ends de repos — vérifie ta CCN.'});}
@@ -1107,11 +1125,15 @@ function renderLegend(){
 }
 function renderCycle(){
   elt('anchor').value=S.cycle.anchor;
+  var aD=anchorDow(),DL=['L','M','M','J','V','S','D'];
+  var hh='<span></span>';
+  for(var jd=0;jd<7;jd++)hh+='<span>'+DL[(aD+jd)%7]+'</span>';
+  elt('cyc-head').innerHTML=hh+'<span>h/sem</span>';
   var w=S.cycle.weeks,h='';
   for(var i=0;i<w.length;i++){
     h+='<div class="cyc-week"><span class="cyc-lab">S'+(i+1)+'</span>';
-    for(var j=0;j<7;j++){var p=w[i][j];
-      h+='<button class="cell '+(p==='R'?'pR':'')+'" style="background:'+colOf(p)+'" data-w="'+i+'" data-d="'+j+'" aria-label="Semaine '+(i+1)+' '+DOWS[j]+' : '+(p==='R'?'repos':esc(S.cycle.postes[p].l))+'">'+(p==='R'?'·':p)+'</button>';}
+    for(var j=0;j<7;j++){var p=w[i][j],realDow=(aD+j)%7;
+      h+='<button class="cell '+(p==='R'?'pR':'')+'" style="background:'+colOf(p)+'" data-w="'+i+'" data-d="'+j+'" aria-label="Semaine '+(i+1)+' '+DOWS[realDow]+' : '+(p==='R'?'repos':esc(S.cycle.postes[p].l))+'">'+(p==='R'?'·':p)+'</button>';}
     h+='<span class="cyc-h">'+fmtMin(weekHours(w[i]))+'</span></div>';
   }
   elt('cyc-grid').innerHTML=h;
@@ -1179,10 +1201,11 @@ function openPosteEd(){
   elt('pe-ov').classList.add('show');
 }
 function renderStats(){
-  var w=S.cycle.weeks,tot=0,mn=Infinity,mx=0,nuits=0,we=0,i,j;
+  var w=S.cycle.weeks,tot=0,mn=Infinity,mx=0,nuits=0,we=0,i,j,satOffS=(5-anchorDow()+7)%7;
   for(i=0;i<w.length;i++){var wh=weekHours(w[i]);tot+=wh;mn=Math.min(mn,wh);mx=Math.max(mx,wh);
     for(j=0;j<7;j++){if(w[i][j]==='N')nuits++;}
-    if(w[i][5]!=='R'||w[i][6]!=='R')we++;}
+    var pSS=satOffS+i*7;
+    if(cellAt(pSS)!=='R'||cellAt(pSS+1)!=='R')we++;}
   elt('stats').innerHTML=
     '<div class="stat"><div class="v">'+fmtMin(tot/w.length)+'</div><div class="l">en moyenne<br>par semaine</div></div>'+
     '<div class="stat"><div class="v">'+fmtMin(mn)+'<br>'+fmtMin(mx)+'</div><div class="l">semaine basse<br>semaine haute</div></div>'+
@@ -1825,7 +1848,7 @@ document.querySelectorAll('.nv').forEach(function(b){
     if(ACTIVE==='todo'&&DIRT.todo){renderTodos();DIRT.todo=0;}
     window.scrollTo(0,0);};});
 elt('anchor').onchange=function(){var v=this.value;if(!v)return;
-  S.cycle.anchor=iso(mondayOf(pISO(v)));save();renderAll();};
+  S.cycle.anchor=v;save();renderAll();};
 elt('wk-add').onclick=function(){if(S.cycle.weeks.length>=6)return;
   S.cycle.weeks.push(['R','R','R','R','R','R','R']);save();renderAll();};
 elt('wk-del').onclick=function(){if(S.cycle.weeks.length<=1)return;
