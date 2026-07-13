@@ -52,6 +52,7 @@ h2{text-align:center}
 .day small{font-size:11px;line-height:1.1;white-space:nowrap}
 .day.in-period{border:2px solid #4FB3C2;background:#e6f6f8}
 .day.today{outline:3px solid #2196a6;box-shadow:0 0 6px rgba(33,150,166,.4)}
+.day.locked{opacity:.4;cursor:not-allowed}
 
 button,input,textarea{width:100%;padding:8px;margin:5px 0}
 
@@ -452,6 +453,7 @@ document.addEventListener("DOMContentLoaded", function(){
         <select id="periodSelect" style="min-width:0"></select>
       </div>
       <p id="periodInfo" style="font-size:13px;color:#666;margin:0;line-height:1.5;background:#f4f8fb;border-radius:10px;padding:8px 12px;"></p>
+      <button id="periodLockBtn" onclick="togglePeriodLock()" style="margin-top:8px;width:100%;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">🔓 Verrouiller cette période</button>
       <div id="rateContainer"></div>
     </div>
 
@@ -1020,6 +1022,7 @@ function buildPeriods(){
   else if(found===null){if(today<periods[0].start)found=0;else found=closures.length-1;}
   found=Math.max(0,found);
   currentPeriodIndex=found;periodSelect.selectedIndex=found;
+  autoLockPastPeriods();updatePeriodLockUI();
   if(typeof update==="function")update();
 }
 
@@ -1031,6 +1034,61 @@ function getCurrentPeriod(){
   let start=base;
   for(let i=0;i<=closures.length;i++){const end=i<closures.length?new Date(closures[i]):new Date(2099,11,31);if(i===currentPeriodIndex)return{start,end,index:i};start=new Date(end);start.setDate(start.getDate()+1);}
   return null;
+}
+
+/* ── Verrouillage de période (même logique que le module Paye) ──
+   Une période verrouillée protège sa saisie jour par jour contre les
+   modifications accidentelles. L'utilisateur peut toujours déverrouiller
+   manuellement si besoin. */
+function isPeriodLocked(dateStr){
+  const idx=getPeriodIndexForDate(dateStr);
+  return !!(periodMeta[idx]&&periodMeta[idx].locked);
+}
+function savePeriodMeta(){localStorage.setItem(STORAGE.periodMeta,JSON.stringify(periodMeta));}
+function periodHasActivity(period){
+  let d=new Date(period.start);d.setHours(0,0,0,0);
+  const end=new Date(period.end);end.setHours(0,0,0,0);
+  while(d<=end){
+    const key=`${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,"0")}-${String(d.getDate()).padStart(2,"0")}`;
+    const day=data[key];
+    if(day&&((Number(day.extra)||0)>0||(Number(day.recup)||0)>0||(Number(day.absent)||0)>0))return true;
+    d.setDate(d.getDate()+1);
+  }
+  return false;
+}
+/* Verrouille automatiquement toutes les périodes antérieures à la période
+   affichée qui ne sont pas encore verrouillées et ont au moins une saisie. */
+function autoLockPastPeriods(){
+  const base=getBaseStartDate();if(!base)return;
+  let start=new Date(base),changed=false;
+  for(let i=0;i<currentPeriodIndex;i++){
+    const end=i<closures.length?new Date(closures[i]):new Date(2099,11,31);
+    if(!(periodMeta[i]&&periodMeta[i].locked)&&periodHasActivity({start:new Date(start),end})){
+      if(!periodMeta[i])periodMeta[i]={};
+      periodMeta[i].locked=true;changed=true;
+    }
+    start=new Date(end);start.setDate(start.getDate()+1);
+  }
+  if(changed)savePeriodMeta();
+}
+function togglePeriodLock(){
+  const idx=currentPeriodIndex;
+  if(!periodMeta[idx])periodMeta[idx]={};
+  const willLock=!periodMeta[idx].locked;
+  periodMeta[idx].locked=willLock;
+  savePeriodMeta();updatePeriodLockUI();generateCalendar();
+  toast(willLock?"🔒 Période verrouillée":"🔓 Période déverrouillée",willLock?"success":"info");
+}
+function updatePeriodLockUI(){
+  const btn=document.getElementById("periodLockBtn");if(!btn)return;
+  const locked=!!(periodMeta[currentPeriodIndex]&&periodMeta[currentPeriodIndex].locked);
+  if(locked){
+    btn.innerHTML="🔒 Période verrouillée — toucher pour déverrouiller";
+    btn.style.background="rgba(243,156,18,.15)";btn.style.borderColor="rgba(243,156,18,.4)";btn.style.color="#f39c12";
+  }else{
+    btn.innerHTML="🔓 Verrouiller cette période";
+    btn.style.background="#f4f8fb";btn.style.borderColor="#dde6ec";btn.style.color="#666";
+  }
 }
 
 function ensureReportsUpTo(index){const sv=currentPeriodIndex;for(let i=0;i<index;i++){currentPeriodIndex=i;calculate();}currentPeriodIndex=sv;}
@@ -1078,6 +1136,8 @@ function generateCalendar(){
     const div=document.createElement("div");div.className="day";
     if(pStartKey&&key>=pStartKey&&key<=pEndKey)div.classList.add("in-period");
     if(closureSet.has(key))div.classList.add("closure-day");
+    const dayLocked=isPeriodLocked(key);
+    if(dayLocked)div.classList.add("locked");
     const day=data[key]||{extra:0,recup:0,absent:0};
     let html=`<strong>${d}</strong>`;
     if(day.extra)html+=`<small style="color:#000;font-weight:600">+${fmtHShort(day.extra)}</small>`;
@@ -1086,7 +1146,7 @@ function generateCalendar(){
     else if(day.absent){html+=`<small style="color:#c62828;font-weight:bold">ABS ${fmtHShort(day.absent)}</small>`;div.style.background="#ffebee";div.style.border="2px solid #c62828";}
     div.innerHTML=html;
     if(key===dateKeyLocal(new Date()))div.classList.add("today");
-    div.onclick=()=>openPopup(key);calendar.appendChild(div);
+    div.onclick=()=>{if(dayLocked){toast("🔒 Période verrouillée","warn");return;}openPopup(key);};calendar.appendChild(div);
   }
 }
 
@@ -1174,6 +1234,7 @@ function calculate(){
 function openNotice(){document.getElementById("popupNotice").style.display="flex";}
 function closeNotice(){document.getElementById("popupNotice").style.display="none";}
 function openPopup(date){
+  if(isPeriodLocked(date)){toast("🔒 Période verrouillée","warn");return;}
   selectedDate=date;
   // NE PAS écrire absent automatiquement — le bloc AUTO_FERIE dans calculate() gère les -7h
   const d=data[date]||{extra:0,recup:0,absent:0};
@@ -1422,7 +1483,7 @@ function update(){
 }
 monthSelect.onchange=()=>{viewMonth=+monthSelect.value;if(typeof update==="function")update();};
 yearSelect.onchange=()=>{viewYear=+yearSelect.value;if(typeof update==="function")update();};
-periodSelect.onchange=()=>{currentPeriodIndex=+periodSelect.value;if(typeof update==="function")update();showToast();};
+periodSelect.onchange=()=>{currentPeriodIndex=+periodSelect.value;autoLockPastPeriods();updatePeriodLockUI();if(typeof update==="function")update();showToast();};
 const annualDateInput=document.getElementById("annualDateInput");
 const exerciseStartInput=document.getElementById("exerciseStartInput");
 const baseHebdoInput=document.getElementById("baseHebdoInput");
