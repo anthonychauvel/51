@@ -1298,7 +1298,7 @@
   </div>
 
   <!-- Guide de démarrage : sous le favoris (inchangé) -->
-  <button class="info-btn" onclick="reopenWizard()" style="width:100%;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
+  <button class="info-btn" id="guideBtn" onclick="reopenWizard()" style="width:100%;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
 
   <!-- Badge CCN : juste sous le guide de démarrage (pas en bas) -->
   <div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
@@ -1396,6 +1396,11 @@
   var BG={plein:'#4FB3C2',
     partiel:'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)',
     cadre:'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)'};
+  var GUIDE_THEME={
+    plein:{bg:'linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2))',bd:'rgba(79,179,194,0.4)'},
+    partiel:{bg:'linear-gradient(135deg,rgba(108,63,197,0.22),rgba(90,50,170,0.22))',bd:'rgba(108,63,197,0.45)'},
+    cadre:{bg:'linear-gradient(135deg,rgba(196,163,90,0.22),rgba(160,130,70,0.22))',bd:'rgba(196,163,90,0.45)'}
+  };
   window.applyGridOrder=function(){
     var p=curProfile();
     ORDERS[p].forEach(function(id,i){
@@ -1409,6 +1414,12 @@
     document.body.style.background=BG[p];
     // réapplique aussi le surlignage + badge "✓ Mon contrat" + couleur de barre de statut (système existant)
     if(typeof applyContractHighlight==='function') applyContractHighlight();
+    // le bouton Guide reprend la teinte du profil actif (même famille de couleurs que les modules)
+    var gEl=document.getElementById('guideBtn');
+    if(gEl){gEl.style.background=GUIDE_THEME[p].bg;gEl.style.borderColor=GUIDE_THEME[p].bd;}
+    // les modules masqués sont propres à CHAQUE profil (masquer Mizuki en Temps plein
+    // ne le masque plus en Temps partiel, etc.) — on ré-applique la liste du nouveau profil
+    if(typeof applyHidden==='function') applyHidden();
   };
   window.cycleGridProfile=function(){
     var seq=['plein','partiel','cadre'];
@@ -1583,7 +1594,7 @@ function openBackupPopup() {
   try {
     let count = 0, bytes = 0, modCount = 0;
     // Préfixes connus des 54 modules outils
-    const modPrefixes = /^(STC_|CUM_|M8_|TR_|FAM_|RUP_|ENT_|JI_|TT_|INA_|CP_|PA_|PE_|ESS_|AN_|EFF_|LBP_|LEX_|CSE_|INV_|ALT_|AM_|ANC_|AP_|ARC_|AST_|AT_|BUL_|C2P_|CET_|CF_|CH_|CMP_|CON_|CSS_|CVR_|CV_|DAR_|DEL_|EGA_|EPA_|FC_|FER_|FOR_|GRV_|MAP_|MOB_|MOD_|MUT_|NC_|PAR_|PRC_|PRC2_|PRV_|RET_|SAB_|SS_|TR2_|TRA_|DEL_)/;
+    const modPrefixes = /^(STC_|CUM_|M8_|TR_|FAM_|RUP_|ENT_|JI_|TT_|INA_|CP_|PA_|PE_|ESS_|AN_|EFF_|LBP_|LEX_|CSE_|INV_|ALT_|AM_|ANC_|AP_|ARC_|AST_|AT_|BUL_|C2P_|CET_|CF_|CH_|CMP_|CON_|CSS_|CVR_|CV_|DAR_|DEL_|EGA_|EPA_|FC_|FER_|FOR_|GRV_|MAP_|MOB_|MOD_|MUT_|NC_|PAR_|PRC_|PRC2_|PRV_|RET_|SAB_|SS_|TR2_|TRA_|DEL_|TAIKO_)/;
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
       count++;
@@ -3416,13 +3427,30 @@ function hasConsent(){
 <script>
 // ── PERSONNALISATION DU MENU ──────────────────────────────────
 (function(){
-  var LS_HIDDEN = 'MENU_HIDDEN';  // clé localStorage : modules cachés
   var MODULES = [["btn-heures","Compteur annuel"],["btn-paye","Simulateur mensuel"],["btn-fox","FOX Engine"],["btn-module4","DTE"],["btn-module5","Mizuki (temps partiel)"],["btn-module6","Zenji (cadres)"],["btn-lumina","GrillePaye Lumina"],["btn-module7","Mimizuku"]];
   var persoActive = false;
 
-  // Lire/écrire la liste des modules cachés
-  function getHidden(){ try{ return JSON.parse(localStorage.getItem(LS_HIDDEN)||'[]'); }catch(e){ return []; } }
-  function setHidden(a){ try{ localStorage.setItem(LS_HIDDEN,JSON.stringify(a)); }catch(e){} }
+  // Masquage propre à CHAQUE profil : masquer Mizuki en Temps plein ne le masque
+  // pas en Temps partiel, etc. (clé localStorage par profil, ex. MENU_HIDDEN_partiel)
+  function hiddenKey(){
+    var p=null; try{ p=localStorage.getItem('menuContratType'); }catch(e){}
+    return 'MENU_HIDDEN_'+(p||'plein');
+  }
+  // Migration douce : reprend une éventuelle ancienne liste globale (avant cette version)
+  // comme point de départ du profil "plein", une seule fois.
+  (function migrateOldHidden(){
+    try{
+      var old=localStorage.getItem('MENU_HIDDEN');
+      if(old!=null && localStorage.getItem('MENU_HIDDEN_plein')==null){
+        localStorage.setItem('MENU_HIDDEN_plein', old);
+      }
+      if(old!=null) localStorage.removeItem('MENU_HIDDEN');
+    }catch(e){}
+  })();
+
+  // Lire/écrire la liste des modules cachés DU PROFIL ACTIF
+  function getHidden(){ try{ return JSON.parse(localStorage.getItem(hiddenKey())||'[]'); }catch(e){ return []; } }
+  function setHidden(a){ try{ localStorage.setItem(hiddenKey(),JSON.stringify(a)); }catch(e){} }
 
   // Appliquer l'état caché au chargement
   function applyHidden(){
@@ -3509,6 +3537,8 @@ function hasConsent(){
     document.getElementById('hiddenDrawer').classList.add('open');
     document.getElementById('drawerOverlay').style.display='block';
   };
+
+  window.applyHidden = applyHidden;
 
   window.closeHiddenDrawer = function(){
     document.getElementById('hiddenDrawer').classList.remove('open');

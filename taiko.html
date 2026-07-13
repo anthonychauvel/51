@@ -393,7 +393,7 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
         <button class="mini" id="lib-open">📂 Mes cycles</button>
       </div>
       <div class="anchor-row">
-        <label for="anchor">Le cycle démarre le (n\u2019importe quel jour) :</label>
+        <label for="anchor">Le cycle démarre le (n’importe quel jour) :</label>
         <input type="date" class="ip" id="anchor">
       </div>
     </div>
@@ -599,7 +599,7 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
   (art. L3131-1, L3132-1, L3132-2, L3121-16, L3121-18, L3121-20, L3121-22, L3122-1 et s.). Les pistes de Ponpo sont des
   illustrations de calcul, pas des consignes : de nombreuses dérogations conventionnelles ou d'entreprise existent. Ce module ne constitue
   ni un conseil juridique, ni un document de gestion du temps de travail, et ne remplace ni le planning officiel, ni le dialogue avec
-  l'employeur ou les représentants du personnel. Données 100 % locales · <a href="../mentions-legales.html">Mentions légales</a>
+  l'employeur ou les représentants du personnel. Données 100 % locales · <a href="mentions-legales.html">Mentions légales</a>
 </footer>
 
 <script>
@@ -1646,12 +1646,32 @@ function icsExport(){
       'END:VEVENT');}
   }
   L.push('END:VCALENDAR');
-  var b=new Blob([L.join('\r\n')],{type:'text/calendar'});
-  var u=URL.createObjectURL(b),el=document.createElement('a');
-  el.href=u;el.download='taiko-planning.ics';
-  document.body.appendChild(el);el.click();document.body.removeChild(el);
-  setTimeout(function(){URL.revokeObjectURL(u);},1000);
-  setMsg(n+' postes envoyés sur 8 semaines. Ouvre le fichier : ton téléphone proposera de les ajouter à l\u2019agenda.',true);
+  var icsTxt=L.join('\r\n'),fn='taiko-planning.ics';
+  /* iOS/Safari ouvre mal un .ics téléchargé via blob+<a> : on passe par le
+     partage natif (l\u2019app Agenda/Calendrier se propose d\u2019elle-même),
+     avec un aperçu de secours si le partage est indisponible. */
+  var shared=false;
+  if(navigator.share){
+    try{
+      var f=new File([icsTxt],fn,{type:'text/calendar'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        navigator.share({files:[f],title:'Mon planning Taiko'})
+          .then(function(){setMsg(n+' postes partagés — choisis Calendrier/Agenda pour les ajouter.',true);})
+          .catch(function(){icsFallback(icsTxt,fn,n);});
+        shared=true;
+      }
+    }catch(e){}
+  }
+  if(!shared)icsFallback(icsTxt,fn,n);
+}
+function icsFallback(icsTxt,fn,n){
+  try{
+    var du='data:text/calendar;charset=utf-8,'+encodeURIComponent(icsTxt);
+    var el=document.createElement('a');
+    el.href=du;el.download=fn;el.target='_blank';
+    document.body.appendChild(el);el.click();document.body.removeChild(el);
+  }catch(e){}
+  setMsg(n+' postes prêts (8 semaines). Si rien ne s\u2019ouvre, utilise plutôt « Partager » depuis Safari en haut de l\u2019écran, ou le bouton juste au-dessus pour copier le relevé texte.',true);
 }
 
 /* ================= Rendu : tâches ================= */
