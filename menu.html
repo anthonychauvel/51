@@ -1393,7 +1393,11 @@
     var v=null; try{ v=localStorage.getItem(KEY); }catch(e){}
     return (v&&ORDERS[v])?v:'plein';
   }
-  var BG={plein:'#4FB3C2',
+  // Teinte unie représentative de chaque profil : contrairement à background (raccourci),
+  // background-color s'anime nativement en CSS. Le dégradé (non animable) est posé PAR-DESSUS
+  // une fois la teinte unie déjà en place → plus de flash brutal en passant d'un profil à l'autre.
+  var BG_SOLID={plein:'#4FB3C2',partiel:'#2D1467',cadre:'#2E2A26'};
+  var BG_IMG={plein:'none',
     partiel:'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)',
     cadre:'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)'};
   var GUIDE_THEME={
@@ -1409,9 +1413,11 @@
     });
     var lbl=document.getElementById('profChipLbl');
     if(lbl) lbl.textContent=LBL[p];
-    // même code couleur que le choix initial (wizChoixContrat), appliqué en live
-    document.body.style.transition='background 0.4s ease';
-    document.body.style.background=BG[p];
+    // même code couleur que le choix initial (wizChoixContrat), appliqué en live —
+    // en 2 temps pour permettre une vraie animation (voir BG_SOLID/BG_IMG ci-dessus)
+    document.body.style.transition='background-color 0.4s ease';
+    document.body.style.backgroundColor=BG_SOLID[p];
+    document.body.style.backgroundImage=BG_IMG[p];
     // réapplique aussi le surlignage + badge "✓ Mon contrat" + couleur de barre de statut (système existant)
     if(typeof applyContractHighlight==='function') applyContractHighlight();
     // le bouton Guide reprend la teinte du profil actif (même famille de couleurs que les modules)
@@ -2368,7 +2374,8 @@ document.addEventListener('DOMContentLoaded', function(){
         btn6.style.boxShadow = '';
         const b6 = btn6.querySelector('.badge-mon-contrat'); if(b6) b6.remove();
       }
-      document.body.style.background = 'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
+      document.body.style.backgroundColor = '#2D1467';
+      document.body.style.backgroundImage = 'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#2D1467');
 
     } else if(contratType === 'cadre') {
@@ -2395,7 +2402,8 @@ document.addEventListener('DOMContentLoaded', function(){
         btn5.style.boxShadow = '';
         const b5 = btn5.querySelector('.badge-mon-contrat'); if(b5) b5.remove();
       }
-      document.body.style.background = 'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)';
+      document.body.style.backgroundColor = '#2E2A26';
+      document.body.style.backgroundImage = 'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)';
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#1A1714');
 
     } else {
@@ -2423,7 +2431,8 @@ document.addEventListener('DOMContentLoaded', function(){
         if(payeBtn) placeM7After(payeBtn);
         else placeM7After(btn6);
       })();
-      document.body.style.background = '#4FB3C2';
+      document.body.style.backgroundColor = '#4FB3C2';
+      document.body.style.backgroundImage = 'none';
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#4FB3C2');
     }
   };
