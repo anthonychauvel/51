@@ -12,6 +12,18 @@
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Compteur Heures & Paie">
+  <!-- FIX 2026-07-03 : anti-flash wizard/disclaimer + stockage persistant -->
+  <script>
+    /* Le wizard (.overlay display:flex) était peint avant que le script de boot
+       (2200 lignes plus bas) ne le masque => flash au lancement. On pose une
+       classe AVANT le premier paint. reopenWizard() repasse en style inline
+       display:flex, qui prime sur cette règle : la réouverture manuelle marche. */
+    try{if(localStorage.getItem('menuWizardDone')==='1'){document.documentElement.classList.add('wizdone');}}catch(e){}
+    /* Stockage persistant : empêche Android d'évincer le Cache Storage (=> page
+       d'erreur « Actualiser ») et surtout le localStorage (données utilisateur). */
+    try{if(navigator.storage&&navigator.storage.persist){navigator.storage.persist();}}catch(e){}
+  </script>
+  <style>html.wizdone #welcomeWizard{display:none}</style>
   <script src="ccn/conventions-collectives.js"></script>
 
   <style>
@@ -56,6 +68,10 @@
       background: rgba(255,255,255,0.1);
     }
     .btn:active { transform: scale(0.96); }
+    /* ── Grille modules v2 (2 colonnes, réordonnée par profil) ── */
+    .mod-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;width:92%;max-width:420px;margin:0 auto;}
+    .mod-grid .btn{width:100%;max-width:none;}
+    .mod-grid .title{font-size:12.5px;}
     .btn img {
       width: 100%;
       height: auto;
@@ -1250,10 +1266,9 @@
   </div>
 </div>
 
-<div style="display:flex;gap:8px;align-items:flex-start;">
-  <button class="info-btn" onclick="reopenWizard()" style="flex:2;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
-  <!-- Bouton Favoris (même style doré que le bouton favoris, remplace l'ancien Terrier) -->
-  <div style="position:relative;flex:1;" id="favDropContainer">
+<div style="display:flex;flex-direction:column;gap:10px;width:90%;max-width:340px;margin:0 auto;">
+  <!-- Favoris : centré, AU-DESSUS du guide (inchangé, juste déplacé + plein largeur) -->
+  <div style="position:relative;width:100%;" id="favDropContainer">
     <button onclick="toggleFavDrop()" title="Mes outils favoris — La caisse à outils"
       style="width:100%;cursor:pointer;border-radius:10px;padding:9px 12px;
              font-family:inherit;font-weight:700;font-size:12px;
@@ -1278,14 +1293,33 @@
       </div>
     </div>
   </div>
+
+  <!-- Guide de démarrage : sous le favoris (inchangé) -->
+  <button class="info-btn" onclick="reopenWizard()" style="width:100%;background:linear-gradient(135deg,rgba(79,179,194,0.2),rgba(33,150,166,0.2));border:1px solid rgba(79,179,194,0.4);">🚀 Guide de démarrage</button>
+
+  <!-- 2 pills noires, côte à côte : Personnaliser (fonction existante) + Ma to-do list (Taiko)
+       flex-wrap:nowrap + min-width:0 sur chaque bouton : même correctif que .row2 dans taiko.html,
+       pour éviter le bug déjà rencontré (rangée qui s'empile sur Android au lieu de rester côte à côte) -->
+  <div style="display:flex;flex-wrap:nowrap;gap:10px;width:100%;">
+    <button id="btnPersoTop" onclick="togglePersoMode()"
+      style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
+      border-radius:999px;padding:12px 8px;font-family:inherit;font-weight:700;font-size:12px;
+      cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);">✏️ Personnaliser le menu</button>
+    <button onclick="location.href='taiko.html'"
+      style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
+      border-radius:999px;padding:12px 8px;font-family:inherit;font-weight:700;font-size:12px;
+      cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);">✅ Ma to-do list</button>
+  </div>
 </div>
 
-<div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
-  <span>⚖️</span>
-  <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
-  <span class="ccn-edit">✎ modifier</span>
+<div style="width:92%;max-width:420px;margin:6px auto 2px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;">
+  <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;">Tes modules</span>
+  <button id="profChip" onclick="cycleGridProfile()"
+    style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;
+    border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
+    👤 <span id="profChipLbl">Temps plein</span> ▾</button>
 </div>
-
+<div class="mod-grid" id="modGrid">
 <div class="btn" id="btn-module5" onclick="go('module5')" style="border:2px solid rgba(108,63,197,0.55);background:linear-gradient(160deg,#ede8ff,#f4f0fd);"><button class="perso-badge" onclick="hideModule('btn-module5',event)" title="Masquer Mizuki">✕</button>
   <img src="images/Temps partiel.PNG" loading="eager" alt="Temps partiel — Mizuki" onerror="this.style.display='none'">
   <div class="title" style="color:#6C3FC5;">🦊 Mizuki — Temps partiel</div>
@@ -1320,14 +1354,6 @@
   <div class="title">🩺 Ma prédiction santé</div>
 </div>
 
-<div class="btn" id="btn-taches" onclick="go('module-taches-routines')" style="border:2px solid rgba(79,179,194,0.5);background:linear-gradient(160deg,#0e1322,#152633);">
-  <button class="perso-badge" onclick="hideModule('btn-taches',event)" title="Masquer Tâches & Routines">✕</button>
-  <div class="btn-no-img" style="background:linear-gradient(135deg,#0e1322,#152633);min-height:100px;">
-    <span style="font-size:2rem;">🦊</span>
-  </div>
-  <div class="title" style="color:#4FB3C2;">🦊 Kaizen — Tâches & Routines</div>
-</div>
-
 
 
 <div class="btn" id="btn-lumina" onclick="go('GrillePaye')" style="border:2px solid rgba(90,142,219,0.5);background:linear-gradient(160deg,#0a1428,#1a2f5a);"><button class="perso-badge" onclick="hideModule('btn-lumina',event)" title="Masquer GrillePaye">✕</button>
@@ -1342,6 +1368,53 @@
   </div>
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
+</div><!-- /mod-grid -->
+
+<div id="ccn-badge" onclick="openCCNModal()" title="Changer de convention collective">
+  <span>⚖️</span>
+  <span class="ccn-name" id="ccn-badge-name">Mon contrat de travail</span>
+  <span class="ccn-edit">✎ modifier</span>
+</div>
+
+<script>
+(function(){
+  var KEY='menuContratType';
+  var ORDERS={
+    plein:  ['btn-heures','btn-paye','btn-fox','btn-module4','btn-module5','btn-module6','btn-module7','btn-lumina'],
+    partiel:['btn-module5','btn-module6','btn-module7','btn-lumina','btn-heures','btn-paye','btn-fox','btn-module4'],
+    cadre:  ['btn-module6','btn-module5','btn-module7','btn-lumina','btn-heures','btn-paye','btn-fox','btn-module4']
+  };
+  var LBL={plein:'Temps plein',partiel:'Temps partiel',cadre:'Cadre'};
+  function curProfile(){
+    var v=null; try{ v=localStorage.getItem(KEY); }catch(e){}
+    return (v&&ORDERS[v])?v:'plein';
+  }
+  var BG={plein:'#4FB3C2',
+    partiel:'linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)',
+    cadre:'linear-gradient(160deg,#1A1714 0%,#2E2A26 60%,#1A1714 100%)'};
+  window.applyGridOrder=function(){
+    var p=curProfile();
+    ORDERS[p].forEach(function(id,i){
+      var el=document.getElementById(id);
+      if(el) el.style.order=i;
+    });
+    var lbl=document.getElementById('profChipLbl');
+    if(lbl) lbl.textContent=LBL[p];
+    // même code couleur que le choix initial (wizChoixContrat), appliqué en live
+    document.body.style.transition='background 0.4s ease';
+    document.body.style.background=BG[p];
+    // réapplique aussi le surlignage + badge "✓ Mon contrat" + couleur de barre de statut (système existant)
+    if(typeof applyContractHighlight==='function') applyContractHighlight();
+  };
+  window.cycleGridProfile=function(){
+    var seq=['plein','partiel','cadre'];
+    var next=seq[(seq.indexOf(curProfile())+1)%seq.length];
+    try{ localStorage.setItem(KEY,next); }catch(e){}
+    applyGridOrder();
+  };
+  applyGridOrder();
+})();
+</script>
 
 
 
@@ -1934,7 +2007,7 @@ document.addEventListener('keydown', function(e){
     <!-- Auteur + contact -->
     <div style="padding:18px 16px 14px;text-align:center;border-bottom:1px solid rgba(255,255,255,0.07);">
       <div style="font-size:11px;color:rgba(200,212,232,0.5);letter-spacing:0.5px;margin-bottom:10px;">
-        Développé par C. Anthony · v7.2.0
+        Développé par C. Anthony · <span id="app-version">v10.1.0</span>
       </div>
       <button onclick="openContactPopup()" style="
         background:linear-gradient(135deg,#4FB3C2,#2196a6);
@@ -2018,6 +2091,18 @@ document.addEventListener('keydown', function(e){
           Données 100 % locales · Aucune collecte · Votre appareil, vos données
         </span>
       </div>
+      <!-- FIX 2026-07-04 : date du jour + version (source unique : #app-version) -->
+      <div id="footer-datever" style="margin-top:8px;font-size:10px;color:rgba(200,212,232,0.35);letter-spacing:0.4px;"></div>
+      <script>
+        (function(){
+          try{
+            var d = new Date().toLocaleDateString('fr-FR', {weekday:'long', day:'numeric', month:'long', year:'numeric'});
+            d = d.charAt(0).toUpperCase() + d.slice(1);
+            var v = (document.getElementById('app-version')||{}).textContent || '';
+            document.getElementById('footer-datever').textContent = d + (v ? ' \u00B7 ' + v : '');
+          }catch(e){}
+        })();
+      </script>
     </div>
 
   </div>
@@ -2219,7 +2304,7 @@ document.addEventListener('DOMContentLoaded', function(){
   }
 
   // Positionner et surligner module5/module6 selon le type de contrat
-  (function() {
+  window.applyContractHighlight = function() {
     const contratType = _safeLS.get('menuContratType');
     const btn5 = document.getElementById('btn-module5');
     const btn6 = document.getElementById('btn-module6');
@@ -2326,7 +2411,8 @@ document.addEventListener('DOMContentLoaded', function(){
       document.body.style.background = '#4FB3C2';
       document.querySelector('meta[name="theme-color"]')?.setAttribute('content','#4FB3C2');
     }
-  })();
+  };
+  applyContractHighlight();
 
   let selectedMode = null;
   let selectedGlossaireMode = 'debutant';
@@ -3369,6 +3455,8 @@ function hasConsent(){
       btn.textContent = persoActive ? '✅ Terminer la personnalisation' : '✏️ Personnaliser le menu';
       btn.classList.toggle('active', persoActive);
     }
+    var btnTop = document.getElementById('btnPersoTop');
+    if(btnTop){ btnTop.textContent = persoActive ? '✅ Terminer la personnalisation' : '✏️ Personnaliser le menu'; }
     // Réafficher temporairement les modules cachés en mode perso (atténués)
     if(persoActive){
       var h = getHidden();

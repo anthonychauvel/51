@@ -1,0 +1,24 @@
+Remplacement direct de menu.html — pas de coexistence des deux versions.
+
+Où déposer (racine du dépôt, à côté des fichiers existants) :
+
+hs-Android-cloudfare-production/
+├── menu.html    ← REMPLACE l'ancien (même nom, nouveau contenu)
+├── taiko.html   ← NOUVEAU
+├── sw.js        ← À REMPLACER (version + précache mis à jour)
+├── nouveautes.html
+├── outils.html
+├── manifest.json      (inchangé — start_url pointe déjà vers menu.html)
+└── ... (reste du dépôt inchangé)
+
+Conseil avant d'écraser : garde une copie de l'ancien menu.html quelque part
+en local (ex: menu.html.backup) le temps de valider la nouvelle version en
+prod — si besoin de revenir en arrière, un simple renommage suffit.
+
+Ce qui a changé dans sw.js (uniquement ces 2 points) :
+1. CACHE_NAME : v10.9.20 -> v10.9.22
+   (indispensable : sans le bump de version, les téléphones déjà installés
+   gardent l'ancien menu.html en cache et ne verront jamais le nouveau)
+2. Ajout de "./taiko.html" dans FILES_TO_CACHE, juste après "./nouveautes.html"
+   — même précaution que le fix "nav avalée par le repli menu" (FIX 2026-07-04b).
+   "./menu.html" était déjà précaché, rien à ajouter pour lui.
