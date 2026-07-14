@@ -1,15 +1,31 @@
 1 fichier à remplacer dans le dépôt (chemin identique à l'existant) :
 
-hs-Android-cloudfare-production/menu.html
+hs-Android-cloudfare-production/taiko.html
 
---- Cumul des dernières modifications ---
-1. Cercle "✏️ Perso" du nid d'abeille retiré (doublon de la pill du haut).
-2. Vignettes "Trousse à outils" et "Site web" intégrées à la grille des
-   modules, toujours en dernière position (peu importe le profil).
-3. Nid d'abeille recomposé en formation 3+2 : Sauvegarde/Nouveautés/
-   Réseaux sur la ligne du haut, Présentation/Partager sur la ligne du
-   bas — Réseaux n'est plus un cercle solo isolé, il rejoint le groupe.
+--- Nouveau bouton dans l'onglet Tâches ---
+"📅 Importer les jours fériés de l'année" (même style sbtn que les
+boutons Copier/ICS/Export/Import existants).
 
-92 tests automatisés passés (dont 5 nouveaux vérifiant la formation
-3+2 : 3 cercles à top:0, 2 cercles à top:102px, Réseaux bien dans le
-même conteneur que les autres, plus de cercle solo séparé).
+Au clic : pour chaque jour férié de l'année en cours où le rythme
+prévoit un poste travaillé, une question s'affiche ("Tu travailles ce
+jour férié ?"). Si non → le jour passe automatiquement en repos
+(même mécanisme que les exceptions manuelles). Si oui → rien ne change.
+
+Ne redemande jamais :
+- un jour déjà en repos naturellement (rien à faire)
+- un jour déjà personnalisé (vacances, poste modifié, repos déjà posé…)
+  — aucune exception existante n'est jamais écrasée
+
+Un résumé s'affiche à la fin ("X jour(s) férié(s) sur Y marqué(s) en
+repos"), ou "Rien à faire" si aucun jour férié ne concernait un poste
+travaillé.
+
+14 nouveaux tests passés (dont : exception existante jamais écrasée,
+comptage exact des jours redemandés/changés, cas "rien à faire" avec
+cycle 100% repos et avec cycle déjà totalement personnalisé).
+
+À noter en passant (sans lien avec ce correctif) : une suite de tests
+plus ancienne (taiko_test.js, antérieure à cette session) plante sur un
+sélecteur ".pill" qui ne correspond plus à un rendu de gabarit — aucun
+rapport avec les fériés, je n'y ai pas touché mais tu voudras peut-être
+la regarder à l'occasion.

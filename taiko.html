@@ -517,6 +517,8 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
         <p class="note" style="margin-top:5px;">Heure facultative — utile pour une activité fixe (judo, rendez-vous…). Ponpo te préviendra si elle chevauche un poste.</p>
         <button class="btn" id="td-add" style="width:100%;margin-top:10px;">Ajouter la tâche</button>
       </div>
+      <button class="sbtn" id="td-ferie" style="margin-top:10px;">📅 Importer les jours fériés de l'année</button>
+      <p class="note" style="margin-top:5px;">Pour chaque jour férié où ton rythme prévoit un poste, Ponpo te demande si tu travailles ce jour-là — si non, il passe automatiquement en repos. Les jours déjà en repos ou déjà personnalisés ne sont pas redemandés.</p>
       <div style="margin-top:14px;">
         <p class="sub" style="margin:0 0 8px;">Ponpo suggère :</p>
         <div class="chips" id="td-sugg"></div>
@@ -1954,6 +1956,23 @@ elt('td-add').onclick=function(){
   if(k==='poste'){o.poste=(elt('td-poste')&&elt('td-poste').value)||'M';}
   if(elt('td-hs').value){o.s=elt('td-hs').value;if(elt('td-he').value)o.e=elt('td-he').value;}
   addTodo(o);elt('td-text').value='';elt('td-hs').value='';elt('td-he').value='';};
+elt('td-ferie').onclick=function(){
+  var y=new Date().getFullYear();
+  var list=feries(y),dates=Object.keys(list).sort();
+  var changed=0,asked=0;
+  dates.forEach(function(dISO){
+    if(S.exc[dISO]!==undefined)return; // déjà personnalisé (repos, vacances, poste custom…) : on ne redemande pas
+    var p=posteFor(dISO,true); // ce que le rythme prévoit, sans tenir compte d'une exception
+    if(p==='R'||p==='')return; // déjà repos ou rien de prévu ce jour-là
+    asked++;
+    var travaille=confirm('📅 '+list[dISO]+'\n'+fmtD(pISO(dISO))+'\n\nTu travailles ce jour férié ?');
+    if(!travaille){S.exc[dISO]='R';changed++;}
+  });
+  if(asked===0){alert('Rien à faire : aucun jour férié '+y+' ne tombe sur un poste travaillé (ou tout est déjà personnalisé).');return;}
+  save();
+  if(ACTIVE==='cal'){renderCal();DIRT.cal=0;}else DIRT.cal=1;
+  alert(changed+' jour'+(changed>1?'s':'')+' férié'+(changed>1?'s':'')+' sur '+asked+' marqué'+(changed>1?'s':'')+' en repos.');
+};
 elt('wiz-prev').onclick=function(){if(WSTEP>0){WSTEP--;wizRender();}};
 elt('wiz-next').onclick=function(){
   if(WSTEP<WIZ.length-1){WSTEP++;wizRender();}else wizClose();};
