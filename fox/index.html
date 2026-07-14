@@ -7301,7 +7301,8 @@ async function sendToKitsune() {
   100% { opacity: 0; transform: var(--dx,translateX(80px)) scale(0); }
 }
 
-/* ── Boutons nav M1/M2 dans le HUD ────────────────────────── */
+/* ── Boutons nav M1/M2/M4 dans le HUD ─────────────────────── */
+#hud-buttons { display: flex !important; flex-wrap: wrap !important; gap: 6px !important; row-gap: 6px !important; }
 @media screen and (max-width: 380px) {
   a.hud-nav-btn { font-size: 0.65rem !important; }
   a.hud-nav-btn::before { content: none !important; }
