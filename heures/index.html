@@ -453,7 +453,6 @@ document.addEventListener("DOMContentLoaded", function(){
         <select id="periodSelect" style="min-width:0"></select>
       </div>
       <p id="periodInfo" style="font-size:13px;color:#666;margin:0;line-height:1.5;background:#f4f8fb;border-radius:10px;padding:8px 12px;"></p>
-      <button id="periodLockBtn" onclick="togglePeriodLock()" style="margin-top:8px;width:100%;border-radius:10px;padding:8px 12px;font-size:13px;font-weight:600;cursor:pointer;">🔓 Verrouiller cette période</button>
       <div id="rateContainer"></div>
     </div>
 
@@ -586,6 +585,9 @@ document.addEventListener("DOMContentLoaded", function(){
     <div class="weekday">Jeu</div><div class="weekday">Ven</div><div class="weekday">Sam</div><div class="weekday">Dim</div>
   </div>
   <div class="calendar" id="calendar"></div>
+</div>
+<div class="main-zone" style="background:#fff;padding:10px 16px;border-radius:18px;max-width:900px;margin:8px auto 0;box-shadow:0 2px 8px rgba(0,0,0,.07);display:flex;justify-content:flex-end;">
+  <button type="button" id="periodLockBtn" onclick="togglePeriodLock()" style="display:flex;align-items:center;gap:6px;background:#f4f8fb;border:1px solid #dde6ec;border-radius:99px;padding:6px 12px;font-size:12px;font-weight:600;color:#666;cursor:pointer;">🔓 Verrouiller cette période</button>
 </div>
 <div class="totaux main-zone" id="totaux"></div>
 <div class="action-bar">
