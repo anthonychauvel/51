@@ -1378,6 +1378,12 @@
   </div>
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
+<div class="btn" id="btn-trousse" onclick="location.href='outils.html';" style="margin:0;order:8;background:linear-gradient(160deg,#0d1420,#1a2030);">
+  <img src="icon-renard.png" loading="eager" alt="Trousse à outils du Renard" style="border-radius:28px;">
+</div>
+<div class="btn" id="btn-site" onclick="window.open('https://www.simulateurheuressupfrance.fr','_blank','noopener')" title="Ouvrir simulateurheuressupfrance.fr" style="margin:0;order:9;background:linear-gradient(160deg,#0d1420,#1a2030);">
+  <img src="site-vignette.jpg" loading="lazy" alt="simulateurheuressupfrance.fr" style="border-radius:28px;">
+</div>
 </div><!-- /mod-grid -->
 
 <script>
@@ -1455,7 +1461,7 @@
   </button>
 
   <!-- Nid d'abeille : 5 cercles colorés -->
-  <div style="position:relative;width:300px;height:196px;">
+  <div style="position:relative;width:300px;height:196px;margin:0 auto;">
     <button onclick="openBackupPopup()" style="position:absolute;top:0;left:0;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#2196a6,#0d7a8a);">
       <span style="font-size:26px;line-height:1;">💾</span>Sauvegarde
     </button>
@@ -1463,37 +1469,22 @@
       <span style="font-size:26px;line-height:1;">🆕</span>Nouveautés
       <span id="badgeNew" style="display:none;position:absolute;top:4px;right:8px;background:#b71c1c;color:#fff;border-radius:6px;font-size:9px;padding:1px 5px;font-weight:700;">NEW</span>
     </button>
-    <button id="btnPerso" onclick="togglePersoMode()" style="position:absolute;top:0;left:214px;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#6a1b9a,#ab47bc);">
-      <span style="font-size:26px;line-height:1;">✏️</span>Perso
-    </button>
     <button onclick="openPresentation()" style="position:absolute;top:102px;left:53px;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#1565c0,#42a5f5);">
       <span style="font-size:26px;line-height:1;">📄</span>Présentation
     </button>
     <button onclick="openSharePopup()" style="position:absolute;top:102px;left:160px;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#2e7d32,#66bb6a);">
       <span style="font-size:26px;line-height:1;">📲</span>Partager
     </button>
+    <button onclick="openSocialPopup()" style="position:absolute;top:0;left:214px;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#c62828,#ef5350);">
+      <span style="font-size:26px;line-height:1;">🎬</span>Réseaux
+    </button>
   </div>
-
-  <!-- Réseaux : cercle solo centré -->
-  <button onclick="openSocialPopup()" style="width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#c62828,#ef5350);">
-    <span style="font-size:26px;line-height:1;">🎬</span>Réseaux
-  </button>
 
 </div>
 <button class="btn-hidden" id="btnHidden" onclick="openHiddenDrawer()"
   style="width:90%;max-width:340px;margin:14px auto 0;display:block;">
   👁 Modules masqués&nbsp;<span id="hiddenCount"></span>
 </button>
-
-<!-- Trousse à outils du Renard + accès site web — côte à côte, même taille -->
-<div style="display:flex;justify-content:center;align-items:center;gap:12px;flex-wrap:wrap;width:90%;max-width:402px;margin:0 auto;">
-  <div class="btn" id="btn-trousse" onclick="location.href='outils.html';" style="flex:1 1 150px;width:auto;max-width:190px;margin:0;background:linear-gradient(160deg,#0d1420,#1a2030);">
-    <img src="icon-renard.png" loading="eager" alt="Trousse à outils du Renard" style="border-radius:28px;">
-  </div>
-  <div class="btn" id="btn-site" onclick="window.open('https://www.simulateurheuressupfrance.fr','_blank','noopener')" title="Ouvrir simulateurheuressupfrance.fr" style="flex:1 1 150px;width:auto;max-width:190px;margin:0;background:linear-gradient(160deg,#0d1420,#1a2030);">
-    <img src="site-vignette.jpg" loading="lazy" alt="simulateurheuressupfrance.fr" style="border-radius:28px;">
-  </div>
-</div>
 
 <!-- ══ DROIT À L'ERREUR — BAS DE PAGE ════════════════════════ -->
 <div style="margin:24px 14px 0;background:#12192a;border-radius:16px;overflow:hidden;
