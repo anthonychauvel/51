@@ -908,6 +908,7 @@ body {
 
 <!-- Scripts (ordre inchangé) -->
 <script src="../ccn/conventions-collectives.js"></script>
+<script src="../legi-ref.js"></script>
 <script src="js/articles-loi.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/config.js"></script>
@@ -9618,7 +9619,7 @@ const GLOSSAIRE_BASE = [
   {
     art: 'Sc. #11',
     titre: '1 Nuit isolée',
-    def: 'Nuit = 21h-6h. Compensations spécifiques.',
+    def: 'Nuit = 21h-7h (définition légale par défaut). Compensations spécifiques.',
     ex: '🌙 Travail de Nuit 🟡 Nuit — ⚠️ Majoration applicable',
     mots: ["scenario", "nuit", "faible"],
     liens: []
@@ -10098,7 +10099,7 @@ const GLOSSAIRE_BASE = [
   {
     art: 'Sc. #71',
     titre: 'Congé paternité',
-    def: '28 jours calendaires (dont 7 obligatoires).',
+    def: '25 jours calendaires dont 4 obligatoires (32 jours pour naissances multiples).',
     ex: '👶 Congé Paternité 💚 Congés — ✅ Droit congé paternité',
     mots: ["scenario", "congés", "aucun", "conge"],
     liens: []
@@ -14562,7 +14563,7 @@ const GLOSSAIRE_BASE = [
   {
     art: 'Msg. #29',
     titre: 'Salutation Kitsune — Accueil',
-    def: 'Bonjour [Prénom] ! 🦊 Je connais plus de 100 situations juridiques et tes données personnelles. Qu est-ce qui te préoccupe ?',
+    def: 'Bonjour [Prénom] ! 🦊 Je connais plus de 100 situations juridiques et je peux analyser les heures que tu as saisies dans l\'app. Qu est-ce qui te préoccupe ?',
     ex: 'Message Kitsune dans : Accueil',
     mots: ["kitsune", "message", "salutation_kitsune"],
     liens: []
@@ -14626,7 +14627,7 @@ const GLOSSAIRE_BASE = [
   {
     art: 'Msg. #37',
     titre: 'Limite légale — Info droit',
-    def: '📖 **Travail de nuit** (Art. L3122-1) Période 21h-6h. Travailleur de nuit : ≥3h de nuit ≥2 fois/semaine habituellement OU ≥270h/an (Art. L3122-5). 8h max/nuit, surveillance médicale obligatoire. Majoration selon convention collective.',
+    def: '📖 **Travail de nuit** (Art. L3122-2) Période 21h-7h (au moins 9h consécutives comprenant minuit-5h). Travailleur de nuit : ≥3h de nuit ≥2 fois/semaine habituellement OU ≥270h/an (Art. L3122-5). 8h max/nuit, surveillance médicale obligatoire. Majoration selon convention collective.',
     ex: 'Message Kitsune dans : Info droit',
     mots: ["kitsune", "message", "limite_légale"],
     liens: []
@@ -14634,7 +14635,7 @@ const GLOSSAIRE_BASE = [
   {
     art: 'Msg. #38',
     titre: 'Limite légale — Info droit',
-    def: '📖 **Repos dominical** (Art. L3132-1) Principe général : repos le dimanche. Dérogations encadrées. Majoration minimale +100%.',
+    def: '📖 **Repos dominical** (Art. L3132-3) Principe général : repos le dimanche. Dérogations encadrées. Majoration variable selon le régime de dérogation et la convention collective applicable.',
     ex: 'Message Kitsune dans : Info droit',
     mots: ["kitsune", "message", "limite_légale"],
     liens: []
@@ -14838,7 +14839,7 @@ function renderGlossaire(list, query) {
     // Liens externes supprimés (distribution store)
     const liensHtml = '';
     return `<div class="glossaire-card">
-      <div class="gc-art">${_highlight(g.art, query)}</div>
+      <div class="gc-art">${(typeof LegiRef !== 'undefined') ? LegiRef.html(g.art, function (t) { return _highlight(t, query); }) : _highlight(g.art, query)}</div>
       <div class="gc-titre">${_highlight(g.titre, query)}</div>
       <div class="gc-def">${_highlight(g.def, query)}</div>
       <div class="gc-ex">${_highlight(g.ex, query)}</div>
