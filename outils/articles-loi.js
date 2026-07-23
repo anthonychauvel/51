@@ -30,6 +30,78 @@
      modifiée. Prochaine échéance connue : revalorisation SMIC au 1er janvier
      2027 (sauf nouveau dépassement du seuil +2 % d'inflation déclenchant une
      revalorisation automatique en cours d'année).
+
+   PASSAGE D'AUDIT DU 15/07/2026 (lot 1 — voir tracking-audit-outils.csv) :
+     - ARE (are_min/are_degressif_*) CONFIRMÉS : pas de revalorisation au
+       1er juillet 2026 (Unédic CA du 30/06/2026, communiqué + service-public.fr
+       + unedic.org). Montants du 1er juillet 2025 toujours en vigueur.
+     - Bug corrigé : module-chomage.html utilisait un plancher ARE local
+       (31,97 €) désynchronisé de la valeur confirmée (32,13 €) — corrigé.
+     - Nouveau à surveiller pour la conformité septembre 2026 : loi n° 2026-470
+       du 11/06/2026 (Légifrance : legifrance.gouv.fr/eli/loi/2026/6/11/
+       TRSD2606801L) réduit la durée max. d'indemnisation ARE pour les
+       ruptures conventionnelles homologuées à compter du 1er sept. 2026
+       (18→15 mois si -55 ans, 22,5/27→20,5 mois si 55 ans+). Textes
+       d'application encore attendus à cette date. Note ajoutée dans
+       module-chomage.html et module-rupture.html ; pas encore reflété dans
+       un calcul dédié (le simulateur ne demande pas le motif de rupture).
+     - Chômage BIT : 8,1 % au T1 2026 (Insee, 13/05/2026) — reste sous le
+       seuil de 9 % : le coefficient de contracyclicité 0,75 reste donc
+       d'actualité, mais la tendance est haussière (+0,7 pt sur un an) :
+       à re-vérifier au prochain trimestre Insee.
+     - FMD (forfait mobilités durables) CORRIGÉ : 700€/800€ (limite temporaire
+       2022-2024) remplacés par 600€/900€, en vigueur depuis le 01/01/2025
+       (Art. D3261-15-2 CT ; urssaf.fr ; ecologie.gouv.fr). Bug identique
+       trouvé et corrigé dans module-lexique.html (glossaire, texte figé
+       affichait encore 700/800). Aucun module n'appelait SH.val() pour ces
+       clés — impact live limité à articles-loi.js + module-lexique.html.
+     - avantage_repas (5,50 €) CONFIRMÉ pour 2026 (urssaf.fr).
+     - VALEURS/ARTICLES restant à re-vérifier pour le lot 2 : C2P, saisie sur
+       salaire, PEE/PERCO, AJPA, PreParE — voir tracking-audit-outils.csv
+       pour le détail et le statut des 105 outils (inclusion articles-loi.js,
+       sources vérifiées).
+
+   PASSAGE D'AUDIT DU 16/07/2026 (lot 2) :
+     - c2p_reserve_formation CORRIGÉ : 10 → 20 points. Confirmé par 2 fiches
+       service-public.gouv.fr (F15504, F36326) : "les 20 premiers points du
+       C2P sont obligatoirement affectés à la formation". L'ancienne valeur
+       de 10 semble avoir été une confusion avec un autre seuil du dispositif
+       (plusieurs mécanismes du C2P utilisent aussi le nombre 10). Corrigé
+       aussi dans module-c2p.html (même texte affiché à l'écran).
+     - saisie sur salaire (module-saisie.html) VÉRIFIÉ OK : barème 7 tranches
+       et majoration 145€/mois confirmés identiques à Légifrance (décret
+       n°2025-1299 du 24/12/2025) + service-public.gouv.fr + Éditions Tissot.
+     - jours fériés (module-feries.html) VÉRIFIÉ OK : algorithme de calcul de
+       Pâques (Meeus/Jones/Butcher) contrôlé manuellement pour 2026 (5 avril,
+       donc Ascension 14 mai, Pentecôte 24/25 mai) — correct. Le module
+       s'auto-vérifie déjà en live contre calendrier.api.gouv.fr (officiel),
+       donc risque de dérive très faible pour les années suivantes aussi.
+     - retraite (module-retraite.html) VÉRIFIÉ OK — et bonne nouvelle : la
+       suspension LFSS 2026 de l'âge légal (gel à 62 ans 9 mois pour les
+       générations 1964-1968, dès le 1er septembre 2026, jusqu'en janvier
+       2028 — loi n°2025-1403) y est déjà intégrée avec bascule à la bonne
+       date, y compris le cas particulier des nés au T1 1965. Rien à changer.
+     - Prochain lot : PEE/PERCO, AJPA, PreParE restent à vérifier ; puis
+       attaquer le reste du lot 1 (46 fichiers) — voir tracking-audit-outils.csv.
+   PASSAGE D'AUDIT DU 19/07/2026 (lot 3 — vérification systématique contre droit repo) :
+     - 131 clés d'articles comparées au texte officiel (117 trouvées directement, 6 fichiers
+       vides côté source, 8 à re-vérifier par le web). 4 erreurs de NUMÉRO D'ARTICLE trouvées
+       (le texte affiché était juste, mais rattaché au mauvais article) :
+       · L1237-9 → contenu préavis déplacé vers L1237-10 (article correct) ; L1237-9 redéfini
+         avec son vrai contenu (indemnité de départ retraite). module-preavis.html corrigé.
+       · L3121-47 → contenu modulation 4/9 semaines déplacé vers L3121-45 (article correct) ;
+         L3121-47 redéfini avec son vrai contenu (délai de prévenance 7 jours).
+       · L3142-27 → contenu congé sabbatique 6-11 mois déplacé vers L3142-28 (article correct) ;
+         L3142-27 redéfini (congé proche aidant/présence parentale, 3 mois renouvelables).
+       · L1225-65 → contenu garantie d'emploi au retour éclaté en 2 entrées correctes :
+         L1225-55 (retour congé parental) et L1225-25 (retour congé maternité) ; L1225-65
+         redéfini avec son vrai contenu (congé présence parentale, ancienneté).
+     - D3243-8 (conservation bulletins) VÉRIFIÉ OK : "50 ans ou jusqu'au 75e anniversaire" sont
+       bien 2 seuils alternatifs officiels, pas une erreur — aucune correction nécessaire.
+     - Prochaine étape : vérifier les 8 clés encore sans source croisée (R351-12, L341-1,
+       L431-1, L441-1, L331-3, L161-22, L225-102-1, L341-16, L411-1, L452-5, L461-7, D242-2,
+       L243-16, R441-3) + reprendre la vérification des 111 articles comparés pour les écarts
+       de contenu au-delà des numéros (formulations, seuils secondaires non encore comparés).
    ========================================================================== */
 
 (function (global) {
@@ -74,17 +146,17 @@
 
     /* ----- C2P pénibilité (réforme 1er septembre 2023) ----- */
     c2p_valeur_point: { v: 500,    u: '€',       maj: '2023-09-01', src: 'était 375 € (1 pt formation)' },
-    c2p_reserve_formation:{ v: 10, u: 'points',  maj: '2023-09-01', src: 'points réservés formation (était 20)' },
+    c2p_reserve_formation:{ v: 20, u: 'points',  maj: '2023-09-01', src: 'Les 20 premiers points du C2P sont obligatoirement affectés à la formation (au-delà, usage libre : temps partiel, trimestres retraite, reconversion) — confirmé service-public.gouv.fr (fiches F15504 et F36326). Ancienne valeur de 10 corrigée le 16/07/2026 (source non identifiée à l\'origine).' },
     c2p_mitemps_points:{ v: 10,    u: 'points',  maj: '2023-09-01', src: '= 4 mois mi-temps payé plein' },
     c2p_mitemps_duree:{ v: 4,      u: 'mois',    maj: '2023-09-01', src: 'durée mi-temps (était 3 mois)' },
     c2p_seuil_nuit:   { v: 100,    u: 'nuits/an',maj: '2023-09-01', src: 'travail de nuit (était 120)' },
     c2p_seuil_alternance:{ v: 30,  u: 'nuits/an',maj: '2023-09-01', src: 'équipes alternantes (était 50)' },
     c2p_points_par_facteur:{ v: 4, u: 'points',  maj: '2023-09-01', src: 'par facteur/an' },
 
-    /* ----- Transport / mobilités (Loi de finances 2026) ----- */
-    fmd_plafond_seul: { v: 700,    u: '€/an',    maj: '2026-01-01', src: 'FMD seul, secteur privé' },
-    fmd_plafond_cumul:{ v: 800,    u: '€/an',    maj: '2026-01-01', src: 'cumul FMD + transports en commun' },
-    fmd_plafond_public:{ v: 300,   u: '€/an',    maj: '2026-01-01', src: 'fonction publique' },
+    /* ----- Transport / mobilités ----- */
+    fmd_plafond_seul: { v: 600,    u: '€/an',    maj: '2025-01-01', src: 'Forfait mobilités durables seul, secteur privé — Art. D3261-15-2 code du travail. La limite temporaire de 700 € (2022-2024) n\'a pas été reconduite ; 600 € s\'applique depuis le 1er janvier 2025 (urssaf.fr/employeur/beneficier-exonerations/frais-professionnels ; ecologie.gouv.fr/politiques-publiques/soutien-employeurs-aux-mobilites-durables)' },
+    fmd_plafond_cumul:{ v: 900,    u: '€/an',    maj: '2025-01-01', src: 'Cumul FMD + prise en charge transports en commun — 900 € (contre 800 € auparavant), confirmé urssaf.fr' },
+    fmd_plafond_public:{ v: 300,   u: '€/an',    maj: '—',          src: 'Fonction publique — 300 € max (barème progressif 100/200/300 € selon jours d\'usage, inchangé)' },
     tc_prise_charge:  { v: 0.50,   u: '',        maj: '—',          src: '50 % abonnement TC obligatoire' },
 
     /* ----- Titres-restaurant ----- */
@@ -95,7 +167,7 @@
     saisie_solde_insaisissable:{ v: 651.69, u: '€', maj: '2026-04-01', src: 'Décret n°2026-220 du 30/03/2026 — RSA socle 1 pers.' },
 
     /* ----- Avantages en nature ----- */
-    avantage_repas:   { v: 5.45,   u: '€',       maj: '2026-01-01', src: 'avantage nature repas (forfait)' },
+    avantage_repas:   { v: 5.50,   u: '€',       maj: '2026-01-01', src: 'forfait URSSAF avantage nature repas 2026 (était 5,45 € en 2025) — distinct du MG 4,35 € utilisé en HCR' },
 
     /* ----- Épargne salariale (PASS-indexé) ----- */
     pee_abondement_max:{ v: 3844.8,u: '€/an',    maj: '2026-01-01', src: '8 % PASS — PEE' },
@@ -111,7 +183,7 @@
     ajpa_demi:        { v: 33.32,  u: '€/demi-journée', maj: '2026-01-01', src: 'pour-les-personnes-agees.gouv.fr — demi-journée 2026' },
 
     /* ----- Parentalité ----- */
-    prepare_taux_plein:{ v: 455,   u: '€/mois',  maj: '2026-01-01', src: 'PreParE taux plein (enfant né après 2015)' },
+    prepare_taux_plein:{ v: 459.69,u: '€/mois',  maj: '2026-04-01', src: 'Taux plein — barème officiel caf.fr (Barème Prestation partagée d\'éducation de l\'enfant), en vigueur au 1er avril 2026. Ancienne valeur 455 € corrigée le 16/07/2026. Autres montants du barème : PreParE majorée 751,39 € ; activité ≤ 50 % : 297,17 € ; activité > 50-80 % : 171,42 €' },
     affiliation_maternite:{ v: 6,  u: 'mois',    maj: '2023-12-23', src: 'décret 2023-1410 (était 10 mois)' },
 
     /* ----- Anciennetés & délais clés (Code du travail) ----- */
@@ -160,16 +232,18 @@
       texte:"Ouvre le droit à l'indemnité légale de licenciement dès 8 mois d'ancienneté ininterrompue (sauf faute grave ou lourde)." },
     'L1237-1':  { code:'CT', titre:'Préavis de démission',
       texte:"Le préavis de démission n'est pas fixé par la loi de manière générale : il résulte de la convention collective, des usages ou du contrat de travail." },
-    'L1237-9':  { code:'CT', titre:'Départ volontaire à la retraite — préavis',
+    'L1237-10': { code:'CT', titre:'Départ volontaire à la retraite — préavis',
       texte:"Le salarié qui part volontairement à la retraite respecte un préavis équivalent à celui du licenciement (1 mois entre 6 mois et 2 ans d'ancienneté, 2 mois au-delà)." },
+    'L1237-9':  { code:'CT', titre:'Départ volontaire à la retraite — indemnité',
+      texte:"Ouvre droit à une indemnité de départ à la retraite dont le taux varie selon l'ancienneté (montant/modalités fixés par voie réglementaire) — distincte du préavis (voir L1237-10)." },
     'L1237-11': { code:'CT', titre:'Rupture conventionnelle — principe',
       texte:"Définit la rupture conventionnelle : rupture d'un commun accord du CDI, exclusive de la démission et du licenciement, soumise à homologation." },
     'L1237-13': { code:'CT', titre:'Rupture conventionnelle — indemnité et délais',
       texte:"Fixe l'indemnité spécifique de rupture conventionnelle (au moins égale à l'indemnité légale de licenciement) et le délai de rétractation de 15 jours calendaires." },
     'L1237-14': { code:'CT', titre:'Rupture conventionnelle — homologation',
       texte:"Organise la procédure d'homologation par la DREETS : délai d'instruction de 15 jours ouvrables, homologation tacite à défaut de réponse." },
-    'L1237-33': { code:'CT', titre:'Rupture conventionnelle collective',
-      texte:"Encadre la rupture conventionnelle collective, négociée par accord collectif majoritaire et validée par la DREETS." },
+    'L1237-6': { code:'CT', titre:'Mise à la retraite — préavis employeur',
+      texte:"L'employeur qui décide une mise à la retraite respecte un préavis dont la durée est déterminée conformément à l'article L1234-1 (comme pour un licenciement)." },
 
     /* ----- Maladie / inaptitude / AT-MP ----- */
     'L1225-1':  { code:'CT', titre:'Protection de la grossesse',
@@ -194,12 +268,18 @@
       texte:"60 jours d'arrêt indemnisés (non nécessairement consécutifs) permettent de valider un trimestre d'assurance vieillesse." },
     'L341-1':   { code:'CSS', titre:'Pension d\'invalidité — ouverture',
       texte:"Ouvre droit à pension d'invalidité pour l'assuré présentant une réduction de capacité de travail ou de gain d'au moins deux tiers." },
-    'L341-3':   { code:'CSS', titre:'Catégories d\'invalidité',
+    'L341-4':   { code:'CSS', titre:'Catégories d\'invalidité',
       texte:"Définit les 3 catégories d'invalidité : cat. 1 (capable d'exercer une activité rémunérée), cat. 2 (incapable), cat. 3 (incapable + besoin d'assistance d'une tierce personne)." },
+    'R341-4':   { code:'CSS', titre:'Pension d\'invalidité — plafonds et salaire de comparaison',
+      texte:"Définit le salaire annuel moyen (SAM) et les plafonds catégoriels de la pension d'invalidité (confirmé par l'instruction interministérielle DSS/2A/2026/36 du 26/03/2026)." },
+    'R341-6':   { code:'CSS', titre:'Majoration pour tierce personne (MTP)',
+      texte:"Fixe le montant de la majoration pour tierce personne (MTP), versée en catégorie 3, revalorisé chaque 1er avril (confirmé par l'instruction DSS/2A/2026/36)." },
+    'L341-3':   { code:'CSS', titre:'Invalidité — moment d\'appréciation',
+      texte:"Précise le moment où l'état d'invalidité est apprécié (consolidation, expiration des IJ, stabilisation, ou constatation médicale selon les cas), en tenant compte de la capacité de travail restante et de la situation de l'assuré." },
     'L431-1':   { code:'CSS', titre:'Prestations AT/MP',
       texte:"Énumère les prestations dues en cas d'accident du travail ou de maladie professionnelle (soins, indemnités journalières, rente)." },
     'L441-1':   { code:'CSS', titre:'Déclaration d\'accident du travail',
-      texte:"La victime informe l'employeur dans les 24 h ; l'employeur déclare l'AT à la CPAM dans les 48 h." },
+      texte:"La victime informe l'employeur (principe posé par L441-1 ; délai précis de 24 h fixé par l'article réglementaire R441-1). L'employeur déclare ensuite l'AT à la CPAM (principe posé par L441-2 ; délai précis de 48 h fixé par R441-3)." },
     'L461-1':   { code:'CSS', titre:'Maladies professionnelles',
       texte:"Définit la maladie professionnelle (présomption d'origine via les tableaux). Délai de déclaration : 2 ans à compter de la cessation d'activité ou du certificat médical." },
 
@@ -311,8 +391,10 @@
       texte:"Fixe les taux légaux de majoration : +25 % pour les 8 premières heures supplémentaires, +50 % au-delà (sauf accord prévoyant des taux différents, minimum 10 %)." },
     'L3121-41': { code:'CT', titre:'Aménagement du temps sur l\'année',
       texte:"Autorise l'aménagement du temps de travail sur une période supérieure à la semaine (annualisation) par accord collectif." },
-    'L3121-47': { code:'CT', titre:'Modulation — défaut d\'accord',
-      texte:"En l'absence d'accord, l'employeur peut organiser la durée du travail sur plusieurs semaines dans la limite de 4 semaines (entreprises de moins de 50 salariés : 9 semaines)." },
+    'L3121-45':{ code:'CT', titre:'Modulation — répartition sur plusieurs semaines à défaut d\'accord',
+      texte:"En l'absence d'accord, l'employeur peut organiser la durée du travail sur plusieurs semaines dans la limite de 9 semaines (entreprises de moins de 50 salariés) ou 4 semaines (50 salariés et plus)." },
+    'L3121-47': { code:'CT', titre:'Modulation — délai de prévenance à défaut d\'accord',
+      texte:"À défaut de stipulations dans l'accord de modulation, le délai de prévenance des salariés en cas de changement de durée ou d'horaires de travail est fixé à 7 jours." },
     'L3122-2':  { code:'CT', titre:'Travail de nuit — définition',
       texte:"Définit le travail de nuit (tout travail entre 21 h et 6 h) et la plage horaire de référence." },
     'L3122-5':  { code:'CT', titre:'Travailleur de nuit — statut',
@@ -333,8 +415,12 @@
       texte:"En cas de circonstances exceptionnelles (épidémie, force majeure), le télétravail peut être imposé comme aménagement du poste, sans accord préalable." },
 
     /* --- Maternité / parentalité --- */
-    'L1225-65': { code:'CT', titre:'Garantie d\'emploi au retour',
-      texte:"Garantit au salarié, à l'issue du congé maternité/parental, de retrouver son précédent emploi ou un emploi similaire à rémunération au moins équivalente." },
+    'L1225-55': { code:'CT', titre:'Garantie d\'emploi au retour — congé parental',
+      texte:"À l'issue du congé parental d'éducation (ou du temps partiel associé), le salarié retrouve son précédent emploi ou un emploi similaire à rémunération au moins équivalente." },
+    'L1225-25': { code:'CT', titre:'Garantie d\'emploi au retour — congé maternité',
+      texte:"À l'issue du congé de maternité, la salariée retrouve son précédent emploi (en priorité) ou, à défaut, un emploi similaire à rémunération au moins équivalente." },
+    'L1225-65': { code:'CT', titre:'Congé de présence parentale — ancienneté',
+      texte:"Pendant le congé de présence parentale, la durée du congé est prise en compte en totalité pour les droits liés à l'ancienneté ; le salarié conserve le bénéfice des avantages acquis avant le congé." },
     'L331-3':   { code:'CSS', titre:'Conditions d\'indemnisation maternité',
       texte:"Fixe les conditions d'ouverture des IJ maternité : affiliation minimale (6 mois), seuil de cotisation ou d'heures travaillées." },
 
@@ -423,45 +509,56 @@
       texte:"Définit l'activité partielle : réduction ou suspension d'activité indemnisée, l'employeur percevant une allocation de l'État. Taux dérogatoires possibles en cas de crise." },
 
     /* --- Sabbatique / congés longs --- */
-    'L3142-27':{ code:'CT', titre:'Congé sabbatique — conditions',
-      texte:"Fixe les conditions du congé sabbatique : ancienneté, durée d'activité, durée du congé (6 à 11 mois)." },
+    'L3142-28':{ code:'CT', titre:'Congé sabbatique — durée',
+      texte:"Fixe la durée du congé sabbatique à défaut d'accord : entre 6 mois minimum et 11 mois maximum." },
+    'L3142-27':{ code:'CT', titre:'Congé (proche aidant/présence parentale) — durée à défaut d\'accord',
+      texte:"À défaut d'accord, fixe la durée maximale du congé à 3 mois, renouvelable dans la limite mentionnée à l'article L3142-19 (durée du congé de proche aidant)." },
     'L3142-28':{ code:'CT', titre:'Congé sabbatique — délai entre deux',
       texte:"Le salarié ne doit pas avoir bénéficié, dans les 6 années précédentes, d'un congé sabbatique, d'un congé pour création d'entreprise ou d'un CPF de transition d'au moins 6 mois." },
     'L3142-40':{ code:'CT', titre:'Congé création d\'entreprise',
       texte:"Encadre le congé pour création ou reprise d'entreprise ; l'obligation de loyauté envers l'employeur demeure pendant le congé." },
 
     /* --- CET (compléments) --- */
-    'L3153-3': { code:'CT', titre:'CET — monétisation et épargne retraite',
-      texte:"Permet d'utiliser les droits du CET pour alimenter un plan d'épargne retraite, dans la limite de 10 jours/an avec avantages fiscaux." },
-    'L3154-3': { code:'CT', titre:'CET — liquidation des droits',
-      texte:"Organise la liquidation des droits acquis sur le CET en cas de rupture du contrat ; les sommes sont soumises aux charges sociales." },
+    'L3152-4':{ code:'CT', titre:'CET — financement retraite et garantie',
+      texte:"Prévoit que les droits du CET peuvent être utilisés pour financer des prestations de retraite collectives, ou (au-delà d'un plafond) donnent lieu à un dispositif d'assurance/garantie ou à une indemnité de conversion monétaire. (Remplace l'ancien L3153-3, abrogé en 2016.)" },
+    'L3152-2':{ code:'CT', titre:'CET — liquidation et transfert des droits',
+      texte:"La convention ou l'accord collectif définit les modalités de gestion du CET et détermine les conditions d'utilisation, de liquidation et de transfert des droits d'un employeur à un autre. (Remplace l'ancien L3154-3, abrogé en 2016.)" },
 
     /* --- Épargne salariale (compléments) --- */
     'L3311-1': { code:'CT', titre:'Intéressement — principe',
       texte:"Définit l'intéressement, dispositif facultatif d'épargne salariale lié aux résultats ou performances, mis en place par accord." },
     'L3333-6': { code:'CT', titre:'PEI — plan d\'épargne interentreprises',
       texte:"Encadre le plan d'épargne interentreprises et les conditions d'abondement (Loi Pacte)." },
+    /* Ajouté le 23/07/2026 : module-cet.html citait 'L3334-8-1', qui n'existe pas
+       au corpus (la section s'arrête à L3334-8, sans sous-numérotation). Le
+       libellé a été corrigé, cet article manquait au référentiel. Titre repris
+       du libellé de la page ; le texte explicatif reste à compléter si tu veux
+       l'exposer via data-loi. */
+    'L3334-8': { code:'CT', titre:'Transfert de droits CET vers un plan d\'épargne retraite',
+      texte:"" },
 
     /* --- Invalidité (compléments) --- */
-    'L341-5':  { code:'CSS', titre:'Cumul pension d\'invalidité et revenus',
-      texte:"Fixe les règles de cumul de la pension d'invalidité avec des revenus d'activité et les seuils de réduction." },
+    'L341-12':  { code:'CSS', titre:'Cumul pension d\'invalidité et revenus',
+      texte:"Le service de la pension peut être suspendu en tout ou partie en cas de reprise du travail, au-delà d'un seuil fixé par décret (depuis le 1/04/2022 : cumul intégral jusqu'au salaire antérieur, puis pension réduite de moitié du dépassement au-delà)." },
+    'L341-5':   { code:'CSS', titre:'Pension d\'invalidité — montant minimum',
+      texte:"Le montant minimum de la pension d'invalidité, fixé par décret, ne peut être inférieur au montant de l'allocation aux vieux travailleurs salariés." },
     'L341-16': { code:'CSS', titre:'Pension d\'invalidité — révision',
       texte:"Permet la révision, suspension ou suppression de la pension d'invalidité selon l'évolution de l'état de santé ou des revenus." },
 
     /* --- AT/MP (compléments) --- */
     'L411-1':  { code:'CSS', titre:'Définition de l\'accident du travail',
       texte:"Définit l'accident du travail : accident survenu par le fait ou à l'occasion du travail, quelle qu'en soit la cause." },
-    'L452-5':  { code:'CSS', titre:'Faute inexcusable de l\'employeur',
-      texte:"En cas de faute inexcusable de l'employeur, la victime obtient une majoration de rente et l'indemnisation de préjudices complémentaires." },
+    'L452-5':  { code:'CSS', titre:'Faute intentionnelle de l\'employeur',
+      texte:"Si l'accident résulte d'une faute intentionnelle de l'employeur (distincte de la faute inexcusable, art. L452-1 à L452-4), la victime conserve le droit d'agir en réparation de droit commun contre l'auteur, pour la part du préjudice non couverte par les prestations. (La majoration de rente et l'indemnisation des préjudices complémentaires en cas de faute INEXCUSABLE relèvent des art. L452-2 et L452-3.)" },
     'L461-7':  { code:'CSS', titre:'Maladies professionnelles — déclaration',
       texte:"Précise les modalités et délais de déclaration et de reconnaissance des maladies professionnelles." },
 
     /* --- Alternance --- */
-    'L6325-24':{ code:'CT', titre:'Contrat de professionnalisation — rémunération',
-      texte:"Fixe la rémunération minimale du salarié en contrat de professionnalisation selon l'âge et le niveau de qualification." },
+    'L6325-8':{ code:'CT', titre:'Contrat de professionnalisation — rémunération',
+      texte:"Fixe la rémunération minimale du salarié en contrat de professionnalisation selon l'âge et le niveau de qualification (55 à 100% du SMIC selon les cas ; art. L6325-8 à L6325-10)." },
 
     /* --- Conservation des documents / paie --- */
-    'D242-2':  { code:'CT', titre:'Assiette des cotisations vieillesse',
+    'D242-2':  { code:'CSS', titre:'Assiette des cotisations vieillesse',
       texte:"Précise l'assiette de la cotisation d'assurance vieillesse plafonnée (dans la limite du plafond de la Sécurité sociale)." },
     'D3243-8': { code:'CT', titre:'Conservation du double des bulletins',
       texte:"L'employeur conserve un double des bulletins de paie pendant 5 ans (ou sous forme électronique jusqu'aux 75 ans du salarié)." },
@@ -469,15 +566,16 @@
       texte:"Rend obligatoire la remise d'un bulletin de paie à chaque versement de la rémunération ; conservation conseillée sans limite par le salarié." },
     'L3171-3': { code:'CT', titre:'Décompte du temps de travail',
       texte:"Impose à l'employeur de tenir un décompte du temps de travail (notamment pour les forfaits jours) et de le tenir à disposition." },
-    'R3171-16':{ code:'CT', titre:'Conservation des relevés d\'heures',
+    'D3171-16':{ code:'CT', titre:'Conservation des relevés d\'heures',
       texte:"Fixe à 1 an la durée de conservation des documents de décompte du temps de travail (relevés, pointages). Conseil : 3 ans (prescription salariale)." },
     'L243-16': { code:'CSS', titre:'Justificatifs de cotisations',
       texte:"Précise les obligations de justification et de conservation relatives au versement des cotisations sociales (3 ans)." },
     'R1221-26':{ code:'CT', titre:'Registre unique du personnel',
       texte:"Le registre unique du personnel mentionne les salariés ; les mentions sont conservées 5 ans à compter du départ du salarié." },
-    'R441-3':  { code:'CSS', titre:'Registre des accidents bénins',
+    'L441-4':  { code:'CSS', titre:'Registre des accidents bénins',
       texte:"Autorise, sous conditions, la tenue d'un registre des accidents du travail bénins, conservé 5 ans." },
-
+    'R441-3':  { code:'CSS', titre:'Délai de déclaration employeur',
+      texte:"La déclaration de l'employeur (art. L441-2) doit être faite dans les 48 heures qui suivent la survenance de l'accident, non compris les dimanches et jours fériés." },
   };
 
   /* ──────────────────────────────────────────────────────────────────────
@@ -536,6 +634,25 @@
       var a = ARTICLES[key];
       return a ? ('Art. ' + key + ' ' + a.code) : ('Art. ' + key);
     },
+    /* Même chose, mais cliquable : SH.artLien('L1234-1')
+       -> '<a …>Art. L1234-1 CT</a>' pointant vers le texte officiel.
+
+       À n'utiliser QUE là où le résultat est inséré en HTML (innerHTML,
+       littéral de gabarit…). Pour un usage en textContent, garder SH.art(),
+       sinon le balisage s'afficherait en clair.
+
+       Si l'article est inconnu du référentiel, ou rattaché à un code que le
+       fonds ne couvre pas (transports, commerce), on renvoie le libellé nu :
+       mieux vaut pas de lien qu'un lien mort. */
+    artLien: function (k) {
+      var libelle = SH.art(k);
+      var url = legiUrl(k.replace(/^Art\.?\s*/i, ''));
+      if (!url) return libelle;
+      legiStyle();
+      return '<a class="legi-ref" href="' + url + '" target="_blank"' +
+             ' rel="noopener nofollow" title="Lire le texte officiel de cet article">' +
+             libelle + '</a>';
+    },
     /* Référence sans code (pour les plages "X à Y CODE") : SH.artn('L1234-1') -> "Art. L1234-1" */
     artn: function (k) {
       var key = k.replace(/^Art\.?\s*/i, '');
@@ -583,6 +700,68 @@
        <span data-maj="ijss_max"></span>     → date d'effet (1er juillet 2026)
      Ainsi, pour changer un chiffre ou un texte, on ne touche QUE ce fichier.
      ────────────────────────────────────────────────────────────────────── */
+  /* ──────────────────────────────────────────────────────────────────────
+     Lien vers le texte officiel (MonLegiTexte)
+     Les <span data-art="L3121-27"> ne se contentent plus d'afficher
+     "Art. L3121-27 CT" : le libellé devient cliquable et ouvre le texte
+     intégral. On rend cliquable ce qui est DÉJÀ écrit, sans ajouter de bloc
+     "voir le texte" à côté.
+
+     Pourquoi le champ `code` est indispensable : 1442 numéros existent à la
+     fois dans le code du travail et dans celui de la sécurité sociale
+     (L411-1, L461-1, L441-1…). Le numéro seul ne dirait pas où pointer ;
+     c'est `code` ('CT' ou 'CSS'), déjà renseigné article par article dans la
+     table ci-dessus, qui tranche.
+
+     Un article absent de la table, ou rattaché à un autre code (transports,
+     commerce), reste en texte brut : mieux vaut pas de lien qu'un lien qui
+     tombe sur le mauvais texte.
+     ────────────────────────────────────────────────────────────────────── */
+  var LEGI_BASE = 'https://monlegitexte.heuressupfrance.workers.dev/';
+  var LEGI_CORPUS = { CT: '', CSS: '&code=secu' };
+
+  function legiUrl(key) {
+    var a = ARTICLES[key];
+    if (!a) return null;
+    var suffixe = LEGI_CORPUS[a.code];
+    if (suffixe === undefined) return null;   /* code non couvert par le fonds */
+    return LEGI_BASE + '?art=' + encodeURIComponent(key) + suffixe;
+  }
+
+  function legiStyle() {
+    if (typeof document === 'undefined') return;
+    if (document.getElementById('legi-ref-style')) return;
+    var s = document.createElement('style');
+    s.id = 'legi-ref-style';
+    /* Discret : souligné pointillé, couleur héritée. On signale que c'est
+       cliquable sans transformer les pages en sapin de Noël. */
+    s.textContent =
+      '.legi-ref{color:inherit;text-decoration:underline;' +
+      'text-decoration-style:dotted;text-underline-offset:2px;' +
+      'text-decoration-thickness:1px;cursor:pointer}' +
+      '.legi-ref:hover{text-decoration-style:solid}';
+    (document.head || document.documentElement).appendChild(s);
+  }
+
+  /* Remplit un élément avec le libellé, sous forme de lien si l'article est
+     connu du fonds. Idempotent : ré-hydrater ne produit pas de lien imbriqué,
+     puisqu'on réécrit intégralement le contenu de l'élément. */
+  function poserRefArticle(el, key, libelle) {
+    var url = legiUrl((key || '').replace(/^Art\.?\s*/i, ''));
+    if (!url) { el.textContent = libelle; return; }
+    legiStyle();
+    var a = document.createElement('a');
+    a.className = 'legi-ref';
+    a.href = url;
+    a.target = '_blank';
+    /* nofollow : l'application est indexée, MonLegiTexte ne doit pas l'être. */
+    a.rel = 'noopener nofollow';
+    a.title = 'Lire le texte officiel de cet article';
+    a.textContent = libelle;
+    el.textContent = '';
+    el.appendChild(a);
+  }
+
   function hydrate(root) {
     root = root || document;
     var map = [
@@ -602,7 +781,11 @@
       for (var i = 0; i < els.length; i++) {
         var key = els[i].getAttribute(attr);
         var out = fn(key);
-        if (out) els[i].textContent = out;
+        if (!out) continue;
+        /* Seul data-art devient cliquable. data-artn sert aux plages
+           ("Art. X à Y CODE") : un lien sur une borne serait trompeur. */
+        if (attr === 'data-art') poserRefArticle(els[i], key, out);
+        else els[i].textContent = out;
       }
     });
   }
