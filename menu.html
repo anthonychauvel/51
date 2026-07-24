@@ -3349,6 +3349,45 @@ body.mode-pro #taikoRecap > div{
   border-color:#2E3742 !important;
   box-shadow:0 2px 10px rgba(0,0,0,.45) !important;
 }
+
+/* ── Bandeau du haut en mode sobre ────────────────────────────────────────
+   Favoris et Guide de démarrage gardaient leur teinte turquoise, héritée du
+   profil : deux taches froides au-dessus d'une page métallisée. Elles passent
+   au noir, tout en conservant leur filet d'accent — l'or pour les favoris, un
+   gris clair pour le guide — sinon les deux boutons deviendraient
+   indistinguables l'un de l'autre. */
+body.mode-pro #favDropContainer > button{
+  background:linear-gradient(160deg,#1B2027,#12161B) !important;
+  border-color:rgba(240,192,64,0.45) !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.45) !important;
+}
+body.mode-pro #guideBtn{
+  background:linear-gradient(160deg,#1B2027,#12161B) !important;
+  border-color:#3A444F !important;
+  color:#E8EDF2 !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.45) !important;
+}
+body.mode-pro #ccn-badge{
+  background:linear-gradient(160deg,#1B2027,#12161B) !important;
+  border-color:#2E3742 !important;
+}
+
+/* Titre injecté pour les tuiles qui n'en ont pas : sans lui, masquer l'image
+   les réduisait à une boîte vide — les deux traits horizontaux visibles sous
+   la liste. */
+body.mode-pro .mod-grid .title-sobre{
+  color:#E8EDF2;font-weight:600;letter-spacing:.01em;
+  text-align:left;font-size:13.5px;
+}
+
+/* Le badge « Reprendre » se posait par-dessus le titre sur des lignes courtes.
+   On le ramène à droite, sans chevauchement, et on réserve sa place. */
+body.mode-pro .mod-grid .btn .resume-badge,
+body.mode-pro .mod-grid .btn [class*="reprendre"]{
+  position:absolute !important;right:10px !important;top:50% !important;
+  transform:translateY(-50%) !important;
+}
+body.mode-pro .mod-grid .btn{ position:relative; }
 </style>
 
 <!-- ══ POPUP RÉSEAUX SOCIAUX ════════════════════════════════════ -->
@@ -3988,6 +4027,25 @@ function hasConsent(){
   function appliquer(){
     var on=actif();
     document.body.classList.toggle('mode-pro',on);
+    /* Deux tuiles n'ont aucun élément .title : leur contenu est une image seule
+       (trousse à outils, site des guides). En mode sobre, l'image est masquée
+       et il ne restait donc rien à lire. On leur fabrique un titre à partir du
+       texte alternatif de l'image, qui décrit déjà la destination. */
+    document.querySelectorAll('.mod-grid > *').forEach(function(tuile){
+      if(tuile.querySelector('.title')) return;
+      var t=tuile.querySelector('.title-sobre');
+      if(!on){ if(t) t.remove(); return; }
+      if(t) return;
+      var img=tuile.querySelector('img');
+      var nom=(img&&img.getAttribute('alt'))||'';
+      nom=nom.replace(/\s*du Renard\s*$/i,'').trim();
+      if(!nom) return;
+      var d=document.createElement('div');
+      d.className='title-sobre';
+      d.textContent=nom;
+      tuile.appendChild(d);
+    });
+
     document.querySelectorAll('.mod-grid .title').forEach(function(el){
       /* On conserve le HTML pour pouvoir restaurer à l'identique, mais on
          normalise sur le TEXTE rendu : le HTML contient des entités
@@ -3999,8 +4057,18 @@ function hasConsent(){
       }
       if(on){
         var cle=nu(el.dataset.texteOrigine);
-        el.textContent = RENOMMAGE[cle] ||
-          cle.replace(/^./,function(c){return c.toUpperCase();});
+        if(RENOMMAGE[cle]){
+          el.textContent=RENOMMAGE[cle];
+        }else{
+          /* Aucun renommage prévu : on garde le libellé tel quel, en retirant
+             seulement les emojis et le séparateur qui les suivait. Passer par
+             la forme normalisée aurait mangé les accents et les apostrophes —
+             « Compteur annuel d heures », « Heures mensualisees ». */
+          el.textContent = el.dataset.texteOrigine
+            .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,'')
+            .replace(/^[\s—–\-·]+/,'')
+            .trim();
+        }
       }else{
         el.innerHTML=el.dataset.titreOrigine;
       }

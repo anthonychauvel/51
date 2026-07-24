@@ -112,3 +112,55 @@ Badge ✕ ramené à l'intérieur de la ligne — il était posé en débordemen
 la ligne du dessus sur des rangées courtes. Contour pointillé adouci pour le fond sombre.
 Et le tiroir « Modules masqués » lit désormais le **titre réellement affiché** au lieu de
 noms figés (« Mizuki », « FOX Engine »), donc il suit le mode actif.
+
+
+---
+
+## Corrections d'après la capture du mode sobre
+
+### Les outils et le site des guides avaient disparu
+
+Deux tuiles — **Trousse à outils** et **simulateurheuressupfrance.fr** — n'ont aucun
+élément `.title` : leur contenu est **une image seule**. Le mode sobre masquant les images,
+elles se réduisaient à des boîtes vides. Ce sont les deux traits horizontaux visibles sous
+la liste sur ta capture.
+
+Un titre leur est désormais fabriqué à partir du **texte alternatif de l'image**, qui
+décrit déjà la destination — « Trousse à outils du Renard » devient « Trousse à outils »,
+et la vignette du site donne « simulateurheuressupfrance.fr ». Le titre injecté est retiré
+au retour en mode illustré : rien ne subsiste.
+
+Les dix tuiles sont maintenant lisibles, contre huit auparavant.
+
+### Favoris, Guide de démarrage et badge CCN passent au noir
+
+Ils gardaient leur teinte turquoise héritée du profil : trois taches froides au-dessus
+d'une page métallisée.
+
+Ils passent au même noir que les tuiles, **en conservant leur filet d'accent** — l'or pour
+les favoris, un gris clair pour le guide. Sans cette distinction, les deux boutons
+deviendraient impossibles à différencier l'un de l'autre.
+
+### Un défaut trouvé au passage
+
+Le repli de renommage — pour les tuiles sans correspondance prévue — passait par la forme
+normalisée du titre. Il mangeait les accents et les apostrophes : « Compteur annuel
+**d heures** », « Heures **mensualisees** ».
+
+Il ne retire plus que les emojis et le séparateur qui les suit. Les libellés restent
+intacts.
+
+### Badge « Reprendre »
+
+Il se posait par-dessus le titre sur les lignes courtes du mode sobre. Il est ramené à
+droite, centré verticalement, sans chevauchement.
+
+### Vérifications
+
+| Contrôle | Résultat |
+|---|---|
+| Tuiles vides en mode sobre | 0 sur 10 (était 2) |
+| Accents et apostrophes préservés | oui |
+| Titres injectés retirés au retour | oui |
+| Titres d'origine intacts | oui |
+| Mascottes ou emojis restants | 0 |
