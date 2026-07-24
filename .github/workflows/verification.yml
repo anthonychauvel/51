@@ -70,6 +70,22 @@ jobs:
           cd GrillePaye && python3 tracking-ccn.py >> $GITHUB_STEP_SUMMARY
           echo '```' >> $GITHUB_STEP_SUMMARY
 
+      # Veille : le fonds a-t-il des avenants plus récents que nos grilles ?
+      # C'est la seule étape qui compare les deux dépôts, elle a donc besoin
+      # que la récupération du fonds ait réussi.
+      - name: 1.4 — Veille des grilles
+        continue-on-error: true
+        run: |
+          echo "" >> $GITHUB_STEP_SUMMARY
+          if [ -d _droit/output/ccn ]; then
+            python3 verifier-fraicheur.py --fonds _droit/output/ccn --out /tmp/v.md
+            cat /tmp/v.md >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## Veille des grilles" >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "> Le dossier \`output/ccn\` du fonds n'est pas accessible : veille ignorée." >> $GITHUB_STEP_SUMMARY
+          fi
+
       # Le test 2.1 du cahier de recette demandait un « curl » depuis un
       # terminal, impossible sur téléphone. Il est fait ici.
       - name: 2.1 — MonLegiTexte n'est pas indexable
