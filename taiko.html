@@ -578,6 +578,16 @@ textarea.ip{min-height:64px;resize:vertical;font-size:14px;}
       <button class="sbtn" id="set-export">📤 Exporter les données Taiko (.json)</button>
       <button class="sbtn" id="set-import">📥 Importer une sauvegarde Taiko</button>
       <input type="file" id="set-file" accept=".json,application/json" style="display:none;">
+      <div class="sbtn" style="cursor:default;display:block;text-align:left">
+        <div style="font-weight:700;margin-bottom:2px">📌 Récap du jour sur le menu</div>
+        <div style="font-size:.74rem;opacity:.8;margin-bottom:8px">Ce que tu vois en ouvrant l'application.</div>
+        <div style="display:flex;gap:6px;flex-wrap:wrap">
+          <button class="sbtn recap-opt" data-recap="off"    style="flex:1;min-width:84px">Aucun</button>
+          <button class="sbtn recap-opt" data-recap="light"  style="flex:1;min-width:84px">Discret</button>
+          <button class="sbtn recap-opt" data-recap="full"   style="flex:1;min-width:84px">Complet</button>
+        </div>
+        <div style="font-size:.7rem;opacity:.7;margin-top:7px" id="recap-hint"></div>
+      </div>
       <button class="sbtn danger" id="set-reset">🗑️ Tout effacer (cycle, exceptions, tâches, notes)</button>
     </div>
     <div class="ln" id="set-msg" style="margin-top:12px;display:none;"></div>
@@ -710,7 +720,10 @@ function load(){
     cycle:{anchor:iso(today()),weeks:clone(TPL.libre.w),postes:defPostes()},
     exc:{},notes:{},todos:[],doneRec:{},events:{},lib:[],hist:{}};
 }
-function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}}
+function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
+  /* Le récap publié pour le menu suit l'état : sans cet appel il resterait
+     figé sur la dernière ouverture, et une tâche ajoutée n'apparaîtrait pas. */
+  try{ publierRecap(); }catch(e){}}
 function clone(o){return JSON.parse(JSON.stringify(o));}
 var S=load();
 
@@ -1810,6 +1823,96 @@ function renderTodos(){
 /* ================= Réglages ================= */
 function setMsg(t,ok){var m=elt('set-msg');m.style.display='block';
   m.style.color=ok?'var(--ok)':'var(--shu2)';m.textContent=t;}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   RÉCAP DU JOUR — publié pour le menu principal
+
+   POURQUOI TAIKO L'ÉCRIT LUI-MÊME
+   Le menu pourrait lire TAIKO_V1 et recalculer, mais il devrait alors
+   reproduire toute la logique des cycles, exceptions, fériés et postes. Deux
+   implémentations divergeraient tôt ou tard. Ici, Taiko publie un résumé déjà
+   calculé ; le menu ne fait qu'afficher.
+
+   POURQUOI PLUSIEURS JOURS D'AVANCE
+   Un récap du seul jour courant serait périmé dès le lendemain, et n'aurait
+   de sens que si l'utilisateur ouvre Taiko chaque matin. En publiant les
+   quatorze prochains jours, une ouverture par quinzaine suffit à garder le
+   menu juste.
+   ═══════════════════════════════════════════════════════════════════════════ */
+var RECAP_KEY='TAIKO_RECAP', RECAP_JOURS=14;
+
+function recapMode(){
+  try{ return localStorage.getItem('TAIKO_RECAP_MODE') || 'light'; }
+  catch(e){ return 'light'; }
+}
+
+function publierRecap(){
+  var mode=recapMode();
+  if(mode==='off'){
+    // On retire la clé plutôt que d'y laisser des données : le menu ne doit
+    // rien afficher, et rien ne doit traîner si l'utilisateur a dit non.
+    try{ localStorage.removeItem(RECAP_KEY); }catch(e){}
+    return;
+  }
+  var jours={}, d=today();
+  for(var i=0;i<RECAP_JOURS;i++){
+    var dISO=iso(d), p='';
+    try{ p=posteFor(dISO)||''; }catch(e){}
+    var items=[];
+    try{
+      items=dayItems(dISO).map(function(x){
+        return {h:x.h||'', t:String(x.t||'').slice(0,80)};
+      }).slice(0,6);
+    }catch(e){}
+    var ferie=false;
+    try{ ferie=!!ferieOf(dISO); }catch(e){}
+    // Un jour sans poste ni tâche ni férié n'apporte rien : on ne le publie pas,
+    // ce qui garde la clé légère et permet au menu de ne rien afficher.
+    if(p||items.length||ferie) jours[dISO]={p:p,f:ferie?1:0,i:items};
+    d=addD(d,1);
+  }
+  var charge={
+    v:1,
+    maj:iso(today()),
+    mode:mode,
+    // Le libellé des postes vient des réglages de l'utilisateur : le menu ne
+    // peut pas les deviner, on les embarque.
+    postes:(function(){var o={};try{
+      ORDER.forEach(function(k){ if(S.cycle&&S.cycle.postes&&S.cycle.postes[k])
+        o[k]={n:S.cycle.postes[k].n||k, c:S.cycle.postes[k].c||''}; });
+    }catch(e){} return o;})(),
+    ctx:(function(){try{ return ctxLine()||''; }catch(e){ return ''; }})(),
+    jours:jours
+  };
+  try{ localStorage.setItem(RECAP_KEY, JSON.stringify(charge)); }catch(e){}
+}
+
+function bindRecap(){
+  var boutons=document.querySelectorAll('.recap-opt');
+  var hint=elt('recap-hint');
+  var TXT={
+    off:  "Rien ne s'affiche sur le menu.",
+    light:"Une ligne, uniquement les jours où il y a quelque chose.",
+    full: "La carte complète, tous les jours."
+  };
+  function peindre(){
+    var m=recapMode();
+    Array.prototype.forEach.call(boutons,function(b){
+      var actif=b.getAttribute('data-recap')===m;
+      b.style.outline = actif ? '2px solid currentColor' : '';
+      b.style.opacity = actif ? '1' : '.6';
+    });
+    if(hint) hint.textContent=TXT[m]||'';
+  }
+  Array.prototype.forEach.call(boutons,function(b){
+    b.onclick=function(){
+      try{ localStorage.setItem('TAIKO_RECAP_MODE', b.getAttribute('data-recap')); }catch(e){}
+      peindre(); publierRecap();
+    };
+  });
+  peindre();
+}
+
 function bindSettings(){
   elt('btn-set').onclick=function(){elt('set-msg').style.display='none';elt('set-ov').classList.add('show');};
   elt('set-x').onclick=function(){elt('set-ov').classList.remove('show');};
@@ -2046,7 +2149,8 @@ elt('cal-grid').addEventListener('touchend',function(e){
   if(SWX==null)return;var dx=e.changedTouches[0].clientX-SWX;SWX=null;
   if(Math.abs(dx)>55){if(dx<0)elt('cal-next').click();else elt('cal-prev').click();}},{passive:true});
 document.querySelector('.drum-wrap').onclick=function(){openCheckin();};
-bindSettings();renderTpl();renderWhen();renderAll();
+bindSettings();bindRecap();renderTpl();renderWhen();renderAll();
+try{ publierRecap(); }catch(e){}
 </script>
 </body>
 </html>

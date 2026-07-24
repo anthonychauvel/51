@@ -1324,11 +1324,16 @@
 
 <div style="width:92%;max-width:420px;margin:6px auto 2px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;">
   <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;">Tes modules</span>
-  <button id="profChip" onclick="cycleGridProfile()"
+  <button id="proSwitch" onclick="toggleModePro()" aria-pressed="false">⬛ Passer en mode sobre</button>
+<button id="profChip" onclick="cycleGridProfile()"
     style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;
     border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
     👤 <span id="profChipLbl">Temps plein</span> ▾</button>
 </div>
+<!-- Récap du jour, alimenté par Taiko. Vide et masqué tant que Taiko n'a rien
+     publié : un utilisateur qui n'a jamais ouvert Taiko ne doit voir aucune
+     trace de cette fonctionnalité. -->
+<div id="taikoRecap" style="display:none;margin:0 0 14px;"></div>
 <div class="mod-grid" id="modGrid">
 <div class="btn" id="btn-module5" onclick="go('module5')" style="border:2px solid rgba(108,63,197,0.55);background:linear-gradient(160deg,#ede8ff,#f4f0fd);"><button class="perso-badge" onclick="hideModule('btn-module5',event)" title="Masquer Mizuki">✕</button>
   <img src="images/Temps partiel.PNG" loading="eager" alt="Temps partiel — Mizuki" onerror="this.style.display='none'">
@@ -3221,6 +3226,52 @@ body.perso-mode .btn.hidden-module{opacity:0.35;outline-color:rgba(198,40,40,0.2
 .btn-nouveautes:active{transform:scale(0.97);}
 .btn-nouveautes .badge-new{background:#f0c040;color:#1a1208;font-size:10px;font-weight:800;
   padding:2px 7px;border-radius:6px;margin-left:auto;}
+
+/* ── MODE PRO ─────────────────────────────────────────────────────────────
+   Habillage sobre. Rien n'est supprimé du document : on masque et on
+   neutralise, de sorte que revenir au mode illustré ne demande qu'un
+   basculement de classe. */
+body.mode-pro .mod-grid img,
+body.mode-pro .btn img{ display:none !important; }
+
+/* Les dégradés et bordures colorées sont posés en style inline sur chaque
+   tuile : il faut donc les écraser avec !important, sinon le mode pro n'aurait
+   aucun effet visible. */
+body.mode-pro .mod-grid .btn,
+body.mode-pro .mod-grid .btn-no-img{
+  background:#161a1f !important;
+  border:1px solid #2b333d !important;
+  box-shadow:none !important;
+  min-height:0 !important;
+}
+body.mode-pro .mod-grid .btn:active{ background:#1d232a !important; }
+body.mode-pro .mod-grid .title{
+  color:#e8edf2 !important;
+  font-weight:600;
+  letter-spacing:.01em;
+  text-align:left;
+  font-size:13.5px;
+}
+/* Disposition en liste : plus dense et plus lisible qu'un damier une fois les
+   illustrations retirées, car il ne reste que du texte à comparer. */
+body.mode-pro .mod-grid{
+  display:flex !important;
+  flex-direction:column;
+  gap:7px !important;
+}
+body.mode-pro .mod-grid > *{ width:100% !important; order:0 !important; }
+body.mode-pro #taikoRecap > div{
+  background:#161a1f !important;
+  border-color:#2b333d !important;
+}
+#proSwitch{
+  background:rgba(255,255,255,0.08);
+  border:1px solid rgba(255,255,255,0.18);
+  color:#fff;border-radius:999px;padding:6px 12px;
+  font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;
+  flex-shrink:0;
+}
+body.mode-pro #proSwitch{ background:#1d232a; border-color:#39424d; }
 </style>
 
 <!-- ══ POPUP RÉSEAUX SOCIAUX ════════════════════════════════════ -->
@@ -3672,5 +3723,179 @@ function hasConsent(){
 
 })();
 </script>
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   RÉCAP DU JOUR — lecture de ce que Taiko a publié
+
+   Le menu ne calcule rien : il lit la clé TAIKO_RECAP, écrite par Taiko, qui
+   seul connaît les cycles, exceptions et fériés. Reproduire cette logique ici
+   aurait garanti une divergence à la première évolution.
+
+   Trois états, réglés depuis Taiko :
+     off    — la clé est absente, rien ne s'affiche
+     light  — une ligne, et seulement les jours où il y a quelque chose
+     full   — la carte complète, tous les jours
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var box=document.getElementById('taikoRecap');
+  if(!box) return;
+
+  var JOURS=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  var MOIS=['janvier','février','mars','avril','mai','juin','juillet',
+            'août','septembre','octobre','novembre','décembre'];
+
+  function ech(t){return String(t==null?'':t)
+    .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
+
+  function isoDuJour(){
+    var d=new Date();
+    return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
+           +'-'+String(d.getDate()).padStart(2,'0');
+  }
+
+  var data=null;
+  try{ data=JSON.parse(localStorage.getItem('TAIKO_RECAP')||'null'); }catch(e){}
+  if(!data||!data.jours) return;              // Taiko jamais ouvert, ou récap désactivé
+
+  var ajd=isoDuJour(), j=data.jours[ajd], mode=data.mode||'light';
+
+  /* Mode discret : on ne montre rien un jour sans poste ni tâche. Sans cette
+     règle, un dimanche de repos afficherait une carte vide, ce qui donne
+     surtout envie de désactiver la fonctionnalité. */
+  if(!j && mode!=='full') return;
+
+  var d=new Date(ajd+'T12:00:00');
+  var dateTxt=JOURS[d.getDay()]+' '+d.getDate()+' '+MOIS[d.getMonth()];
+  dateTxt=dateTxt.charAt(0).toUpperCase()+dateTxt.slice(1);
+
+  var poste=null;
+  if(j&&j.p&&data.postes&&data.postes[j.p]) poste=data.postes[j.p];
+  var items=(j&&j.i)||[];
+
+  var titre=dateTxt;
+  if(j&&j.f) titre+=' · Jour férié';
+  else if(poste) titre+=' · '+poste.n;
+  else if(j&&!j.p) titre+=' · Repos';
+
+  var couleur=(poste&&poste.c)||'#5B8DEF';
+  var h='';
+  h+='<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);'
+    +'border-left:3px solid '+ech(couleur)+';border-radius:12px;padding:12px 14px;">';
+  h+='<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">';
+  h+='<div style="font-weight:700;font-size:13px;color:#fff">'+ech(titre)+'</div>';
+  h+='<button onclick="go(\'taiko\')" style="background:rgba(255,255,255,0.10);'
+    +'border:1px solid rgba(255,255,255,0.20);color:#fff;border-radius:999px;'
+    +'padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'
+    +'flex-shrink:0">Ouvrir</button>';
+  h+='</div>';
+
+  if(mode==='full'&&data.ctx){
+    h+='<div style="font-size:11.5px;opacity:.72;color:#fff;margin-top:5px;font-style:italic">'
+      +ech(data.ctx)+'</div>';
+  }
+
+  if(items.length){
+    h+='<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">';
+    items.slice(0,4).forEach(function(it){
+      h+='<div style="font-size:12px;color:#fff;opacity:.9;display:flex;gap:7px">'
+        +(it.h?'<span style="opacity:.6;font-variant-numeric:tabular-nums;flex-shrink:0">'+ech(it.h)+'</span>':'')
+        +'<span>'+ech(it.t)+'</span></div>';
+    });
+    if(items.length>4){
+      h+='<div style="font-size:11px;opacity:.6;color:#fff">+ '+(items.length-4)+' autre(s)</div>';
+    }
+    h+='</div>';
+  } else if(mode==='full'){
+    h+='<div style="font-size:12px;opacity:.6;color:#fff;margin-top:6px">Rien de prévu aujourd\'hui.</div>';
+  }
+  h+='</div>';
+
+  box.innerHTML=h;
+  box.style.display='block';
+})();
+</script>
+
+<script>
+/* ═══════════════════════════════════════════════════════════════════════════
+   MODE PRO — habillage sobre, sans mascotte
+
+   POURQUOI
+   L'univers des renards est un parti pris assumé, mais il ne convient pas à
+   tous les usages : un responsable RH ne montrera pas « 🦊 Mizuki » en réunion.
+
+   CE N'EST PAS QU'UNE PEAU
+   Le vrai obstacle n'est pas esthétique mais lexical : « Mizuki », « Zenji »,
+   « Lumina » ne disent rien de ce que fait le module. Charmant pour un habitué,
+   opaque pour un nouveau venu. Le mode pro renomme donc les tuiles par leur
+   fonction, en plus d'en retirer l'illustration.
+
+   AUCUN CONTENU NE CHANGE : ni les calculs, ni les données, ni la navigation.
+   ═══════════════════════════════════════════════════════════════════════════ */
+(function(){
+  var CLE='MENU_MODE_PRO';
+
+  /* Renommage fonctionnel. La clé est le titre affiché aujourd'hui, la valeur
+     ce qu'il devient. On compare sur le texte débarrassé des emojis, pour ne
+     pas dépendre de leur présence exacte. */
+  var RENOMMAGE={
+    'mizuki temps partiel'            : 'Temps partiel & heures complémentaires',
+    'zenji cadres forfait'            : 'Cadres & forfait jours',
+    'lumina grilles ccn 2026'         : 'Grilles de salaire par convention',
+    'nuit astreinte primes'           : 'Nuit, astreintes & primes',
+    'mon compagnon d analyse'         : 'Analyse de conformité',
+    'ma prediction sante'             : 'Charge de travail & récupération',
+    'simulateur de compteur annuel'   : 'Compteur annuel d\'heures',
+    'simulateur d heures mensualisees': 'Heures mensualisées'
+  };
+
+  function nu(t){
+    return String(t||'')
+      .replace(/[\u{1F300}-\u{1FAFF}\u{2600}-\u{27BF}\u{FE0F}]/gu,' ')
+      .normalize('NFD').replace(/[\u0300-\u036f]/g,'')
+      .toLowerCase().replace(/[^a-z0-9]+/g,' ').trim();
+  }
+
+  function actif(){
+    try{ return localStorage.getItem(CLE)==='1'; }catch(e){ return false; }
+  }
+
+  function appliquer(){
+    var on=actif();
+    document.body.classList.toggle('mode-pro',on);
+    document.querySelectorAll('.mod-grid .title').forEach(function(el){
+      /* On conserve le HTML pour pouvoir restaurer à l'identique, mais on
+         normalise sur le TEXTE rendu : le HTML contient des entités
+         (« &amp; ») qui se transformeraient en mot parasite « amp » et
+         empêcheraient toute correspondance. */
+      if(!el.dataset.titreOrigine){
+        el.dataset.titreOrigine=el.innerHTML;
+        el.dataset.texteOrigine=el.textContent;
+      }
+      if(on){
+        var cle=nu(el.dataset.texteOrigine);
+        el.textContent = RENOMMAGE[cle] ||
+          cle.replace(/^./,function(c){return c.toUpperCase();});
+      }else{
+        el.innerHTML=el.dataset.titreOrigine;
+      }
+    });
+    var b=document.getElementById('proSwitch');
+    if(b){
+      b.setAttribute('aria-pressed',on?'true':'false');
+      b.textContent = on ? '🦊 Revenir au mode illustré' : '⬛ Passer en mode sobre';
+    }
+  }
+
+  window.toggleModePro=function(){
+    try{ localStorage.setItem(CLE, actif()?'0':'1'); }catch(e){}
+    appliquer();
+  };
+
+  if(document.readyState==='loading')
+    document.addEventListener('DOMContentLoaded',appliquer);
+  else appliquer();
+})();
+</script>
+
 </body>
 </html>
