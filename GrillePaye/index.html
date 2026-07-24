@@ -287,6 +287,16 @@ body{font-family:var(--fb);background:var(--iv);color:var(--ch);min-height:100dv
 .kpi-card{background:var(--bl);border:1px solid rgba(26,23,20,.06);border-radius:var(--r16);padding:11px;text-align:center}
 .kpi-val{font-size:1.6rem;font-weight:700;font-family:var(--fm);line-height:1}
 .kpi-lbl{font-size:.54rem;color:var(--sa);margin-top:4px;text-transform:uppercase;letter-spacing:.06em}
+/* Compteurs de l'onglet « Nos sources ». Grille dédiée plutôt que .kpi-grid :
+   les libellés y sont plus longs (« Non couvertes ») et se faisaient tronquer
+   dans la largeur d'une carte sur téléphone. Ici ils passent sur deux lignes
+   au lieu d'être coupés. */
+.suivi-kpi{display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:13px}
+@media(max-width:620px){.suivi-kpi{grid-template-columns:1fr 1fr}}
+.suivi-kpi .kpi-card{padding:10px 6px}
+.suivi-kpi .kpi-val{font-size:1.45rem}
+.suivi-kpi .kpi-lbl{font-size:.56rem;letter-spacing:.02em;text-transform:none;
+  line-height:1.25;margin-top:5px;white-space:normal;overflow-wrap:anywhere}
 .progress-bar{height:8px;border-radius:99px;background:var(--iv2);overflow:hidden;margin:4px 0}
 .progress-fill{height:100%;border-radius:99px;transition:width .7s cubic-bezier(.4,0,.2,1)}
 
@@ -1839,7 +1849,7 @@ body { padding-top: env(safe-area-inset-top) !important; }
     et la référence sur laquelle repose le montant.</div>
   </div>
 
-  <div class="kpi-grid" id="suivi-kpi"></div>
+  <div class="suivi-kpi" id="suivi-kpi"></div>
 
   <div class="card">
     <div class="hst">Chercher une convention</div>
@@ -4315,8 +4325,12 @@ function renderSuivi(){
   if(!SUIVI){ liste.innerHTML='<div style="text-align:center;padding:16px;color:var(--sa)">Chargement…</div>'; return; }
 
   const L=SUIVI._libelles||{}, S=SUIVI._stats||{};
+  /* Libellés courts : ceux du fichier public (« En cours de sourçage ») sont
+     trop longs pour une carte de compteur sur téléphone. */
+  const COURT={verifiee:'Vérifiées',sourcee:'Sourcées',estimation:'Estimations',
+               encours:'En cours',absente:'Non couvertes'};
   kpi.innerHTML=['verifiee','estimation','encours','absente'].map(k=>
-    `<div class="kpi-card"><div class="kpi-val">${S[k]||0}</div><div class="kpi-lbl">${(L[k]||k).replace(' de sourçage','')}</div></div>`
+    `<div class="kpi-card"><div class="kpi-val">${S[k]||0}</div><div class="kpi-lbl">${COURT[k]||L[k]||k}</div></div>`
   ).join('');
 
   const q=(document.getElementById('suivi-q')||{}).value||'';
