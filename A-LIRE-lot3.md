@@ -164,3 +164,47 @@ droite, centré verticalement, sans chevauchement.
 | Titres injectés retirés au retour | oui |
 | Titres d'origine intacts | oui |
 | Mascottes ou emojis restants | 0 |
+
+
+---
+
+## Deux derniers défauts, d'après la capture du 26
+
+### Les lignes « Trousse à outils » et « simulateurheuressupfrance.fr » étaient plus basses
+
+Une fois l'image masquée, c'est le `.title` qui donne sa hauteur à la ligne — par ses
+marges (`margin-top:8px`, `margin-bottom:12px`) et son retrait (`padding:0 12px`). Le titre
+que j'injecte pour ces deux tuiles n'avait aucune de ces valeurs : elles se retrouvaient
+deux fois plus basses que les huit autres, et le texte collé au bord.
+
+Le titre injecté reprend désormais la géométrie exacte de `.title`.
+
+### Le flash au passage illustré ↔ sobre
+
+Deux causes, cumulées.
+
+**`background-attachment: fixed`** sur le fond métallisé. C'est un déclencheur classique de
+repeints coûteux sur Safari iOS : à chaque défilement, le navigateur doit recomposer le
+fond. Retiré — le rendu est identique sans lui.
+
+**La transition du `body`.** La feuille de style porte `transition: background 0.5s ease`.
+Passer d'une couleur unie à un empilement de trois dégradés ne s'interpole pas : le
+navigateur ne sait pas quoi animer, il saute. C'est ce saut que tu voyais.
+
+Les transitions sont maintenant **figées le temps du basculement**, puis rendues au
+deuxième cycle d'affichage. La bascule devient instantanée et nette.
+
+Un garde-fou a été ajouté : si `requestAnimationFrame` n'est pas disponible, un délai prend
+le relais. Sans lui, une exception à cet endroit aurait laissé les transitions désactivées
+pour le reste de la session — un défaut bien plus gênant que celui qu'on corrige.
+
+### Vérifications
+
+| Contrôle | Résultat |
+|---|---|
+| Géométrie du titre injecté | identique à `.title` |
+| `background-attachment` | retiré |
+| Classe anti-transition posée puis retirée | oui |
+| Repli si `requestAnimationFrame` absent | oui |
+| Les 10 tuiles restent lisibles | oui |
+| Mascottes ou emojis en mode sobre | 0 |
