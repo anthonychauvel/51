@@ -1324,7 +1324,7 @@
 
 <div style="width:92%;max-width:420px;margin:6px auto 2px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;">
   <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;">Tes modules</span>
-  <button id="proSwitch" onclick="toggleModePro()" aria-pressed="false">⬛ Passer en mode sobre</button>
+  <button id="proSwitch" onclick="toggleModePro()" aria-pressed="false">Sobre</button>
 <button id="profChip" onclick="cycleGridProfile()"
     style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;
     border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
@@ -3273,23 +3273,17 @@ body.mode-pro #taikoRecap > div{
 }
 body.mode-pro #proSwitch{ background:#1d232a; border-color:#39424d; }
 
-/* Le nid d'abeille et la vignette MonLegiTexte portent leurs couleurs en style
-   inline, hors de .mod-grid : sans ces règles, le mode sobre laissait cinq
-   cercles vifs et une vignette dorée au milieu d'une page grise. */
+/* Le nid d'abeille et la vignette MonLegiTexte GARDENT leurs couleurs en mode
+   sobre. Les avoir neutralisés donnait une page uniformément grise, sans point
+   d'accroche : ces cinq cercles et cette vignette sont les seules taches de
+   couleur de l'écran, et c'est précisément ce qui l'empêche d'être terne.
+   Seule leur ombre est renforcée pour qu'ils se détachent du fond métallisé. */
 body.mode-pro #nidAbeille button{
-  background:#161A1F !important;
-  border:1px solid #2B333D !important;
-  box-shadow:none !important;
-  color:#E8EDF2 !important;
-  text-shadow:none !important;
+  box-shadow:0 6px 20px rgba(0,0,0,.55) !important;
 }
-body.mode-pro #nidAbeille button span{ filter:grayscale(1) opacity(.55); }
 body.mode-pro #vignetteLegi{
-  background:#161A1F !important;
-  border-color:#2B333D !important;
-  box-shadow:none !important;
+  box-shadow:0 14px 38px rgba(0,0,0,.6) !important;
 }
-body.mode-pro #vignetteLegi img{ filter:grayscale(1) opacity(.75); }
 
 /* ── Personnalisation en mode sobre ──────────────────────────────────────
    Le badge ✕ est posé à top:-10px;right:-10px, c'est-à-dire DÉBORDANT de la
@@ -3317,6 +3311,44 @@ body.mode-pro.perso-mode .mod-grid .btn.hidden-module{
 }
 /* La place du badge est réservée, sinon le titre passerait dessous. */
 body.mode-pro.perso-mode .mod-grid .title{ padding-right:44px; }
+
+/* ── Fond du mode sobre ───────────────────────────────────────────────────
+   Le fond du menu vient du profil (turquoise en Temps plein). Conservé tel
+   quel derrière des tuiles sombres, il donnait un rendu bâtard : ni coloré ni
+   sobre. On le remplace par un noir métallisé.
+
+   Trois couches superposées, toutes en dégradés — aucune image, donc aucun
+   octet ajouté et un rendu net à toute densité d'écran :
+     · un halo froid en haut à gauche, qui simule une source de lumière ;
+     · un halo chaud en bas à droite, qui réchauffe et évite le gris mort ;
+     · un dégradé de base anthracite, légèrement bleuté.
+   Le résultat garde de la profondeur là où un aplat noir paraîtrait plat. */
+body.mode-pro{
+  background:
+    radial-gradient(1100px 620px at 12% -8%,  rgba(120,150,190,.20), transparent 60%),
+    radial-gradient(900px 520px at 88% 108%,  rgba(190,150,110,.13), transparent 62%),
+    linear-gradient(168deg, #14181D 0%, #0D1116 46%, #0A0D11 100%) !important;
+  background-attachment:fixed !important;
+}
+/* Un liseré clair au sommet : c'est ce qui donne l'impression de métal poli
+   plutôt que de peinture mate. Purement décoratif, sans interaction. */
+body.mode-pro::before{
+  content:'';position:fixed;top:0;left:0;right:0;height:180px;pointer-events:none;
+  background:linear-gradient(180deg, rgba(255,255,255,.055), transparent);
+  z-index:0;
+}
+/* Les tuiles gagnent un très léger relief pour ne pas se fondre dans le fond. */
+body.mode-pro .mod-grid .btn,
+body.mode-pro .mod-grid .btn-no-img{
+  background:linear-gradient(160deg,#1B2027,#12161B) !important;
+  border:1px solid #2E3742 !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.45), inset 0 1px 0 rgba(255,255,255,.05) !important;
+}
+body.mode-pro #taikoRecap > div{
+  background:linear-gradient(160deg,#1B2027,#12161B) !important;
+  border-color:#2E3742 !important;
+  box-shadow:0 2px 10px rgba(0,0,0,.45) !important;
+}
 </style>
 
 <!-- ══ POPUP RÉSEAUX SOCIAUX ════════════════════════════════════ -->
@@ -3776,16 +3808,18 @@ function hasConsent(){
 </script>
 <script>
 /* ═══════════════════════════════════════════════════════════════════════════
-   RÉCAP DU JOUR — lecture de ce que Taiko a publié
+   ENCART DU JOUR — lecture de ce que Taiko a publié
 
    Le menu ne calcule rien : il lit la clé TAIKO_RECAP, écrite par Taiko, qui
-   seul connaît les cycles, exceptions et fériés. Reproduire cette logique ici
-   aurait garanti une divergence à la première évolution.
+   seul connaît les cycles, exceptions et fériés.
 
-   Trois états, réglés depuis Taiko :
-     off    — la clé est absente, rien ne s'affiche
-     light  — une ligne, et seulement les jours où il y a quelque chose
-     full   — la carte complète, tous les jours
+   PAS DE BOUTON D'OUVERTURE : il menait à taiko/index.html alors que le
+   fichier est taiko.html, et faisait donc échouer la navigation. La to-do liste
+   reste accessible par son propre bouton, plus haut dans la page.
+
+   NAVIGATION PAR BALAYAGE : glisser vers la gauche avance d'un jour, vers la
+   droite recule. Taiko publie quatorze jours d'avance, on autorise donc de
+   remonter jusqu'à trois jours en arrière et d'aller jusqu'au bout du publié.
    ═══════════════════════════════════════════════════════════════════════════ */
 (function(){
   var box=document.getElementById('taikoRecap');
@@ -3794,75 +3828,116 @@ function hasConsent(){
   var JOURS=['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
   var MOIS=['janvier','février','mars','avril','mai','juin','juillet',
             'août','septembre','octobre','novembre','décembre'];
+  var MIN_OFFSET=-3, offset=0;
 
   function ech(t){return String(t==null?'':t)
     .replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');}
 
-  function isoDuJour(){
-    var d=new Date();
+  function isoDecale(n){
+    var d=new Date(); d.setHours(12,0,0,0); d.setDate(d.getDate()+n);
     return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')
            +'-'+String(d.getDate()).padStart(2,'0');
   }
 
   var data=null;
   try{ data=JSON.parse(localStorage.getItem('TAIKO_RECAP')||'null'); }catch(e){}
-  if(!data||!data.jours) return;              // Taiko jamais ouvert, ou récap désactivé
+  if(!data||!data.jours) return;
 
-  var ajd=isoDuJour(), j=data.jours[ajd], mode=data.mode||'light';
+  var mode=data.mode||'light';
+  var maxOffset=0;
+  Object.keys(data.jours).forEach(function(k){
+    var d=Math.round((new Date(k+'T12:00:00')-new Date(isoDecale(0)+'T12:00:00'))/864e5);
+    if(d>maxOffset) maxOffset=d;
+  });
 
-  /* Mode discret : on ne montre rien un jour sans poste ni tâche. Sans cette
-     règle, un dimanche de repos afficherait une carte vide, ce qui donne
-     surtout envie de désactiver la fonctionnalité. */
-  if(!j && mode!=='full') return;
+  function dessiner(){
+    var jISO=isoDecale(offset), j=data.jours[jISO];
 
-  var d=new Date(ajd+'T12:00:00');
-  var dateTxt=JOURS[d.getDay()]+' '+d.getDate()+' '+MOIS[d.getMonth()];
-  dateTxt=dateTxt.charAt(0).toUpperCase()+dateTxt.slice(1);
+    /* Mode discret : rien un jour sans poste ni tâche — mais uniquement pour
+       AUJOURD'HUI. Une fois que l'utilisateur navigue, il attend une réponse,
+       même vide, sinon l'encart disparaîtrait sous son doigt. */
+    if(!j && mode!=='full' && offset===0){ box.style.display='none'; return; }
 
-  var poste=null;
-  if(j&&j.p&&data.postes&&data.postes[j.p]) poste=data.postes[j.p];
-  var items=(j&&j.i)||[];
+    var d=new Date(jISO+'T12:00:00');
+    var dateTxt=JOURS[d.getDay()]+' '+d.getDate()+' '+MOIS[d.getMonth()];
+    dateTxt=dateTxt.charAt(0).toUpperCase()+dateTxt.slice(1);
 
-  var titre=dateTxt;
-  if(j&&j.f) titre+=' · Jour férié';
-  else if(poste) titre+=' · '+poste.n;
-  else if(j&&!j.p) titre+=' · Repos';
+    var poste=(j&&j.p&&data.postes&&data.postes[j.p])?data.postes[j.p]:null;
+    var items=(j&&j.i)||[];
 
-  var couleur=(poste&&poste.c)||'#5B8DEF';
-  var h='';
-  h+='<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);'
-    +'border-left:3px solid '+ech(couleur)+';border-radius:12px;padding:12px 14px;">';
-  h+='<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">';
-  h+='<div style="font-weight:700;font-size:13px;color:#fff">'+ech(titre)+'</div>';
-  h+='<button onclick="go(\'taiko\')" style="background:rgba(255,255,255,0.10);'
-    +'border:1px solid rgba(255,255,255,0.20);color:#fff;border-radius:999px;'
-    +'padding:4px 11px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;'
-    +'flex-shrink:0">Ouvrir</button>';
-  h+='</div>';
+    var titre=dateTxt;
+    if(j&&j.f) titre+=' · Jour férié';
+    else if(poste) titre+=' · '+poste.n;
+    else titre+=' · Repos';
 
-  if(mode==='full'&&data.ctx){
-    h+='<div style="font-size:11.5px;opacity:.72;color:#fff;margin-top:5px;font-style:italic">'
-      +ech(data.ctx)+'</div>';
-  }
+    var couleur=(poste&&poste.c)||'#5B8DEF';
+    var h='';
+    h+='<div style="background:rgba(255,255,255,0.06);border:1px solid rgba(255,255,255,0.14);'
+      +'border-left:3px solid '+ech(couleur)+';border-radius:12px;padding:12px 14px;'
+      +'touch-action:pan-y;user-select:none;-webkit-user-select:none">';
 
-  if(items.length){
-    h+='<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">';
-    items.slice(0,4).forEach(function(it){
-      h+='<div style="font-size:12px;color:#fff;opacity:.9;display:flex;gap:7px">'
-        +(it.h?'<span style="opacity:.6;font-variant-numeric:tabular-nums;flex-shrink:0">'+ech(it.h)+'</span>':'')
-        +'<span>'+ech(it.t)+'</span></div>';
-    });
-    if(items.length>4){
-      h+='<div style="font-size:11px;opacity:.6;color:#fff">+ '+(items.length-4)+' autre(s)</div>';
+    h+='<div style="display:flex;align-items:center;gap:8px;justify-content:space-between">';
+    h+='<div style="font-weight:700;font-size:13px;color:#fff;line-height:1.3">'+ech(titre)+'</div>';
+    /* Deux chevrons discrets : sans eux, rien n'indiquerait que l'encart se
+       balaie. Ils servent aussi de repli quand le geste passe mal. */
+    h+='<div style="display:flex;gap:4px;flex-shrink:0">'
+      +'<button data-nav="-1" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);'
+      +'color:#fff;border-radius:8px;width:26px;height:26px;font-size:13px;cursor:pointer;'
+      +'font-family:inherit;padding:0" aria-label="Jour précédent">‹</button>'
+      +'<button data-nav="1" style="background:rgba(255,255,255,0.10);border:1px solid rgba(255,255,255,0.18);'
+      +'color:#fff;border-radius:8px;width:26px;height:26px;font-size:13px;cursor:pointer;'
+      +'font-family:inherit;padding:0" aria-label="Jour suivant">›</button></div>';
+    h+='</div>';
+
+    if(offset===0 && mode==='full' && data.ctx){
+      h+='<div style="font-size:11.5px;opacity:.72;color:#fff;margin-top:5px;font-style:italic">'
+        +ech(data.ctx)+'</div>';
+    }
+
+    if(items.length){
+      h+='<div style="margin-top:8px;display:flex;flex-direction:column;gap:3px">';
+      items.slice(0,4).forEach(function(it){
+        h+='<div style="font-size:12px;color:#fff;opacity:.9;display:flex;gap:7px">'
+          +(it.h?'<span style="opacity:.6;font-variant-numeric:tabular-nums;flex-shrink:0">'+ech(it.h)+'</span>':'')
+          +'<span>'+ech(it.t)+'</span></div>';
+      });
+      if(items.length>4){
+        h+='<div style="font-size:11px;opacity:.6;color:#fff">+ '+(items.length-4)+' autre(s)</div>';
+      }
+      h+='</div>';
+    } else {
+      h+='<div style="font-size:12px;opacity:.55;color:#fff;margin-top:6px">Rien de prévu.</div>';
     }
     h+='</div>';
-  } else if(mode==='full'){
-    h+='<div style="font-size:12px;opacity:.6;color:#fff;margin-top:6px">Rien de prévu aujourd\'hui.</div>';
-  }
-  h+='</div>';
 
-  box.innerHTML=h;
-  box.style.display='block';
+    box.innerHTML=h;
+    box.style.display='block';
+
+    box.querySelectorAll('[data-nav]').forEach(function(b){
+      b.onclick=function(e){ e.stopPropagation(); bouger(+b.getAttribute('data-nav')); };
+    });
+  }
+
+  function bouger(n){
+    var v=offset+n;
+    if(v<MIN_OFFSET||v>maxOffset) return;   // pas de rebouclage : on s'arrête aux bornes
+    offset=v; dessiner();
+  }
+
+  /* Le geste n'est pris que s'il est franchement horizontal : sinon on volerait
+     le défilement vertical de la page, ce qui rendrait le menu pénible. */
+  var x0=null,y0=null;
+  box.addEventListener('touchstart',function(e){
+    x0=e.touches[0].clientX; y0=e.touches[0].clientY;
+  },{passive:true});
+  box.addEventListener('touchend',function(e){
+    if(x0==null) return;
+    var dx=e.changedTouches[0].clientX-x0, dy=e.changedTouches[0].clientY-y0;
+    x0=null;
+    if(Math.abs(dx)>45 && Math.abs(dx)>Math.abs(dy)*1.6) bouger(dx<0?1:-1);
+  },{passive:true});
+
+  dessiner();
 })();
 </script>
 
@@ -3933,7 +4008,10 @@ function hasConsent(){
     var b=document.getElementById('proSwitch');
     if(b){
       b.setAttribute('aria-pressed',on?'true':'false');
-      b.textContent = on ? '🦊 Revenir au mode illustré' : '⬛ Passer en mode sobre';
+      /* Libellés très courts : « Revenir au mode illustré » débordait de la
+         rangée sur un écran de téléphone et poussait le sélecteur de profil
+         hors de l'écran. */
+      b.textContent = on ? 'Illustré' : 'Sobre';
     }
   }
 

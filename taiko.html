@@ -721,9 +721,20 @@ function load(){
     exc:{},notes:{},todos:[],doneRec:{},events:{},lib:[],hist:{}};
 }
 function save(){try{localStorage.setItem(KEY,JSON.stringify(S));}catch(e){}
-  /* Le récap publié pour le menu suit l'état : sans cet appel il resterait
-     figé sur la dernière ouverture, et une tâche ajoutée n'apparaîtrait pas. */
-  try{ publierRecap(); }catch(e){}}
+  /* Le récap suit l'état, mais de façon DIFFÉRÉE. save() peut être appelé
+     plusieurs fois par seconde (glissement du sélecteur de couleur, saisie
+     d'un champ) ; republier 14 jours à chaque appel gelait l'interface le
+     temps du recalcul. On ne publie donc qu'une fois les modifications
+     retombées. */
+  planifierRecap();}
+var _recapTimer=null;
+function planifierRecap(){
+  if(_recapTimer) clearTimeout(_recapTimer);
+  _recapTimer=setTimeout(function(){
+    _recapTimer=null;
+    try{ publierRecap(); }catch(e){}
+  },600);
+}
 function clone(o){return JSON.parse(JSON.stringify(o));}
 var S=load();
 
@@ -1877,9 +1888,12 @@ function publierRecap(){
     mode:mode,
     // Le libellé des postes vient des réglages de l'utilisateur : le menu ne
     // peut pas les deviner, on les embarque.
+    // Le libellé d'un poste est dans le champ « l » (Matin, Après-midi, Nuit,
+    // Journée) — et non « n ». Lire la mauvaise clé faisait retomber sur la
+    // lettre du poste, d'où le « · M » affiché sur le menu au lieu du nom.
     postes:(function(){var o={};try{
-      ORDER.forEach(function(k){ if(S.cycle&&S.cycle.postes&&S.cycle.postes[k])
-        o[k]={n:S.cycle.postes[k].n||k, c:S.cycle.postes[k].c||''}; });
+      ORDER.forEach(function(k){ var pc=S.cycle&&S.cycle.postes&&S.cycle.postes[k];
+        if(pc) o[k]={n:pc.l||pc.n||k, c:pc.c||''}; });
     }catch(e){} return o;})(),
     ctx:(function(){try{ return ctxLine()||''; }catch(e){ return ''; }})(),
     jours:jours
