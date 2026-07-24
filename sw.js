@@ -3,7 +3,7 @@
  * Version : 10.9.19 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.7.22"; // menu.html remplacé (nouvelle version) + précache taiko.html
+const CACHE_NAME = "heuressup-cache-v10.8.22"; // menu.html remplacé (nouvelle version) + précache taiko.html
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
