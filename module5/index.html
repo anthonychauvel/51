@@ -896,6 +896,20 @@
     </div>
     <button class="m5-btn m5-btn-primary m5-btn-full" onclick="saveContract()">💾 Enregistrer</button>
 
+    <!-- Apparence : retire le renard des messages, garde tout le reste -->
+    <div style="margin:16px 0 0;padding:10px 12px;background:var(--miz-bg2);border-radius:var(--miz-radius-sm);border:1px solid var(--miz-border2);">
+      <div style="font-size:13px;font-weight:700;color:var(--miz-text);margin-bottom:8px;">🎨 Apparence</div>
+      <label style="display:flex;align-items:flex-start;gap:10px;cursor:pointer;">
+        <input type="checkbox" id="m5-mode-pro-check" onchange="toggleM5Pro()" style="width:18px;height:18px;margin-top:2px;accent-color:var(--miz-primary);">
+        <div>
+          <div style="font-size:13px;font-weight:600;color:var(--miz-text);">Mode sobre</div>
+          <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;line-height:1.5;">
+            Retire 🦊 des messages de Mizuki. Les conseils, alertes et couleurs restent identiques.
+          </div>
+        </div>
+      </label>
+    </div>
+
     <!-- Zone danger : remise à zéro -->
     <div style="margin-top:24px;padding:14px 12px;background:rgba(220,38,38,0.05);border:1.5px solid rgba(220,38,38,0.2);border-radius:var(--miz-radius-sm);">
       <div style="font-size:13px;font-weight:700;color:#dc2626;margin-bottom:6px;">⚠️ Zone danger</div>
@@ -951,6 +965,76 @@ function confirmResetM5() {
   }
 }
 </script>
+
+<!-- ── MODE SOBRE — retire 🦊 des messages de Mizuki, garde tout le reste ──
+     Le renard n'est jamais un mot séparé : il apparaît TOUJOURS comme le
+     caractère 🦊 seul, en tête ou en fin des messages (54 occurrences
+     recensées, réparties entre index.html, app.js, mizuki.js, wellbeing.js).
+     Plutôt que d'éditer chacune de ces 54 chaînes — risqué, et fragile si
+     Chauvel ajoute un message plus tard — ce script nettoie au niveau du DOM,
+     après coup : il repère "🦊" partout où il apparaît à l'écran et le retire,
+     quelle que soit la fonction qui l'a écrit.
+     Un MutationObserver couvre les messages qui arrivent APRÈS le chargement
+     (bulle Mizuki, popups, toast) ; un premier passage traite ce qui est déjà
+     dans la page (titre, message d'accueil). -->
+<script>
+(function(){
+  function m5Pro(){ try{ return localStorage.getItem('M5_MODE_PRO')==='1'; }catch(e){ return false; } }
+
+  function nettoyer(txt){
+    // Retire l'emoji et l'espace attenant, qu'il soit en tête ("🦊 Bonjour…")
+    // ou en fin ("…prête 🦊"), puis normalise les espaces qui pourraient
+    // rester doublés à l'endroit de la coupe.
+    return txt.replace(/\s*🦊\s*/g,' ').replace(/\s{2,}/g,' ').trim();
+  }
+
+  function scrubNode(node){
+    if(node.nodeType===3){ // texte
+      if(node.nodeValue && node.nodeValue.indexOf('🦊')!==-1) node.nodeValue=nettoyer(node.nodeValue);
+      return;
+    }
+    if(node.nodeType!==1) return; // élément uniquement au-delà
+    var w=document.createTreeWalker(node, NodeFilter.SHOW_TEXT), t;
+    while((t=w.nextNode())){
+      if(t.nodeValue && t.nodeValue.indexOf('🦊')!==-1) t.nodeValue=nettoyer(t.nodeValue);
+    }
+  }
+
+  window.toggleM5Pro=function(){
+    var el=document.getElementById('m5-mode-pro-check');
+    var on=el?el.checked:!m5Pro();
+    try{ localStorage.setItem('M5_MODE_PRO', on?'1':'0'); }catch(e){}
+    // Nettoie ce qui est DÉJÀ affiché. Sans ça, activer la case ne changerait
+    // rien tant qu'un nouveau message n'apparaît pas.
+    if(on) scrubNode(document.body);
+    // Désactiver ne peut pas "redonner" le texte déjà effacé des noeuds — un
+    // rechargement est la façon la plus simple de le restaurer fidèlement.
+    else location.reload();
+  };
+
+  // Premier passage, uniquement si le mode est déjà actif à l'ouverture :
+  // nettoie ce que le HTML contenait avant même que les scripts de rendu
+  // n'aient tourné (titre, bulle d'accueil).
+  if(m5Pro()) scrubNode(document.body);
+
+  // L'observateur reste TOUJOURS attaché, que le mode soit actif ou non — son
+  // coût est négligeable (il vérifie juste un booléen et sort). Le laisser
+  // toujours actif est ce qui permet à toggleM5Pro() d'activer le mode SANS
+  // recharger la page : dès que la case est cochée, tout nouveau message
+  // (bulle, popup, toast) est déjà surveillé.
+  new MutationObserver(function(mutations){
+    if(!m5Pro()) return;
+    mutations.forEach(function(m){
+      if(m.type==='childList'){
+        m.addedNodes.forEach(scrubNode);
+      }else if(m.type==='characterData' && m.target.nodeValue && m.target.nodeValue.indexOf('🦊')!==-1){
+        m.target.nodeValue=nettoyer(m.target.nodeValue);
+      }
+    });
+  }).observe(document.body, {childList:true, subtree:true, characterData:true});
+})();
+</script>
+
 <script src="js/data/ccn-partiel.js"></script>
 <script src="js/core/calc-engine.js"></script>
 <script src="js/features/saisie.js"></script>
