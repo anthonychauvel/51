@@ -1397,6 +1397,8 @@ function openContractModal() {
   const ccnSel=document.getElementById('contract-ccn-selected');
   if(ccnSearch) ccnSearch.value=c.ccnNom||'';
   if(ccnSel)   ccnSel.textContent=c.idcc?'✓ IDCC '+c.idcc+' — '+c.ccnNom:'';
+  const proEl=document.getElementById('m5-mode-pro-check');
+  if(proEl) proEl.checked=(localStorage.getItem('M5_MODE_PRO')==='1');
   openModal('modal-contract');
 }
 
