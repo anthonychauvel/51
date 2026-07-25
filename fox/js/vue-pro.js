@@ -292,7 +292,15 @@
       +   '<div style="padding:12px 18px;display:flex;align-items:center;justify-content:space-between;">'
       +     '<div><div style="font-size:0.82rem;font-weight:700;color:#78909C;letter-spacing:0.8px;text-transform:uppercase;">Tableau de bord</div>'
       +     '<div style="font-size:0.63rem;color:#263238;margin-top:1px;">' + ds + '</div></div>'
-      +     '<button onclick="VuePro.hide()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#546E7A;border-radius:8px;padding:8px 16px;font-size:0.75rem;cursor:pointer;font-family:inherit;letter-spacing:0.5px;">← Retour</button>'
+      // "Retour" (VuePro.hide()) ramène à la vue mascotte DANS fox — pas au
+      // menu principal de l'app. "Menu" est donc un raccourci distinct, pas
+      // un doublon : sans lui, sortir de fox demandait de repasser par la vue
+      // mascotte pour y retrouver le lien "← Menu" du HUD (ligne ~149 de
+      // index.html, même destination ../menu.html, réutilisé ici).
+      +     '<div style="display:flex;align-items:center;gap:8px;">'
+      +       '<a href="../menu.html" style="text-decoration:none;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#546E7A;border-radius:8px;padding:8px 14px;font-size:0.75rem;cursor:pointer;font-family:inherit;letter-spacing:0.5px;display:inline-block;" title="Retour au menu principal">☰ Menu</a>'
+      +       '<button onclick="VuePro.hide()" style="background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:#546E7A;border-radius:8px;padding:8px 16px;font-size:0.75rem;cursor:pointer;font-family:inherit;letter-spacing:0.5px;">← Retour</button>'
+      +     '</div>'
       +   '</div>'
       +   '<div style="display:grid;grid-template-columns:repeat(4,1fr);border-top:1px solid rgba(255,255,255,0.05);">'
       +     '<a href="../heures/index.html" style="text-decoration:none;text-align:center;padding:9px 4px;border-right:1px solid rgba(255,255,255,0.05);"><div style="font-size:1.05rem;">📅</div><div style="font-size:0.58rem;color:#455A64;margin-top:1px;">Annuel M1</div></a>'
@@ -417,9 +425,9 @@
             ['L3245-1', 'Prescription pour réclamer des HS : 3 ans'],
             ['L4121-1', 'Obligation santé/sécurité de l\'employeur'],
             ['L3121-28','Heures supplémentaires — définition'],
-            ['L3122-2', 'Période de nuit légale (21h–6h)'],
+            ['L3122-2', 'Période de nuit légale (21h–7h)'],
             ['L3122-5', 'Statut travailleur de nuit'],
-            ['L3122-9', 'Contreparties travail de nuit'],
+            ['L3122-8', 'Contreparties travail de nuit'],
             ['L3133-6', '1er mai — doublement de salaire'],
             ['L1222-9', 'Télétravail — définition'],
             ['L2242-17','Droit à la déconnexion'],
