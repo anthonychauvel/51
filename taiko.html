@@ -1458,7 +1458,7 @@ function openSheet(dISO,focus){
   elt('sheet-ov').classList.add('show');
   if(focus)setTimeout(function(){
     var t={task:'sh-add-text',note:'sh-note',event:'ev-text'}[focus];
-    if(t){var n=elt(t);n.scrollIntoView({block:'center'});n.focus();}},80);
+    if(t){var n=elt(t);n.scrollIntoView({block:'center'});}},80);
 }
 
 /* ===== vacances ===== */
@@ -1471,7 +1471,6 @@ function renderVacRange(dISO){
     var d=pISO(dISO),n=0;
     while(iso(d)<=end&&n<92){S.exc[iso(d)]='V';d=addD(d,1);n++;}
     save();openSheet(dISO);renderCal();};
-  elt('vac-end').focus();
 }
 function vacRun(dISO){
   var out=[dISO],d=addD(pISO(dISO),-1);
@@ -2118,7 +2117,7 @@ elt('set-copy').onclick=function(){
 elt('set-ics').onclick=icsExport;
 elt('btn-share').onclick=shareMonth;
 elt('lib-open').onclick=function(){renderLib();elt('lib-name').value='';elt('lib-ov').classList.add('show');};
-elt('lib-save').onclick=function(){renderLib();elt('lib-name').value='';elt('lib-ov').classList.add('show');setTimeout(function(){elt('lib-name').focus();},60);};
+elt('lib-save').onclick=function(){renderLib();elt('lib-name').value='';elt('lib-ov').classList.add('show');};
 elt('lib-x').onclick=function(){elt('lib-ov').classList.remove('show');};
 elt('lib-ov').onclick=function(e){if(e.target===this)this.classList.remove('show');};
 elt('lib-add').onclick=function(){var v=elt('lib-name').value.trim();if(!v)return;libSave(v);elt('lib-name').value='';};
