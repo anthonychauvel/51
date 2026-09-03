@@ -476,6 +476,108 @@
   document.addEventListener('click', function(){ tryLockPortrait(); }, { once: true, passive: true });
 })();
 </script>
+<style id="sh-wiz-sobre">
+  /* ═══ Contrôle Illustré / Sobre dans le wizard (état clair par défaut) ═══ */
+  #welcomeWizard .wiz-vue{
+    display:flex; align-items:center; gap:12px; justify-content:space-between;
+    padding:11px 13px; border-radius:12px; margin:2px 0 2px;
+    background:#f4f5f7; border:1px solid #e4e7eb;
+  }
+  #welcomeWizard .wiz-vue .wv-title{ display:block; font-size:12px; font-weight:700; color:#2a323a; }
+  #welcomeWizard .wiz-vue .wv-hint{ display:block; font-size:10.5px; color:#6b747d; margin-top:2px; line-height:1.4; }
+  #welcomeWizard .wiz-vue .wv-btn{
+    flex-shrink:0; appearance:none; cursor:pointer; font:inherit; font-weight:700; font-size:11.5px;
+    padding:9px 13px; border-radius:9px; border:1px solid #cfe0e4;
+    background:#e8f4f6; color:#1f6b78; transition:background .18s,color .18s,border-color .18s,transform .05s;
+  }
+  #welcomeWizard .wiz-vue .wv-btn:active{ transform:translateY(1px); }
+  #welcomeWizard .wiz-vue .wv-btn[aria-pressed="true"]{ background:#1f8a9c; color:#fff; border-color:#1f8a9c; }
+
+  /* ═══ Wizard entier en mode sobre (dès que body.mode-pro est actif) ═══ */
+  body.mode-pro #welcomeWizard .popup-box{ background:#161a1f; color:#e9edf2; border:1px solid #2b333d; }
+  body.mode-pro #welcomeWizard .popup-box h2,
+  body.mode-pro #welcomeWizard .popup-box h3{ color:#eef2f6; }
+  body.mode-pro #welcomeWizard .popup-box hr{ border:0; border-top:1px solid #2b333d; }
+  body.mode-pro #welcomeWizard .wiz-progress{ background:#2b333d; }
+
+  /* Fonds teintés inline → surface sombre uniforme */
+  body.mode-pro #welcomeWizard [style*="background:rgba"],
+  body.mode-pro #welcomeWizard [style*="background:linear-gradient"],
+  body.mode-pro #welcomeWizard [style*="background:#f0fbfc"],
+  body.mode-pro #welcomeWizard [style*="background:#f"]{
+    background:#1c2229 !important; border-color:#2b333d !important;
+  }
+  /* Textes sombres/accentués inline → clair muet */
+  body.mode-pro #welcomeWizard [style*="color:#555"],
+  body.mode-pro #welcomeWizard [style*="color:#444"],
+  body.mode-pro #welcomeWizard [style*="color:#666"],
+  body.mode-pro #welcomeWizard [style*="color:#888"],
+  body.mode-pro #welcomeWizard [style*="color:#222"],
+  body.mode-pro #welcomeWizard [style*="color:#1a1a2e"],
+  body.mode-pro #welcomeWizard [style*="color:#0f1f3d"],
+  body.mode-pro #welcomeWizard [style*="color:#6C3FC5"],
+  body.mode-pro #welcomeWizard [style*="color:#8B5CF6"],
+  body.mode-pro #welcomeWizard [style*="color:#8B6914"],
+  body.mode-pro #welcomeWizard [style*="color:#A07820"],
+  body.mode-pro #welcomeWizard [style*="color:#8a6010"],
+  body.mode-pro #welcomeWizard [style*="color:#b35417"],
+  body.mode-pro #welcomeWizard [style*="color:#a03020"],
+  body.mode-pro #welcomeWizard [style*="color:#1a6b7a"],
+  body.mode-pro #welcomeWizard [style*="color:#1a6b3a"],
+  body.mode-pro #welcomeWizard [style*="color:#5a30a0"],
+  body.mode-pro #welcomeWizard [style*="color:#4FB3C2"]{ color:#c3ccd4 !important; }
+  /* Gras = titres → quasi-blanc, pour garder la hiérarchie (règle placée après) */
+  body.mode-pro #welcomeWizard [style*="font-weight:700"],
+  body.mode-pro #welcomeWizard [style*="font-weight:800"],
+  body.mode-pro #welcomeWizard [style*="font-weight:900"]{ color:#eef2f6 !important; }
+
+  /* Éléments structurels */
+  body.mode-pro #welcomeWizard .wiz-btn.secondary{ background:#243139 !important; color:#dfe7ec !important; }
+  body.mode-pro #welcomeWizard .choice-card{ background:#1c2229 !important; border-color:#2b333d !important; color:#e9edf2 !important; }
+  body.mode-pro #welcomeWizard .choice-card strong{ color:#eef2f6 !important; }
+  body.mode-pro #welcomeWizard .choice-card .icon{ filter:grayscale(1) opacity(.85); }
+  body.mode-pro #welcomeWizard .explain-box{ background:#1c2229 !important; border-color:#2b333d !important; }
+
+  /* Le contrôle Illustré/Sobre lui-même, en sombre */
+  body.mode-pro #welcomeWizard .wiz-vue{ background:#1c2229; border-color:#2b333d; }
+  body.mode-pro #welcomeWizard .wiz-vue .wv-title{ color:#eef2f6; }
+  body.mode-pro #welcomeWizard .wiz-vue .wv-hint{ color:#96a0ab; }
+  body.mode-pro #welcomeWizard .wiz-vue .wv-btn{ background:#243139; color:#dfe7ec; border-color:#39424d; }
+  body.mode-pro #welcomeWizard .wiz-vue .wv-btn[aria-pressed="true"]{ background:#33424b; color:#fff; border-color:#4a5b66; }
+
+  /* ═══ Écran de présentation générale (première ouverture) ═══ */
+  #welcomeWizard .wi-brand{ display:flex; align-items:center; gap:11px; margin-bottom:3px; }
+  #welcomeWizard .wi-avatar{
+    width:38px; height:38px; border-radius:11px; flex-shrink:0;
+    display:flex; align-items:center; justify-content:center; font-size:21px;
+    background:#eaf5f7; border:1px solid #cfe8ec;
+    transition:opacity .3s, width .3s, margin .3s, border .3s;
+  }
+  #welcomeWizard .wi-name{ font-size:21px; font-weight:800; letter-spacing:-.01em; color:#141a1f; line-height:1; }
+  #welcomeWizard .wi-tag{ font-size:12.5px; line-height:1.5; color:#5a636d; margin:9px 0 16px; }
+  #welcomeWizard .wi-list{ border-top:1px solid #e7ebef; margin-bottom:14px; }
+  #welcomeWizard .wi-row{ display:flex; gap:13px; align-items:flex-start; padding:12px 2px; border-bottom:1px solid #e7ebef; }
+  #welcomeWizard .wi-glyph{ width:26px; flex-shrink:0; text-align:center; font-size:17px; line-height:1.35; transition:opacity .3s; }
+  #welcomeWizard .wi-rtitle{ font-size:13.5px; font-weight:700; color:#181d22; display:flex; align-items:center; gap:8px; }
+  #welcomeWizard .wi-rdesc{ font-size:12px; line-height:1.5; color:#5a636d; margin-top:2px; }
+  #welcomeWizard .wi-badge{ font-size:9.5px; font-weight:700; padding:2px 7px; border-radius:20px; white-space:nowrap; background:#1f8a9c; color:#fff; }
+  #welcomeWizard .wi-cta{ width:100%; }
+  #welcomeWizard .wi-foot{ font-size:10.5px; text-align:center; color:#9aa2ab; margin:11px 0 0; }
+
+  /* Présentation en mode sobre */
+  body.mode-pro #welcomeWizard .wi-name,
+  body.mode-pro #welcomeWizard .wi-rtitle{ color:#eef2f6; }
+  body.mode-pro #welcomeWizard .wi-tag,
+  body.mode-pro #welcomeWizard .wi-rdesc{ color:#96a0ab; }
+  body.mode-pro #welcomeWizard .wi-list,
+  body.mode-pro #welcomeWizard .wi-row{ border-color:#2b333d; }
+  body.mode-pro #welcomeWizard .wi-foot{ color:#6b747d; }
+  body.mode-pro #welcomeWizard .wi-badge{ background:transparent; color:#8fb0ba; border:1px solid #2b333d; }
+  body.mode-pro #welcomeWizard .wi-cta{ background:#243139 !important; color:#eaf1f4 !important; }
+  /* Le renard rentre au terrier ; les pictos deviennent un filet d'accent */
+  body.mode-pro #welcomeWizard .wi-avatar{ opacity:0; width:0; margin-right:-11px; border:0; }
+  body.mode-pro #welcomeWizard .wi-glyph{ font-size:0; width:3px; align-self:stretch; border-radius:2px; background:#5a7d86; opacity:.7; }
+</style>
 </head>
 
 <body>
@@ -488,9 +590,65 @@
 <div class="overlay" id="welcomeWizard">
   <div class="popup-box">
     <div class="wiz-progress">
-      <div class="wiz-progress-fill" id="wizProg" style="width:33%"></div>
+      <div class="wiz-progress-fill" id="wizProg" style="width:8%"></div>
     </div>
-    <div class="wiz-step active" id="wStep0">
+    <div class="wiz-step active" id="wStepIntro">
+      <div class="wi-brand">
+        <div class="wi-avatar" aria-hidden="true">🦊</div>
+        <div class="wi-name">SimulHeures</div>
+      </div>
+      <p class="wi-tag">Vos heures supplémentaires, comprises et vérifiées — et tout ce qui va avec votre paie.</p>
+
+      <div class="wi-list">
+        <div class="wi-row">
+          <div class="wi-glyph" aria-hidden="true">⏱️</div>
+          <div>
+            <div class="wi-rtitle">Suivi des heures supplémentaires</div>
+            <div class="wi-rdesc">Compteur annuel ou mensuel. Temps plein, temps partiel et cadres au forfait.</div>
+          </div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-glyph" aria-hidden="true">🧰</div>
+          <div>
+            <div class="wi-rtitle">105 outils pratiques</div>
+            <div class="wi-rdesc">Congés, jours fériés, chômage, titres-restaurant, saisie sur salaire, fin de contrat.</div>
+          </div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-glyph" aria-hidden="true">📚</div>
+          <div>
+            <div class="wi-rtitle">Guides par métier</div>
+            <div class="wi-rdesc">Des fiches claires sur vos droits, secteur par secteur.</div>
+          </div>
+        </div>
+        <div class="wi-row">
+          <div class="wi-glyph" aria-hidden="true">⚖️</div>
+          <div>
+            <div class="wi-rtitle">MonLegiTexte <span class="wi-badge">17 sept.</span></div>
+            <div class="wi-rdesc">Recherche juridique : Code du travail, EUR-Lex, CJUE, CEDH.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Bascule affichage Illustré / Sobre -->
+      <div class="wiz-vue">
+        <div class="wv-txt">
+          <span class="wv-title">🦊 → 👔&nbsp; Affichage</span>
+          <span id="wizVueHint" class="wv-hint">Le renard trop ludique ? Une interface épurée, sans mascotte.</span>
+        </div>
+        <button id="wizVueBtn" type="button" class="wv-btn" aria-pressed="false" onclick="wizVueClick()">
+          <span class="wv-label">Passer en mode sobre</span>
+        </button>
+      </div>
+
+      <button class="wiz-btn primary wi-cta" onclick="wizStart()">Commencer</button>
+      <div style="text-align:center;margin-top:10px;">
+        <button type="button" onclick="wizPasser()" style="background:none;border:0;color:#888;font-size:12px;font-weight:600;cursor:pointer;text-decoration:underline;padding:4px;">Explorer directement, sans le guide →</button>
+      </div>
+      <p class="wi-foot">Aucune donnée transmise — tout reste sur votre appareil. Guide relançable depuis le menu.</p>
+    </div>
+
+    <div class="wiz-step" id="wStep0">
       <h2 style="text-align:center;margin-bottom:6px;">👋 Bienvenue !</h2>
       <p style="text-align:center;color:#555;font-size:12px;margin:0 0 16px;">
         Aucune donnée transmise — tout reste sur votre appareil.
@@ -524,8 +682,14 @@
           </div>
         </button>
       </div>
-      <p style="font-size:10px;color:#aaa;text-align:center;margin:0;">
+      <p style="font-size:10px;color:#aaa;text-align:center;margin:0 0 10px;">
         ⚠️ Calculs indicatifs — seul le bulletin de paie fait foi.
+      </p>
+      <div style="text-align:center;">
+        <button type="button" onclick="wizPasser()" style="background:none;border:0;color:#4FB3C2;font-size:12.5px;font-weight:600;cursor:pointer;text-decoration:underline;padding:6px;">Passer, je verrai plus tard →</button>
+      </div>
+      <p style="font-size:11px;color:#888;text-align:center;margin:4px 0 0;line-height:1.45;">
+        Pas d'inscription, aucune donnée envoyée. Vous pourrez relancer ce guide à tout moment via 🚀 <strong>Guide de démarrage</strong> dans le menu.
       </p>
     </div>
 
@@ -753,6 +917,39 @@
     </div>
   </div>
 </div>
+
+<script>
+  /* Bascule Illustré/Sobre depuis le wizard.
+     Source de vérité unique : le flag MENU_MODE_PRO + la fonction toggleModePro()
+     du menu principal. On ne fait que la piloter, jamais dupliquer sa logique.
+     -> le reste du wizard passe en sobre (CSS body.mode-pro #welcomeWizard),
+     -> les vignettes du menu passent en sobre (appliquer() dans toggleModePro),
+     -> le module fox lira MENU_MODE_PRO au lancement (câblage côté fox),
+     -> outils.html ne lit pas ce flag : il reste illustré. */
+  window.wizVueSync = function(){
+    var on=false; try{ on = localStorage.getItem('MENU_MODE_PRO')==='1'; }catch(e){}
+    var btn=document.getElementById('wizVueBtn');
+    if(btn){
+      btn.setAttribute('aria-pressed', on?'true':'false');
+      var lab=btn.querySelector('.wv-label');
+      if(lab) lab.textContent = on ? "Revenir à l'illustré" : "Passer en mode sobre";
+    }
+    var hint=document.getElementById('wizVueHint');
+    if(hint) hint.textContent = on
+      ? "Interface épurée, sans mascotte — le renard reste au terrier."
+      : "Le renard trop ludique ? Une interface épurée, sans mascotte.";
+  };
+  window.wizSetVue = function(on){
+    var cur=false; try{ cur = localStorage.getItem('MENU_MODE_PRO')==='1'; }catch(e){}
+    if(cur !== on && typeof window.toggleModePro === 'function'){ window.toggleModePro(); }
+    window.wizVueSync();
+  };
+  window.wizVueClick = function(){
+    var on=false; try{ on = localStorage.getItem('MENU_MODE_PRO')==='1'; }catch(e){}
+    window.wizSetVue(!on);
+  };
+  window.addEventListener('load', function(){ try{ window.wizVueSync(); }catch(e){} });
+</script>
 
 <div class="overlay" id="presentationPopup" style="display:none;" onclick="closePresentation()">
   <div class="presentation-box" onclick="event.stopPropagation()" style="max-width:600px;font-size:13px;">
@@ -2538,6 +2735,24 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById("explainMensuel").style.display = mode === "mensuel" ? "block" : "none";
   }
 
+  function wizStart() {
+    // Écran de présentation → sélection du type de contrat (wStep0)
+    document.querySelectorAll(".wiz-step").forEach(el => el.classList.remove("active"));
+    var s0 = document.getElementById("wStep0");
+    if (s0) s0.classList.add("active");
+    var pf = document.getElementById("wizProg");
+    if (pf) pf.style.width = "33%";
+  }
+
+  function wizPasser() {
+    // Passer la config : interdit tant que les conditions ne sont pas acceptées.
+    // Si déjà consenti -> on ferme (skip). Sinon -> on force le béton (wStep1),
+    // et acceptBeton() fermera le wizard une fois les conditions acceptées.
+    if (typeof hasConsent === 'function' && hasConsent()) { closeWizard(); return; }
+    try { localStorage.setItem('_pendingType', '__skip__'); } catch(e){}
+    goStep(1);
+  }
+
   function closeWizard() {
     _safeLS.set("menuWizardDone", "1");
     document.getElementById("welcomeWizard").style.display = "none";
@@ -2550,8 +2765,12 @@ document.addEventListener('DOMContentLoaded', function(){
     document.getElementById("cardMensuel").classList.remove("selected");
     document.getElementById("explainAnnuel").style.display = "none";
     document.getElementById("explainMensuel").style.display = "none";
-    goStep(0);
+    document.querySelectorAll(".wiz-step").forEach(el => el.classList.remove("active"));
+    var _intro = document.getElementById("wStepIntro");
+    if (_intro) _intro.classList.add("active");
+    var _pf = document.getElementById("wizProg"); if (_pf) _pf.style.width = "8%";
     document.getElementById("welcomeWizard").style.display = "flex";
+    if(window.wizVueSync) window.wizVueSync();
   }
 
   function goApp(app) { closeWizard(); go(app); }
@@ -3527,6 +3746,7 @@ function acceptBeton(){
   var pending='';
   try{ pending=localStorage.getItem('_pendingType')||''; }catch(e){}
   try{ localStorage.removeItem('_pendingType'); }catch(e){}
+  if(pending==='__skip__'){ closeWizard(); return; }
   if(pending==='partiel'){
     document.body.style.background='linear-gradient(160deg,#1A0A3E 0%,#2D1467 50%,#3B1F8C 100%)';
     var ww=document.getElementById('welcomeWizard');
@@ -4108,6 +4328,10 @@ function hasConsent(){
        dégradé qu'il ne sait pas interpoler, et l'écran clignote. */
     document.body.classList.add('switch-mode');
     try{ localStorage.setItem(CLE, actif()?'0':'1'); }catch(e){}
+    /* Le module fox suit la bascule : son vue-pro.js lit FOX_VUE au lancement.
+       Écrit uniquement au basculement (pas au boot) pour ne pas écraser un
+       choix fait à l'intérieur du fox. */
+    try{ localStorage.setItem('FOX_VUE', (localStorage.getItem(CLE)==='1')?'pro':'fox'); }catch(e){}
     appliquer();
     /* Deux trames suffisent à laisser le navigateur peindre le nouvel état.
        Repli sur un délai si requestAnimationFrame n'est pas disponible : sans
@@ -4127,5 +4351,19 @@ function hasConsent(){
 })();
 </script>
 
+<style id="sh-sober-tiles">
+  /* Cibles tactiles plus grandes en mode sobre — évite de cliquer la vignette
+     voisine. Placé après le CSS sobre d'origine pour l'emporter proprement. */
+  body.mode-pro .mod-grid{ gap:11px !important; }
+  body.mode-pro .mod-grid .btn{
+    min-height:58px !important;
+    padding:17px 18px !important;
+    display:flex !important;
+    align-items:center !important;
+  }
+  body.mode-pro .mod-grid .title{ font-size:14.5px !important; }
+  /* Pas d'emoji en sobre : le fallback illustré (btn-no-img) reste masqué. */
+  body.mode-pro .mod-grid .btn-no-img{ display:none !important; }
+</style>
 </body>
 </html>
