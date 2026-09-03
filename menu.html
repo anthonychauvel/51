@@ -4355,13 +4355,15 @@ function hasConsent(){
 
 <style id="sh-sober-tiles">
   /* Cibles tactiles plus grandes en mode sobre — évite de cliquer la vignette
-     voisine. Placé après le CSS sobre d'origine pour l'emporter proprement. */
-  body.mode-pro .mod-grid{ gap:11px !important; }
-  body.mode-pro .mod-grid .btn{
+     voisine. Désactivé pendant la personnalisation (body.perso-mode) : le CSS
+     perso-sobre est calibré pour le layout sobre d'origine, et l'agrandissement
+     déplaçait les badges ✕. On rend donc la main le temps de l'édition. */
+  body.mode-pro:not(.perso-mode) .mod-grid{ gap:11px !important; }
+  body.mode-pro:not(.perso-mode) .mod-grid .btn{
     min-height:58px !important;
     padding:17px 18px !important;
-    display:flex !important;
-    align-items:center !important;
+    display:flex;
+    align-items:center;
   }
   body.mode-pro .mod-grid .title{ font-size:14.5px !important; }
   /* Pas d'emoji en sobre : le fallback illustré (btn-no-img) reste masqué. */
