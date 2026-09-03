@@ -4266,6 +4266,12 @@ function hasConsent(){
   function appliquer(){
     var on=actif();
     document.body.classList.toggle('mode-pro',on);
+    /* La Trousse à outils (outils.html) et le module fox suivent la vue du menu :
+       chacun lit son propre flag à son ouverture — OUTILS_MODE_PRO pour outils,
+       FOX_VUE pour fox. On les aligne ici à chaque application du mode, donc au
+       démarrage comme au basculement. Aucune modif nécessaire dans ces fichiers. */
+    try{ localStorage.setItem('OUTILS_MODE_PRO', on?'1':'0'); }catch(e){}
+    try{ localStorage.setItem('FOX_VUE', on?'pro':'fox'); }catch(e){}
     /* Deux tuiles n'ont aucun élément .title : leur contenu est une image seule
        (trousse à outils, site des guides). En mode sobre, l'image est masquée
        et il ne restait donc rien à lire. On leur fabrique un titre à partir du
@@ -4328,10 +4334,6 @@ function hasConsent(){
        dégradé qu'il ne sait pas interpoler, et l'écran clignote. */
     document.body.classList.add('switch-mode');
     try{ localStorage.setItem(CLE, actif()?'0':'1'); }catch(e){}
-    /* Le module fox suit la bascule : son vue-pro.js lit FOX_VUE au lancement.
-       Écrit uniquement au basculement (pas au boot) pour ne pas écraser un
-       choix fait à l'intérieur du fox. */
-    try{ localStorage.setItem('FOX_VUE', (localStorage.getItem(CLE)==='1')?'pro':'fox'); }catch(e){}
     appliquer();
     /* Deux trames suffisent à laisser le navigateur peindre le nouvel état.
        Repli sur un délai si requestAnimationFrame n'est pas disponible : sans
