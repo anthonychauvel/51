@@ -1542,7 +1542,7 @@
   <!-- ══ Zone épinglés + catégories déroulantes (tuiles déplacées par JS) ══ -->
   <div id="pinnedWrap" style="display:none;">
     <div id="pinnedHead">📌 Épinglés</div>
-    <div id="pinnedBody"></div>
+    <div id="pinnedBody" class="mod-grid"></div>
   </div>
   <div class="cat-sec">
     <button class="cat-head" type="button" onclick="toggleCat('heures')">
@@ -4435,11 +4435,14 @@ function hasConsent(){
   .cat-head .cat-arw{ font-size:12px; opacity:.65; flex-shrink:0; position:absolute; right:18px; }
   .cat-body{ margin-top:10px; }
   .cat-body.collapsed{ display:none !important; }
+  /* En sobre, body.mode-pro .mod-grid force display:flex !important — on repasse
+     au-dessus avec une spécificité plus haute pour que le repli marche aussi. */
+  body.mode-pro .cat-body.collapsed{ display:none !important; }
 
   #pinnedWrap{ width:92%; max-width:420px; margin:16px auto 0; }
   #pinnedHead{ display:flex; align-items:center; justify-content:center; gap:8px; font-size:13px; font-weight:800;
     color:#e6c257; margin-bottom:9px; letter-spacing:.02em; }
-  #pinnedBody{ display:flex; flex-wrap:wrap; gap:8px; }
+  #pinnedBody{ width:100% !important; max-width:none !important; margin:0 !important; }
   .pin-quick{ appearance:none; cursor:pointer; font:inherit; font-weight:700; font-size:12.5px;
     background:linear-gradient(160deg,#1a2233,#12161f); color:#eaf1f6;
     border:1px solid rgba(212,175,55,.45); border-radius:12px; padding:11px 15px;
@@ -4468,7 +4471,8 @@ function hasConsent(){
               'btn-lumina':'paie','btn-trousse':'paie','btn-site':'paie','btn-fox':'sante','btn-module4':'sante'};
   var LABELS={'btn-heures':'Compteur annuel','btn-paye':'Heures mensualisées','btn-module7':'Nuit, astreintes & primes',
               'btn-module5':'Temps partiel','btn-module6':'Cadres & forfait','btn-lumina':'Grilles de salaire',
-              'btn-fox':'Analyse de conformité','btn-trousse':'Trousse à outils','btn-module4':'Charge & récupération'};
+              'btn-fox':'Analyse de conformité','btn-trousse':'Trousse à outils','btn-module4':'Charge & récupération','vignetteLegi':'MonLegiTexte'};
+  var PINNABLE=Object.keys(CATMAP).filter(function(id){return id!=='btn-site';}).concat(['vignetteLegi']);
   function pKey(){ return 'menuPinnedV1'; }
   function getPinned(){ try{ return JSON.parse(localStorage.getItem(pKey())||'[]'); }catch(e){ return []; } }
   function setPinned(a){ try{ localStorage.setItem(pKey(), JSON.stringify(a)); }catch(e){} }
@@ -4494,20 +4498,24 @@ function hasConsent(){
     var p=getPinned(), wrap=document.getElementById('pinnedWrap'), body=document.getElementById('pinnedBody');
     if(!wrap||!body) return;
     body.innerHTML='';
-    var shown=p.filter(function(id){ return document.getElementById(id) && CATMAP[id]; });
+    var shown=p.filter(function(id){ return document.getElementById(id) && PINNABLE.indexOf(id)>=0; });
     if(!shown.length){ wrap.style.display='none'; return; }
     wrap.style.display='block';
     shown.forEach(function(id){
-      var b=document.createElement('button'); b.className='pin-quick'; b.type='button';
-      b.textContent=LABELS[id]||id;
-      b.onclick=function(){ var t=document.getElementById(id); if(t) t.click(); };
-      body.appendChild(b);
+      var orig=document.getElementById(id);
+      var clone=orig.cloneNode(true);          // vraie vignette, dupliquée
+      clone.removeAttribute('id');
+      clone.setAttribute('data-pin-id', id);
+      var junk=clone.querySelectorAll('.perso-badge,.pin-badge,.badge-mon-contrat');
+      for(var k=0;k<junk.length;k++) junk[k].remove();
+      clone.style.order=''; clone.style.margin='';
+      body.appendChild(clone);
     });
   }
   function injectPinBadges(){
-    Object.keys(CATMAP).forEach(function(id){
-      if(id==='btn-site') return;
+    PINNABLE.forEach(function(id){
       var el=document.getElementById(id); if(!el||el.querySelector('.pin-badge')) return;
+      try{ if(getComputedStyle(el).position==='static') el.style.position='relative'; }catch(e){ el.style.position='relative'; }
       var b=document.createElement('button'); b.type='button'; b.className='pin-badge';
       b.title='Épingler en tête de menu'; b.textContent='📌';
       b.onclick=function(ev){ window.togglePin(id,ev); };
@@ -4515,6 +4523,24 @@ function hasConsent(){
       el.appendChild(b);
     });
   }
+
+  /* Mode Perso : cliquer une vignette ÉPINGLÉE la retire ; cliquer une vignette
+     MASQUÉE la réactive (sans ouvrir le tiroir). Capture pour bloquer la navigation. */
+  document.addEventListener('click', function(ev){
+    if(!document.body.classList.contains('perso-mode')) return;
+    if(ev.target.closest('.perso-badge,.pin-badge')) return; // laisser les badges agir
+    var pin=ev.target.closest('[data-pin-id]');
+    if(pin){ ev.preventDefault(); ev.stopPropagation(); window.togglePin(pin.getAttribute('data-pin-id')); return; }
+    var tile=ev.target.closest('.cat-body .btn, #vignetteLegi');
+    if(tile){
+      ev.preventDefault(); ev.stopPropagation();
+      if(tile.classList.contains('hidden-module') && tile.id && typeof window.restoreModule==='function'){
+        window.restoreModule(tile.id);
+        var dr=document.getElementById('hiddenDrawer'); if(dr) dr.classList.remove('open');
+        var ov=document.getElementById('drawerOverlay'); if(ov) ov.style.display='none';
+      }
+    }
+  }, true);
   function distribute(){
     Object.keys(CATMAP).forEach(function(id){
       var el=document.getElementById(id), body=document.getElementById('body-'+CATMAP[id]);
