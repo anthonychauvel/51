@@ -951,6 +951,8 @@
   window.addEventListener('load', function(){ try{ window.wizVueSync(); }catch(e){} });
 </script>
 
+  <div style="text-align:center;font-size:9px;color:rgba(255,255,255,.28);letter-spacing:.03em;margin:22px auto 8px;">v.2026-09-04 · catégories + épingles</div>
+
 <div class="overlay" id="presentationPopup" style="display:none;" onclick="closePresentation()">
   <div class="presentation-box" onclick="event.stopPropagation()" style="max-width:600px;font-size:13px;">
 
@@ -1538,6 +1540,30 @@
      publié : un utilisateur qui n'a jamais ouvert Taiko ne doit voir aucune
      trace de cette fonctionnalité. -->
 <div id="taikoRecap" style="display:none;margin:0 0 14px;"></div>
+  <!-- ══ Zone épinglés + catégories déroulantes (tuiles déplacées par JS) ══ -->
+  <div id="pinnedWrap" style="display:none;">
+    <div id="pinnedHead">📌 Épinglés</div>
+    <div id="pinnedBody"></div>
+  </div>
+  <div class="cat-sec">
+    <button class="cat-head" type="button" onclick="toggleCat('heures')">
+      <span>⏱️ Je gère mes heures supplémentaires</span><span class="cat-arw" id="arw-heures">▲</span>
+    </button>
+    <div class="cat-body mod-grid" id="body-heures"></div>
+  </div>
+  <div class="cat-sec">
+    <button class="cat-head" type="button" onclick="toggleCat('paie')">
+      <span>💶 Ma paie &amp; mes droits</span><span class="cat-arw" id="arw-paie">▼</span>
+    </button>
+    <div class="cat-body mod-grid collapsed" id="body-paie"></div>
+  </div>
+  <div class="cat-sec">
+    <button class="cat-head" type="button" onclick="toggleCat('sante')">
+      <span>🩺 Charge de travail &amp; santé</span><span class="cat-arw" id="arw-sante">▼</span>
+    </button>
+    <div class="cat-body mod-grid collapsed" id="body-sante"></div>
+  </div>
+
 <div class="mod-grid" id="modGrid">
 <div class="btn" id="btn-module5" onclick="go('module5')" style="border:2px solid rgba(108,63,197,0.55);background:linear-gradient(160deg,#ede8ff,#f4f0fd);"><button class="perso-badge" onclick="hideModule('btn-module5',event)" title="Masquer Mizuki">✕</button>
   <img src="images/Temps partiel.PNG" loading="eager" alt="Temps partiel — Mizuki" onerror="this.style.display='none'">
@@ -4369,5 +4395,107 @@ function hasConsent(){
   /* Pas d'emoji en sobre : le fallback illustré (btn-no-img) reste masqué. */
   body.mode-pro .mod-grid .btn-no-img{ display:none !important; }
 </style>
+<style id="sh-cats">
+  .cat-sec{ width:92%; max-width:420px; margin:14px auto 0; }
+  .cat-head{ width:100%; display:flex; align-items:center; justify-content:space-between; gap:12px;
+    background:transparent; color:#eaf1f6; border:1px solid rgba(255,255,255,.14);
+    border-radius:16px; padding:15px 18px; font-size:14.5px; font-weight:800; cursor:pointer;
+    text-align:left; -webkit-tap-highlight-color:transparent; }
+  .cat-head .cat-arw{ font-size:12px; opacity:.65; flex-shrink:0; }
+  .cat-body{ margin-top:10px; }
+  .cat-body.collapsed{ display:none !important; }
+
+  #pinnedWrap{ width:92%; max-width:420px; margin:16px auto 0; }
+  #pinnedHead{ display:flex; align-items:center; gap:8px; font-size:13px; font-weight:800;
+    color:#e6c257; margin-bottom:9px; padding-left:2px; letter-spacing:.02em; }
+  #pinnedBody{ display:flex; flex-wrap:wrap; gap:8px; }
+  .pin-quick{ appearance:none; cursor:pointer; font:inherit; font-weight:700; font-size:12.5px;
+    background:linear-gradient(160deg,#1a2233,#12161f); color:#eaf1f6;
+    border:1px solid rgba(212,175,55,.45); border-radius:12px; padding:11px 15px;
+    -webkit-tap-highlight-color:transparent; }
+  .pin-quick:active{ transform:translateY(1px); }
+
+  /* Badge 📌 (visible en mode perso, coin opposé au ✕) */
+  .pin-badge{ display:none; position:absolute; top:-10px; left:-10px; z-index:50;
+    width:26px; height:26px; border-radius:50%; align-items:center; justify-content:center;
+    background:#2a2f3a; color:#e6c257; border:2px solid rgba(212,175,55,.6);
+    font-size:12px; line-height:1; cursor:pointer; padding:0; }
+  body.perso-mode .pin-badge{ display:flex; }
+  .pin-badge.on{ background:linear-gradient(180deg,#e3c15c,#c99b2b); color:#0f2d52; }
+
+  /* Variantes sobres */
+  body.mode-pro .cat-head{ background:#161a1f; color:#e9edf2; border-color:#2b333d; }
+  body.mode-pro .pin-quick{ background:#161a1f; border-color:rgba(212,175,55,.4); color:#e9edf2; }
+  /* En sobre+perso : ✕ est ramené à droite-centre ; on met 📌 à gauche-centre */
+  body.mode-pro.perso-mode .pin-badge{ top:50% !important; left:12px !important; right:auto !important;
+    transform:translateY(-50%); width:24px !important; height:24px !important; }
+  body.mode-pro.perso-mode .mod-grid .title{ padding-left:44px; }
+</style>
+<script>
+(function(){
+  var CATMAP={'btn-heures':'heures','btn-paye':'heures','btn-module7':'heures','btn-module5':'heures','btn-module6':'heures',
+              'btn-lumina':'paie','btn-trousse':'paie','btn-site':'paie','btn-fox':'sante','btn-module4':'sante'};
+  var LABELS={'btn-heures':'Compteur annuel','btn-paye':'Heures mensualisées','btn-module7':'Nuit, astreintes & primes',
+              'btn-module5':'Temps partiel','btn-module6':'Cadres & forfait','btn-lumina':'Grilles de salaire',
+              'btn-fox':'Analyse de conformité','btn-trousse':'Trousse à outils','btn-module4':'Charge & récupération'};
+  function pKey(){ return 'menuPinnedV1'; }
+  function getPinned(){ try{ return JSON.parse(localStorage.getItem(pKey())||'[]'); }catch(e){ return []; } }
+  function setPinned(a){ try{ localStorage.setItem(pKey(), JSON.stringify(a)); }catch(e){} }
+
+  window.toggleCat=function(cat){
+    var body=document.getElementById('body-'+cat), arw=document.getElementById('arw-'+cat);
+    if(!body) return;
+    var willCollapse = !body.classList.contains('collapsed');
+    body.classList.toggle('collapsed', willCollapse);
+    body.style.display = willCollapse ? 'none' : '';   // inline = imparable
+    if(arw) arw.textContent = willCollapse ? '▼' : '▲';
+  };
+  window.togglePin=function(id,ev){
+    if(ev){ ev.stopPropagation(); ev.preventDefault(); }
+    var p=getPinned(), i=p.indexOf(id);
+    if(i>=0) p.splice(i,1); else p.push(id);
+    setPinned(p);
+    var badge=document.querySelector('#'+id+' .pin-badge');
+    if(badge) badge.classList.toggle('on', p.indexOf(id)>=0);
+    renderPinned();
+  };
+  function renderPinned(){
+    var p=getPinned(), wrap=document.getElementById('pinnedWrap'), body=document.getElementById('pinnedBody');
+    if(!wrap||!body) return;
+    body.innerHTML='';
+    var shown=p.filter(function(id){ return document.getElementById(id) && CATMAP[id]; });
+    if(!shown.length){ wrap.style.display='none'; return; }
+    wrap.style.display='block';
+    shown.forEach(function(id){
+      var b=document.createElement('button'); b.className='pin-quick'; b.type='button';
+      b.textContent=LABELS[id]||id;
+      b.onclick=function(){ var t=document.getElementById(id); if(t) t.click(); };
+      body.appendChild(b);
+    });
+  }
+  function injectPinBadges(){
+    Object.keys(CATMAP).forEach(function(id){
+      if(id==='btn-site') return;
+      var el=document.getElementById(id); if(!el||el.querySelector('.pin-badge')) return;
+      var b=document.createElement('button'); b.type='button'; b.className='pin-badge';
+      b.title='Épingler en tête de menu'; b.textContent='📌';
+      b.onclick=function(ev){ window.togglePin(id,ev); };
+      if(getPinned().indexOf(id)>=0) b.classList.add('on');
+      el.appendChild(b);
+    });
+  }
+  function distribute(){
+    Object.keys(CATMAP).forEach(function(id){
+      var el=document.getElementById(id), body=document.getElementById('body-'+CATMAP[id]);
+      if(el&&body) body.appendChild(el);
+    });
+    var mg=document.getElementById('modGrid'); if(mg) mg.style.display='none';
+    injectPinBadges();
+    renderPinned();
+  }
+  if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',distribute);
+  else distribute();
+})();
+</script>
 </body>
 </html>
