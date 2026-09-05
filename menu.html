@@ -4487,7 +4487,7 @@ function hasConsent(){
   var LABELS={'btn-heures':'Compteur annuel','btn-paye':'Heures mensualisées','btn-module7':'Nuit, astreintes & primes',
               'btn-module5':'Temps partiel','btn-module6':'Cadres & forfait','btn-lumina':'Grilles de salaire',
               'btn-fox':'Analyse de conformité','btn-trousse':'Trousse à outils','btn-module4':'Charge & récupération','vignetteLegi':'MonLegiTexte'};
-  var PINNABLE=Object.keys(CATMAP).filter(function(id){return id!=='btn-site';}).concat(['vignetteLegi']);
+  var PINNABLE=Object.keys(CATMAP).concat(['vignetteLegi']); /* version 17 sept : modules + Trousse + Guide + MonLegiTexte, tous épinglables */
   function pKey(){ return 'menuPinnedV1'; }
   function getPinned(){ try{ return JSON.parse(localStorage.getItem(pKey())||'[]'); }catch(e){ return []; } }
   function setPinned(a){ try{ localStorage.setItem(pKey(), JSON.stringify(a)); }catch(e){} }
