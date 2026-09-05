@@ -4464,6 +4464,13 @@ function hasConsent(){
   body.mode-pro .cat-body .btn:active{ background:#333a42 !important; }
   /* Tuiles image-seule (Trousse, site) : hauteur naturelle, plus de vide sombre */
   #btn-trousse, #btn-site{ align-self:start !important; }
+  /* Tuile seule sur sa ligne (nombre impair) → centrée. 2 colonnes seulement ;
+     en sobre c'est déjà 1 par ligne, donc on ne l'applique pas. */
+  body:not(.mode-pro) .cat-body.mod-grid > .btn.lone-centered{
+    grid-column:1 / -1 !important; justify-self:center !important;
+    width:calc(50% - 6px) !important; max-width:calc(50% - 6px) !important;
+    margin-left:auto !important; margin-right:auto !important;
+  }
   body.mode-pro .pin-quick{ background:#161a1f; border-color:rgba(212,175,55,.4); color:#e9edf2; }
   /* En sobre+perso : ✕ est ramené à droite-centre ; on met 📌 à gauche-centre */
   body.mode-pro.perso-mode .pin-badge{ top:50% !important; left:12px !important; right:auto !important;
@@ -4563,6 +4570,39 @@ function hasConsent(){
       }
     }
   }, true);
+  function visibleTiles(body){
+    return Array.prototype.slice.call(body.children).filter(function(el){
+      if(!el.classList || !el.classList.contains('btn')) return false;
+      if(el.style.display==='none') return false;
+      try{ if(getComputedStyle(el).display==='none') return false; }catch(e){}
+      return true;
+    });
+  }
+  function centerLoneTiles(){
+    var sober=document.body.classList.contains('mode-pro');
+    ['heures','paie','sante'].forEach(function(cat){
+      var body=document.getElementById('body-'+cat); if(!body) return;
+      var vis=visibleTiles(body);
+      vis.forEach(function(el){ el.classList.remove('lone-centered'); });
+      if(!sober && vis.length%2===1){
+        var sorted=vis.slice().sort(function(a,b){ return (parseInt(a.style.order||'0',10)) - (parseInt(b.style.order||'0',10)); });
+        var last=sorted[sorted.length-1];
+        if(last) last.classList.add('lone-centered');
+      }
+    });
+  }
+  function setupCenterObservers(){
+    try{
+      var mo=new MutationObserver(function(){ centerLoneTiles(); });
+      ['heures','paie','sante'].forEach(function(cat){
+        var body=document.getElementById('body-'+cat);
+        if(body) mo.observe(body,{childList:true, subtree:true, attributes:true, attributeFilter:['style']});
+      });
+      // reprise du centrage aussi au basculement sobre/illustré ou perso (classe du body)
+      new MutationObserver(function(){ centerLoneTiles(); }).observe(document.body,{attributes:true, attributeFilter:['class']});
+    }catch(e){}
+  }
+
   function distribute(){
     Object.keys(CATMAP).forEach(function(id){
       var el=document.getElementById(id), body=document.getElementById('body-'+CATMAP[id]);
@@ -4581,6 +4621,9 @@ function hasConsent(){
     });
     injectPinBadges();
     renderPinned();
+    centerLoneTiles();
+    setupCenterObservers();
+    try{ console.log('[SimulHeures] menu chargé — catégories + épingles + centrage'); }catch(e){}
   }
   if(document.readyState==='loading') document.addEventListener('DOMContentLoaded',distribute);
   else distribute();
