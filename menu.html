@@ -4469,7 +4469,8 @@ function hasConsent(){
   #btn-trousse, #btn-site{ align-self:start !important; }
   /* Tuile seule sur sa ligne (nombre impair) → centrée. 2 colonnes seulement ;
      en sobre c'est déjà 1 par ligne, donc on ne l'applique pas. */
-  body:not(.mode-pro) .cat-body.mod-grid > .btn.lone-centered{
+  body:not(.mode-pro) .cat-body.mod-grid > .btn.lone-centered,
+  body:not(.mode-pro) #pinnedBody.mod-grid > .btn.lone-centered{
     grid-column:1 / -1 !important; justify-self:center !important;
     width:calc(50% - 6px) !important; max-width:calc(50% - 6px) !important;
     margin-left:auto !important; margin-right:auto !important;
@@ -4543,6 +4544,7 @@ function hasConsent(){
       clone.style.order=''; clone.style.margin='';
       body.appendChild(clone);
     });
+    if(typeof centerLoneTiles==='function') centerLoneTiles();
   }
   function injectPinBadges(){
     PINNABLE.forEach(function(id){
@@ -4593,6 +4595,13 @@ function hasConsent(){
         if(last) last.classList.add('lone-centered');
       }
     });
+    // Zone Épinglés : mêmes règles (les clones n'ont pas d'order → ordre DOM)
+    var pb=document.getElementById('pinnedBody');
+    if(pb){
+      var pv=visibleTiles(pb);
+      pv.forEach(function(el){ el.classList.remove('lone-centered'); });
+      if(!sober && pv.length%2===1){ pv[pv.length-1].classList.add('lone-centered'); }
+    }
   }
   function setupCenterObservers(){
     try{
