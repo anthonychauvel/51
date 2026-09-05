@@ -844,10 +844,10 @@
       <div>
         <h3 style="font-size:14px;margin-bottom:8px;">🔧 Quel profil es-tu ?</h3>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-          <button class="wiz-btn" id="wizModeDebutant" onclick="wizChooseMode('debutant')" style="background:rgba(0,200,255,0.1);border:2px solid rgba(0,200,255,0.3);">
+          <button class="wiz-btn" id="wizModeDebutant" onclick="wizChooseMode('debutant')" style="background:#123e50;border:2px solid #2ba7c9;">
             🎓 Débutant<br><span style="font-size:10px;">Termes simplifiés</span>
           </button>
-          <button class="wiz-btn" id="wizModeExpert" onclick="wizChooseMode('expert')" style="background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);">
+          <button class="wiz-btn" id="wizModeExpert" onclick="wizChooseMode('expert')" style="background:#232c3a;border:1px solid rgba(255,255,255,0.16);">
             ⚡ Expert<br><span style="font-size:10px;">Termes techniques</span>
           </button>
         </div>
@@ -1613,10 +1613,10 @@
   </div>
   <div class="title" style="color:#9ec3ff;">🌙 Nuit, Astreinte &amp; Primes</div>
 </div>
-<div class="btn" id="btn-trousse" onclick="location.href='outils.html';" style="margin:0;order:8;background:linear-gradient(160deg,#0d1420,#1a2030);">
+<div class="btn" id="btn-trousse" onclick="location.href='outils.html';" style="margin:0;order:1;background:linear-gradient(160deg,#0d1420,#1a2030);">
   <img src="icon-renard.png" loading="eager" alt="Trousse à outils du Renard" style="border-radius:28px;">
 </div>
-<div class="btn" id="btn-site" onclick="window.open('https://www.simulateurheuressupfrance.fr','_blank','noopener')" title="Ouvrir simulateurheuressupfrance.fr" style="margin:0;order:9;background:linear-gradient(160deg,#0d1420,#1a2030);">
+<div class="btn" id="btn-site" onclick="window.open('https://www.simulateurheuressupfrance.fr','_blank','noopener')" title="Ouvrir simulateurheuressupfrance.fr" style="margin:0;order:2;background:linear-gradient(160deg,#0d1420,#1a2030);">
   <img src="site-vignette.jpg" loading="lazy" alt="simulateurheuressupfrance.fr" style="border-radius:28px;">
 </div>
 </div><!-- /mod-grid -->
@@ -2754,11 +2754,11 @@ document.addEventListener('DOMContentLoaded', function(){
     const btnExpert = document.getElementById('wizModeExpert');
     if (btnDebutant && btnExpert) {
       if (mode === 'debutant') {
-        btnDebutant.style.background = 'rgba(0,200,255,0.2)'; btnDebutant.style.border = '2px solid rgba(0,200,255,0.5)';
-        btnExpert.style.background = 'rgba(255,255,255,0.05)'; btnExpert.style.border = '1px solid rgba(255,255,255,0.1)';
+        btnDebutant.style.background = '#123e50'; btnDebutant.style.border = '2px solid #2ba7c9';
+        btnExpert.style.background = '#232c3a'; btnExpert.style.border = '1px solid rgba(255,255,255,0.16)';
       } else {
-        btnExpert.style.background = 'rgba(0,200,255,0.2)'; btnExpert.style.border = '2px solid rgba(0,200,255,0.5)';
-        btnDebutant.style.background = 'rgba(255,255,255,0.05)'; btnDebutant.style.border = '1px solid rgba(255,255,255,0.1)';
+        btnExpert.style.background = '#123e50'; btnExpert.style.border = '2px solid #2ba7c9';
+        btnDebutant.style.background = '#232c3a'; btnDebutant.style.border = '1px solid rgba(255,255,255,0.16)';
       }
     }
   }
@@ -3617,7 +3617,7 @@ body.mode-pro{
    plutôt que de peinture mate. Purement décoratif, sans interaction. */
 body.mode-pro::before{
   content:'';position:fixed;top:0;left:0;right:0;height:180px;pointer-events:none;
-  background:linear-gradient(180deg, rgba(255,255,255,.055), transparent);
+  background:none;
   z-index:0;
 }
 /* Les tuiles gagnent un très léger relief pour ne pas se fondre dans le fond. */
