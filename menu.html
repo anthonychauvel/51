@@ -3542,7 +3542,7 @@ body.mode-pro .mod-grid{
   flex-direction:column;
   gap:7px !important;
 }
-body.mode-pro .mod-grid > *{ width:100% !important; order:0 !important; }
+body.mode-pro .mod-grid > *{ width:100% !important; }
 body.mode-pro #taikoRecap > div{
   background:#161a1f !important;
   border-color:#2b333d !important;
@@ -4459,6 +4459,11 @@ function hasConsent(){
 
   /* Variantes sobres */
   body.mode-pro .cat-head{ background:#161a1f; color:#e9edf2; border-color:#2b333d; }
+  /* Tuiles (sous-catégories) en anthracite — distinctes des en-têtes de partie */
+  body.mode-pro .cat-body .btn{ background:#2b3037 !important; border-color:#3a424b !important; }
+  body.mode-pro .cat-body .btn:active{ background:#333a42 !important; }
+  /* Tuiles image-seule (Trousse, site) : hauteur naturelle, plus de vide sombre */
+  #btn-trousse, #btn-site{ align-self:start !important; }
   body.mode-pro .pin-quick{ background:#161a1f; border-color:rgba(212,175,55,.4); color:#e9edf2; }
   /* En sobre+perso : ✕ est ramené à droite-centre ; on met 📌 à gauche-centre */
   body.mode-pro.perso-mode .pin-badge{ top:50% !important; left:12px !important; right:auto !important;
@@ -4476,6 +4481,9 @@ function hasConsent(){
   function pKey(){ return 'menuPinnedV1'; }
   function getPinned(){ try{ return JSON.parse(localStorage.getItem(pKey())||'[]'); }catch(e){ return []; } }
   function setPinned(a){ try{ localStorage.setItem(pKey(), JSON.stringify(a)); }catch(e){} }
+  function cKey(){ return 'menuCatStateV1'; }
+  function getCatState(){ try{ var v=JSON.parse(localStorage.getItem(cKey())||'null'); return v||{heures:false,paie:true,sante:true}; }catch(e){ return {heures:false,paie:true,sante:true}; } } // true = replié
+  function setCatState(s){ try{ localStorage.setItem(cKey(), JSON.stringify(s)); }catch(e){} }
 
   window.toggleCat=function(cat){
     var body=document.getElementById('body-'+cat), arw=document.getElementById('arw-'+cat);
@@ -4484,6 +4492,7 @@ function hasConsent(){
     body.classList.toggle('collapsed', willCollapse);
     body.style.display = willCollapse ? 'none' : '';   // inline = imparable
     if(arw) arw.textContent = willCollapse ? '▼' : '▲';
+    var s=getCatState(); s[cat]=willCollapse; setCatState(s);  // mémorisé jusqu'au repli manuel
   };
   window.togglePin=function(id,ev){
     if(ev){ ev.stopPropagation(); ev.preventDefault(); }
@@ -4503,6 +4512,19 @@ function hasConsent(){
     wrap.style.display='block';
     shown.forEach(function(id){
       var orig=document.getElementById(id);
+      if(id==='vignetteLegi'){
+        // Tuile compacte taille module : juste le logo + titre court
+        var oi=orig.querySelector('img');
+        var t=document.createElement('a');
+        t.className='btn'; t.setAttribute('data-pin-id',id);
+        t.setAttribute('href', orig.getAttribute('href')||'#'); t.setAttribute('rel','noopener');
+        t.style.cssText='background:linear-gradient(160deg,#0f2d52,#0a1f3a);border:1.5px solid rgba(212,175,55,.55);text-decoration:none;';
+        var im=document.createElement('img'); if(oi) im.src=oi.src; im.alt='MonLegiTexte'; im.style.borderRadius='18px';
+        var ti=document.createElement('div'); ti.className='title'; ti.style.color='#e6c257'; ti.textContent='⚖️ MonLegiTexte';
+        t.appendChild(im); t.appendChild(ti);
+        body.appendChild(t);
+        return;
+      }
       var clone=orig.cloneNode(true);          // vraie vignette, dupliquée
       clone.removeAttribute('id');
       clone.setAttribute('data-pin-id', id);
@@ -4547,6 +4569,16 @@ function hasConsent(){
       if(el&&body) body.appendChild(el);
     });
     var mg=document.getElementById('modGrid'); if(mg) mg.style.display='none';
+    // Restaurer l'état ouvert/replié mémorisé (défaut : Heures ouverte)
+    var st=getCatState();
+    ['heures','paie','sante'].forEach(function(cat){
+      var body=document.getElementById('body-'+cat), arw=document.getElementById('arw-'+cat);
+      if(!body) return;
+      var collapsed = !!st[cat];
+      body.classList.toggle('collapsed', collapsed);
+      body.style.display = collapsed ? 'none' : '';
+      if(arw) arw.textContent = collapsed ? '▼' : '▲';
+    });
     injectPinBadges();
     renderPinned();
   }
