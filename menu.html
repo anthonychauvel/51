@@ -1,6 +1,10 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>/* Retour contextuel : si un module/outil a été ouvert depuis "Tout l'écosystème",
+son bouton "Retour au menu" atterrit ici → on renvoie vers le sommaire. Le référent
+confirme qu'on arrive bien d'un module (évite tout faux déclenchement au lancement). */
+try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('ecoBack');if(_eco&&document.referrer&&document.referrer.indexOf('sommaire')<0){location.replace('sommaire.html');}}catch(e){}</script>
   <meta charset="UTF-8">
   <title>Simulateur heures supplémentaires</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">

@@ -1,6 +1,9 @@
 <!DOCTYPE html>
 <html lang="fr">
 <head>
+<script>/* Retour contextuel écosystème : un outil ouvert depuis "Tout l'écosystème"
+revient au sommaire (son bouton retour atterrit sur ce hub). */
+try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('ecoBack');if(_eco&&document.referrer&&document.referrer.indexOf('sommaire')<0){location.replace('sommaire.html');}}catch(e){}</script>
 <script>try{history.scrollRestoration='manual';}catch(e){}window.scrollTo(0,0);</script>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">

@@ -126,6 +126,16 @@
   <div class="foot">Je vérifie mes droits → je calcule mon cas → je consulte la loi.<br>Sans inscription · gratuit · tout reste sur ton téléphone.</div>
 </div>
 <script>
+  /* Mémorise que la navigation part de l'écosystème → retour contextuel.
+     Uniquement pour les liens INTERNES (modules/outils), pas les liens externes
+     (guide, MonLegiTexte) que le navigateur gère nativement. */
+  document.addEventListener('click', function(e){
+    var a=e.target.closest('a.tag'); if(!a) return;
+    var href=a.getAttribute('href')||'';
+    if(href && href.charAt(0)!=='#' && href.indexOf('http')!==0){
+      try{ sessionStorage.setItem('ecoBack','1'); }catch(err){}
+    }
+  }, true);
   var q=document.getElementById('q');
   var pillars=[].slice.call(document.querySelectorAll('.pillar'));
   function norm(s){return (s||'').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'');}
