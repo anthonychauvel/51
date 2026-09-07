@@ -1621,9 +1621,11 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
 </div>
 <div class="btn" id="btn-trousse" onclick="location.href='outils.html';" style="margin:0;order:1;background:linear-gradient(160deg,#0d1420,#1a2030);">
   <img src="icon-renard.png" loading="eager" alt="Trousse à outils du Renard" style="border-radius:28px;">
+  <div class="title">Trousse à outils</div>
 </div>
 <div class="btn" id="btn-site" onclick="window.open('https://www.simulateurheuressupfrance.fr','_blank','noopener')" title="Ouvrir simulateurheuressupfrance.fr" style="margin:0;order:2;background:linear-gradient(160deg,#0d1420,#1a2030);">
   <img src="site-vignette.jpg" loading="lazy" alt="simulateurheuressupfrance.fr" style="border-radius:28px;">
+  <div class="title">Guides par métier</div>
 </div>
 </div><!-- /mod-grid -->
 
@@ -4469,10 +4471,7 @@ function hasConsent(){
   /* Tuiles (sous-catégories) en anthracite — distinctes des en-têtes de partie */
   body.mode-pro .cat-body .btn{ background:#2b3037 !important; border-color:#3a424b !important; }
   body.mode-pro .cat-body .btn:active{ background:#333a42 !important; }
-  /* Tuiles image-seule (Trousse, site) : hauteur naturelle, plus de vide sombre */
-  #btn-trousse, #btn-site{ align-self:start !important; }
-  /* … et leurs clones épinglés (l'id est retiré, on cible via data-pin-id) pour éviter l'étirement */
-  #pinnedBody > [data-pin-id="btn-trousse"], #pinnedBody > [data-pin-id="btn-site"]{ align-self:start !important; }
+  /* Trousse & Guide ont désormais un titre comme les autres tuiles → hauteur uniforme (même dans la zone Épinglés) */
   /* Tuile seule sur sa ligne (nombre impair) → centrée. 2 colonnes seulement ;
      en sobre c'est déjà 1 par ligne, donc on ne l'applique pas. */
   body:not(.mode-pro) .cat-body.mod-grid > .btn.lone-centered,
