@@ -411,17 +411,18 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   const proposals=[];
   // Range adaptatif : si base < 4h, propose des paliers plus serrés
   const steps = base < 4
-    ? [0, base-0.5, base, base+0.5, base+1, base+2, base+3, base+4]
-    : [0, base-1, base-0.5, base, base+0.5, base+1, base+2, base+3];
+    ? [0, base-0.5, base, base+0.25, base+0.5, base+0.75, base+1, base+1.5, base+2, base+3]
+    : [0, base-1, base-0.5, base, base+0.25, base+0.5, base+0.75, base+1, base+1.5, base+2, base+3];
   steps.forEach(h=>{
-    if(h>=0&&h<=12) proposals.push(Math.round(h*2)/2);
+    if(h>=0&&h<=12) proposals.push(Math.round(h*4)/4); // pas de 15 min
   });
   const unique=[...new Set(proposals)].sort((a,b)=>a-b);
 
   let quickHtml='';
   unique.forEach(h=>{
     const isSelected=existing&&existing.worked===h;
-    quickHtml+=`<button class="m5-quick-btn ${isSelected?'selected':''}" onclick="selectQuickHour(${h})">${h}h</button>`;
+    var _lbl=(window._m5fmtH?window._m5fmtH(h):h+'h');
+    quickHtml+=`<button class="m5-quick-btn ${isSelected?'selected':''}" onclick="selectQuickHour(${h})">${_lbl}</button>`;
   });
 
   document.getElementById('day-quick-hours').innerHTML=quickHtml;
@@ -2210,6 +2211,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(mm===60){ hh++; mm=0; }
     return sign+hh+'h'+(mm?String(mm).padStart(2,'0'):'');
   }
+  window._m5fmtH=_fmtH;
   window.M5setHCPaid=function(v){
     var m=_getPaidMap(), k=_periodKey();
     m[k]=Math.max(0, parseFloat(String(v).replace(',','.'))||0);
