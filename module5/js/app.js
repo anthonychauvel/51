@@ -799,6 +799,7 @@ function renderQuickStats(analysis) {
     }
   }
 
+  if(window._m5SoldeHCBlock){ try{ html += window._m5SoldeHCBlock(analysis); }catch(e){} }
   el.innerHTML=html;
 }
 
@@ -1397,8 +1398,6 @@ function openContractModal() {
   const ccnSel=document.getElementById('contract-ccn-selected');
   if(ccnSearch) ccnSearch.value=c.ccnNom||'';
   if(ccnSel)   ccnSel.textContent=c.idcc?'✓ IDCC '+c.idcc+' — '+c.ccnNom:'';
-  const proEl=document.getElementById('m5-mode-pro-check');
-  if(proEl) proEl.checked=(localStorage.getItem('M5_MODE_PRO')==='1');
   openModal('modal-contract');
 }
 
@@ -2195,3 +2194,75 @@ document.addEventListener('DOMContentLoaded',()=>{
 });
 
 }());
+
+
+/* ═══════════════════════════════════════════════════════════════
+   AJOUT (bac à sable) — Solde des heures complémentaires : tranches
+   +10%/+25%, suivi "payé", montant € flouté, affichage au quart d'heure.
+   Le calcul reste en décimal (moteur) ; seul l'affichage passe en h/min.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  function _getPaidMap(){ try{ return JSON.parse(localStorage.getItem('M5_HC_PAID')||'{}'); }catch(e){ return {}; } }
+  function _periodKey(){ try{ return (window.st&&st.get&&st.get('currentPeriod'))||'default'; }catch(e){ return 'default'; } }
+  function _fmtH(h){
+    var sign=h<0?'-':''; h=Math.abs(h);
+    var hh=Math.floor(h+1e-9); var mm=Math.round((h-hh)*60);
+    if(mm===60){ hh++; mm=0; }
+    return sign+hh+'h'+(mm?String(mm).padStart(2,'0'):'');
+  }
+  window.M5setHCPaid=function(v){
+    var m=_getPaidMap(), k=_periodKey();
+    m[k]=Math.max(0, parseFloat(String(v).replace(',','.'))||0);
+    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
+    var el=document.getElementById('m5-hc-reste');
+    if(el){ var tot=parseFloat(el.getAttribute('data-total'))||0; el.textContent=_fmtH(Math.max(0,tot-m[k])); }
+  };
+  window.M5toggleEuro=function(){
+    var shown=localStorage.getItem('M5_EURO_SHOWN')==='1'; shown=!shown;
+    try{ localStorage.setItem('M5_EURO_SHOWN', shown?'1':'0'); }catch(e){}
+    var box=document.getElementById('m5-euro-box'), btn=document.getElementById('m5-euro-btn');
+    if(box) box.classList.toggle('m5-blur', !shown);
+    if(btn) btn.textContent = shown?'🙈 Masquer':'👁️ Afficher';
+  };
+  window._m5SoldeHCBlock=function(analysis){
+    var res=analysis&&analysis.mensuelResult;                 // solde sur la période de paye
+    if(!res || typeof res.compH1==='undefined') return '';    // n'apparaît qu'en mode période
+    var c=(analysis.contract)||{}, rate=c.rate||0;
+    var hc10=res.compH1||0, hc25=res.compH2||0, tot=res.totalCompH||0;
+    var a10=res.comp1Amount||0, a25=res.comp2Amount||0, aT=res.totalCompAmount||0;
+    var paid=_getPaidMap()[_periodKey()]||0, reste=Math.max(0,tot-paid);
+    var shown=localStorage.getItem('M5_EURO_SHOWN')==='1';
+    var euroLine = rate>0
+      ? 'à +10% : <strong>'+a10.toFixed(2)+' €</strong> &nbsp;·&nbsp; à +25% : <strong>'+a25.toFixed(2)+' €</strong><br><span style="font-size:13px;">Total estimé : <strong>'+aT.toFixed(2)+' €</strong> <span style="opacity:.6">brut indicatif</span></span>'
+      : 'Renseigne ton <b>taux horaire</b> dans les réglages (⚙️) pour estimer le montant.';
+    return ''
+      +'<div style="margin-top:12px;padding:12px 13px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;">'
+      +  '<div style="font-size:12px;font-weight:800;color:var(--miz-text2);margin-bottom:8px;">💠 Solde des heures complémentaires — cette période</div>'
+      +  '<div class="m5-stat-grid">'
+      +    '<div class="m5-stat"><div class="m5-stat-val warn">'+_fmtH(hc10)+'</div><div class="m5-stat-label">à +10 %</div></div>'
+      +    '<div class="m5-stat"><div class="m5-stat-val danger">'+_fmtH(hc25)+'</div><div class="m5-stat-label">à +25 %</div></div>'
+      +    '<div class="m5-stat"><div class="m5-stat-val">'+_fmtH(tot)+'</div><div class="m5-stat-label">Total HC</div></div>'
+      +  '</div>'
+      +  '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:10px;font-size:12.5px;">'
+      +    '<span style="color:var(--miz-text2);">Déjà payées (fiche de paie)</span>'
+      +    '<span><input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="window.M5setHCPaid(this.value)" style="width:64px;padding:5px 7px;border:1px solid var(--miz-border);border-radius:8px;text-align:right;font-size:13px;"> h</span>'
+      +  '</div>'
+      +  '<div style="font-size:12.5px;margin-top:5px;color:var(--miz-text2);">Reste à faire payer : <strong id="m5-hc-reste" data-total="'+tot+'" style="color:var(--miz-primary);">'+_fmtH(reste)+'</strong></div>'
+      +  '<div style="display:flex;align-items:center;justify-content:space-between;margin-top:12px;">'
+      +    '<span style="font-size:12.5px;font-weight:800;color:var(--miz-text2);">💰 Montant estimé</span>'
+      +    '<button id="m5-euro-btn" onclick="window.M5toggleEuro()" style="font-size:11.5px;font-weight:700;padding:5px 11px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;">'+(shown?'🙈 Masquer':'👁️ Afficher')+'</button>'
+      +  '</div>'
+      +  '<div id="m5-euro-box" class="'+(shown?'':'m5-blur')+'" style="margin-top:6px;font-size:14px;color:var(--miz-text);padding:10px 12px;background:rgba(0,0,0,0.03);border-radius:9px;line-height:1.5;">'+euroLine+'</div>'
+      +'</div>';
+  };
+  // Feature 3 : indicateur "= Xh15" sous les champs de saisie (jour + semaine)
+  document.addEventListener('input', function(e){
+    var t=e.target; if(!t || (t.id!=='day-saisie-hours' && t.id!=='week-saisie-hours')) return;
+    var v=parseFloat(String(t.value).replace(',','.'));
+    var id=t.id+'-hm', hint=document.getElementById(id);
+    if(!hint){ hint=document.createElement('div'); hint.id=id;
+      hint.style.cssText='font-size:12px;color:var(--miz-text3);text-align:center;margin-top:3px;font-weight:600;';
+      if(t.parentNode) t.parentNode.appendChild(hint); }
+    hint.textContent=(isNaN(v)||v<=0)?'':('= '+_fmtH(v));
+  });
+})();
