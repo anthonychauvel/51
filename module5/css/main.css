@@ -1572,3 +1572,6 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   font-size: 16px;
   padding: 7px 10px;
 }
+
+/* AJOUT bac à sable : montant € flouté tant que masqué */
+.m5-blur{filter:blur(7px);-webkit-filter:blur(7px);user-select:none;pointer-events:none;}
