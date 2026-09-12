@@ -2198,93 +2198,142 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 
 /* ═══════════════════════════════════════════════════════════════
-   AJOUT (bac à sable) — Solde HC par tranche (+10%/+25%), montant €
-   par tranche (flouté/toggle), DEUX cases "payé" (à +10% / à +25%),
-   affichage au quart d'heure. Le montant live figure aussi dans
-   l'aperçu de saisie semaine. Calcul en décimal (moteur), affichage h/min.
+   AJOUT (bac à sable) — Compteur HC avec REPORT CONTINU, multi-mode.
+   MENSUEL : report par période de paye. HEBDO : cumul de l'exercice.
+   ANNUEL : pas de carte HC (annualisation). Deux cases payé (+10%/+25%),
+   montant € par tranche (flouté/toggle), affichage au quart d'heure.
    ═══════════════════════════════════════════════════════════════ */
 (function(){
+  function _mode(){ try{ return (typeof M5_Contract!=='undefined'&&M5_Contract.get)?(M5_Contract.get().modeCalcul||'HEBDO'):'HEBDO'; }catch(e){ return 'HEBDO'; } }
+  function _year(){ try{ return M5_DataStore.getYear(); }catch(e){ return ''; } }
   function _getPaidMap(){ try{ return JSON.parse(localStorage.getItem('M5_HC_PAID')||'{}'); }catch(e){ return {}; } }
-  function _periodKey(){ try{ return (window.st&&st.get&&st.get('currentPeriod'))||'default'; }catch(e){ return 'default'; } }
-  function _getPaid(k){ var m=_getPaidMap()[k]||{}; return { h10: +m.h10||0, h25: +m.h25||0 }; }
+  function _periodKey(){
+    try{
+      var m=_mode();
+      if(m==='HEBDO') return 'hebdo:'+_year();
+      if(m==='ANNUEL') return 'annuel:'+_year();
+      return (typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) || 'default';
+    }catch(e){ return 'default'; }
+  }
+  function _getPaid(k){ var m=_getPaidMap()[k]||{}; return { h10:+m.h10||0, h25:+m.h25||0 }; }
   function _savePaid(tranche, v){
     var m=_getPaidMap(), k=_periodKey(); if(!m[k]||typeof m[k]!=='object') m[k]={};
     m[k][tranche]=Math.max(0, parseFloat(String(v).replace(',','.'))||0);
     try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
   }
-  function _fmtH(h){
-    var sign=h<0?'-':''; h=Math.abs(h);
-    var hh=Math.floor(h+1e-9), mm=Math.round((h-hh)*60);
-    if(mm===60){ hh++; mm=0; }
-    return sign+hh+'h'+(mm?String(mm).padStart(2,'0'):'');
-  }
+  function _fmtH(h){ var s=h<0?'-':''; h=Math.abs(h); var hh=Math.floor(h+1e-9), mm=Math.round((h-hh)*60); if(mm===60){hh++;mm=0;} return s+hh+'h'+(mm?String(mm).padStart(2,'0'):''); }
   window._m5fmtH=_fmtH;
 
-  function _refreshReste(id, tranche){
-    var el=document.getElementById(id); if(!el) return;
-    var h=parseFloat(el.getAttribute('data-h'))||0;
-    var paid=_getPaid(_periodKey())[tranche]||0;
-    el.textContent=_fmtH(Math.max(0, h-paid));
+  // Début d'exercice en ISO (gère "YYYY-MM-DD" et ancien "DD/MM" rattaché à N-1)
+  function _exStartISO(c){
+    try{ var es=c.exerciceStart||'';
+      if(/^\d{4}-\d{2}-\d{2}$/.test(es)) return es;
+      if(es.indexOf('/')>=0){ var p=es.split('/'), dd=parseInt(p[0]||'1'), mm=parseInt(p[1]||'1'), y=parseInt(_year())-1;
+        return y+'-'+String(mm).padStart(2,'0')+'-'+String(dd).padStart(2,'0'); }
+    }catch(e){}
+    return _year()+'-01-01';
   }
-  window.M5setHCPaid10=function(v){ _savePaid('h10', v); _refreshReste('m5-reste-10','h10'); };
-  window.M5setHCPaid25=function(v){ _savePaid('h25', v); _refreshReste('m5-reste-25','h25'); };
+  // Toutes les semaines de l'exercice, même à cheval sur l'année civile (déc N-1 → …)
+  function _allExerciseWeeks(c){
+    var year=parseInt(_year()), start=_exStartISO(c);
+    var endD=new Date(start+'T12:00:00'); endD.setFullYear(endD.getFullYear()+1);
+    var end=endD.getFullYear()+'-'+String(endD.getMonth()+1).padStart(2,'0')+'-'+String(endD.getDate()).padStart(2,'0');
+    var seen={}, all=[];
+    [year-1, year, year+1].forEach(function(y){
+      var ws=[]; try{ ws=M5_DataStore.getWeeksSorted(String(y))||[]; }catch(e){}
+      ws.forEach(function(w){ if(!seen[w.monday] && w.monday>=start && w.monday<end){ seen[w.monday]=1; all.push(w); } });
+    });
+    all.sort(function(a,b){ return a.monday<b.monday?-1:1; });
+    return all;
+  }
 
-  window.M5toggleEuro=function(){
-    var shown=localStorage.getItem('M5_EURO_SHOWN')==='1'; shown=!shown;
-    try{ localStorage.setItem('M5_EURO_SHOWN', shown?'1':'0'); }catch(e){}
-    var els=document.querySelectorAll('.m5-euro-val');
-    for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur', !shown);
-    var btn=document.getElementById('m5-euro-btn'); if(btn) btn.textContent = shown?'🙈 Masquer €':'👁️ Afficher €';
-  };
+  function _weeksInPeriode(allWeeks, per){
+    return allWeeks.filter(function(w){ var e=new Date(w.monday+'T12:00:00'); e.setDate(e.getDate()+6);
+      var es=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0');
+      return w.monday<=per.finStr && es>=per.debutStr; });
+  }
+  // MENSUEL : report entrant = non payé cumulé sur les périodes précédentes
+  function _computeReport(c){
+    var out={h10:0,h25:0};
+    try{
+      if(typeof buildPeriodes!=='function'||typeof CalcEngine==='undefined'||typeof M5_DataStore==='undefined') return out;
+      if(typeof _currentPeriode==='undefined'||!_currentPeriode||!_currentPeriode.debutStr) return out;
+      var year=_year(), periodes=buildPeriodes(year,c)||[], allWeeks=_allExerciseWeeks(c), pm=_getPaidMap();
+      var cur=_currentPeriode.debutStr, b10=0,b25=0;
+      for(var i=0;i<periodes.length;i++){ var per=periodes[i]; if(!per.debutStr||per.debutStr>=cur) break;
+        var wks=_weeksInPeriode(allWeeks,per);
+        var nbJ=Math.round((new Date(per.finStr+'T12:00:00')-new Date(per.debutStr+'T12:00:00'))/86400000)+1;
+        var r=CalcEngine.calcMonth(c.hoursBase,wks,c,(c.hourlyRate||c.rate||0),nbJ);
+        var paid=pm[per.debutStr]||{};
+        b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0)); b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0)); }
+      out.h10=Math.round(b10*100)/100; out.h25=Math.round(b25*100)/100;
+    }catch(e){}
+    return out;
+  }
+  // HEBDO : cumul de toutes les semaines de l'exercice (HC calculées par semaine)
+  function _computeHebdoTotal(c){
+    var out={h10:0,h25:0};
+    try{ var wks=_allExerciseWeeks(c);
+      wks.forEach(function(w){ var wk=(w.worked!=null?w.worked:(w.hours||0));
+        var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)); out.h10+=(r.compH1||0); out.h25+=(r.compH2||0); });
+      out.h10=Math.round(out.h10*100)/100; out.h25=Math.round(out.h25*100)/100;
+    }catch(e){}
+    return out;
+  }
+
+  function _refreshReported(rid,tranche){ var el=document.getElementById(rid); if(!el)return; var due=parseFloat(el.getAttribute('data-due'))||0; var paid=_getPaid(_periodKey())[tranche]||0; el.textContent=_fmtH(Math.max(0,due-paid)); }
+  window.M5setHCPaid10=function(v){ _savePaid('h10',v); _refreshReported('m5-rep-10','h10'); };
+  window.M5setHCPaid25=function(v){ _savePaid('h25',v); _refreshReported('m5-rep-25','h25'); };
+  window.M5toggleEuro=function(){ var sh=localStorage.getItem('M5_EURO_SHOWN')==='1'; sh=!sh; try{localStorage.setItem('M5_EURO_SHOWN',sh?'1':'0');}catch(e){}
+    var els=document.querySelectorAll('.m5-euro-val'); for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur',!sh);
+    var b=document.getElementById('m5-euro-btn'); if(b) b.textContent=sh?'🙈 Masquer €':'👁️ Afficher €'; };
 
   window._m5SoldeHCBlock=function(analysis){
-    var res=analysis&&analysis.mensuelResult;
-    if(!res || typeof res.compH1==='undefined') return '';
-    var c=(analysis.contract)||{}, rate=c.rate||0;
-    var hc10=res.compH1||0, hc25=res.compH2||0, tot=res.totalCompH||0;
-    var a10=res.comp1Amount||0, a25=res.comp2Amount||0, aT=res.totalCompAmount||0;
-    var p=_getPaid(_periodKey());
-    var r10=Math.max(0,hc10-p.h10), r25=Math.max(0,hc25-p.h25);
-    var shown=localStorage.getItem('M5_EURO_SHOWN')==='1';
-    var blur=shown?'':' m5-blur';
-    function eur(v){ return rate>0 ? '<span class="m5-euro-val'+blur+'">'+v.toFixed(2)+' €</span>' : '<span style="opacity:.45">—</span>'; }
-    function row(label,color,h,a,paid,reste,fn,rid){
-      return ''
-       +'<div style="background:rgba(0,0,0,0.03);border-radius:10px;padding:9px 11px;margin-top:8px;">'
-       + '<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;">'
-       +   '<span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span>'
-       +   '<span style="font-weight:800;font-size:13px;">'+_fmtH(h)+' &nbsp;·&nbsp; '+eur(a)+'</span>'
-       + '</div>'
-       + '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:12px;color:var(--miz-text2);gap:8px;">'
-       +   '<span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:56px;padding:4px 6px;border:1px solid var(--miz-border);border-radius:7px;text-align:right;font-size:12.5px;"> h</span>'
-       +   '<span>Reste : <strong id="'+rid+'" data-h="'+h+'" style="color:var(--miz-primary);">'+_fmtH(reste)+'</strong></span>'
-       + '</div>'
+    var c=(analysis.contract)||{}, rate=(c.hourlyRate||c.rate||0), r1=(c.rate1!=null?c.rate1:0.10), r2=(c.rate2!=null?c.rate2:0.25);
+    var due10,due25,dtl10,dtl25,suffix;
+    if(analysis.mensuelResult && typeof analysis.mensuelResult.compH1!=='undefined'){
+      var res=analysis.mensuelResult, rep=_computeReport(c), hc10=res.compH1||0, hc25=res.compH2||0;
+      due10=Math.round((rep.h10+hc10)*100)/100; due25=Math.round((rep.h25+hc25)*100)/100;
+      dtl10='report '+_fmtH(rep.h10)+' + période '+_fmtH(hc10); dtl25='report '+_fmtH(rep.h25)+' + période '+_fmtH(hc25);
+      suffix='report continu';
+    } else if(_mode()==='HEBDO'){
+      var tot=_computeHebdoTotal(c); due10=tot.h10; due25=tot.h25;
+      dtl10='cumul de l\'exercice'; dtl25='cumul de l\'exercice'; suffix='cumul de l\'exercice';
+    } else if(_mode()==='ANNUEL' && analysis.annuelResult){
+      // Annualisation : les HC se règlent en fin d'exercice = dépassement de l'objectif annuel
+      var ar=analysis.annuelResult, obj=+ar.objectifAnnuel||0, reel=+ar.reelCumule||0;
+      var over=Math.max(0, reel-obj), thr=(c.threshold!=null?c.threshold:0.10);
+      due10=Math.min(over, obj*thr); due25=Math.max(0, over-due10);
+      due10=Math.round(due10*100)/100; due25=Math.round(due25*100)/100;
+      dtl10='dépassement objectif '+_fmtH(obj); dtl25='au-delà de 1/10 de l\'objectif';
+      suffix='reste à payer en fin d\'exercice';
+    } else { return ''; }
+    var e10=due10*rate*(1+r1), e25=due25*rate*(1+r2), eT=e10+e25;
+    var p=_getPaid(_periodKey()), out10=Math.max(0,due10-p.h10), out25=Math.max(0,due25-p.h25);
+    var shown=localStorage.getItem('M5_EURO_SHOWN')==='1', blur=shown?'':' m5-blur';
+    function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'">'+v.toFixed(2)+' €</span>':'<span style="opacity:.45">—</span>'; }
+    function row(label,color,dtl,due,euro,paid,out,fn,rid){
+      return '<div style="background:rgba(0,0,0,0.03);border-radius:10px;padding:9px 11px;margin-top:8px;">'
+       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;">'+_fmtH(due)+' &nbsp;·&nbsp; '+eur(euro)+'</span></div>'
+       +'<div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">'+dtl+'</div>'
+       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:var(--miz-text2);gap:8px;"><span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:52px;padding:4px 6px;border:1px solid var(--miz-border);border-radius:7px;text-align:right;font-size:12.5px;"> h</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:var(--miz-primary);">'+_fmtH(out)+'</strong></span></div>'
        +'</div>';
     }
-    return ''
-     +'<div style="margin-top:12px;padding:12px 13px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;">'
-     + '<div style="display:flex;justify-content:space-between;align-items:center;">'
-     +   '<span style="font-size:12px;font-weight:800;color:var(--miz-text2);">💠 Heures complémentaires — période en cours (live)</span>'
-     +   '<button id="m5-euro-btn" onclick="window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>'
-     + '</div>'
-     + (rate>0?'':'<div style="font-size:11.5px;color:var(--miz-text3);margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> dans les réglages (⚙️) pour voir les montants.</div>')
-     + row('à +10 %','var(--miz-warning,#c47f00)',hc10,a10,p.h10,r10,'window.M5setHCPaid10','m5-reste-10')
-     + row('à +25 %','var(--miz-danger,#c0392b)',hc25,a25,p.h25,r25,'window.M5setHCPaid25','m5-reste-25')
-     + '<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--miz-border);font-size:13px;font-weight:800;">'
-     +   '<span>Total : '+_fmtH(tot)+'</span>'
-     +   '<span>'+eur(aT)+' <span style="font-weight:500;opacity:.55;font-size:11px;">brut indicatif</span></span>'
-     + '</div>'
+    return '<div style="margin-top:12px;padding:12px 13px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;">'
+     +'<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;font-weight:800;color:var(--miz-text2);">💠 Heures comp. — '+suffix+'</span><button id="m5-euro-btn" onclick="window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button></div>'
+     +'<div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Les heures non payées se reportent, en gardant leur tranche.</div>'
+     +(rate>0?'':'<div style="font-size:11.5px;color:var(--miz-text3);margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
+     +row('à +10 %','var(--miz-warning,#c47f00)',dtl10,due10,e10,p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
+     +row('à +25 %','var(--miz-danger,#c0392b)',dtl25,due25,e25,p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
+     +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--miz-border);font-size:13px;font-weight:800;"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.55;font-size:11px;">brut indicatif</span></span></div>'
      +'</div>';
   };
 
-  // Feature 3 : indicateur "= Xh15" sous les champs de saisie (jour + semaine)
   document.addEventListener('input', function(e){
     var t=e.target; if(!t || (t.id!=='day-saisie-hours' && t.id!=='week-saisie-hours')) return;
     var v=parseFloat(String(t.value).replace(',','.'));
     var id=t.id+'-hm', hint=document.getElementById(id);
-    if(!hint){ hint=document.createElement('div'); hint.id=id;
-      hint.style.cssText='font-size:12px;color:var(--miz-text3);text-align:center;margin-top:3px;font-weight:600;';
-      if(t.parentNode) t.parentNode.appendChild(hint); }
+    if(!hint){ hint=document.createElement('div'); hint.id=id; hint.style.cssText='font-size:12px;color:var(--miz-text3);text-align:center;margin-top:3px;font-weight:600;'; if(t.parentNode) t.parentNode.appendChild(hint); }
     hint.textContent=(isNaN(v)||v<=0)?'':('= '+_fmtH(v));
   });
 })();
