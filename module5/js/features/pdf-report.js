@@ -77,6 +77,16 @@ const M5_PdfReport = {
     row('Début exercice',contract.exerciceStart||String(new Date().getFullYear()));
     y+=4;
 
+    // ══ Périodes de paie personnalisées (configurées dans les réglages) ══
+    if(mode==='MENSUEL' && contract.cloturesDates && Object.keys(contract.cloturesDates).length>0){
+      h1('Périodes de paie configurées');
+      const _MOIS=['janv.','févr.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+      const _fmtD=(iso)=>{ if(!iso) return '—'; const q=String(iso).split('-'); return q.length===3?(q[2]+'/'+q[1]+'/'+q[0]):String(iso); };
+      const _months=Object.keys(contract.cloturesDates).map(Number).sort((a,b)=>a-b);
+      _months.forEach(m=>{ row('Clôture '+(_MOIS[m-1]||('mois '+m)), _fmtD(contract.cloturesDates[m])); });
+      y+=4;
+    }
+
     // ══ SECTION 2 : BILAN ════════════════════════════════════════
     h1('2. Bilan de la période');
     if(mode==='ANNUEL' && analysis && analysis.annuelResult) {
