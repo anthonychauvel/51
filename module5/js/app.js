@@ -2288,6 +2288,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     var els=document.querySelectorAll('.m5-euro-val'); for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur',!sh);
     var b=document.getElementById('m5-euro-btn'); if(b) b.textContent=sh?'🙈 Masquer €':'👁️ Afficher €'; };
 
+  window.M5toggleSolde=function(){
+    var open=localStorage.getItem('M5_SOLDE_OPEN')==='1'; open=!open;
+    try{ localStorage.setItem('M5_SOLDE_OPEN', open?'1':'0'); }catch(e){}
+    var b=document.getElementById('m5-solde-body'); if(b) b.style.display=open?'':'none';
+    var ch=document.getElementById('m5-solde-chev'); if(ch) ch.style.transform=open?'rotate(180deg)':'';
+  };
+
   window._m5SoldeHCBlock=function(analysis){
     var c=(analysis.contract)||{}, rate=(c.hourlyRate||c.rate||0), r1=(c.rate1!=null?c.rate1:0.10), r2=(c.rate2!=null?c.rate2:0.25);
     var due10,due25,dtl10,dtl25,suffix;
@@ -2300,7 +2307,6 @@ document.addEventListener('DOMContentLoaded',()=>{
       var tot=_computeHebdoTotal(c); due10=tot.h10; due25=tot.h25;
       dtl10='cumul de l\'exercice'; dtl25='cumul de l\'exercice'; suffix='cumul de l\'exercice';
     } else if(_mode()==='ANNUEL' && analysis.annuelResult){
-      // Annualisation : les HC se règlent en fin d'exercice = dépassement de l'objectif annuel
       var ar=analysis.annuelResult, obj=+ar.objectifAnnuel||0, reel=+ar.reelCumule||0;
       var over=Math.max(0, reel-obj), thr=(c.threshold!=null?c.threshold:0.10);
       due10=Math.min(over, obj*thr); due25=Math.max(0, over-due10);
@@ -2311,22 +2317,27 @@ document.addEventListener('DOMContentLoaded',()=>{
     var e10=due10*rate*(1+r1), e25=due25*rate*(1+r2), eT=e10+e25;
     var p=_getPaid(_periodKey()), out10=Math.max(0,due10-p.h10), out25=Math.max(0,due25-p.h25);
     var shown=localStorage.getItem('M5_EURO_SHOWN')==='1', blur=shown?'':' m5-blur';
+    var open=localStorage.getItem('M5_SOLDE_OPEN')==='1';
     function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'">'+v.toFixed(2)+' €</span>':'<span style="opacity:.45">—</span>'; }
     function row(label,color,dtl,due,euro,paid,out,fn,rid){
       return '<div style="background:rgba(0,0,0,0.03);border-radius:10px;padding:9px 11px;margin-top:8px;">'
-       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;">'+_fmtH(due)+' &nbsp;·&nbsp; '+eur(euro)+'</span></div>'
+       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;">'+_fmtH(due)+' &nbsp;·&nbsp; '+euro+'</span></div>'
        +'<div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">'+dtl+'</div>'
        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:var(--miz-text2);gap:8px;"><span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:52px;padding:4px 6px;border:1px solid var(--miz-border);border-radius:7px;text-align:right;font-size:12.5px;"> h</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:var(--miz-primary);">'+_fmtH(out)+'</strong></span></div>'
        +'</div>';
     }
-    return '<div style="margin-top:12px;padding:12px 13px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;">'
-     +'<div style="display:flex;justify-content:space-between;align-items:center;"><span style="font-size:12px;font-weight:800;color:var(--miz-text2);">💠 Heures comp. — '+suffix+'</span><button id="m5-euro-btn" onclick="window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button></div>'
-     +'<div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Les heures non payées se reportent, en gardant leur tranche.</div>'
-     +(rate>0?'':'<div style="font-size:11.5px;color:var(--miz-text3);margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
-     +row('à +10 %','var(--miz-warning,#c47f00)',dtl10,due10,e10,p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
-     +row('à +25 %','var(--miz-danger,#c0392b)',dtl25,due25,e25,p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
-     +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--miz-border);font-size:13px;font-weight:800;"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.55;font-size:11px;">brut indicatif</span></span></div>'
-     +'</div>';
+    var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
+    var body=''
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--miz-text3);">Non payées → reportées, tranche conservée.</span>'+euroBtn+'</div>'
+      +(rate>0?'':'<div style="font-size:11.5px;color:var(--miz-text3);margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
+      +row('à +10 %','var(--miz-warning,#c47f00)',dtl10,due10,eur(e10),p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
+      +row('à +25 %','var(--miz-danger,#c0392b)',dtl25,due25,eur(e25),p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--miz-border);font-size:13px;font-weight:800;"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.55;font-size:11px;">brut indicatif</span></span></div>';
+    var head='<div onclick="window.M5toggleSolde()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;user-select:none;">'
+      +'<span style="font-size:12.5px;font-weight:800;color:var(--miz-text2);">💠 Heures comp. — '+suffix+' <span style="font-weight:500;color:var(--miz-text3);">('+_fmtH(due10+due25)+')</span></span>'
+      +'<span id="m5-solde-chev" style="color:var(--miz-text3);font-size:13px;transition:transform .2s;'+(open?'transform:rotate(180deg);':'')+'">▾</span></div>';
+    return '<div style="margin-top:12px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;overflow:hidden;">'
+      + head + '<div id="m5-solde-body" style="padding:0 13px 12px;'+(open?'':'display:none;')+'">'+body+'</div></div>';
   };
 
   document.addEventListener('input', function(e){
