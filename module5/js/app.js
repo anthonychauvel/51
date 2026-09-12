@@ -1474,10 +1474,19 @@ function updatePDFPreview() {
   const mensuelOpts=document.getElementById('pdf-mensuel-opts');
   const customOpts=document.getElementById('pdf-custom-opts');
   const info=document.getElementById('pdf-preview-info');
+  const paieOpts=document.getElementById('pdf-paie-opts');
   if(mensuelOpts) mensuelOpts.style.display=periode==='MENSUEL'?'block':'none';
   if(customOpts)  customOpts.style.display=periode==='CUSTOM'?'block':'none';
+  if(paieOpts) paieOpts.style.display=periode==='PAIE'?'block':'none';
   const year=M5_DataStore.getYear();
   const allWeeks=M5_DataStore.getWeeksSorted(year);
+  if(periode==='PAIE'){
+    const _sel=document.getElementById('pdf-paie-select');
+    if(_sel && !_sel.options.length && typeof buildPeriodes==='function'){
+      const _dfr=(iso)=>{const q=String(iso).split('-');return q.length===3?q[2]+'/'+q[1]+'/'+q[0]:String(iso);};
+      (buildPeriodes(year, M5_Contract.get())||[]).forEach(pp=>{ const o=document.createElement('option'); o.value=pp.debutStr+'|'+pp.finStr; o.textContent=_dfr(pp.debutStr)+' → '+_dfr(pp.finStr); _sel.appendChild(o); });
+    }
+  }
   const weeks=filterWeeksByPeriode(allWeeks, periode, year);
   if(info) info.textContent=`${weeks.length} semaine(s) dans la période sélectionnée`;
 }
@@ -1493,6 +1502,13 @@ function filterWeeksByPeriode(allWeeks, periode, year) {
     const debut=document.getElementById('pdf-date-debut')?.value||'';
     const fin=document.getElementById('pdf-date-fin')?.value||'';
     return allWeeks.filter(w=>(!debut||w.monday>=debut)&&(!fin||w.monday<=fin));
+  }
+  if(periode==='PAIE') {
+    const v=document.getElementById('pdf-paie-select')?.value||'';
+    const parts=v.split('|'); const d=parts[0]||'', f=parts[1]||'';
+    return allWeeks.filter(w=>{ const e=new Date(w.monday+'T12:00:00'); e.setDate(e.getDate()+6);
+      const es=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0');
+      return (!d||w.monday<=f) && (!f||es>=d); });
   }
   return allWeeks; // ANNUEL
 }
@@ -1511,6 +1527,8 @@ function launchPDF() {
       ? ['Jan','Fév','Mar','Avr','Mai','Jun','Jul','Aoû','Sep','Oct','Nov','Déc'][parseInt(document.getElementById('pdf-mois')?.value||'1')-1]+' '+year
       : periode==='CUSTOM'
         ? (document.getElementById('pdf-date-debut')?.value||'')+' → '+(document.getElementById('pdf-date-fin')?.value||'')
+        : periode==='PAIE'
+        ? 'Période de paie : '+(()=>{const s2=document.getElementById('pdf-paie-select');return (s2&&s2.options[s2.selectedIndex]&&s2.options[s2.selectedIndex].textContent)||'';})()
         : String(year);
     const contractWithName={...contract, userName, periodeLabel, periodeMode:periode};
     closeModal('modal-pdf');
@@ -2210,7 +2228,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _periodKey(){
     try{
       var m=_mode();
-      if(m==='HEBDO') return 'hebdo:'+_year();
+      if(m==='HEBDO') return 'week:'+((typeof calendarMonday!=='undefined'&&calendarMonday)||'');
       if(m==='ANNUEL') return 'annuel:'+_year();
       return (typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) || 'default';
     }catch(e){ return 'default'; }
@@ -2270,13 +2288,17 @@ document.addEventListener('DOMContentLoaded',()=>{
     }catch(e){}
     return out;
   }
-  // HEBDO : cumul de toutes les semaines de l'exercice (HC calculées par semaine)
-  function _computeHebdoTotal(c){
+  // HEBDO : report = solde non payé cumulé sur les semaines AVANT la semaine affichée
+  function _computeHebdoReport(c, curMonday){
     var out={h10:0,h25:0};
-    try{ var wks=_allExerciseWeeks(c);
-      wks.forEach(function(w){ var wk=(w.worked!=null?w.worked:(w.hours||0));
-        var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)); out.h10+=(r.compH1||0); out.h25+=(r.compH2||0); });
-      out.h10=Math.round(out.h10*100)/100; out.h25=Math.round(out.h25*100)/100;
+    try{ if(!curMonday) return out;
+      var wks=_allExerciseWeeks(c), pm=_getPaidMap(), b10=0,b25=0;
+      for(var i=0;i<wks.length;i++){ var w=wks[i]; if(w.monday>=curMonday) break;
+        var wk=(w.worked!=null?w.worked:(w.hours||0));
+        var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0));
+        var paid=pm['week:'+w.monday]||{};
+        b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0)); b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0)); }
+      out.h10=Math.round(b10*100)/100; out.h25=Math.round(b25*100)/100;
     }catch(e){}
     return out;
   }
@@ -2302,10 +2324,14 @@ document.addEventListener('DOMContentLoaded',()=>{
       var res=analysis.mensuelResult, rep=_computeReport(c), hc10=res.compH1||0, hc25=res.compH2||0;
       due10=Math.round((rep.h10+hc10)*100)/100; due25=Math.round((rep.h25+hc25)*100)/100;
       dtl10='report '+_fmtH(rep.h10)+' + période '+_fmtH(hc10); dtl25='report '+_fmtH(rep.h25)+' + période '+_fmtH(hc25);
-      suffix='report continu';
+      suffix='report par période';
     } else if(_mode()==='HEBDO'){
-      var tot=_computeHebdoTotal(c); due10=tot.h10; due25=tot.h25;
-      dtl10='cumul de l\'exercice'; dtl25='cumul de l\'exercice'; suffix='cumul de l\'exercice';
+      var wr=analysis.weekResult||{}, whc10=wr.compH1||0, whc25=wr.compH2||0;
+      var cm=(typeof calendarMonday!=='undefined'&&calendarMonday)||'';
+      var wrep=_computeHebdoReport(c, cm);
+      due10=Math.round((wrep.h10+whc10)*100)/100; due25=Math.round((wrep.h25+whc25)*100)/100;
+      dtl10='report '+_fmtH(wrep.h10)+' + semaine '+_fmtH(whc10); dtl25='report '+_fmtH(wrep.h25)+' + semaine '+_fmtH(whc25);
+      suffix='semaine par semaine';
     } else if(_mode()==='ANNUEL' && analysis.annuelResult){
       var ar=analysis.annuelResult, obj=+ar.objectifAnnuel||0, reel=+ar.reelCumule||0;
       var over=Math.max(0, reel-obj), thr=(c.threshold!=null?c.threshold:0.10);
@@ -2318,25 +2344,26 @@ document.addEventListener('DOMContentLoaded',()=>{
     var p=_getPaid(_periodKey()), out10=Math.max(0,due10-p.h10), out25=Math.max(0,due25-p.h25);
     var shown=localStorage.getItem('M5_EURO_SHOWN')==='1', blur=shown?'':' m5-blur';
     var open=localStorage.getItem('M5_SOLDE_OPEN')==='1';
-    function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'">'+v.toFixed(2)+' €</span>':'<span style="opacity:.45">—</span>'; }
+    var C_TXT='#ffffff', C_SUB='rgba(255,255,255,0.62)', C_REP='#CDB8FF';
+    function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'" style="color:#fff">'+v.toFixed(2)+' €</span>':'<span style="color:rgba(255,255,255,0.4)">—</span>'; }
     function row(label,color,dtl,due,euro,paid,out,fn,rid){
-      return '<div style="background:rgba(0,0,0,0.03);border-radius:10px;padding:9px 11px;margin-top:8px;">'
-       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;">'+_fmtH(due)+' &nbsp;·&nbsp; '+euro+'</span></div>'
-       +'<div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">'+dtl+'</div>'
-       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:var(--miz-text2);gap:8px;"><span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:52px;padding:4px 6px;border:1px solid var(--miz-border);border-radius:7px;text-align:right;font-size:12.5px;"> h</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:var(--miz-primary);">'+_fmtH(out)+'</strong></span></div>'
+      return '<div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 11px;margin-top:8px;">'
+       +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;color:'+C_TXT+';">'+_fmtH(due)+' &nbsp;·&nbsp; '+euro+'</span></div>'
+       +'<div style="font-size:11px;color:'+C_SUB+';margin-top:3px;">'+dtl+'</div>'
+       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:'+C_SUB+';gap:8px;"><span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:52px;padding:4px 6px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:right;font-size:12.5px;background:#fff;color:#18102E;"> h</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:'+C_REP+';">'+_fmtH(out)+'</strong></span></div>'
        +'</div>';
     }
-    var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid var(--miz-border);background:var(--miz-bg2,#f3f0fb);cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
+    var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
     var body=''
-      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:11px;color:var(--miz-text3);">Non payées → reportées, tranche conservée.</span>'+euroBtn+'</div>'
-      +(rate>0?'':'<div style="font-size:11.5px;color:var(--miz-text3);margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
-      +row('à +10 %','var(--miz-warning,#c47f00)',dtl10,due10,eur(e10),p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
-      +row('à +25 %','var(--miz-danger,#c0392b)',dtl25,due25,eur(e25),p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid var(--miz-border);font-size:13px;font-weight:800;"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.55;font-size:11px;">brut indicatif</span></span></div>';
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:11px;color:'+C_SUB+';">Non payées → reportées, tranche conservée.</span>'+euroBtn+'</div>'
+      +(rate>0?'':'<div style="font-size:11.5px;color:'+C_SUB+';margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
+      +row('à +10 %','#FFC24B',dtl10,due10,eur(e10),p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
+      +row('à +25 %','#FF9B8A',dtl25,due25,eur(e25),p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:13px;font-weight:800;color:'+C_TXT+';"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.6;font-size:11px;">brut indicatif</span></span></div>';
     var head='<div onclick="window.M5toggleSolde()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;user-select:none;">'
-      +'<span style="font-size:12.5px;font-weight:800;color:var(--miz-text2);">💠 Heures comp. — '+suffix+' <span style="font-weight:500;color:var(--miz-text3);">('+_fmtH(due10+due25)+')</span></span>'
-      +'<span id="m5-solde-chev" style="color:var(--miz-text3);font-size:13px;transition:transform .2s;'+(open?'transform:rotate(180deg);':'')+'">▾</span></div>';
-    return '<div style="margin-top:12px;background:rgba(108,63,197,0.06);border:1px solid var(--miz-border);border-radius:12px;overflow:hidden;">'
+      +'<span style="font-size:12.5px;font-weight:800;color:'+C_TXT+';">💠 Heures comp. — '+suffix+' <span style="font-weight:500;color:'+C_SUB+';">('+_fmtH(due10+due25)+')</span></span>'
+      +'<span id="m5-solde-chev" style="color:'+C_SUB+';font-size:13px;transition:transform .2s;'+(open?'transform:rotate(180deg);':'')+'">▾</span></div>';
+    return '<div style="margin-top:12px;background:linear-gradient(160deg,rgba(23,16,46,0.72),rgba(44,24,76,0.72));border:1.5px solid rgba(180,150,255,0.55);border-radius:14px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.30);">'
       + head + '<div id="m5-solde-body" style="padding:0 13px 12px;'+(open?'':'display:none;')+'">'+body+'</div></div>';
   };
 
