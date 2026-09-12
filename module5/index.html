@@ -720,6 +720,7 @@
         <option value="ANNUEL">Année complète</option>
         <option value="MENSUEL">Mois spécifique</option>
         <option value="CUSTOM">Période personnalisée</option>
+        <option value="PAIE">📅 Ma période de paie</option>
       </select>
     </div>
     <div id="pdf-mensuel-opts" style="display:none;">
@@ -733,6 +734,12 @@
           <option value="9">Septembre</option><option value="10">Octobre</option>
           <option value="11">Novembre</option><option value="12">Décembre</option>
         </select>
+      </div>
+    </div>
+    <div id="pdf-paie-opts" style="display:none;">
+      <div class="m5-input-group">
+        <label class="m5-label">Période de paie configurée</label>
+        <select class="m5-select" id="pdf-paie-select" onchange="updatePDFPreview()"></select>
       </div>
     </div>
     <div id="pdf-custom-opts" style="display:none;">
