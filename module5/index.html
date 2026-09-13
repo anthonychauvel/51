@@ -421,6 +421,7 @@
         <span id="cal-week-label" class="acc-week-label"></span>
         <button class="acc-nav-btn" onclick="calNext()">›</button>
         <button class="acc-today-btn" onclick="calToday()">Auj.</button>
+        <button class="acc-today-btn" id="cal-view-btn" onclick="window.M5calView()">📅 Mois</button>
       </div>
       <!-- Calendrier -->
       <div id="calendar-grid" style="padding:0 2px;"></div>
@@ -604,7 +605,11 @@
         style="font-size:26px;font-weight:700;text-align:center;">
     </div>
 
-    <div class="m5-label" style="margin-bottom:8px;">Saisie rapide</div>
+    <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;margin:2px 0 12px;cursor:pointer;color:var(--miz-text2);">
+        <input type="checkbox" id="day-hc-only" onchange="M5dayHCtoggle()" style="width:16px;height:16px;flex:0 0 auto;">
+        <span>Je note seulement mes heures <b>en plus</b> (ajoutées à ma journée type)</span>
+      </label>
+      <div class="m5-label" style="margin-bottom:8px;">Saisie rapide</div>
     <div id="day-quick-hours" class="m5-quick-grid"></div>
 
     <div id="day-saisie-preview" style="margin:10px 0;min-height:24px;"></div>
@@ -958,15 +963,15 @@ function confirmResetM5() {
   }
 }
 </script>
-<script src="js/data/ccn-partiel.js"></script>
-<script src="js/core/calc-engine.js"></script>
-<script src="js/features/saisie.js"></script>
-<script src="js/features/mizuki.js"></script>
-<script src="js/features/pdf-report.js"></script>
+<script src="js/data/ccn-partiel.js?v=r4"></script>
+<script src="js/core/calc-engine.js?v=r4"></script>
+<script src="js/features/saisie.js?v=r4"></script>
+<script src="js/features/mizuki.js?v=r4"></script>
+<script src="js/features/pdf-report.js?v=r4"></script>
 <script src="../legi-ref.js"></script>
-<script src="js/features/glossaire.js"></script>
-<script src="js/features/wellbeing.js"></script>
+<script src="js/features/glossaire.js?v=r4"></script>
+<script src="js/features/wellbeing.js?v=r4"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
-<script src="js/app.js"></script>
+<script src="js/app.js?v=r4"></script>
 </body>
 </html>
