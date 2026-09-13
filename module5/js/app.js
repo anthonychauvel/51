@@ -2217,7 +2217,7 @@ document.addEventListener('DOMContentLoaded',()=>{
 
 /* ═══════════════════════════════════════════════════════════════
    AJOUT (bac à sable) — Compteur HC avec REPORT CONTINU, multi-mode.
-   MENSUEL : report par période de paye. HEBDO : cumul de l'exercice.
+   MENSUEL : report par période de paye. HEBDO : report semaine par semaine.
    ANNUEL : pas de carte HC (annualisation). Deux cases payé (+10%/+25%),
    montant € par tranche (flouté/toggle), affichage au quart d'heure.
    ═══════════════════════════════════════════════════════════════ */
@@ -2259,7 +2259,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var seen={}, all=[];
     [year-1, year, year+1].forEach(function(y){
       var ws=[]; try{ ws=M5_DataStore.getWeeksSorted(String(y))||[]; }catch(e){}
-      ws.forEach(function(w){ if(!seen[w.monday] && w.monday>=start && w.monday<end){ seen[w.monday]=1; all.push(w); } });
+      ws.forEach(function(w){ if(!seen[w.monday] && w.monday>=start){ seen[w.monday]=1; all.push(w); } });
     });
     all.sort(function(a,b){ return a.monday<b.monday?-1:1; });
     return all;
@@ -2303,9 +2303,20 @@ document.addEventListener('DOMContentLoaded',()=>{
     return out;
   }
 
-  function _refreshReported(rid,tranche){ var el=document.getElementById(rid); if(!el)return; var due=parseFloat(el.getAttribute('data-due'))||0; var paid=_getPaid(_periodKey())[tranche]||0; el.textContent=_fmtH(Math.max(0,due-paid)); }
-  window.M5setHCPaid10=function(v){ _savePaid('h10',v); _refreshReported('m5-rep-10','h10'); };
-  window.M5setHCPaid25=function(v){ _savePaid('h25',v); _refreshReported('m5-rep-25','h25'); };
+  window._m5UpdateNet=function(){
+    var card=document.getElementById('m5-solde-card'); if(!card) return;
+    var due10=+card.getAttribute('data-due10')||0, due25=+card.getAttribute('data-due25')||0;
+    var rate=+card.getAttribute('data-rate')||0, r1=+card.getAttribute('data-r1')||0.10, r2=+card.getAttribute('data-r2')||0.25;
+    var p=_getPaid(_periodKey());
+    var n10=Math.max(0,due10-p.h10), n25=Math.max(0,due25-p.h25), nT=Math.round((n10+n25)*100)/100;
+    function set(id,t){ var e=document.getElementById(id); if(e) e.textContent=t; }
+    set('m5-rep-10',_fmtH(n10)); set('m5-rep-25',_fmtH(n25));
+    set('m5-net-h',_fmtH(nT)); set('m5-hdr-net',_fmtH(nT));
+    var eEl=document.getElementById('m5-net-eur');
+    if(eEl) eEl.textContent = rate>0 ? ((n10*rate*(1+r1)+n25*rate*(1+r2)).toFixed(2)+' €') : '—';
+  };
+  window.M5setHCPaid10=function(v){ _savePaid('h10',v); window._m5UpdateNet(); };
+  window.M5setHCPaid25=function(v){ _savePaid('h25',v); window._m5UpdateNet(); };
   window.M5toggleEuro=function(){ var sh=localStorage.getItem('M5_EURO_SHOWN')==='1'; sh=!sh; try{localStorage.setItem('M5_EURO_SHOWN',sh?'1':'0');}catch(e){}
     var els=document.querySelectorAll('.m5-euro-val'); for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur',!sh);
     var b=document.getElementById('m5-euro-btn'); if(b) b.textContent=sh?'🙈 Masquer €':'👁️ Afficher €'; };
@@ -2359,11 +2370,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       +(rate>0?'':'<div style="font-size:11.5px;color:'+C_SUB+';margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
       +row('à +10 %','#FFC24B',dtl10,due10,eur(e10),p.h10,out10,'window.M5setHCPaid10','m5-rep-10')
       +row('à +25 %','#FF9B8A',dtl25,due25,eur(e25),p.h25,out25,'window.M5setHCPaid25','m5-rep-25')
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:13px;font-weight:800;color:'+C_TXT+';"><span>Total dû : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+' <span style="font-weight:500;opacity:.6;font-size:11px;">brut indicatif</span></span></div>';
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:12px;color:'+C_SUB+';"><span>Total généré (brut) : '+_fmtH(due10+due25)+'</span><span>'+eur(eT)+'</span></div>'+'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:14px;font-weight:800;color:'+C_TXT+';"><span>💰 Reste à payer (net) : <span id="m5-net-h">'+_fmtH(out10+out25)+'</span></span><span id="m5-net-eur" class="m5-euro-val'+blur+'">'+(rate>0?((out10*rate*(1+r1)+out25*rate*(1+r2)).toFixed(2)+' €'):'—')+'</span></div>';
     var head='<div onclick="window.M5toggleSolde()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;user-select:none;">'
-      +'<span style="font-size:12.5px;font-weight:800;color:'+C_TXT+';">💠 Heures comp. — '+suffix+' <span style="font-weight:500;color:'+C_SUB+';">('+_fmtH(due10+due25)+')</span></span>'
+      +'<span style="font-size:12.5px;font-weight:800;color:'+C_TXT+';">💠 Heures comp. — '+suffix+' <span style="font-weight:500;color:'+C_SUB+';">(reste <span id="m5-hdr-net">'+_fmtH(out10+out25)+'</span>)</span></span>'
       +'<span id="m5-solde-chev" style="color:'+C_SUB+';font-size:13px;transition:transform .2s;'+(open?'transform:rotate(180deg);':'')+'">▾</span></div>';
-    return '<div style="margin-top:12px;background:linear-gradient(160deg,rgba(23,16,46,0.72),rgba(44,24,76,0.72));border:1.5px solid rgba(180,150,255,0.55);border-radius:14px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.30);">'
+    return '<div id="m5-solde-card" data-due10="'+due10+'" data-due25="'+due25+'" data-rate="'+rate+'" data-r1="'+r1+'" data-r2="'+r2+'" style="margin-top:12px;background:linear-gradient(160deg,rgba(23,16,46,0.72),rgba(44,24,76,0.72));border:1.5px solid rgba(180,150,255,0.55);border-radius:14px;overflow:hidden;box-shadow:0 6px 20px rgba(0,0,0,0.30);">'
       + head + '<div id="m5-solde-body" style="padding:0 13px 12px;'+(open?'':'display:none;')+'">'+body+'</div></div>';
   };
 
