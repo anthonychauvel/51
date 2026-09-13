@@ -643,7 +643,7 @@ body::before {
 .m5-cal-day.over   { background: rgba(245,158,11,0.12); }
 .m5-cal-day.under  { background: rgba(139,92,246,0.10); }
 .m5-cal-day.weekend{ background: var(--miz-bg2); opacity: 0.78; border: 1.5px dashed rgba(139,92,246,0.25); }
-.m5-cal-day.future { background: var(--miz-bg2); opacity: 0.35; cursor: default; }
+.m5-cal-day.future { background: var(--miz-bg2); opacity: 0.55; cursor: pointer; }
 .m5-cal-day.vac    { background: rgba(20,184,166,0.12); cursor: default; }
 .m5-cal-day.ferie  { background: rgba(245,158,11,0.13); border: 1.5px solid rgba(245,158,11,0.35); }
 .m5-cal-day.ferie.today { border-color: var(--miz-primary); }
@@ -949,7 +949,7 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .acc-week-hero .m5-cal-day.over .m5-cal-day-hours { color: #FDE68A; }
 .acc-week-hero .m5-cal-day.under   { background: rgba(167,139,250,0.22); border-color: rgba(167,139,250,0.30); }
 .acc-week-hero .m5-cal-day.weekend { background: rgba(255,255,255,0.05); border-color: rgba(255,255,255,0.07); opacity:0.7; }
-.acc-week-hero .m5-cal-day.future  { background: rgba(255,255,255,0.04); border-color: rgba(255,255,255,0.06); opacity:0.45; }
+.acc-week-hero .m5-cal-day.future  { background: rgba(255,255,255,0.06); border-color: rgba(255,255,255,0.10); opacity:0.6; cursor:pointer; }
 .acc-week-hero .m5-cal-day.vac     { background: rgba(20,184,166,0.25); border-color: rgba(20,184,166,0.40); }
 .acc-week-hero .m5-cal-day.ferie   { background: rgba(251,191,36,0.20); border-color: rgba(251,191,36,0.45); }
 /* Alternance période : différence visible */
@@ -1575,3 +1575,14 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 
 /* AJOUT bac à sable : montant € flouté tant que masqué */
 .m5-blur{filter:blur(7px);-webkit-filter:blur(7px);user-select:none;pointer-events:none;}
+
+/* AJOUT bac à sable : calendrier mensuel façon M2 (mode avancé) */
+.m5-month-grid{ display:grid; grid-template-columns:repeat(7,1fr); gap:4px; padding:2px 0; }
+.m5-month-wd{ text-align:center; font-size:10px; font-weight:700; color:rgba(255,255,255,0.55); padding:2px 0; }
+.m5-month-day{ aspect-ratio:1/1; display:flex; flex-direction:column; align-items:center; justify-content:center; gap:1px; border-radius:9px; background:rgba(255,255,255,0.06); border:1px solid rgba(255,255,255,0.10); cursor:pointer; color:#fff; transition:transform .08s; }
+.m5-month-day b{ font-size:12px; font-weight:600; }
+.m5-month-day span{ font-size:9px; font-weight:800; color:#FFC24B; line-height:1; }
+.m5-month-day.has{ background:rgba(108,63,197,0.38); border-color:rgba(180,150,255,0.5); }
+.m5-month-day.today{ border-color:#9B5CF8; box-shadow:0 0 0 1.5px #9B5CF8; }
+.m5-month-day:active{ transform:scale(0.94); }
+.m5-month-pad{ }
