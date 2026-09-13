@@ -164,7 +164,7 @@ function refreshUI() {
   }
   const bubbleEl=document.getElementById('mizuki-bubble-text');
   if(bubbleEl) bubbleEl.textContent=bubbleText;
-  renderCalendar();
+  if(window._m5IsMonthView&&window._m5IsMonthView()){ if(window.renderMonthCalendar) window.renderMonthCalendar(); } else { renderCalendar(); }
   renderPeriodeNav();
   renderWeekSummary(analysis);
   renderQuickStats(analysis);
@@ -298,7 +298,7 @@ function renderCalendar() {
 
     if(isToday) cellClass+=' today';
 
-    const clickable=!isFuture&&!isVac;
+    const clickable=!isVac; // futur cliquable (anticipation)
     html+=`<div class="${cellClass}" ${clickable?`onclick="openDaySaisie('${d.dk}','${JOURS_SEMAINE[dow]}')"`:''}>`
       +`<div class="m5-cal-day-name">${JOURS_SEMAINE[dow]}</div>`
       +`<div class="m5-cal-day-num">${dayNum}</div>`
@@ -362,6 +362,7 @@ function calChangeYear(newYear) {
 }
 
 function calPrev() {
+  if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthPrev&&window.M5monthPrev(); return; }
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()-7);
   calendarMonday=M5_localDK(d);
@@ -369,15 +370,19 @@ function calPrev() {
   requestAnimationFrame(refreshUI);
 }
 function calNext() {
+  if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthNext&&window.M5monthNext(); return; }
   const today=M5_getCurrentMonday();
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()+7);
   const next=M5_localDK(d);
-  if(next>today) return; // pas dans le futur
+  // Anticipation autorisée : saisie en avance jusqu'à ~1 an
+  const _max=new Date(); _max.setDate(_max.getDate()+371); const _maxDK=M5_localDK(_max);
+  if(next>_maxDK) return;
   calendarMonday=next;
   requestAnimationFrame(refreshUI);
 }
 function calToday() {
+  if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthToday&&window.M5monthToday(); return; }
   calendarMonday=M5_getCurrentMonday();
   requestAnimationFrame(refreshUI);
 }
@@ -426,6 +431,7 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   });
 
   document.getElementById('day-quick-hours').innerHTML=quickHtml;
+  var _hcc=document.getElementById('day-hc-only'); if(_hcc) _hcc.checked=false;
   updateDayPreview();
   openModal('modal-day-saisie');
   setTimeout(()=>inp.focus(),200);
@@ -444,7 +450,10 @@ function updateDayPreview() {
   const worked=parseFloat(document.getElementById('day-saisie-hours')?.value)||0;
   const prev=document.getElementById('day-saisie-preview');
   if(!prev||!contract.hoursBase) return;
-  const base=contract.hoursBase/5;
+  const _nb=Math.max(1,Math.min(7,contract.joursOuvresContrat||5));
+  const base=Math.round((contract.hoursBase/_nb)*100)/100;
+  const _hc=document.getElementById('day-hc-only')&&document.getElementById('day-hc-only').checked;
+  if(_hc){ const _t=Math.round((base+worked)*100)/100; prev.innerHTML='<span style="color:var(--miz-warning);font-size:13px;">+'+worked+'h en plus → journée de <b>'+_t+'h</b> (base '+base+'h)</span>'; return; }
   const diff=worked-base;
   prev.innerHTML=diff>0.09
     ?`<span style="color:var(--miz-warning);font-size:13px;">+${diff.toFixed(1)}h au-delà de ta base journalière (${base}h)</span>`
@@ -453,15 +462,29 @@ function updateDayPreview() {
       :`<span style="color:var(--miz-success);font-size:13px;">✓ Dans ta base journalière</span>`;
 }
 
+window.M5dayHCtoggle=function(){
+  var hc=document.getElementById('day-hc-only')&&document.getElementById('day-hc-only').checked;
+  var c=M5_Contract.get(), nb=Math.max(1,Math.min(7,c.joursOuvresContrat||5)), base=c.hoursBase/nb;
+  var steps= hc ? [0,0.25,0.5,0.75,1,1.5,2,3,4]
+    : (base<4?[0,base-0.5,base,base+0.25,base+0.5,base+0.75,base+1,base+1.5,base+2,base+3]
+             :[0,base-1,base-0.5,base,base+0.25,base+0.5,base+0.75,base+1,base+1.5,base+2,base+3]);
+  var props=[]; steps.forEach(function(h){ if(h>=0&&h<=12) props.push(Math.round(h*4)/4); });
+  var html=''; [...new Set(props)].sort(function(a,b){return a-b;}).forEach(function(h){ html+='<button class="m5-quick-btn" onclick="selectQuickHour('+h+')">'+(window._m5fmtH?window._m5fmtH(h):h+'h')+'</button>'; });
+  var el=document.getElementById('day-quick-hours'); if(el) el.innerHTML=html;
+  var inp=document.getElementById('day-saisie-hours'); if(inp){ inp.value=''; inp.placeholder = hc ? 'ex: 2 (heures en plus)' : 'ex: 5.75 (= 5h45)'; }
+  updateDayPreview();
+};
 function saveDaySaisie() {
   const dateStr=document.getElementById('day-saisie-date').value;
-  const worked=parseFloat(document.getElementById('day-saisie-hours').value);
+  let worked=parseFloat(document.getElementById('day-saisie-hours').value);
   if(!dateStr||isNaN(worked)||worked<0||worked>24) {
     toast('Saisis un nombre d\'heures valide (0-24).','error'); return;
   }
   const year=M5_DataStore.getYear();
-  // 0h = effacer ce jour uniquement, sans toucher à la semaine
-  if(worked===0) {
+  const _hcOnly=document.getElementById('day-hc-only')&&document.getElementById('day-hc-only').checked;
+  if(_hcOnly){ const _c=M5_Contract.get(); const _nb=Math.max(1,Math.min(7,_c.joursOuvresContrat||5)); worked=Math.round(((_c.hoursBase/_nb)+worked)*100)/100; }
+  // 0h = effacer ce jour (uniquement en mode total)
+  if(!_hcOnly && worked===0) {
     M5_DataStore.deleteDay(dateStr,year);
     Mizuki.clearCache();
     closeModal('modal-day-saisie');
@@ -2224,23 +2247,43 @@ document.addEventListener('DOMContentLoaded',()=>{
 (function(){
   function _mode(){ try{ return (typeof M5_Contract!=='undefined'&&M5_Contract.get)?(M5_Contract.get().modeCalcul||'HEBDO'):'HEBDO'; }catch(e){ return 'HEBDO'; } }
   function _year(){ try{ return M5_DataStore.getYear(); }catch(e){ return ''; } }
+  // Bornes de la période affichée, TOUJOURS résolues (jamais 'default') pour un suivi payé par période
+  function _currentPeriodBounds(){
+    try{
+      if(typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) return _currentPeriode;
+      if(typeof buildPeriodes==='function'){
+        var c=M5_Contract.get(), pers=buildPeriodes(_year(), c)||[];
+        var ref=(typeof calendarMonday!=='undefined' && calendarMonday) || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
+        for(var i=0;i<pers.length;i++){ if(pers[i].debutStr && ref>=pers[i].debutStr && ref<=pers[i].finStr) return pers[i]; }
+        if(pers.length) return pers[pers.length-1];
+      }
+    }catch(e){}
+    return null;
+  }
   function _getPaidMap(){ try{ return JSON.parse(localStorage.getItem('M5_HC_PAID')||'{}'); }catch(e){ return {}; } }
   function _periodKey(){
     try{
       var m=_mode();
       if(m==='HEBDO') return 'week:'+((typeof calendarMonday!=='undefined'&&calendarMonday)||'');
       if(m==='ANNUEL') return 'annuel:'+_year();
-      return (typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) || 'default';
+      var b=_currentPeriodBounds(); return (b && b.debutStr) ? ('per:'+b.debutStr) : ('mois:'+_year());
     }catch(e){ return 'default'; }
   }
   function _getPaid(k){ var m=_getPaidMap()[k]||{}; return { h10:+m.h10||0, h25:+m.h25||0 }; }
   function _savePaid(tranche, v){
     var m=_getPaidMap(), k=_periodKey(); if(!m[k]||typeof m[k]!=='object') m[k]={};
-    m[k][tranche]=Math.max(0, parseFloat(String(v).replace(',','.'))||0);
+    m[k][tranche]=Math.round(_parseHM(v)*100)/100;
     try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
   }
   function _fmtH(h){ var s=h<0?'-':''; h=Math.abs(h); var hh=Math.floor(h+1e-9), mm=Math.round((h-hh)*60); if(mm===60){hh++;mm=0;} return s+hh+'h'+(mm?String(mm).padStart(2,'0'):''); }
   window._m5fmtH=_fmtH;
+  function _parseHM(v){
+    v=String(v==null?'':v).trim().toLowerCase().replace(',','.');
+    if(!v) return 0;
+    var m=v.match(/^(\d+)\s*[h:]\s*(\d*)$/);
+    if(m) return Math.max(0,(+m[1])+(m[2]?(+m[2])/60:0));
+    return Math.max(0,parseFloat(v)||0);
+  }
 
   // Début d'exercice en ISO (gère "YYYY-MM-DD" et ancien "DD/MM" rattaché à N-1)
   function _exStartISO(c){
@@ -2275,14 +2318,14 @@ document.addEventListener('DOMContentLoaded',()=>{
     var out={h10:0,h25:0};
     try{
       if(typeof buildPeriodes!=='function'||typeof CalcEngine==='undefined'||typeof M5_DataStore==='undefined') return out;
-      if(typeof _currentPeriode==='undefined'||!_currentPeriode||!_currentPeriode.debutStr) return out;
+      var bnds=_currentPeriodBounds(); if(!bnds||!bnds.debutStr) return out;
       var year=_year(), periodes=buildPeriodes(year,c)||[], allWeeks=_allExerciseWeeks(c), pm=_getPaidMap();
-      var cur=_currentPeriode.debutStr, b10=0,b25=0;
+      var cur=bnds.debutStr, b10=0,b25=0;
       for(var i=0;i<periodes.length;i++){ var per=periodes[i]; if(!per.debutStr||per.debutStr>=cur) break;
         var wks=_weeksInPeriode(allWeeks,per);
         var nbJ=Math.round((new Date(per.finStr+'T12:00:00')-new Date(per.debutStr+'T12:00:00'))/86400000)+1;
         var r=CalcEngine.calcMonth(c.hoursBase,wks,c,(c.hourlyRate||c.rate||0),nbJ);
-        var paid=pm[per.debutStr]||{};
+        var paid=pm['per:'+per.debutStr]||pm[per.debutStr]||{};
         b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0)); b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0)); }
       out.h10=Math.round(b10*100)/100; out.h25=Math.round(b25*100)/100;
     }catch(e){}
@@ -2361,7 +2404,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       return '<div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 11px;margin-top:8px;">'
        +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;color:'+C_TXT+';">'+_fmtH(due)+' &nbsp;·&nbsp; '+euro+'</span></div>'
        +'<div style="font-size:11px;color:'+C_SUB+';margin-top:3px;">'+dtl+'</div>'
-       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:'+C_SUB+';gap:8px;"><span>On m\'a payé : <input type="number" inputmode="decimal" min="0" step="0.25" value="'+(paid||'')+'" placeholder="0" onchange="'+fn+'(this.value)" style="width:52px;padding:4px 6px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:right;font-size:12.5px;background:#fff;color:#18102E;"> h</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:'+C_REP+';">'+_fmtH(out)+'</strong></span></div>'
+       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:'+C_SUB+';gap:8px;"><span>On m\'a payé : <input type="text" inputmode="numeric" value="'+(paid?_fmtH(paid):'')+'" placeholder="0h00" onchange="'+fn+'(this.value)" style="width:64px;padding:4px 6px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:right;font-size:12.5px;background:#fff;color:#18102E;"></span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:'+C_REP+';">'+_fmtH(out)+'</strong></span></div>'
        +'</div>';
     }
     var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
@@ -2385,4 +2428,63 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(!hint){ hint=document.createElement('div'); hint.id=id; hint.style.cssText='font-size:12px;color:var(--miz-text3);text-align:center;margin-top:3px;font-weight:600;'; if(t.parentNode) t.parentNode.appendChild(hint); }
     hint.textContent=(isNaN(v)||v<=0)?'':('= '+_fmtH(v));
   });
+})();
+
+
+/* ═══════════════════════════════════════════════════════════════
+   AJOUT (bac à sable) — Calendrier MENSUEL façon M2 (mode avancé).
+   Grille du mois, jours cliquables (openDaySaisie), toggle Semaine/Mois.
+   La nav ‹ › devient mensuelle en vue mois.
+   ═══════════════════════════════════════════════════════════════ */
+(function(){
+  var _mk=null;
+  function _fmt(v){ return window._m5fmtH?window._m5fmtH(v):(v+'h'); }
+  function _curMK(){
+    if(_mk) return _mk;
+    var cm=(typeof calendarMonday!=='undefined'&&calendarMonday)||'';
+    if(cm) return cm.slice(0,7);
+    var t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
+  }
+  window._m5IsMonthView=function(){ return localStorage.getItem('M5_CAL_VIEW')==='month'; };
+  window.M5calView=function(){
+    var v=window._m5IsMonthView()?'week':'month';
+    try{ localStorage.setItem('M5_CAL_VIEW', v); }catch(e){}
+    if(v==='month') _mk=_curMK();
+    var b=document.getElementById('cal-view-btn'); if(b) b.textContent = v==='month'?'📆 Semaine':'📅 Mois';
+    if(typeof refreshUI==='function') refreshUI();
+  };
+  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
+  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
+  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
+  window.renderMonthCalendar=function(){
+    var el=document.getElementById('calendar-grid'); if(!el) return;
+    var key=_curMK(), pp=key.split('-').map(Number), y=pp[0], m=pp[1];
+    var MOIS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
+    var lbl=document.getElementById('cal-week-label'); if(lbl) lbl.textContent=MOIS[m-1]+' '+y;
+    var b=document.getElementById('cal-view-btn'); if(b) b.textContent='📆 Semaine';
+    var cy; try{ cy=M5_DataStore.getYear(); }catch(e){ cy=y; }
+    var dA={}, dB={};
+    try{ dA=M5_DataStore.getAll(cy)||{}; }catch(e){}
+    try{ dB=(String(y)!==String(cy))?(M5_DataStore.getAll(y)||{}):dA; }catch(e){ dB=dA; }
+    function val(dk){ var e=dB[dk]||dA[dk]; return (e&&e.type==='day')?e.worked:null; }
+    var sd=0; try{ sd=(M5_Contract.get().weekStartDay||0); }catch(e){}
+    var WD=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'], JR=['lundi','mardi','mercredi','jeudi','vendredi','samedi','dimanche'];
+    var wd=WD.slice(sd).concat(WD.slice(0,sd)), jr=JR.slice(sd).concat(JR.slice(0,sd));
+    var daysIn=new Date(y,m,0).getDate();
+    var firstMon=(new Date(y,m-1,1).getDay()+6)%7, offset=(firstMon-sd+7)%7;
+    var t=new Date(), todayDK=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    var h='<div class="m5-cal-weekly-badge">Mode mensuel — tape un jour pour saisir</div><div class="m5-month-grid">';
+    wd.forEach(function(d){ h+='<div class="m5-month-wd">'+d+'</div>'; });
+    for(var i=0;i<offset;i++) h+='<div class="m5-month-pad"></div>';
+    for(var d=1;d<=daysIn;d++){
+      var dk=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
+      var v=val(dk), lab=jr[(offset+d-1)%7];
+      var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'');
+      h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(v!=null?'<span>'+_fmt(v)+'</span>':'')+'</div>';
+    }
+    h+='</div>';
+    el.innerHTML=h;
+  };
+  // Init du libellé du bouton au chargement
+  document.addEventListener('DOMContentLoaded', function(){ var b=document.getElementById('cal-view-btn'); if(b) b.textContent = window._m5IsMonthView()?'📆 Semaine':'📅 Mois'; });
 })();
