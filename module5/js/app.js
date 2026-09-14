@@ -165,7 +165,7 @@ function refreshUI() {
   const bubbleEl=document.getElementById('mizuki-bubble-text');
   if(bubbleEl) bubbleEl.textContent=bubbleText;
   if(window._m5IsMonthView&&window._m5IsMonthView()){ if(window.renderMonthCalendar) window.renderMonthCalendar(); } else { renderCalendar(); }
-  { var _vb=document.getElementById('cal-view-btn'); if(_vb){ var _mv=!!(window._m5IsMonthView&&window._m5IsMonthView()); _vb.textContent=_mv?'📆 Semaine':'📅 Mois'; _vb.classList.toggle('active', _mv); } }
+  if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect();
   renderPeriodeNav();
   renderWeekSummary(analysis);
   renderQuickStats(analysis);
@@ -432,7 +432,11 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   });
 
   document.getElementById('day-quick-hours').innerHTML=quickHtml;
-  var _hcc=document.getElementById('day-hc-only'); if(_hcc) _hcc.checked=false;
+  // Préférence « je note seulement mes heures en plus » : mémorisée d'une saisie à l'autre
+  var _hcc=document.getElementById('day-hc-only');
+  var _hcPref=false; try{ _hcPref=localStorage.getItem('M5_DAY_HC_ONLY')==='1'; }catch(e){}
+  if(_hcc) _hcc.checked=_hcPref;
+  if(_hcPref && window.M5dayHCtoggle) window.M5dayHCtoggle(); // rebâtit les boutons + vide le champ (mode « en plus »)
   updateDayPreview();
   openModal('modal-day-saisie');
   setTimeout(()=>inp.focus(),200);
@@ -465,6 +469,7 @@ function updateDayPreview() {
 
 window.M5dayHCtoggle=function(){
   var hc=document.getElementById('day-hc-only')&&document.getElementById('day-hc-only').checked;
+  try{ localStorage.setItem('M5_DAY_HC_ONLY', hc?'1':'0'); }catch(e){}
   var c=M5_Contract.get(), nb=Math.max(1,Math.min(7,c.joursOuvresContrat||5)), base=c.hoursBase/nb;
   var steps= hc ? [0,0.25,0.5,0.75,1,1.5,2,3,4]
     : (base<4?[0,base-0.5,base,base+0.25,base+0.5,base+0.75,base+1,base+1.5,base+2,base+3]
@@ -2218,6 +2223,14 @@ window.goToMonth=goToMonth;
 window.renderPeriodeNav=renderPeriodeNav;
 window.goToPeriode=goToPeriode;
 window.buildPeriodes=buildPeriodes;
+// ── Ponts vers les IIFE "bac à sable" (carte HC + calendrier mensuel) ──
+// calendarMonday / refreshUI / _currentPeriode sont privés à cette IIFE.
+// On expose des accesseurs LIVE (closures) pour que le report HC, la clé de
+// paiement par semaine/période et le rafraîchissement au changement de vue
+// suivent réellement la semaine affichée.
+window.M5_getCalMonday=function(){ return calendarMonday; };
+window.M5_refreshUI=refreshUI;
+window.M5_getCurrentPeriode=function(){ return _currentPeriode; };
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
@@ -2256,11 +2269,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       var todayS=(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
       if(typeof buildPeriodes==='function'){
         var c=M5_Contract.get(), pers=buildPeriodes(_year(), c)||[];
-        var ref=(typeof calendarMonday!=='undefined' && calendarMonday) || todayS;
+        var ref=(window.M5_getCalMonday&&window.M5_getCalMonday())||todayS;
         for(var i=0;i<pers.length;i++){ if(pers[i].debutStr && ref>=pers[i].debutStr && ref<=pers[i].finStr) return pers[i]; }
         for(var j=0;j<pers.length;j++){ if(pers[j].debutStr && todayS>=pers[j].debutStr && todayS<=pers[j].finStr) return pers[j]; }
       }
-      if(typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) return _currentPeriode;
+      var _cp=(window.M5_getCurrentPeriode&&window.M5_getCurrentPeriode()); if(_cp && _cp.debutStr) return _cp;
     }catch(e){}
     return null;
   }
@@ -2268,7 +2281,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _periodKey(){
     try{
       var m=_mode();
-      if(m==='HEBDO') return 'week:'+((typeof calendarMonday!=='undefined'&&calendarMonday)||'');
+      if(m==='HEBDO') return 'week:'+((window.M5_getCalMonday&&window.M5_getCalMonday())||'');
       if(m==='ANNUEL') return 'annuel:'+_year();
       var b=_currentPeriodBounds(); return (b && b.debutStr) ? ('per:'+b.debutStr) : ('mois:'+_year());
     }catch(e){ return 'default'; }
@@ -2406,7 +2419,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       suffix='report par période';
     } else if(_mode()==='HEBDO'){
       var wr=analysis.weekResult||{}, whc10=wr.compH1||0, whc25=wr.compH2||0;
-      var cm=(typeof calendarMonday!=='undefined'&&calendarMonday)||'';
+      var cm=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
       var wrep=_computeHebdoReport(c, cm);
       due10=Math.round((wrep.h10+whc10)*100)/100; due25=Math.round((wrep.h25+whc25)*100)/100;
       dtl10='report '+_fmtH(wrep.h10)+' + semaine '+_fmtH(whc10); dtl25='report '+_fmtH(wrep.h25)+' + semaine '+_fmtH(whc25);
@@ -2462,27 +2475,33 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _fmt(v){ return window._m5fmtH?window._m5fmtH(v):(v+'h'); }
   function _curMK(){
     if(_mk) return _mk;
-    var cm=(typeof calendarMonday!=='undefined'&&calendarMonday)||'';
+    var cm=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
     if(cm) return cm.slice(0,7);
     var t=new Date(); return t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0');
   }
   window._m5IsMonthView=function(){ return localStorage.getItem('M5_CAL_VIEW')==='month'; };
-  window.M5calView=function(){
-    var v=window._m5IsMonthView()?'week':'month';
+  // Synchronise le menu déroulant Semaine/Mois avec l'état courant
+  window._m5SyncCalViewSelect=function(){ var s=document.getElementById('cal-view-select'); if(s) s.value=window._m5IsMonthView()?'month':'week'; };
+  function _refresh(){ if(window.M5_refreshUI) window.M5_refreshUI(); }
+  // Sélection explicite depuis le menu déroulant (Semaine / Mois)
+  window.M5setCalView=function(v){
+    v=(v==='month')?'month':'week';
     try{ localStorage.setItem('M5_CAL_VIEW', v); }catch(e){}
     if(v==='month') _mk=_curMK();
-    var b=document.getElementById('cal-view-btn'); if(b) b.textContent = v==='month'?'📆 Semaine':'📅 Mois';
-    if(typeof refreshUI==='function') refreshUI();
+    window._m5SyncCalViewSelect();
+    _refresh();
   };
-  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
-  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
-  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); if(typeof refreshUI==='function') refreshUI(); };
+  // Bascule (rétrocompat)
+  window.M5calView=function(){ window.M5setCalView(window._m5IsMonthView()?'week':'month'); };
+  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _refresh(); };
+  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _refresh(); };
+  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); _refresh(); };
   window.renderMonthCalendar=function(){
     var el=document.getElementById('calendar-grid'); if(!el) return;
     var key=_curMK(), pp=key.split('-').map(Number), y=pp[0], m=pp[1];
     var MOIS=['Janvier','Février','Mars','Avril','Mai','Juin','Juillet','Août','Septembre','Octobre','Novembre','Décembre'];
     var lbl=document.getElementById('cal-week-label'); if(lbl) lbl.textContent=MOIS[m-1]+' '+y;
-    var b=document.getElementById('cal-view-btn'); if(b) b.textContent='📆 Semaine';
+    if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect();
     var cy; try{ cy=M5_DataStore.getYear(); }catch(e){ cy=y; }
     var dA={}, dB={};
     try{ dA=M5_DataStore.getAll(cy)||{}; }catch(e){}
@@ -2506,6 +2525,6 @@ document.addEventListener('DOMContentLoaded',()=>{
     h+='</div>';
     el.innerHTML=h;
   };
-  // Init du libellé du bouton au chargement
-  document.addEventListener('DOMContentLoaded', function(){ var b=document.getElementById('cal-view-btn'); if(b) b.textContent = window._m5IsMonthView()?'📆 Semaine':'📅 Mois'; });
+  // Init du menu déroulant au chargement
+  document.addEventListener('DOMContentLoaded', function(){ if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect(); });
 })();
