@@ -1586,3 +1586,6 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .m5-month-day.today{ border-color:#9B5CF8; box-shadow:0 0 0 1.5px #9B5CF8; }
 .m5-month-day:active{ transform:scale(0.94); }
 .m5-month-pad{ }
+
+/* AJOUT bac à sable : état actif du bouton vue Mois/Semaine */
+.acc-today-btn#cal-view-btn.active{ background:#9B5CF8 !important; color:#fff !important; border-color:#9B5CF8 !important; }
