@@ -152,13 +152,12 @@ function _weekResultFor(monday){
       { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 });
   }catch(e){ return null; }
 }
-// En vue MOIS, Mizuki suit la SEMAINE EN COURS (aujourd'hui), pas la 1re semaine du mois
+// Mizuki parle TOUJOURS de la semaine EN COURS (aujourd'hui), quelle que soit
+// la vue (semaine/mois) ou la navigation dans le calendrier.
 function _analysisForMizuki(analysis){
   try{
-    if(window._m5IsMonthView&&window._m5IsMonthView()){
-      const tMon=M5_getCurrentMonday(), year=M5_DataStore.getYear();
-      return Object.assign({},analysis,{ weekResult:_weekResultFor(tMon), isVacWeek:M5_DataStore.isVacWeek(tMon,year) });
-    }
+    const tMon=M5_getCurrentMonday(), year=M5_DataStore.getYear();
+    return Object.assign({},analysis,{ weekResult:_weekResultFor(tMon), isVacWeek:M5_DataStore.isVacWeek(tMon,year) });
   }catch(e){}
   return analysis;
 }
@@ -2511,6 +2510,12 @@ document.addEventListener('DOMContentLoaded',()=>{
     return { comp10:comp10, comp25:comp25, rep10:rep.h10, rep25:rep.h25, paid10:paid10, paid25:paid25,
              rest10:Math.max(0,due10-paid10), rest25:Math.max(0,due25-paid25) };
   }
+  window.M5togglePeriodeSolde=function(){
+    var open=localStorage.getItem('M5_PERSOLDE_OPEN')!=='0'; open=!open;
+    try{ localStorage.setItem('M5_PERSOLDE_OPEN', open?'1':'0'); }catch(e){}
+    var b=document.getElementById('m5-persolde-body'); if(b) b.style.display=open?'':'none';
+    var ch=document.getElementById('m5-persolde-chev'); if(ch) ch.style.transform=open?'rotate(180deg)':'';
+  };
   window._m5PeriodeSoldeBlock=function(analysis){
     try{
       if(_mode()!=='HEBDO') return ''; // le mode MENSUEL a déjà son report par période
@@ -2523,15 +2528,19 @@ document.addEventListener('DOMContentLoaded',()=>{
       var repP=Math.round((s.rep10+s.rep25)*100)/100;
       var shown=localStorage.getItem('M5_EURO_SHOWN')==='1', blur=shown?'':' m5-blur';
       var restEur=(s.rest10*rate*(1+r1)+s.rest25*rate*(1+r2));
+      var open=localStorage.getItem('M5_PERSOLDE_OPEN')!=='0';
       function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'" style="color:#fff">'+v.toFixed(2)+' €</span>':'<span style="color:rgba(255,255,255,0.4)">—</span>'; }
       function tile(val,lbl,col){ return '<div style="flex:1;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px 6px;text-align:center;">'
         +'<div style="font-size:20px;font-weight:800;color:'+col+';">'+_fmtH(val)+'</div>'
         +'<div style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">'+lbl+'</div></div>'; }
       var lbl=per.label||(per.debutStr+' → '+per.finStr);
       var restColor=rest>0?'#FF9E6B':'#7CE0A0';
-      return '<div style="background:linear-gradient(180deg,rgba(45,20,103,0.55),rgba(30,15,60,0.55));border:1px solid rgba(196,168,255,0.20);border-radius:14px;padding:13px;margin-top:14px;">'
-        +'<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#C4A8FF;text-transform:uppercase;margin-bottom:2px;">💠 Solde de la période</div>'
-        +'<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:10px;">'+lbl+'</div>'
+      var header='<div onclick="window.M5togglePeriodeSolde()" style="display:flex;justify-content:space-between;align-items:center;cursor:pointer;">'
+        +'<div><div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#C4A8FF;text-transform:uppercase;">💠 Solde de la période</div>'
+        +'<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-top:2px;">'+lbl+'</div></div>'
+        +'<div style="display:flex;align-items:center;gap:9px;"><span style="font-size:15px;font-weight:800;color:#8FD3E0;">'+_fmtH(totP)+'</span>'
+        +'<span id="m5-persolde-chev" style="color:#C4A8FF;font-size:13px;transition:transform .2s;transform:'+(open?'rotate(180deg)':'')+';">▾</span></div></div>';
+      var body='<div id="m5-persolde-body" style="display:'+(open?'':'none')+';margin-top:11px;">'
         +'<div style="display:flex;gap:7px;">'+tile(totP,'Total période','#8FD3E0')+tile(s.comp10,'à +'+Math.round(r1*100)+'%','#FFC24B')+tile(s.comp25,'à +'+Math.round(r2*100)+'%','#FF7A59')+'</div>'
         +'<div style="display:flex;justify-content:space-between;margin-top:11px;font-size:13px;color:rgba(255,255,255,0.82);"><span>Report précédent</span><b>'+_fmtH(repP)+'</b></div>'
         +'<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:13px;color:rgba(255,255,255,0.82);"><span>Payées (période)</span><b>'+_fmtH(Math.round((s.paid10+s.paid25)*100)/100)+'</b></div>'
@@ -2541,6 +2550,7 @@ document.addEventListener('DOMContentLoaded',()=>{
         +'<div style="display:flex;justify-content:space-between;margin-top:8px;padding:8px 10px;background:rgba(79,179,194,0.12);border:1px solid rgba(79,179,194,0.3);border-radius:9px;font-size:13px;color:#8FD3E0;"><span>Reliquat reporté</span><b>'+_fmtH(rest)+'</b></div>'
         +'<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:8px;">Synthèse de la période active — le détail modifiable est ci-dessous, semaine par semaine.</div>'
         +'</div>';
+      return '<div style="background:linear-gradient(180deg,rgba(45,20,103,0.55),rgba(30,15,60,0.55));border:1px solid rgba(196,168,255,0.20);border-radius:14px;padding:13px;margin-top:14px;">'+header+body+'</div>';
     }catch(e){ return ''; }
   };
 
@@ -2737,6 +2747,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   // Init du menu déroulant + gestes de balayage au chargement
   document.addEventListener('DOMContentLoaded', function(){
     if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect();
+    // Cadenas : déclenche au 1er tap (touchend) — corrige le "double clic" iOS
+    var lb=document.getElementById('periode-lock-btn');
+    if(lb){
+      if(!lb.textContent) lb.textContent='🔓';
+      var _lockFired=false;
+      lb.addEventListener('touchend', function(e){ e.preventDefault(); _lockFired=true; window.M5togglePeriodeLock(); }, {passive:false});
+      lb.addEventListener('click', function(){ if(_lockFired){ _lockFired=false; return; } window.M5togglePeriodeLock(); });
+    }
     var hero=document.querySelector('.acc-week-hero'); if(!hero) return;
     var x0=null, y0=null, t0=0;
     hero.addEventListener('touchstart', function(e){
