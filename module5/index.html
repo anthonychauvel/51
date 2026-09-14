@@ -421,7 +421,10 @@
         <span id="cal-week-label" class="acc-week-label"></span>
         <button class="acc-nav-btn" onclick="calNext()">›</button>
         <button class="acc-today-btn" onclick="calToday()">Auj.</button>
-        <button class="acc-today-btn" id="cal-view-btn" onclick="window.M5calView()">📅 Mois</button>
+        <select class="acc-view-select" id="cal-view-select" aria-label="Mode calendrier" onchange="window.M5setCalView(this.value)">
+          <option value="week">📅 Semaine</option>
+          <option value="month">📆 Mois</option>
+        </select>
       </div>
       <!-- Calendrier -->
       <div id="calendar-grid" style="padding:0 2px;"></div>
