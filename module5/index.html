@@ -211,6 +211,16 @@
         <div id="wiz-hours-preview" style="font-size:12px;color:var(--miz-text3);margin-top:4px;text-align:center;"></div>
       </div>
       <div class="m5-input-group">
+        <label class="m5-label">Combien de jours par semaine travailles-tu ?</label>
+        <select class="m5-select" id="wiz-jours-ouvres">
+          <option value="3">3 jours/semaine</option>
+          <option value="4">4 jours/semaine</option>
+          <option value="5" selected>5 jours/semaine (défaut)</option>
+          <option value="6">6 jours/semaine</option>
+        </select>
+        <div style="font-size:11px;color:var(--miz-text3);margin-top:3px;">Définit ta <b>journée type</b> (contrat ÷ jours). Ex : retraite progressive sur <b>4 jours</b> → 28h = 7h/jour.</div>
+      </div>
+      <div class="m5-input-group">
         <label class="m5-label">Ton taux horaire brut (optionnel, pour estimer tes gains)</label>
         <input type="number" inputmode="decimal" class="m5-input" id="wiz-rate"
           min="0" step="0.01" placeholder="ex : 12.31 (SMIC 2026)"
@@ -442,6 +452,9 @@
       </select>
       <select id="periode-year-sel" class="acc-periode-year"
         onchange="calChangeYear(this.value)"></select>
+      <button id="periode-lock-btn" class="acc-periode-lock" type="button"
+        aria-label="Verrouiller la période" aria-pressed="false"
+        onclick="window.M5togglePeriodeLock()">🔓</button>
     </div>
 
     <!-- ══ ALERTES SEMAINE ══ -->
