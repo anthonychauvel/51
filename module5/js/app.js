@@ -135,6 +135,34 @@ function runAnalysis() {
 }
 
 // ── Refresh UI ────────────────────────────────────────────────────
+// Calcule le résultat hebdo pour un lundi donné (utilisé par Mizuki en vue mois)
+function _weekResultFor(monday){
+  try{
+    const contract=M5_Contract.get(); if(!contract.hoursBase) return null;
+    const year=M5_DataStore.getYear();
+    const wk=M5_DataStore.getWeekTotal(monday,year);
+    const isVac=M5_DataStore.isVacWeek(monday,year);
+    const av=M5_DataStore.getAvenant(monday,year);
+    if(wk.total===null||isVac) return null;
+    const feriesMap=typeof M5_getFeriesYear!=='undefined'?M5_getFeriesYear(parseInt(year)):null;
+    if(av && av.avenatH > contract.hoursBase){
+      return CalcEngine.calcAvenant(contract.hoursBase,av.avenatH,wk.total,contract.hourlyRate||0);
+    }
+    return CalcEngine.calcWeek(contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
+      { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 });
+  }catch(e){ return null; }
+}
+// En vue MOIS, Mizuki suit la SEMAINE EN COURS (aujourd'hui), pas la 1re semaine du mois
+function _analysisForMizuki(analysis){
+  try{
+    if(window._m5IsMonthView&&window._m5IsMonthView()){
+      const tMon=M5_getCurrentMonday(), year=M5_DataStore.getYear();
+      return Object.assign({},analysis,{ weekResult:_weekResultFor(tMon), isVacWeek:M5_DataStore.isVacWeek(tMon,year) });
+    }
+  }catch(e){}
+  return analysis;
+}
+
 function refreshUI() {
   const contract=M5_Contract.get();
   const noContract=document.getElementById('view-no-contract');
@@ -157,7 +185,7 @@ function refreshUI() {
   const analysis=runAnalysis();
   if(!analysis) return;
   // Bulle Mizuki — wellbeing en priorité si signal fort
-  let bubbleText=Mizuki.getBubbleText(analysis);
+  let bubbleText=Mizuki.getBubbleText(_analysisForMizuki(analysis));
   if(analysis.wellbeing&&analysis.wellbeing.available&&analysis.wellbeing.niveau==='critique') {
     const name=localStorage.getItem('M5_USER_NAME')||'';
     bubbleText=M5_Wellbeing.getMizukiText(analysis.wellbeing,name)||bubbleText;
@@ -834,6 +862,7 @@ function renderQuickStats(analysis) {
     }
   }
 
+  if(window._m5PeriodeSoldeBlock){ try{ html += window._m5PeriodeSoldeBlock(analysis); }catch(e){} }
   if(window._m5SoldeHCBlock){ try{ html += window._m5SoldeHCBlock(analysis); }catch(e){} }
   el.innerHTML=html;
 }
@@ -1381,7 +1410,7 @@ function renderStats() {
 // ── Popup Mizuki ──────────────────────────────────────────────────
 function openMizukiPopup() {
   const analysis=currentAnalysis||runAnalysis(); if(!analysis) return;
-  const popup=Mizuki.getPopupContent(analysis); if(!popup) return;
+  const popup=Mizuki.getPopupContent(_analysisForMizuki(analysis)); if(!popup) return;
   const lvlMap={ok:'✅ Tout va bien',info:'📋 Info',vigilance:'👀 Vigilance',alerte:'⚠️ Alerte',critique:'🚨 Critique'};
   document.getElementById('mizuki-popup-body').innerHTML=`
     <div class="mizuki-popup-icon">${popup.icon}</div>
@@ -2254,7 +2283,11 @@ function _activePeriode(){
     var c=M5_Contract.get();
     var yr=(calendarMonday||'').slice(0,4)||M5_DataStore.getYear();
     var pers=buildPeriodes(yr, c)||[];
-    for(var i=0;i<pers.length;i++){ if(calendarMonday>=pers[i].debutStr && calendarMonday<=pers[i].finStr) return pers[i]; }
+    var i;
+    for(i=0;i<pers.length;i++){ if(calendarMonday>=pers[i].debutStr && calendarMonday<=pers[i].finStr) return pers[i]; }
+    // repli : période contenant aujourd'hui
+    var tk=M5_localDK(new Date());
+    for(i=0;i<pers.length;i++){ if(tk>=pers[i].debutStr && tk<=pers[i].finStr) return pers[i]; }
   }catch(e){}
   return null;
 }
@@ -2265,8 +2298,11 @@ window.M5togglePeriodeLock=function(){
   var m=_lockMap(), on=!m[p.debutStr];
   if(on) m[p.debutStr]=p.finStr; else delete m[p.debutStr];
   try{ localStorage.setItem('M5_PERIODE_LOCKS', JSON.stringify(m)); }catch(e){}
+  // Retour visuel IMMÉDIAT (le re-render lourd est différé → 1 seul tap suffit)
+  var b=document.getElementById('periode-lock-btn');
+  if(b){ b.textContent=on?'🔒':'🔓'; b.classList.toggle('locked', on); b.setAttribute('aria-pressed', on?'true':'false'); }
   toast(on?('Période verrouillée 🔒 — '+p.label):('Période déverrouillée 🔓 — '+p.label),'info');
-  refreshUI();
+  requestAnimationFrame(refreshUI);
 };
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
@@ -2398,12 +2434,24 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _computeHebdoReport(c, curMonday){
     var out={h10:0,h25:0};
     try{ if(!curMonday) return out;
-      var wks=_allWeeksRaw(), pm=_getPaidMap(), b10=0,b25=0;
-      for(var i=0;i<wks.length;i++){ var w=wks[i]; if(w.monday>=curMonday) break;
-        var wk=(w.worked!=null?w.worked:(w.hours||0));
-        var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0));
-        var paid=pm['week:'+w.monday]||{};
-        b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0)); b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0)); }
+      var wks=_allWeeksRaw(), pm=_getPaidMap();
+      // Toutes les semaines à traiter AVANT curMonday : celles qui ont des heures
+      // travaillées ET/OU un paiement saisi (sinon un paiement sur une semaine
+      // sans heures n'était jamais soustrait → cascade cassée).
+      var workedMap={}; wks.forEach(function(w){ workedMap[w.monday]=(w.worked!=null?w.worked:(w.hours||0)); });
+      var set={};
+      wks.forEach(function(w){ if(w.monday<curMonday) set[w.monday]=1; });
+      Object.keys(pm).forEach(function(k){ if(k.indexOf('week:')===0){ var mday=k.slice(5); if(mday && mday<curMonday) set[mday]=1; } });
+      var sorted=Object.keys(set).sort();
+      var b10=0,b25=0;
+      for(var i=0;i<sorted.length;i++){
+        var mday=sorted[i];
+        var wk=(workedMap[mday]!=null?workedMap[mday]:0);
+        var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)):{compH1:0,compH2:0};
+        var paid=pm['week:'+mday]||{};
+        b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0));
+        b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0));
+      }
       out.h10=Math.round(b10*100)/100; out.h25=Math.round(b25*100)/100;
     }catch(e){}
     return out;
@@ -2444,6 +2492,56 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{ localStorage.setItem('M5_SOLDE_OPEN', open?'1':'0'); }catch(e){}
     var b=document.getElementById('m5-solde-body'); if(b) b.style.display=open?'':'none';
     var ch=document.getElementById('m5-solde-chev'); if(ch) ch.style.transform=open?'rotate(180deg)':'';
+  };
+
+  // ── SOLDE DE LA PÉRIODE (intermédiaire, lecture seule) ──
+  function _computePeriodeSolde(c, per){
+    var wks=_allWeeksRaw(), pm=_getPaidMap(), comp10=0,comp25=0, paid10=0,paid25=0;
+    wks.forEach(function(w){
+      if(w.monday>=per.debutStr && w.monday<=per.finStr){
+        var wk=(w.worked!=null?w.worked:0);
+        if(wk>0){ var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)); comp10+=r.compH1||0; comp25+=r.compH2||0; }
+      }
+    });
+    Object.keys(pm).forEach(function(k){
+      if(k.indexOf('week:')===0){ var mday=k.slice(5); if(mday>=per.debutStr && mday<=per.finStr){ paid10+=(+pm[k].h10||0); paid25+=(+pm[k].h25||0); } }
+    });
+    var rep=_computeHebdoReport(c, per.debutStr);
+    var due10=rep.h10+comp10, due25=rep.h25+comp25;
+    return { comp10:comp10, comp25:comp25, rep10:rep.h10, rep25:rep.h25, paid10:paid10, paid25:paid25,
+             rest10:Math.max(0,due10-paid10), rest25:Math.max(0,due25-paid25) };
+  }
+  window._m5PeriodeSoldeBlock=function(analysis){
+    try{
+      if(_mode()!=='HEBDO') return ''; // le mode MENSUEL a déjà son report par période
+      var c=(analysis.contract)||{}; if(!c.hoursBase) return '';
+      var per=_currentPeriodBounds(); if(!per||!per.debutStr) return '';
+      var s=_computePeriodeSolde(c, per);
+      var rate=(c.hourlyRate||c.rate||0), r1=(c.rate1!=null?c.rate1:0.10), r2=(c.rate2!=null?c.rate2:0.25);
+      var totP=Math.round((s.comp10+s.comp25)*100)/100;
+      var rest10=Math.round(s.rest10*100)/100, rest25=Math.round(s.rest25*100)/100, rest=Math.round((rest10+rest25)*100)/100;
+      var repP=Math.round((s.rep10+s.rep25)*100)/100;
+      var shown=localStorage.getItem('M5_EURO_SHOWN')==='1', blur=shown?'':' m5-blur';
+      var restEur=(s.rest10*rate*(1+r1)+s.rest25*rate*(1+r2));
+      function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'" style="color:#fff">'+v.toFixed(2)+' €</span>':'<span style="color:rgba(255,255,255,0.4)">—</span>'; }
+      function tile(val,lbl,col){ return '<div style="flex:1;background:rgba(255,255,255,0.06);border-radius:10px;padding:10px 6px;text-align:center;">'
+        +'<div style="font-size:20px;font-weight:800;color:'+col+';">'+_fmtH(val)+'</div>'
+        +'<div style="font-size:10px;color:rgba(255,255,255,0.55);text-transform:uppercase;letter-spacing:.04em;margin-top:2px;">'+lbl+'</div></div>'; }
+      var lbl=per.label||(per.debutStr+' → '+per.finStr);
+      var restColor=rest>0?'#FF9E6B':'#7CE0A0';
+      return '<div style="background:linear-gradient(180deg,rgba(45,20,103,0.55),rgba(30,15,60,0.55));border:1px solid rgba(196,168,255,0.20);border-radius:14px;padding:13px;margin-top:14px;">'
+        +'<div style="font-size:11px;font-weight:800;letter-spacing:.06em;color:#C4A8FF;text-transform:uppercase;margin-bottom:2px;">💠 Solde de la période</div>'
+        +'<div style="font-size:12px;color:rgba(255,255,255,0.6);margin-bottom:10px;">'+lbl+'</div>'
+        +'<div style="display:flex;gap:7px;">'+tile(totP,'Total période','#8FD3E0')+tile(s.comp10,'à +'+Math.round(r1*100)+'%','#FFC24B')+tile(s.comp25,'à +'+Math.round(r2*100)+'%','#FF7A59')+'</div>'
+        +'<div style="display:flex;justify-content:space-between;margin-top:11px;font-size:13px;color:rgba(255,255,255,0.82);"><span>Report précédent</span><b>'+_fmtH(repP)+'</b></div>'
+        +'<div style="display:flex;justify-content:space-between;margin-top:5px;font-size:13px;color:rgba(255,255,255,0.82);"><span>Payées (période)</span><b>'+_fmtH(Math.round((s.paid10+s.paid25)*100)/100)+'</b></div>'
+        +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:9px;border-top:1px solid rgba(196,168,255,0.18);">'
+          +'<span style="font-size:14px;font-weight:800;color:'+restColor+';">⚠️ Restant dû</span>'
+          +'<span style="font-size:14px;font-weight:800;color:'+restColor+';">'+_fmtH(rest)+' · '+eur(restEur)+'</span></div>'
+        +'<div style="display:flex;justify-content:space-between;margin-top:8px;padding:8px 10px;background:rgba(79,179,194,0.12);border:1px solid rgba(79,179,194,0.3);border-radius:9px;font-size:13px;color:#8FD3E0;"><span>Reliquat reporté</span><b>'+_fmtH(rest)+'</b></div>'
+        +'<div style="font-size:10px;color:rgba(255,255,255,0.4);margin-top:8px;">Synthèse de la période active — le détail modifiable est ci-dessous, semaine par semaine.</div>'
+        +'</div>';
+    }catch(e){ return ''; }
   };
 
   window._m5SoldeHCBlock=function(analysis){
@@ -2530,55 +2628,68 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   // Bascule (rétrocompat)
   window.M5calView=function(){ window.M5setCalView(window._m5IsMonthView()?'week':'month'); };
-  // ── Navigation par PÉRIODE en vue mois ────────────────────────────
-  // Une période peut finir le 15 et la suivante commencer le 16 (même mois).
-  // On avance/recule d'une période ; le mois affiché = le mois qui contient
-  // le PLUS de jours de la période → on reste sur le même mois tant que la
-  // période active y est majoritaire, puis on passe au mois suivant.
-  function _periodesSorted(){
+  // ── Navigation par (mois × période) en vue mois ──────────────────
+  // On construit la liste des "cases" (mois, période) où la période chevauche
+  // le mois, triées par mois puis par période. Le balayage avance d'une case :
+  //  P1M1 → P2M1 → P2M2 → P3M2 → P3M3 …  (on reste sur le même mois tant que
+  //  deux périodes s'y trouvent, puis on passe au mois suivant).
+  function _periodesSorted(centerY){
     var c; try{ c=M5_Contract.get(); }catch(e){ c={}; }
-    var y=parseInt(_curMK().slice(0,4))||new Date().getFullYear();
+    var y=centerY||parseInt(_curMK().slice(0,4))||new Date().getFullYear();
     var seen={}, out=[];
-    [y-1,y,y+1].forEach(function(yy){
+    [y-2,y-1,y,y+1,y+2].forEach(function(yy){
       var ps=[]; try{ ps=(window.buildPeriodes?window.buildPeriodes(String(yy),c):[])||[]; }catch(e){}
       ps.forEach(function(p){ if(p&&p.debutStr&&!seen[p.debutStr]){ seen[p.debutStr]=1; out.push(p); } });
     });
     out.sort(function(a,b){ return a.debutStr<b.debutStr?-1:1; });
     return out;
   }
-  function _majorityMonth(p){
-    var d=new Date(p.debutStr+'T12:00:00'), f=new Date(p.finStr+'T12:00:00'), counts={};
-    for(var t=d.getTime(); t<=f.getTime(); t+=86400000){
-      var dd=new Date(t), k=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0');
-      counts[k]=(counts[k]||0)+1;
-    }
-    var best=p.debutStr.slice(0,7), bc=-1;
-    for(var k in counts){ if(counts[k]>bc){ bc=counts[k]; best=k; } }
-    return best;
+  // Toutes les cases (mk, période) : une période apparaît dans chaque mois qu'elle touche
+  function _cells(centerY){
+    var pers=_periodesSorted(centerY), cells=[];
+    pers.forEach(function(p){
+      var d=new Date(p.debutStr+'T12:00:00'), f=new Date(p.finStr+'T12:00:00');
+      var ym0=d.getFullYear()*12+d.getMonth(), ym1=f.getFullYear()*12+f.getMonth();
+      for(var ym=ym0; ym<=ym1; ym++){
+        var yy=Math.floor(ym/12), mm=ym%12;
+        cells.push({ mk: yy+'-'+String(mm+1).padStart(2,'0'), pStart: p.debutStr, pFin: p.finStr });
+      }
+    });
+    cells.sort(function(a,b){ if(a.mk!==b.mk) return a.mk<b.mk?-1:1; return a.pStart<b.pStart?-1:1; });
+    return cells;
+  }
+  function _activePStart(cells){
+    // période active = celle contenant calendarMonday
+    var cm=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
+    for(var i=0;i<cells.length;i++){ if(cm>=cells[i].pStart && cm<=cells[i].pFin) return cells[i].pStart; }
+    return '';
   }
   function _navPeriode(delta){
-    var pers=_periodesSorted(); if(!pers.length){ _refresh(); return; }
-    var cm=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
+    var mk=_curMK(), cy=parseInt(mk.slice(0,4))||new Date().getFullYear();
+    var cells=_cells(cy); if(!cells.length){ _refresh(); return; }
+    var pStart=_activePStart(cells);
+    // case courante = (mois affiché, période active)
     var idx=-1, i;
-    for(i=0;i<pers.length;i++){ if(cm>=pers[i].debutStr && cm<=pers[i].finStr){ idx=i; break; } }
-    if(idx<0){
-      var t=new Date(), tk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-      for(i=0;i<pers.length;i++){ if(tk>=pers[i].debutStr && tk<=pers[i].finStr){ idx=i; break; } }
+    for(i=0;i<cells.length;i++){ if(cells[i].mk===mk && cells[i].pStart===pStart){ idx=i; break; } }
+    if(idx<0){ // repli : 1re case du mois affiché, sinon case contenant aujourd'hui
+      for(i=0;i<cells.length;i++){ if(cells[i].mk===mk){ idx=i; break; } }
+      if(idx<0){ var tk=(window.M5_getCurrentMonday?window.M5_getCurrentMonday():''); for(i=0;i<cells.length;i++){ if(tk>=cells[i].pStart && tk<=cells[i].pFin){ idx=i; break; } } }
       if(idx<0) idx=0;
     }
-    var ni=idx+delta; if(ni<0) ni=0; if(ni>pers.length-1) ni=pers.length-1;
-    var target=pers[ni];
-    if(window.M5_setCalMonday) window.M5_setCalMonday(target.debutStr);
-    _mk=_majorityMonth(target);
+    var ni=idx+delta; if(ni<0) ni=0; if(ni>cells.length-1) ni=cells.length-1;
+    var cell=cells[ni];
+    if(window.M5_setCalMonday) window.M5_setCalMonday(cell.pStart);
+    _mk=cell.mk;
     _refresh();
   }
   window.M5monthPrev=function(){ _navPeriode(-1); };
   window.M5monthNext=function(){ _navPeriode(1); };
   window.M5monthToday=function(){
-    var t=new Date(), tk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
-    var pers=_periodesSorted(), found=null;
-    for(var i=0;i<pers.length;i++){ if(tk>=pers[i].debutStr && tk<=pers[i].finStr){ found=pers[i]; break; } }
-    if(found){ if(window.M5_setCalMonday) window.M5_setCalMonday(found.debutStr); _mk=_majorityMonth(found); }
+    var tk=(window.M5_getCurrentMonday?window.M5_getCurrentMonday():'');
+    var t=new Date(), cy=t.getFullYear();
+    var cells=_cells(cy), found=null;
+    for(var i=0;i<cells.length;i++){ if(tk>=cells[i].pStart && tk<=cells[i].pFin){ found=cells[i]; if(found.mk===t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')) break; } }
+    if(found){ if(window.M5_setCalMonday) window.M5_setCalMonday(found.pStart); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); }
     else { _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); }
     _refresh();
   };
