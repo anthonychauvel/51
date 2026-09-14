@@ -219,11 +219,12 @@ function renderCalendar() {
   // Mode hebdo = une seule case "total semaine"
   if(days.mode==='week') {
     const isVacH=M5_DataStore.isVacWeek(calendarMonday,year);
+    const _wkLocked=(window.M5_isDayLocked&&window.M5_isDayLocked(calendarMonday));
     el.innerHTML=`
-      <div class="m5-cal-weekly-badge">Mode hebdomadaire</div>
-      <div class="m5-cal-week-total-cell" onclick="openWeeklySaisie()">
+      <div class="m5-cal-weekly-badge">Mode hebdomadaire${_wkLocked?' · 🔒 verrouillé':''}</div>
+      <div class="m5-cal-week-total-cell${_wkLocked?' m5-locked':''}" onclick="openWeeklySaisie()">
         <div class="m5-cal-week-total-val">${wk.total}h</div>
-        <div class="m5-cal-week-total-sub">total semaine — tap pour modifier</div>
+        <div class="m5-cal-week-total-sub">${_wkLocked?'période verrouillée 🔒':'total semaine — tap pour modifier'}</div>
       </div>
       <div style="display:flex;gap:8px;margin-top:10px;">
         <button class="m5-btn m5-btn-outline m5-btn-sm" style="flex:1" onclick="openWeeklySaisie()">📊 Total semaine</button>
@@ -298,12 +299,14 @@ function renderCalendar() {
     }
 
     if(isToday) cellClass+=' today';
+    const _dayLocked=(window.M5_isDayLocked&&window.M5_isDayLocked(d.dk));
+    if(_dayLocked) cellClass+=' m5-locked';
 
     const clickable=!isVac; // futur cliquable (anticipation)
     html+=`<div class="${cellClass}" ${clickable?`onclick="openDaySaisie('${d.dk}','${JOURS_SEMAINE[dow]}')"`:''}>`
       +`<div class="m5-cal-day-name">${JOURS_SEMAINE[dow]}</div>`
       +`<div class="m5-cal-day-num">${dayNum}</div>`
-      +`${hoursHtml}`
+      +`${_dayLocked?'<span class="m5-cal-day-lock">🔒</span>':hoursHtml}`
       +`</div>`;
   });
   html+='</div>';
@@ -363,7 +366,6 @@ function calChangeYear(newYear) {
 }
 
 function calPrev() {
-  if(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()){ toast('Période verrouillée 🔒 — touche le cadenas pour naviguer','info'); return; }
   if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthPrev&&window.M5monthPrev(); return; }
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()-7);
@@ -372,7 +374,6 @@ function calPrev() {
   requestAnimationFrame(refreshUI);
 }
 function calNext() {
-  if(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()){ toast('Période verrouillée 🔒 — touche le cadenas pour naviguer','info'); return; }
   if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthNext&&window.M5monthNext(); return; }
   const today=M5_getCurrentMonday();
   const d=new Date(calendarMonday+'T12:00:00');
@@ -392,6 +393,7 @@ function calToday() {
 
 // ── Popup saisie journalière ───────────────────────────────────────
 function openDaySaisie(dateStr, jourLabel) {
+  if(window.M5_isDayLocked&&window.M5_isDayLocked(dateStr)){ toast('Période verrouillée 🔒 — déverrouille-la pour modifier ce jour','info'); return; }
   const contract=M5_Contract.get();
   const year=M5_DataStore.getYear();
   const existing=M5_DataStore.getAll(year)[dateStr];
@@ -521,6 +523,7 @@ function deleteDaySaisie() {
 
 // ── Popup saisie hebdomadaire ─────────────────────────────────────
 function openWeeklySaisie() {
+  if(window.M5_isDayLocked&&window.M5_isDayLocked(calendarMonday)){ toast('Période verrouillée 🔒 — déverrouille-la pour modifier cette semaine','info'); return; }
   const contract=M5_Contract.get();
   const year=M5_DataStore.getYear();
   const wk=M5_DataStore.getWeekTotal(calendarMonday,year);
@@ -1159,9 +1162,9 @@ function renderPeriodeNav() {
   }
 
   sel.innerHTML=options;
-  // Reflète l'état de verrouillage persistant sur le bouton cadenas
+  // Reflète l'état de verrouillage de la période affichée sur le bouton cadenas
   var _lb=document.getElementById('periode-lock-btn');
-  if(_lb){ var _lk=(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()); _lb.textContent=_lk?'🔒':'🔓'; _lb.classList.toggle('locked',!!_lk); _lb.setAttribute('aria-pressed',_lk?'true':'false'); }
+  if(_lb){ var _lk=(window.M5_isActivePeriodeLocked&&window.M5_isActivePeriodeLocked()); _lb.textContent=_lk?'🔒':'🔓'; _lb.classList.toggle('locked',!!_lk); _lb.setAttribute('aria-pressed',_lk?'true':'false'); }
   // Pré-positionner APRÈS innerHTML — évite le blocage onchange au 1er clic
   if(activeIdx>=0) {
     const pActive=periodes[activeIdx];
@@ -1673,6 +1676,7 @@ function saveWeeklySaisieOrClose() {
 
 // ── Gestion vacances M5 ──────────────────────────────────────────────
 function toggleVacSemaine() {
+  if(window.M5_isDayLocked&&window.M5_isDayLocked(calendarMonday)){ toast('Période verrouillée 🔒 — déverrouille-la pour modifier','info'); return; }
   const year=M5_DataStore.getYear();
   const isVac=M5_DataStore.isVacWeek(calendarMonday,year);
   if(isVac) {
@@ -2180,6 +2184,7 @@ window.exportDataJSON=exportDataJSON; window.importDataJSON=importDataJSON;
 // ── Saisie rapide depuis l'accueil ────────────────────────────────
 function quickSave(hours) {
   try {
+    if(window.M5_isDayLocked&&window.M5_isDayLocked(calendarMonday)){ toast('Période verrouillée 🔒 — déverrouille-la pour saisir','info'); return; }
     if(!hours||isNaN(hours)||hours<=0||hours>=35) return;
     const year=M5_DataStore.getYear();
     M5_DataStore.saveWeekTotal(calendarMonday, hours, year);
@@ -2239,14 +2244,29 @@ window.M5_getCalMonday=function(){ return calendarMonday; };
 window.M5_setCalMonday=function(v){ if(v) calendarMonday=v; };
 window.M5_refreshUI=refreshUI;
 window.M5_getCurrentPeriode=function(){ return _currentPeriode; };
-// ── Verrouillage de période (on/off) ──────────────────────────────
-window.M5_isPeriodeLocked=function(){ try{ return localStorage.getItem('M5_PERIODE_LOCK')==='1'; }catch(e){ return false; } };
+// ── Verrouillage par période : gèle la SAISIE d'une période donnée ──
+// (les autres périodes restent modifiables ; la navigation n'est jamais bloquée)
+function _lockMap(){ try{ return JSON.parse(localStorage.getItem('M5_PERIODE_LOCKS')||'{}'); }catch(e){ return {}; } }
+window.M5_isDayLocked=function(dk){ if(!dk) return false; var m=_lockMap(); for(var k in m){ if(dk>=k && dk<=m[k]) return true; } return false; };
+// Période "active" = celle qui contient calendarMonday (= ce qu'affiche la barre)
+function _activePeriode(){
+  try{
+    var c=M5_Contract.get();
+    var yr=(calendarMonday||'').slice(0,4)||M5_DataStore.getYear();
+    var pers=buildPeriodes(yr, c)||[];
+    for(var i=0;i<pers.length;i++){ if(calendarMonday>=pers[i].debutStr && calendarMonday<=pers[i].finStr) return pers[i]; }
+  }catch(e){}
+  return null;
+}
+window.M5_isActivePeriodeLocked=function(){ var p=_activePeriode(); return !!(p && _lockMap()[p.debutStr]); };
 window.M5togglePeriodeLock=function(){
-  var on=!window.M5_isPeriodeLocked();
-  try{ localStorage.setItem('M5_PERIODE_LOCK', on?'1':'0'); }catch(e){}
-  var b=document.getElementById('periode-lock-btn');
-  if(b){ b.textContent=on?'🔒':'🔓'; b.classList.toggle('locked', on); b.setAttribute('aria-pressed', on?'true':'false'); }
-  toast(on?'Période verrouillée 🔒':'Période déverrouillée 🔓','info');
+  var p=_activePeriode();
+  if(!p){ toast('Aucune période à verrouiller ici','info'); return; }
+  var m=_lockMap(), on=!m[p.debutStr];
+  if(on) m[p.debutStr]=p.finStr; else delete m[p.debutStr];
+  try{ localStorage.setItem('M5_PERIODE_LOCKS', JSON.stringify(m)); }catch(e){}
+  toast(on?('Période verrouillée 🔒 — '+p.label):('Période déverrouillée 🔓 — '+p.label),'info');
+  refreshUI();
 };
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
@@ -2504,24 +2524,64 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.M5setCalView=function(v){
     v=(v==='month')?'month':'week';
     try{ localStorage.setItem('M5_CAL_VIEW', v); }catch(e){}
-    if(v==='month') _mk=_curMK();
+    if(v==='month') _mk=null; // dérive le mois affiché depuis la semaine/période courante
     window._m5SyncCalViewSelect();
     _refresh();
   };
   // Bascule (rétrocompat)
   window.M5calView=function(){ window.M5setCalView(window._m5IsMonthView()?'week':'month'); };
-  // Aligne calendarMonday sur le mois affiché (milieu de mois) pour que la barre
-  // de période sous le calendrier suive le mois qu'on visualise.
-  function _syncMondayToMonth(){
-    var p=_curMK().split('-').map(Number);
-    var mid=p[0]+'-'+String(p[1]).padStart(2,'0')+'-15';
-    var sd=0; try{ sd=(M5_Contract.get().weekStartDay||0); }catch(e){}
-    var mon=(window.M5_weekStartOf?window.M5_weekStartOf(mid,sd):mid);
-    if(window.M5_setCalMonday) window.M5_setCalMonday(mon);
+  // ── Navigation par PÉRIODE en vue mois ────────────────────────────
+  // Une période peut finir le 15 et la suivante commencer le 16 (même mois).
+  // On avance/recule d'une période ; le mois affiché = le mois qui contient
+  // le PLUS de jours de la période → on reste sur le même mois tant que la
+  // période active y est majoritaire, puis on passe au mois suivant.
+  function _periodesSorted(){
+    var c; try{ c=M5_Contract.get(); }catch(e){ c={}; }
+    var y=parseInt(_curMK().slice(0,4))||new Date().getFullYear();
+    var seen={}, out=[];
+    [y-1,y,y+1].forEach(function(yy){
+      var ps=[]; try{ ps=(window.buildPeriodes?window.buildPeriodes(String(yy),c):[])||[]; }catch(e){}
+      ps.forEach(function(p){ if(p&&p.debutStr&&!seen[p.debutStr]){ seen[p.debutStr]=1; out.push(p); } });
+    });
+    out.sort(function(a,b){ return a.debutStr<b.debutStr?-1:1; });
+    return out;
   }
-  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
-  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
-  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
+  function _majorityMonth(p){
+    var d=new Date(p.debutStr+'T12:00:00'), f=new Date(p.finStr+'T12:00:00'), counts={};
+    for(var t=d.getTime(); t<=f.getTime(); t+=86400000){
+      var dd=new Date(t), k=dd.getFullYear()+'-'+String(dd.getMonth()+1).padStart(2,'0');
+      counts[k]=(counts[k]||0)+1;
+    }
+    var best=p.debutStr.slice(0,7), bc=-1;
+    for(var k in counts){ if(counts[k]>bc){ bc=counts[k]; best=k; } }
+    return best;
+  }
+  function _navPeriode(delta){
+    var pers=_periodesSorted(); if(!pers.length){ _refresh(); return; }
+    var cm=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
+    var idx=-1, i;
+    for(i=0;i<pers.length;i++){ if(cm>=pers[i].debutStr && cm<=pers[i].finStr){ idx=i; break; } }
+    if(idx<0){
+      var t=new Date(), tk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+      for(i=0;i<pers.length;i++){ if(tk>=pers[i].debutStr && tk<=pers[i].finStr){ idx=i; break; } }
+      if(idx<0) idx=0;
+    }
+    var ni=idx+delta; if(ni<0) ni=0; if(ni>pers.length-1) ni=pers.length-1;
+    var target=pers[ni];
+    if(window.M5_setCalMonday) window.M5_setCalMonday(target.debutStr);
+    _mk=_majorityMonth(target);
+    _refresh();
+  }
+  window.M5monthPrev=function(){ _navPeriode(-1); };
+  window.M5monthNext=function(){ _navPeriode(1); };
+  window.M5monthToday=function(){
+    var t=new Date(), tk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    var pers=_periodesSorted(), found=null;
+    for(var i=0;i<pers.length;i++){ if(tk>=pers[i].debutStr && tk<=pers[i].finStr){ found=pers[i]; break; } }
+    if(found){ if(window.M5_setCalMonday) window.M5_setCalMonday(found.debutStr); _mk=_majorityMonth(found); }
+    else { _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); }
+    _refresh();
+  };
   window.renderMonthCalendar=function(){
     var el=document.getElementById('calendar-grid'); if(!el) return;
     var key=_curMK(), pp=key.split('-').map(Number), y=pp[0], m=pp[1];
@@ -2543,6 +2603,9 @@ document.addEventListener('DOMContentLoaded',()=>{
     // visuellement les deux périodes qui peuvent cohabiter dans un même mois.
     var pers=[]; try{ pers=(window.buildPeriodes?window.buildPeriodes(String(y), M5_Contract.get()):[])||[]; }catch(e){}
     function _pIdx(dk){ for(var pi=0;pi<pers.length;pi++){ if(dk>=pers[pi].debutStr && dk<=pers[pi].finStr) return pi; } return -1; }
+    // Période active = celle qui contient la semaine courante (barre + verrou + swipe)
+    var _cmA=(window.M5_getCalMonday&&window.M5_getCalMonday())||'';
+    var _actIdx=-1; for(var _ai=0;_ai<pers.length;_ai++){ if(_cmA>=pers[_ai].debutStr && _cmA<=pers[_ai].finStr){ _actIdx=_ai; break; } }
     var h='<div class="m5-cal-weekly-badge">Mode mensuel — tape un jour pour saisir</div><div class="m5-month-grid">';
     wd.forEach(function(d){ h+='<div class="m5-month-wd">'+d+'</div>'; });
     for(var i=0;i<offset;i++) h+='<div class="m5-month-pad"></div>';
@@ -2551,10 +2614,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       var dk=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
       var v=val(dk), lab=jr[(offset+d-1)%7];
       var _pi=_pIdx(dk);
-      var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'');
-      if(_pi>=0){ cls+=' m5-mp-'+(_pi%2===0?'a':'b'); if(_prevPi!==null && _pi!==_prevPi) cls+=' m5-mp-start'; }
+      var _lk=(window.M5_isDayLocked&&window.M5_isDayLocked(dk));
+      var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'')+(_lk?' locked':'');
+      if(_pi>=0){ cls+=' m5-mp-'+(_pi%2===0?'a':'b'); if(_pi===_actIdx) cls+=' m5-mp-active'; if(_prevPi!==null && _pi!==_prevPi) cls+=' m5-mp-start'; }
       _prevPi=_pi;
-      h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(v!=null?'<span>'+_fmt(v)+'</span>':'')+'</div>';
+      h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(_lk?'<span class="m5-mp-lock">🔒</span>':(v!=null?'<span>'+_fmt(v)+'</span>':''))+'</div>';
     }
     h+='</div>';
     el.innerHTML=h;
