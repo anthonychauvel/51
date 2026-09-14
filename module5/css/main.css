@@ -1629,6 +1629,9 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .m5-month-day.m5-mp-active{ box-shadow: inset 0 0 0 2px rgba(196,168,255,0.85); }
 .m5-month-day.m5-mp-a.m5-mp-active{ background:rgba(139,92,246,0.30); }
 .m5-month-day.m5-mp-b.m5-mp-active{ background:rgba(79,179,194,0.30); }
+/* Aujourd'hui : marqueur or, prioritaire sur les teintes de période */
+.m5-month-grid .m5-month-day.today{ border:2px solid #FFC24B; box-shadow:0 0 0 2px rgba(255,194,75,0.40); }
+.m5-month-grid .m5-month-day.today > b{ color:#FFC24B; }
 /* Jours verrouillés : saisie gelée pour cette période */
 .m5-month-day.locked{ opacity:0.55; cursor:not-allowed; background:rgba(255,255,255,0.05); border-style:dashed; }
 .m5-month-day .m5-mp-lock{ font-size:10px; color:rgba(255,255,255,0.75); }
