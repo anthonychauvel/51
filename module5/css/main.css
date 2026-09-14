@@ -1042,6 +1042,23 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   cursor: pointer;
   flex-shrink: 0;
 }
+.acc-periode-lock {
+  flex-shrink: 0;
+  width: 38px;
+  background: rgba(255,255,255,0.08);
+  border: 1px solid rgba(196,168,255,0.25);
+  border-radius: 8px;
+  font-size: 15px;
+  padding: 7px 0;
+  cursor: pointer;
+  color: #fff;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+.acc-periode-lock.locked {
+  background: rgba(155,92,248,0.55);
+  border-color: rgba(196,168,255,0.75);
+}
 
 /* ── ALERTES SEMAINE ──────────────────────────────────────────── */
 .acc-alerts {
@@ -1602,6 +1619,12 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .m5-month-day.has{ background:rgba(108,63,197,0.38); border-color:rgba(180,150,255,0.5); }
 .m5-month-day.today{ border-color:#9B5CF8; box-shadow:0 0 0 1.5px #9B5CF8; }
 .m5-month-day:active{ transform:scale(0.94); }
+/* Deux teintes pour distinguer les deux périodes de paye du mois */
+.m5-month-day.m5-mp-a{ background:rgba(139,92,246,0.16); }
+.m5-month-day.m5-mp-b{ background:rgba(79,179,194,0.16); }
+.m5-month-day.m5-mp-a.has{ background:rgba(139,92,246,0.44); border-color:rgba(180,150,255,0.6); }
+.m5-month-day.m5-mp-b.has{ background:rgba(79,179,194,0.44); border-color:rgba(120,220,235,0.65); }
+.m5-month-day.m5-mp-start{ border-left:3px solid #C4A8FF; }
 .m5-month-pad{ }
 
 /* AJOUT bac à sable : état actif du bouton vue Mois/Semaine */
