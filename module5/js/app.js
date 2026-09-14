@@ -165,6 +165,7 @@ function refreshUI() {
   const bubbleEl=document.getElementById('mizuki-bubble-text');
   if(bubbleEl) bubbleEl.textContent=bubbleText;
   if(window._m5IsMonthView&&window._m5IsMonthView()){ if(window.renderMonthCalendar) window.renderMonthCalendar(); } else { renderCalendar(); }
+  { var _vb=document.getElementById('cal-view-btn'); if(_vb){ var _mv=!!(window._m5IsMonthView&&window._m5IsMonthView()); _vb.textContent=_mv?'📆 Semaine':'📅 Mois'; _vb.classList.toggle('active', _mv); } }
   renderPeriodeNav();
   renderWeekSummary(analysis);
   renderQuickStats(analysis);
@@ -427,7 +428,7 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   unique.forEach(h=>{
     const isSelected=existing&&existing.worked===h;
     var _lbl=(window._m5fmtH?window._m5fmtH(h):h+'h');
-    quickHtml+=`<button class="m5-quick-btn ${isSelected?'selected':''}" onclick="selectQuickHour(${h})">${_lbl}</button>`;
+    quickHtml+=`<button class="m5-quick-btn ${isSelected?'selected':''}" data-val="${h}" onclick="selectQuickHour(${h})">${_lbl}</button>`;
   });
 
   document.getElementById('day-quick-hours').innerHTML=quickHtml;
@@ -440,7 +441,7 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
 function selectQuickHour(h) {
   document.getElementById('day-saisie-hours').value=h;
   document.querySelectorAll('.m5-quick-btn').forEach(b=>{
-    b.classList.toggle('selected', parseFloat(b.textContent)===h);
+    b.classList.toggle('selected', parseFloat(b.getAttribute('data-val'))===h);
   });
   updateDayPreview();
 }
@@ -469,7 +470,7 @@ window.M5dayHCtoggle=function(){
     : (base<4?[0,base-0.5,base,base+0.25,base+0.5,base+0.75,base+1,base+1.5,base+2,base+3]
              :[0,base-1,base-0.5,base,base+0.25,base+0.5,base+0.75,base+1,base+1.5,base+2,base+3]);
   var props=[]; steps.forEach(function(h){ if(h>=0&&h<=12) props.push(Math.round(h*4)/4); });
-  var html=''; [...new Set(props)].sort(function(a,b){return a-b;}).forEach(function(h){ html+='<button class="m5-quick-btn" onclick="selectQuickHour('+h+')">'+(window._m5fmtH?window._m5fmtH(h):h+'h')+'</button>'; });
+  var html=''; [...new Set(props)].sort(function(a,b){return a-b;}).forEach(function(h){ html+='<button class="m5-quick-btn" data-val="'+h+'" onclick="selectQuickHour('+h+')">'+(window._m5fmtH?window._m5fmtH(h):h+'h')+'</button>'; });
   var el=document.getElementById('day-quick-hours'); if(el) el.innerHTML=html;
   var inp=document.getElementById('day-saisie-hours'); if(inp){ inp.value=''; inp.placeholder = hc ? 'ex: 2 (heures en plus)' : 'ex: 5.75 (= 5h45)'; }
   updateDayPreview();
@@ -2249,14 +2250,17 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _year(){ try{ return M5_DataStore.getYear(); }catch(e){ return ''; } }
   // Bornes de la période affichée, TOUJOURS résolues (jamais 'default') pour un suivi payé par période
   function _currentPeriodBounds(){
+    // Dérive de calendarMonday EXACTEMENT comme le bilan (pCourante), pour que
+    // la clé du paiement suive la période affichée (sinon le paiement persiste).
     try{
-      if(typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) return _currentPeriode;
+      var todayS=(new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
       if(typeof buildPeriodes==='function'){
         var c=M5_Contract.get(), pers=buildPeriodes(_year(), c)||[];
-        var ref=(typeof calendarMonday!=='undefined' && calendarMonday) || (new Date().getFullYear()+'-'+String(new Date().getMonth()+1).padStart(2,'0')+'-'+String(new Date().getDate()).padStart(2,'0'));
+        var ref=(typeof calendarMonday!=='undefined' && calendarMonday) || todayS;
         for(var i=0;i<pers.length;i++){ if(pers[i].debutStr && ref>=pers[i].debutStr && ref<=pers[i].finStr) return pers[i]; }
-        if(pers.length) return pers[pers.length-1];
+        for(var j=0;j<pers.length;j++){ if(pers[j].debutStr && todayS>=pers[j].debutStr && todayS<=pers[j].finStr) return pers[j]; }
       }
+      if(typeof _currentPeriode!=='undefined' && _currentPeriode && _currentPeriode.debutStr) return _currentPeriode;
     }catch(e){}
     return null;
   }
@@ -2308,6 +2312,15 @@ document.addEventListener('DOMContentLoaded',()=>{
     return all;
   }
 
+  function _allWeeksRaw(){
+    var year=parseInt(_year()), seen={}, all=[];
+    [year-1, year, year+1].forEach(function(y){
+      var ws=[]; try{ ws=M5_DataStore.getWeeksSorted(String(y))||[]; }catch(e){}
+      ws.forEach(function(w){ if(!seen[w.monday]){ seen[w.monday]=1; all.push(w); } });
+    });
+    all.sort(function(a,b){ return a.monday<b.monday?-1:1; });
+    return all;
+  }
   function _weeksInPeriode(allWeeks, per){
     return allWeeks.filter(function(w){ var e=new Date(w.monday+'T12:00:00'); e.setDate(e.getDate()+6);
       var es=e.getFullYear()+'-'+String(e.getMonth()+1).padStart(2,'0')+'-'+String(e.getDate()).padStart(2,'0');
@@ -2319,7 +2332,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     try{
       if(typeof buildPeriodes!=='function'||typeof CalcEngine==='undefined'||typeof M5_DataStore==='undefined') return out;
       var bnds=_currentPeriodBounds(); if(!bnds||!bnds.debutStr) return out;
-      var year=_year(), periodes=buildPeriodes(year,c)||[], allWeeks=_allExerciseWeeks(c), pm=_getPaidMap();
+      var year=_year(), periodes=buildPeriodes(year,c)||[], allWeeks=_allWeeksRaw(), pm=_getPaidMap();
       var cur=bnds.debutStr, b10=0,b25=0;
       for(var i=0;i<periodes.length;i++){ var per=periodes[i]; if(!per.debutStr||per.debutStr>=cur) break;
         var wks=_weeksInPeriode(allWeeks,per);
@@ -2335,7 +2348,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _computeHebdoReport(c, curMonday){
     var out={h10:0,h25:0};
     try{ if(!curMonday) return out;
-      var wks=_allExerciseWeeks(c), pm=_getPaidMap(), b10=0,b25=0;
+      var wks=_allWeeksRaw(), pm=_getPaidMap(), b10=0,b25=0;
       for(var i=0;i<wks.length;i++){ var w=wks[i]; if(w.monday>=curMonday) break;
         var wk=(w.worked!=null?w.worked:(w.hours||0));
         var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0));
@@ -2360,6 +2373,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   window.M5setHCPaid10=function(v){ _savePaid('h10',v); window._m5UpdateNet(); };
   window.M5setHCPaid25=function(v){ _savePaid('h25',v); window._m5UpdateNet(); };
+  function _savePaidHM(tranche, part, v){
+    var m=_getPaidMap(), k=_periodKey(); if(!m[k]||typeof m[k]!=='object') m[k]={};
+    var cur=+m[k][tranche]||0, h=Math.floor(cur+1e-9), min=Math.round((cur-h)*60); if(min===60){h++;min=0;}
+    if(part==='h') h=Math.max(0,parseInt(String(v),10)||0);
+    else min=Math.max(0,Math.min(59,parseInt(String(v),10)||0));
+    m[k][tranche]=Math.round((h+min/60)*100)/100;
+    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
+  }
+  window.M5setHCPaid10h=function(v){ _savePaidHM('h10','h',v); window._m5UpdateNet(); };
+  window.M5setHCPaid10m=function(v){ _savePaidHM('h10','m',v); window._m5UpdateNet(); };
+  window.M5setHCPaid25h=function(v){ _savePaidHM('h25','h',v); window._m5UpdateNet(); };
+  window.M5setHCPaid25m=function(v){ _savePaidHM('h25','m',v); window._m5UpdateNet(); };
   window.M5toggleEuro=function(){ var sh=localStorage.getItem('M5_EURO_SHOWN')==='1'; sh=!sh; try{localStorage.setItem('M5_EURO_SHOWN',sh?'1':'0');}catch(e){}
     var els=document.querySelectorAll('.m5-euro-val'); for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur',!sh);
     var b=document.getElementById('m5-euro-btn'); if(b) b.textContent=sh?'🙈 Masquer €':'👁️ Afficher €'; };
@@ -2401,10 +2426,11 @@ document.addEventListener('DOMContentLoaded',()=>{
     var C_TXT='#ffffff', C_SUB='rgba(255,255,255,0.62)', C_REP='#CDB8FF';
     function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'" style="color:#fff">'+v.toFixed(2)+' €</span>':'<span style="color:rgba(255,255,255,0.4)">—</span>'; }
     function row(label,color,dtl,due,euro,paid,out,fn,rid){
+      var _ph=Math.floor((paid||0)+1e-9), _pm=Math.round(((paid||0)-_ph)*60); if(_pm===60){_ph++;_pm=0;}
       return '<div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 11px;margin-top:8px;">'
        +'<div style="display:flex;justify-content:space-between;align-items:baseline;gap:8px;"><span style="font-weight:800;color:'+color+';font-size:13px;">'+label+'</span><span style="font-weight:800;font-size:12.5px;color:'+C_TXT+';">'+_fmtH(due)+' &nbsp;·&nbsp; '+euro+'</span></div>'
        +'<div style="font-size:11px;color:'+C_SUB+';margin-top:3px;">'+dtl+'</div>'
-       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:'+C_SUB+';gap:8px;"><span>On m\'a payé : <input type="text" inputmode="numeric" value="'+(paid?_fmtH(paid):'')+'" placeholder="0h00" onchange="'+fn+'(this.value)" style="width:64px;padding:4px 6px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:right;font-size:12.5px;background:#fff;color:#18102E;"></span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:'+C_REP+';">'+_fmtH(out)+'</strong></span></div>'
+       +'<div style="display:flex;justify-content:space-between;align-items:center;margin-top:6px;font-size:12px;color:'+C_SUB+';gap:8px;"><span>On m\'a payé : <input type="number" inputmode="numeric" min="0" value="'+(paid?_ph:'')+'" placeholder="0" onchange="'+fn+'h(this.value)" style="width:38px;padding:4px 4px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:center;font-size:12.5px;background:#fff;color:#18102E;">h <input type="number" inputmode="numeric" min="0" max="59" value="'+(paid?String(_pm).padStart(2,"0"):'')+'" placeholder="00" onchange="'+fn+'m(this.value)" style="width:38px;padding:4px 4px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:center;font-size:12.5px;background:#fff;color:#18102E;">min</span><span>Reporté : <strong id="'+rid+'" data-due="'+due+'" style="color:'+C_REP+';">'+_fmtH(out)+'</strong></span></div>'
        +'</div>';
     }
     var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
@@ -2421,13 +2447,8 @@ document.addEventListener('DOMContentLoaded',()=>{
       + head + '<div id="m5-solde-body" style="padding:0 13px 12px;'+(open?'':'display:none;')+'">'+body+'</div></div>';
   };
 
-  document.addEventListener('input', function(e){
-    var t=e.target; if(!t || (t.id!=='day-saisie-hours' && t.id!=='week-saisie-hours')) return;
-    var v=parseFloat(String(t.value).replace(',','.'));
-    var id=t.id+'-hm', hint=document.getElementById(id);
-    if(!hint){ hint=document.createElement('div'); hint.id=id; hint.style.cssText='font-size:12px;color:var(--miz-text3);text-align:center;margin-top:3px;font-weight:600;'; if(t.parentNode) t.parentNode.appendChild(hint); }
-    hint.textContent=(isNaN(v)||v<=0)?'':('= '+_fmtH(v));
-  });
+  /* indicateur '= Xh' retiré (parasite) */
+
 })();
 
 
