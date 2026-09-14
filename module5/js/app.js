@@ -130,7 +130,7 @@ function runAnalysis() {
   }
 
   currentAnalysis={weekResult,rule12,isVacWeek:isVac,annualStats:stats,contract,
-    weeks:last12,weekMode:wk.mode,feriesMap,annuelResult,mensuelResult,wellbeing};
+    weeks:last12,weekMode:wk.mode,feriesMap,annuelResult,mensuelResult,wellbeing,dailyFlags:_dailyFlags(monday,year)};
   return currentAnalysis;
 }
 
@@ -152,12 +152,25 @@ function _weekResultFor(monday){
       { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 });
   }catch(e){ return null; }
 }
+// Analyse par JOUR d'une semaine : repère les journées > 10h (Art. L3121-18)
+function _dailyFlags(monday, year){
+  var out={max:0, count:0, days:[]};
+  try{
+    var wd=M5_DataStore.getWeekDays(monday, year); var arr=(wd&&wd.length)?wd:[];
+    for(var i=0;i<arr.length;i++){
+      var h=(arr[i] && arr[i].worked!=null)?arr[i].worked:0;
+      if(h>out.max) out.max=h;
+      if(h>10){ out.count++; out.days.push(arr[i].dk); }
+    }
+  }catch(e){}
+  return out;
+}
 // Mizuki parle TOUJOURS de la semaine EN COURS (aujourd'hui), quelle que soit
 // la vue (semaine/mois) ou la navigation dans le calendrier.
 function _analysisForMizuki(analysis){
   try{
     const tMon=M5_getCurrentMonday(), year=M5_DataStore.getYear();
-    return Object.assign({},analysis,{ weekResult:_weekResultFor(tMon), isVacWeek:M5_DataStore.isVacWeek(tMon,year) });
+    return Object.assign({},analysis,{ weekResult:_weekResultFor(tMon), isVacWeek:M5_DataStore.isVacWeek(tMon,year), dailyFlags:_dailyFlags(tMon,year) });
   }catch(e){}
   return analysis;
 }
@@ -321,7 +334,9 @@ function renderCalendar() {
     } else if(worked!==null) {
       const diff=worked-contract_daily;
       cellClass+= diff>0?' over': diff<-0.5?' under':' normal';
+      if(worked>10) cellClass+=' m5-day-over10';
       hoursHtml=`<span class="m5-cal-day-hours">${worked}h</span>`;
+      if(worked>10) hoursHtml+='<span class="m5-cal-day-warn" title="Plus de 10h — Art. L3121-18">⚠️</span>';
       if(diff>0) hoursHtml+=`<span class="m5-cal-day-diff">+${diff.toFixed(1)}</span>`;
     }
 
@@ -2736,10 +2751,11 @@ document.addEventListener('DOMContentLoaded',()=>{
       var v=val(dk), lab=jr[(offset+d-1)%7];
       var _pi=_pIdx(dk);
       var _lk=(window.M5_isDayLocked&&window.M5_isDayLocked(dk));
-      var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'')+(_lk?' locked':'');
+      var _over10=(v!=null && v>10);
+      var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'')+(_lk?' locked':'')+(_over10?' m5-day-over10':'');
       if(_pi>=0){ cls+=' m5-mp-'+(_pi%2===0?'a':'b'); if(_pi===_actIdx) cls+=' m5-mp-active'; if(_prevPi!==null && _pi!==_prevPi) cls+=' m5-mp-start'; }
       _prevPi=_pi;
-      h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(_lk?'<span class="m5-mp-lock">🔒</span>':(v!=null?'<span>'+_fmt(v)+'</span>':''))+'</div>';
+      h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(_lk?'<span class="m5-mp-lock">🔒</span>':(v!=null?'<span>'+_fmt(v)+(_over10?' ⚠️':'')+'</span>':''))+'</div>';
     }
     h+='</div>';
     el.innerHTML=h;
