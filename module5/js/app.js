@@ -363,6 +363,7 @@ function calChangeYear(newYear) {
 }
 
 function calPrev() {
+  if(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()){ toast('Période verrouillée 🔒 — touche le cadenas pour naviguer','info'); return; }
   if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthPrev&&window.M5monthPrev(); return; }
   const d=new Date(calendarMonday+'T12:00:00');
   d.setDate(d.getDate()-7);
@@ -371,6 +372,7 @@ function calPrev() {
   requestAnimationFrame(refreshUI);
 }
 function calNext() {
+  if(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()){ toast('Période verrouillée 🔒 — touche le cadenas pour naviguer','info'); return; }
   if(window._m5IsMonthView&&window._m5IsMonthView()){ window.M5monthNext&&window.M5monthNext(); return; }
   const today=M5_getCurrentMonday();
   const d=new Date(calendarMonday+'T12:00:00');
@@ -1157,6 +1159,9 @@ function renderPeriodeNav() {
   }
 
   sel.innerHTML=options;
+  // Reflète l'état de verrouillage persistant sur le bouton cadenas
+  var _lb=document.getElementById('periode-lock-btn');
+  if(_lb){ var _lk=(window.M5_isPeriodeLocked&&window.M5_isPeriodeLocked()); _lb.textContent=_lk?'🔒':'🔓'; _lb.classList.toggle('locked',!!_lk); _lb.setAttribute('aria-pressed',_lk?'true':'false'); }
   // Pré-positionner APRÈS innerHTML — évite le blocage onchange au 1er clic
   if(activeIdx>=0) {
     const pActive=periodes[activeIdx];
@@ -2065,6 +2070,7 @@ function wizFinish() {
   const rate=parseFloat(document.getElementById('wiz-rate')?.value||'0');
   const name=(document.getElementById('wiz-name')?.value||'').trim();
   const startDay=parseInt(document.getElementById('wiz-start-day')?.value||'0');
+  const joursOuvresContrat=Math.max(1,Math.min(7,parseInt(document.getElementById('wiz-jours-ouvres')?.value||'5')||5));
   const ccnRules=_wizCCN?CCN_PARTIEL_API.getRules(_wizCCN.i):{cap:0.10,rate1:0.10,rate2:0.25,threshold:0.10,nom:'Droit commun'};
   // Récupérer les 12 clôtures
   const cloturesDates={};
@@ -2098,6 +2104,7 @@ function wizFinish() {
     rate2:ccnRules.rate2||0.25,
     threshold:ccnRules.threshold||0.10,
     weekStartDay:startDay,
+    joursOuvresContrat:joursOuvresContrat,
     exerciceStart:exercice,
     cloturesDates,
     modeCalcul:_wizMode,
@@ -2229,8 +2236,18 @@ window.buildPeriodes=buildPeriodes;
 // paiement par semaine/période et le rafraîchissement au changement de vue
 // suivent réellement la semaine affichée.
 window.M5_getCalMonday=function(){ return calendarMonday; };
+window.M5_setCalMonday=function(v){ if(v) calendarMonday=v; };
 window.M5_refreshUI=refreshUI;
 window.M5_getCurrentPeriode=function(){ return _currentPeriode; };
+// ── Verrouillage de période (on/off) ──────────────────────────────
+window.M5_isPeriodeLocked=function(){ try{ return localStorage.getItem('M5_PERIODE_LOCK')==='1'; }catch(e){ return false; } };
+window.M5togglePeriodeLock=function(){
+  var on=!window.M5_isPeriodeLocked();
+  try{ localStorage.setItem('M5_PERIODE_LOCK', on?'1':'0'); }catch(e){}
+  var b=document.getElementById('periode-lock-btn');
+  if(b){ b.textContent=on?'🔒':'🔓'; b.classList.toggle('locked', on); b.setAttribute('aria-pressed', on?'true':'false'); }
+  toast(on?'Période verrouillée 🔒':'Période déverrouillée 🔓','info');
+};
 window.openYearsPopup=openYearsPopup;
 window.switchYear=switchYear;
 window.createNewYear=createNewYear;
@@ -2493,9 +2510,18 @@ document.addEventListener('DOMContentLoaded',()=>{
   };
   // Bascule (rétrocompat)
   window.M5calView=function(){ window.M5setCalView(window._m5IsMonthView()?'week':'month'); };
-  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _refresh(); };
-  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _refresh(); };
-  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); _refresh(); };
+  // Aligne calendarMonday sur le mois affiché (milieu de mois) pour que la barre
+  // de période sous le calendrier suive le mois qu'on visualise.
+  function _syncMondayToMonth(){
+    var p=_curMK().split('-').map(Number);
+    var mid=p[0]+'-'+String(p[1]).padStart(2,'0')+'-15';
+    var sd=0; try{ sd=(M5_Contract.get().weekStartDay||0); }catch(e){}
+    var mon=(window.M5_weekStartOf?window.M5_weekStartOf(mid,sd):mid);
+    if(window.M5_setCalMonday) window.M5_setCalMonday(mon);
+  }
+  window.M5monthPrev=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1]-2,1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
+  window.M5monthNext=function(){ var p=_curMK().split('-').map(Number); var d=new Date(p[0],p[1],1); _mk=d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
+  window.M5monthToday=function(){ var t=new Date(); _mk=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0'); _syncMondayToMonth(); _refresh(); };
   window.renderMonthCalendar=function(){
     var el=document.getElementById('calendar-grid'); if(!el) return;
     var key=_curMK(), pp=key.split('-').map(Number), y=pp[0], m=pp[1];
@@ -2513,18 +2539,44 @@ document.addEventListener('DOMContentLoaded',()=>{
     var daysIn=new Date(y,m,0).getDate();
     var firstMon=(new Date(y,m-1,1).getDay()+6)%7, offset=(firstMon-sd+7)%7;
     var t=new Date(), todayDK=t.getFullYear()+'-'+String(t.getMonth()+1).padStart(2,'0')+'-'+String(t.getDate()).padStart(2,'0');
+    // Périodes de paye du mois affiché → deux teintes alternées pour distinguer
+    // visuellement les deux périodes qui peuvent cohabiter dans un même mois.
+    var pers=[]; try{ pers=(window.buildPeriodes?window.buildPeriodes(String(y), M5_Contract.get()):[])||[]; }catch(e){}
+    function _pIdx(dk){ for(var pi=0;pi<pers.length;pi++){ if(dk>=pers[pi].debutStr && dk<=pers[pi].finStr) return pi; } return -1; }
     var h='<div class="m5-cal-weekly-badge">Mode mensuel — tape un jour pour saisir</div><div class="m5-month-grid">';
     wd.forEach(function(d){ h+='<div class="m5-month-wd">'+d+'</div>'; });
     for(var i=0;i<offset;i++) h+='<div class="m5-month-pad"></div>';
+    var _prevPi=null;
     for(var d=1;d<=daysIn;d++){
       var dk=y+'-'+String(m).padStart(2,'0')+'-'+String(d).padStart(2,'0');
       var v=val(dk), lab=jr[(offset+d-1)%7];
+      var _pi=_pIdx(dk);
       var cls='m5-month-day'+(dk===todayDK?' today':'')+(v!=null?' has':'');
+      if(_pi>=0){ cls+=' m5-mp-'+(_pi%2===0?'a':'b'); if(_prevPi!==null && _pi!==_prevPi) cls+=' m5-mp-start'; }
+      _prevPi=_pi;
       h+='<div class="'+cls+'" onclick="openDaySaisie(\''+dk+'\',\''+lab+'\')"><b>'+d+'</b>'+(v!=null?'<span>'+_fmt(v)+'</span>':'')+'</div>';
     }
     h+='</div>';
     el.innerHTML=h;
   };
-  // Init du menu déroulant au chargement
-  document.addEventListener('DOMContentLoaded', function(){ if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect(); });
+  // Init du menu déroulant + gestes de balayage au chargement
+  document.addEventListener('DOMContentLoaded', function(){
+    if(window._m5SyncCalViewSelect) window._m5SyncCalViewSelect();
+    var hero=document.querySelector('.acc-week-hero'); if(!hero) return;
+    var x0=null, y0=null, t0=0;
+    hero.addEventListener('touchstart', function(e){
+      if(!e.touches||e.touches.length!==1){ x0=null; return; }
+      x0=e.touches[0].clientX; y0=e.touches[0].clientY; t0=Date.now();
+    }, {passive:true});
+    hero.addEventListener('touchend', function(e){
+      if(x0===null) return;
+      var tch=(e.changedTouches&&e.changedTouches[0]); if(!tch){ x0=null; return; }
+      var dx=tch.clientX-x0, dy=tch.clientY-y0, dt=Date.now()-t0;
+      x0=null;
+      // Balayage horizontal net (pas un scroll vertical, pas un tap)
+      if(dt>700) return;
+      if(Math.abs(dx)<45 || Math.abs(dx)<Math.abs(dy)*1.6) return;
+      if(dx<0){ if(window.calNext) window.calNext(); } else { if(window.calPrev) window.calPrev(); }
+    }, {passive:true});
+  });
 })();
