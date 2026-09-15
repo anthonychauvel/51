@@ -56,7 +56,7 @@ function runAnalysis() {
     } else {
       weekResult=CalcEngine.calcWeek(
         contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
-        { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 }
+        { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5, workedDaysMap:_workedDaysMap(monday,year) }
       );
     }
   }
@@ -135,6 +135,17 @@ function runAnalysis() {
 }
 
 // ── Refresh UI ────────────────────────────────────────────────────
+// Jours réellement travaillés d'une semaine (dk → heures) — sert à ne pas
+// neutraliser un férié qui a été travaillé.
+function _workedDaysMap(monday, year){
+  var map={}; try{
+    var wd=M5_DataStore.getWeekDays(monday, year);
+    (wd||[]).forEach(function(d){ if(d && d.dk && d.worked!=null && d.worked>0) map[d.dk]=d.worked; });
+  }catch(e){}
+  return map;
+}
+window.M5_workedDaysMap=_workedDaysMap;
+
 // Calcule le résultat hebdo pour un lundi donné (utilisé par Mizuki en vue mois)
 function _weekResultFor(monday){
   try{
@@ -149,7 +160,7 @@ function _weekResultFor(monday){
       return CalcEngine.calcAvenant(contract.hoursBase,av.avenatH,wk.total,contract.hourlyRate||0);
     }
     return CalcEngine.calcWeek(contract.hoursBase, wk.total, contract, contract.hourlyRate||0,
-      { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5 });
+      { feriesMap, neutraliseFeries: contract.neutraliseFeries===true || contract.neutraliseFeries===undefined, mondayStr:monday, joursOuvresContrat: contract.joursOuvresContrat||5, workedDaysMap:_workedDaysMap(monday,year) });
   }catch(e){ return null; }
 }
 // Analyse par JOUR d'une semaine : repère les journées > 10h (Art. L3121-18)
@@ -662,7 +673,9 @@ function updateWeekPreview() {
       if(result.totalCompH>0&&contract.hourlyRate>0){const _c=result.comp1Amount+result.comp2Amount;html+=`<div class="m5-alert info" style="font-size:12px;padding:6px 10px;"><span>💰</span> Estimation semaine : <strong>${_c.toFixed(2)} € brut</strong> de majoration (sur ${result.totalCompH}h comp. cette semaine).</div>`;}
     }
   } else {
-    result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0);
+    const _pfm=(typeof M5_getFeriesYear!=='undefined')?M5_getFeriesYear(parseInt(calendarMonday.slice(0,4))):null;
+    result=CalcEngine.calcWeek(contract.hoursBase,worked,contract,contract.hourlyRate||0,
+      { feriesMap:_pfm, neutraliseFeries: contract.neutraliseFeries===true||contract.neutraliseFeries===undefined, mondayStr:calendarMonday, joursOuvresContrat:contract.joursOuvresContrat||5, workedDaysMap:_workedDaysMap(calendarMonday,M5_DataStore.getYear()) });
     html+=`<div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
       <span class="m5-preview-tag ${result.totalCompH>0?'warn':'ok'}">${result.totalCompH>0?'+'+result.totalCompH.toFixed(1)+'h comp.':'✓ Dans le contrat'}</span>
       <span class="m5-preview-tag ${pct35>=95?'danger':''}">${pct35}% du temps plein</span>
@@ -2444,6 +2457,13 @@ document.addEventListener('DOMContentLoaded',()=>{
     }catch(e){}
     return out;
   }
+  // Options calcWeek IDENTIQUES à l'analyse principale (fériés → seuil abaissé,
+  // Art. L3133-3). Sans ça, report/solde et carte semaine divergeaient.
+  function _weekOpts(c, mondayStr){
+    var fm=null; try{ if(typeof M5_getFeriesYear!=='undefined') fm=M5_getFeriesYear(parseInt((mondayStr||'').slice(0,4))); }catch(e){}
+    var wdm={}; try{ if(window.M5_workedDaysMap) wdm=window.M5_workedDaysMap(mondayStr,(mondayStr||'').slice(0,4)); }catch(e){}
+    return { feriesMap:fm, neutraliseFeries: c.neutraliseFeries===true || c.neutraliseFeries===undefined, mondayStr:mondayStr, joursOuvresContrat: c.joursOuvresContrat||5, workedDaysMap:wdm };
+  }
   // HEBDO : report = solde non payé cumulé sur les semaines AVANT la semaine affichée
   function _computeHebdoReport(c, curMonday){
     var out={h10:0,h25:0};
@@ -2461,7 +2481,7 @@ document.addEventListener('DOMContentLoaded',()=>{
       for(var i=0;i<sorted.length;i++){
         var mday=sorted[i];
         var wk=(workedMap[mday]!=null?workedMap[mday]:0);
-        var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)):{compH1:0,compH2:0};
+        var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0),_weekOpts(c,mday)):{compH1:0,compH2:0};
         var paid=pm['week:'+mday]||{};
         b10=Math.max(0,b10+(r.compH1||0)-(+paid.h10||0));
         b25=Math.max(0,b25+(r.compH2||0)-(+paid.h25||0));
@@ -2530,7 +2550,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     wks.forEach(function(w){
       if(w.monday>=per.debutStr && w.monday<=per.finStr){
         var wk=(w.worked!=null?w.worked:0);
-        if(wk>0){ var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0)); comp10+=r.compH1||0; comp25+=r.compH2||0; }
+        if(wk>0){ var r=CalcEngine.calcWeek(c.hoursBase,wk,c,(c.hourlyRate||c.rate||0),_weekOpts(c,w.monday)); comp10+=r.compH1||0; comp25+=r.compH2||0; }
       }
     });
     Object.keys(pm).forEach(function(k){
@@ -2595,7 +2615,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var rows=[], sum10=0,sum25=0, paid10=0,paid25=0;
     wks.forEach(function(w){
       var wk=(w.worked!=null?w.worked:0);
-      var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,rate):{compH1:0,compH2:0};
+      var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,rate,_weekOpts(c,w.monday)):{compH1:0,compH2:0};
       var g10=r.compH1||0, g25=r.compH2||0;
       sum10+=g10; sum25+=g25;
       if(g10>0||g25>0) rows.push({monday:w.monday,g10:g10,g25:g25});
