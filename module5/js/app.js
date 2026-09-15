@@ -2497,15 +2497,21 @@ document.addEventListener('DOMContentLoaded',()=>{
   window.M5setHCPaid10m=function(v){ _savePaidHM('h10','m',v); window._m5UpdateNet(); };
   window.M5setHCPaid25h=function(v){ _savePaidHM('h25','h',v); window._m5UpdateNet(); };
   window.M5setHCPaid25m=function(v){ _savePaidHM('h25','m',v); window._m5UpdateNet(); };
-  // Paiement ciblé sur UNE semaine précise (vue mois, détail par semaine de la période)
-  window.M5setHCPaidWeek=function(mondayStr, tranche, part, v){
-    var m=_getPaidMap(), k='week:'+mondayStr; if(!m[k]||typeof m[k]!=='object') m[k]={};
-    var cur=+m[k][tranche]||0, h=Math.floor(cur+1e-9), min=Math.round((cur-h)*60); if(min===60){h++;min=0;}
-    if(part==='h') h=Math.max(0,parseInt(String(v),10)||0);
-    else min=Math.max(0,Math.min(59,parseInt(String(v),10)||0));
-    m[k][tranche]=Math.round((h+min/60)*100)/100;
-    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
-    if(window.M5_refreshUI) requestAnimationFrame(window.M5_refreshUI); // recalcul live (période + solde)
+  // Paiement au niveau de la PÉRIODE (vue mois) : le champ représente le total payé
+  // de la période ; on ajuste la semaine de début pour atteindre ce total (les
+  // paiements déjà saisis par semaine en vue semaine sont conservés).
+  window.M5setHCPaidPeriode=function(debutStr, finStr, tranche, part, v){
+    var pm=_getPaidMap(), total=0, dkPaid=0;
+    Object.keys(pm).forEach(function(k){ if(k.indexOf('week:')===0){ var md=k.slice(5); if(md>=debutStr && md<=finStr){ var val=+((pm[k]||{})[tranche])||0; total+=val; if(md===debutStr) dkPaid=val; } } });
+    var other=Math.round((total-dkPaid)*100)/100;
+    var h=Math.floor(total+1e-9), min=Math.round((total-h)*60); if(min===60){h++;min=0;}
+    if(part==='h') h=Math.max(0,parseInt(String(v),10)||0); else min=Math.max(0,Math.min(59,parseInt(String(v),10)||0));
+    var newTotal=Math.round((h+min/60)*100)/100;
+    var newDk=Math.max(0, Math.round((newTotal-other)*100)/100);
+    var k='week:'+debutStr; if(!pm[k]||typeof pm[k]!=='object') pm[k]={};
+    pm[k][tranche]=newDk;
+    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(pm)); }catch(e){}
+    if(window.M5_refreshUI) requestAnimationFrame(window.M5_refreshUI);
   };
   window.M5toggleEuro=function(){ var sh=localStorage.getItem('M5_EURO_SHOWN')==='1'; sh=!sh; try{localStorage.setItem('M5_EURO_SHOWN',sh?'1':'0');}catch(e){}
     var els=document.querySelectorAll('.m5-euro-val'); for(var i=0;i<els.length;i++) els[i].classList.toggle('m5-blur',!sh);
@@ -2591,11 +2597,12 @@ document.addEventListener('DOMContentLoaded',()=>{
       var wk=(w.worked!=null?w.worked:0);
       var r=(wk>0)?CalcEngine.calcWeek(c.hoursBase,wk,c,rate):{compH1:0,compH2:0};
       var g10=r.compH1||0, g25=r.compH2||0;
-      var pk='week:'+w.monday, pd=pm[pk]||{}, p10=+pd.h10||0, p25=+pd.h25||0;
-      sum10+=g10; sum25+=g25; paid10+=p10; paid25+=p25;
-      if(g10>0||g25>0||p10>0||p25>0) rows.push({monday:w.monday,g10:g10,g25:g25,p10:p10,p25:p25});
+      sum10+=g10; sum25+=g25;
+      if(g10>0||g25>0) rows.push({monday:w.monday,g10:g10,g25:g25});
     });
+    Object.keys(pm).forEach(function(k){ if(k.indexOf('week:')===0){ var md=k.slice(5); if(md>=per.debutStr && md<=per.finStr){ paid10+=+((pm[k]||{}).h10)||0; paid25+=+((pm[k]||{}).h25)||0; } } });
     sum10=Math.round(sum10*100)/100; sum25=Math.round(sum25*100)/100;
+    paid10=Math.round(paid10*100)/100; paid25=Math.round(paid25*100)/100;
     var due10=Math.round((rep.h10+sum10)*100)/100, due25=Math.round((rep.h25+sum25)*100)/100;
     var net10=Math.max(0,due10-paid10), net25=Math.max(0,due25-paid25);
     var eT=net10*rate*(1+r1)+net25*rate*(1+r2);
@@ -2605,40 +2612,39 @@ document.addEventListener('DOMContentLoaded',()=>{
     var MOISC=['jan','fév','mar','avr','mai','jun','jul','aoû','sep','oct','nov','déc'];
     var JC=['Lun','Mar','Mer','Jeu','Ven','Sam','Dim'];
     function eur(v){ return rate>0?'<span class="m5-euro-val'+blur+'" style="color:#fff">'+v.toFixed(2)+' €</span>':'<span style="color:rgba(255,255,255,0.4)">—</span>'; }
-    function inpPair(monday,tr,paid){
-      var _ph=Math.floor((paid||0)+1e-9), _pm=Math.round(((paid||0)-_ph)*60); if(_pm===60){_ph++;_pm=0;}
-      var st='width:34px;padding:3px;border:1px solid rgba(255,255,255,0.3);border-radius:6px;text-align:center;font-size:12px;background:#fff;color:#18102E;';
-      return '<input type="number" inputmode="numeric" min="0" value="'+(paid?_ph:'')+'" placeholder="0" onchange="window.M5setHCPaidWeek(\''+monday+'\',\''+tr+'\',\'h\',this.value)" style="'+st+'">h '
-           + '<input type="number" inputmode="numeric" min="0" max="59" value="'+(paid?String(_pm).padStart(2,"0"):'')+'" placeholder="00" onchange="window.M5setHCPaidWeek(\''+monday+'\',\''+tr+'\',\'m\',this.value)" style="'+st+'">min';
-    }
+    // Ligne semaine — LECTURE SEULE (génération uniquement)
     function weekBlock(w){
       var d=new Date(w.monday+'T12:00:00'), e=new Date(d.getTime()); e.setDate(e.getDate()+6);
       var dowD=(d.getDay()+6)%7, dowE=(e.getDay()+6)%7;
       var startTxt=JC[dowD]+' '+d.getDate()+(d.getMonth()!==e.getMonth()?' '+MOISC[d.getMonth()]:'');
       var lbl='Sem. '+startTxt+' → '+JC[dowE]+' '+e.getDate()+' '+MOISC[e.getMonth()];
-      function line(color,label,gen,tr,paid){
-        return '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;margin-top:5px;flex-wrap:wrap;">'
-          +'<span style="font-weight:800;color:'+color+';font-size:12px;min-width:96px;">'+label+' '+_fmtH(gen)+'</span>'
-          +'<span style="font-size:11.5px;color:'+C_SUB+';">payé : '+inpPair(w.monday,tr,paid)+'</span></div>';
-      }
-      return '<div style="background:rgba(255,255,255,0.07);border-radius:10px;padding:9px 11px;margin-top:8px;">'
-        +'<div style="font-weight:700;font-size:12px;color:'+C_TXT+';">'+lbl+'</div>'
-        +line('#FFC24B','+10 %',w.g10,'h10',w.p10)
-        +line('#FF9B8A','+25 %',w.g25,'h25',w.p25)
-        +'</div>';
+      return '<div style="background:rgba(255,255,255,0.06);border-radius:9px;padding:8px 11px;margin-top:7px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">'
+        +'<span style="font-weight:700;font-size:12px;color:'+C_TXT+';">'+lbl+'</span>'
+        +'<span style="font-size:12px;"><b style="color:#FFC24B;">+10% '+_fmtH(w.g10)+'</b> &nbsp; <b style="color:#FF9B8A;">+25% '+_fmtH(w.g25)+'</b></span></div>';
+    }
+    // Champ de paiement AU NIVEAU DE LA PÉRIODE (toujours présent, toujours éditable)
+    function periodPaid(tranche, paidVal, color, label){
+      var _ph=Math.floor((paidVal||0)+1e-9), _pm=Math.round(((paidVal||0)-_ph)*60); if(_pm===60){_ph++;_pm=0;}
+      var st='width:38px;padding:4px;border:1px solid rgba(255,255,255,0.3);border-radius:7px;text-align:center;font-size:12.5px;background:#fff;color:#18102E;';
+      return '<div style="display:flex;justify-content:space-between;align-items:center;margin-top:7px;font-size:12.5px;color:'+C_SUB+';gap:8px;flex-wrap:wrap;">'
+        +'<span>On m\'a payé <b style="color:'+color+';">'+label+'</b> :</span>'
+        +'<span><input type="number" inputmode="numeric" min="0" value="'+(paidVal?_ph:'')+'" placeholder="0" onchange="window.M5setHCPaidPeriode(\''+per.debutStr+'\',\''+per.finStr+'\',\''+tranche+'\',\'h\',this.value)" style="'+st+'">h '
+        +'<input type="number" inputmode="numeric" min="0" max="59" value="'+(paidVal?String(_pm).padStart(2,"0"):'')+'" placeholder="00" onchange="window.M5setHCPaidPeriode(\''+per.debutStr+'\',\''+per.finStr+'\',\''+tranche+'\',\'m\',this.value)" style="'+st+'">min</span></div>';
     }
     var euroBtn='<button id="m5-euro-btn" onclick="event.stopPropagation();window.M5toggleEuro()" style="font-size:11px;font-weight:700;padding:4px 10px;border-radius:9px;border:1px solid rgba(255,255,255,0.28);background:rgba(255,255,255,0.15);color:#fff;cursor:pointer;white-space:nowrap;">'+(shown?'🙈 Masquer €':'👁️ Afficher €')+'</button>';
     var repLine=(rep.h10>0||rep.h25>0)
       ? '<div style="display:flex;justify-content:space-between;font-size:12px;color:'+C_REP+';margin-top:8px;"><span>Report précédent</span><b>'+_fmtH(rep.h10)+' (+10%) · '+_fmtH(rep.h25)+' (+25%)</b></div>'
       : '';
-    var rowsHtml=rows.length? rows.map(weekBlock).join('') : '<div style="font-size:12px;color:'+C_SUB+';margin-top:8px;">Aucune heure comp. saisie dans cette période.</div>';
+    var rowsHtml=rows.length? rows.map(weekBlock).join('') : '<div style="font-size:12px;color:'+C_SUB+';margin-top:8px;">Aucune heure comp. saisie dans cette période. Tu peux quand même enregistrer un paiement du report ci-dessous.</div>';
     var body=''
-      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:11px;color:'+C_SUB+';">Détail par semaine — saisis ce qu\'on t\'a payé.</span>'+euroBtn+'</div>'
+      +'<div style="display:flex;justify-content:space-between;align-items:center;gap:8px;"><span style="font-size:11px;color:'+C_SUB+';">Généré par semaine (lecture). Le paiement se saisit en bas.</span>'+euroBtn+'</div>'
       +(rate>0?'':'<div style="font-size:11.5px;color:'+C_SUB+';margin-top:4px;">💡 Renseigne ton <b>taux horaire</b> (⚙️) pour voir les montants.</div>')
       +repLine
       +rowsHtml
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:12px;color:'+C_SUB+';"><span>Total dû (brut) : '+_fmtH(due10+due25)+'</span><span>'+eur(due10*rate*(1+r1)+due25*rate*(1+r2))+'</span></div>'
-      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:6px;font-size:14px;font-weight:800;color:'+C_TXT+';"><span>💰 Reste à payer (net) : '+_fmtH(net10+net25)+'</span><span class="m5-euro-val'+blur+'">'+(rate>0?(eT.toFixed(2)+' €'):'—')+'</span></div>';
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:10px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:12.5px;color:'+C_TXT+';font-weight:700;"><span>Total dû (brut) : '+_fmtH(due10+due25)+'</span><span>'+eur(due10*rate*(1+r1)+due25*rate*(1+r2))+'</span></div>'
+      +periodPaid('h10',paid10,'#FFC24B','+10%')
+      +periodPaid('h25',paid25,'#FF9B8A','+25%')
+      +'<div style="display:flex;justify-content:space-between;align-items:baseline;margin-top:9px;padding-top:8px;border-top:1px solid rgba(255,255,255,0.18);font-size:14px;font-weight:800;color:'+C_TXT+';"><span>💰 Reste à payer (net) : '+_fmtH(net10+net25)+'</span><span class="m5-euro-val'+blur+'">'+(rate>0?(eT.toFixed(2)+' €'):'—')+'</span></div>';
     var head='<div onclick="window.M5toggleSolde()" style="display:flex;justify-content:space-between;align-items:center;gap:8px;padding:11px 13px;cursor:pointer;user-select:none;">'
       +'<span style="font-size:12.5px;font-weight:800;color:'+C_TXT+';">💠 Heures comp. — semaine par semaine <span style="font-weight:500;color:'+C_SUB+';">(reste '+_fmtH(net10+net25)+')</span></span>'
       +'<span id="m5-solde-chev" style="color:'+C_SUB+';font-size:13px;transition:transform .2s;'+(open?'transform:rotate(180deg);':'')+'">▾</span></div>';
