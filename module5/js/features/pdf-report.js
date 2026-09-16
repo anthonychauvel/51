@@ -149,7 +149,7 @@ const M5_PdfReport = {
       y=wy+CELL+6;
       // Légende
       doc.setFontSize(7); doc.setFont('helvetica','normal');
-      [[16,185,129,'Conforme'],[245,158,11,'Heures comp.'],[220,80,80,'≥35h']].forEach(([r,g,b,lbl],i)=>{
+      [[16,185,129,'Conforme'],[245,158,11,'Heures comp.'],[220,80,80,'35h et +']].forEach(([r,g,b,lbl],i)=>{
         const lx=M+i*40;
         doc.setFillColor(r,g,b); doc.rect(lx,y,5,4,'F');
         doc.setTextColor(0,0,0); doc.text(lbl,lx+7,y+3);
