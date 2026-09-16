@@ -245,7 +245,18 @@ const M5_PdfReport = {
     }
 
     const yr=new Date().getFullYear();
-    doc.save(`heures-complementaires-mizuki-${yr}.pdf`);
+    const filename=`heures-complementaires-mizuki-${yr}.pdf`;
+    const isAndroid=/Android/i.test((navigator&&navigator.userAgent)||'');
+    if(isAndroid){
+      // Android (TWA) : le téléchargement est silencieux → snackbar de confirmation + bouton Ouvrir
+      try{
+        const blob=doc.output('blob');
+        doc.save(filename);
+        if(window.M5_pdfSnackbar) window.M5_pdfSnackbar(blob, filename);
+      }catch(e){ doc.save(filename); }
+    } else {
+      doc.save(filename); // iOS : le PDF s'ouvre automatiquement
+    }
   }
 };
 
