@@ -570,7 +570,10 @@ body::before {
 .m5-bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--miz-glass);
-  backdrop-filter: blur(16px);
+  /* backdrop-filter retiré : cause le "flottement" de la barre fixe pendant le
+     défilement inertiel iOS. Fond opaque + couche GPU dédiée à la place. */
+  -webkit-transform: translateZ(0);
+  transform: translateZ(0);
   border-top: 1px solid var(--miz-border);
   display: flex;
   z-index: 90;
@@ -1311,7 +1314,7 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 
 /* Bottom nav — texte visible sur fond sombre */
 .m5-bottom-nav {
-  background: rgba(18,8,48,0.92);
+  background: rgba(18,8,48,0.98);
   border-top-color: rgba(167,139,250,0.18);
 }
 .m5-bottom-btn { color: rgba(196,168,255,0.45); }
