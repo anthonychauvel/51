@@ -1635,6 +1635,9 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 /* Aujourd'hui : marqueur or, prioritaire sur les teintes de période */
 .m5-month-grid .m5-month-day.today{ border:2px solid #FFC24B; box-shadow:0 0 0 2px rgba(255,194,75,0.40); }
 .m5-month-grid .m5-month-day.today > b{ color:#FFC24B; }
+/* Semaine saisie en TOTAL (répartition inconnue) */
+.m5-month-day.m5-wt-day{ background:rgba(79,179,194,0.13); border-style:dashed; border-color:rgba(120,220,235,0.42); }
+.m5-wt-mark{ font-size:11px; font-weight:800; color:#8FD3E0; }
 /* Journée > 10h — dépassement du max légal (Art. L3121-18) */
 .m5-month-day.m5-day-over10{ box-shadow: inset 0 0 0 2px rgba(255,90,90,0.7); }
 .acc-week-hero .m5-cal-day.m5-day-over10{ box-shadow: inset 0 0 0 2px rgba(255,90,90,0.75); }
