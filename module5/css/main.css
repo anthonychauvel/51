@@ -570,10 +570,8 @@ body::before {
 .m5-bottom-nav {
   position: fixed; bottom: 0; left: 0; right: 0;
   background: var(--miz-glass);
-  /* backdrop-filter retiré : cause le "flottement" de la barre fixe pendant le
-     défilement inertiel iOS. Fond opaque + couche GPU dédiée à la place. */
-  -webkit-transform: translateZ(0);
-  transform: translateZ(0);
+  /* Ni backdrop-filter (flottement iOS) ni transform (1er tap avalé sur Android) :
+     fond opaque simple → barre fixe stable ET boutons réactifs au 1er tap. */
   border-top: 1px solid var(--miz-border);
   display: flex;
   z-index: 90;
@@ -593,6 +591,8 @@ body::before {
   cursor: pointer; gap: 3px;
   transition: color .15s;
   position: relative;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
 }
 .m5-bottom-btn .icon { font-size: 22px; line-height: 1; }
 .m5-bottom-btn.active { color: var(--miz-primary); }
@@ -1584,18 +1584,21 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
 .acc-quick-btns {
   display: flex;
   gap: 6px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
 .acc-quick-btn {
+  flex: 1 1 0; min-width: 0;
   background: rgba(255,255,255,0.10);
   border: 1.5px solid rgba(255,255,255,0.15);
   border-radius: 8px;
-  padding: 7px 14px;
+  padding: 7px 4px;
   font-family: var(--miz-font);
   font-size: 13px; font-weight: 700;
   color: rgba(255,255,255,0.75);
   cursor: pointer;
   transition: all .15s;
+  text-align: center; white-space: nowrap;
+  touch-action: manipulation;
 }
 .acc-quick-btn:active { transform: scale(.93); }
 .acc-quick-btn.active {
@@ -1604,10 +1607,11 @@ body { padding-bottom: max(80px, calc(60px + env(safe-area-inset-bottom))); }
   color: #6EE7B7;
 }
 .acc-quick-btn.acc-quick-custom {
+  flex: 0 0 auto;
   background: rgba(255,255,255,0.07);
   border-color: rgba(255,255,255,0.12);
   font-size: 16px;
-  padding: 7px 10px;
+  padding: 7px 12px;
 }
 
 /* AJOUT bac à sable : montant € flouté tant que masqué */
