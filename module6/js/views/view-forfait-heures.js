@@ -322,7 +322,7 @@ const VFH = {
                 <input type="range" id="fh-j${i}" min="0" max="14" step="0.5" value="${stored}"
                   oninput="document.getElementById('fh-j${i}-val').textContent=this.value+'h';
                            const t=[0,1,2,3,4,5,6].reduce((s,x)=>s+(parseFloat(document.getElementById('fh-j'+x)?.value)||0),0);
-                           document.getElementById('fh-total-jours').textContent=t.toFixed(1)+'h';">
+                           document.getElementById('fh-total-jours').textContent=window._m6fmtH(t);">
               </div>`;
             }).join('')}
             <div style="display:flex;justify-content:space-between;font-size:0.82rem;font-weight:600;margin-top:4px;padding:8px;background:var(--ivoire-2);border-radius:var(--radius)">
