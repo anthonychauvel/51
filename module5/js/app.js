@@ -601,8 +601,7 @@ function openWeeklySaisie() {
   document.getElementById('week-saisie-title').textContent=label;
   document.getElementById('week-saisie-monday').value=calendarMonday;
 
-  const inp=document.getElementById('week-saisie-hours');
-  inp.value=wk.total!==null?wk.total:contract.hoursBase;
+  window._decToHM(wk.total!==null?wk.total:contract.hoursBase,'week-saisie-hoursH','week-saisie-hoursM');
 
   // Avenant — affichage selon CCN (L3123-22) OU si un avenant existe déjà sauvegardé
   // (on ne peut pas masquer une coche déjà cochée et sauvegardée par l'utilisateur)
@@ -652,7 +651,7 @@ function toggleAvenat() {
 }
 
 function selectWeekQuick(h) {
-  document.getElementById('week-saisie-hours').value=h;
+  window._decToHM(h,'week-saisie-hoursH','week-saisie-hoursM');
   document.querySelectorAll('#week-quick-hours .m5-quick-btn').forEach(b=>{
     b.classList.toggle('selected',parseFloat(b.textContent)===h);
   });
@@ -661,7 +660,7 @@ function selectWeekQuick(h) {
 
 function updateWeekPreview() {
   const contract=M5_Contract.get();
-  const worked=parseFloat(document.getElementById('week-saisie-hours')?.value)||0;
+  const worked=window._hmToDec('week-saisie-hoursH','week-saisie-hoursM');
   const prev=document.getElementById('week-saisie-preview');
   if(!prev||!contract.hoursBase) return;
 
@@ -705,7 +704,7 @@ function updateWeekPreview() {
 
 function saveWeeklySaisie() {
   const monday=document.getElementById('week-saisie-monday').value;
-  const worked=parseFloat(document.getElementById('week-saisie-hours').value);
+  const worked=window._hmVal('week-saisie-hoursH','week-saisie-hoursM');
   if(!monday||isNaN(worked)||worked<0||worked>=35) {
     toast('Saisis un total entre 0 et 34,5h.','error'); return;
   }
@@ -1737,7 +1736,7 @@ function saveDaySaisieOrClose() {
 }
 
 function saveWeeklySaisieOrClose() {
-  const worked=parseFloat(document.getElementById('week-saisie-hours')?.value);
+  const worked=window._hmVal('week-saisie-hoursH','week-saisie-hoursM');
   if(!isNaN(worked)&&worked>=0&&worked<35) {
     saveWeeklySaisie();  // sauvegarde si une valeur est saisie
   } else {
