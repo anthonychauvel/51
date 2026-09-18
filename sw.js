@@ -3,7 +3,7 @@
  * Version : 10.9.19 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.10.32"; // v10.10.32 : M5 popup saisie JOUR (heures travaillées ce jour) en h+min comme les autres
+const CACHE_NAME = "heuressup-cache-v10.10.34"; // v10.10.34 : M5 tous les affichages d heures en h+min (calendrier, totaux, stats, heatmap, apercus) — reglages contrat inchanges
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
