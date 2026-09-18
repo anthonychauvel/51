@@ -3,7 +3,7 @@
  * Version : 10.9.19 — Cloudflare Pages (Google Play compliance : disclaimers non-gouv + sources)
  */
 
-const CACHE_NAME = "heuressup-cache-v10.10.31"; // v10.10.31 : M7 tag nuit affiché en h+min (fini le 5.35h pour 5h21)
+const CACHE_NAME = "heuressup-cache-v10.10.32"; // v10.10.32 : M5 popup saisie JOUR (heures travaillées ce jour) en h+min comme les autres
 const OFFLINE_URL = "./menu.html";
 
 const FILES_TO_CACHE = [
