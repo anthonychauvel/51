@@ -479,8 +479,8 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
   document.getElementById('day-saisie-title').textContent=`${jourLabel} ${dateStr.slice(8)}/${dateStr.slice(5,7)}`;
   document.getElementById('day-saisie-date').value=dateStr;
 
-  const inp=document.getElementById('day-saisie-hours');
-  inp.value=existing?existing.worked:'';
+  const inp=document.getElementById('day-saisie-hoursH');
+  window._decToHM(existing?existing.worked:0,'day-saisie-hoursH','day-saisie-hoursM');
 
   // Propositions rapides basées sur le contrat
   // Utilise joursOuvresContrat (défini par l'utilisatrice) au lieu de 5 en dur
@@ -515,7 +515,7 @@ Passer en mode journalier va la remplacer. Continuer ?`)) return;
 }
 
 function selectQuickHour(h) {
-  document.getElementById('day-saisie-hours').value=h;
+  window._decToHM(h,'day-saisie-hoursH','day-saisie-hoursM');
   document.querySelectorAll('.m5-quick-btn').forEach(b=>{
     b.classList.toggle('selected', parseFloat(b.getAttribute('data-val'))===h);
   });
@@ -524,7 +524,7 @@ function selectQuickHour(h) {
 
 function updateDayPreview() {
   const contract=M5_Contract.get();
-  const worked=parseFloat(document.getElementById('day-saisie-hours')?.value)||0;
+  const worked=window._hmToDec('day-saisie-hoursH','day-saisie-hoursM');
   const prev=document.getElementById('day-saisie-preview');
   if(!prev||!contract.hoursBase) return;
   const _nb=Math.max(1,Math.min(7,contract.joursOuvresContrat||5));
@@ -549,12 +549,12 @@ window.M5dayHCtoggle=function(){
   var props=[]; steps.forEach(function(h){ if(h>=0&&h<=12) props.push(Math.round(h*4)/4); });
   var html=''; [...new Set(props)].sort(function(a,b){return a-b;}).forEach(function(h){ html+='<button class="m5-quick-btn" data-val="'+h+'" onclick="selectQuickHour('+h+')">'+(window._m5fmtH?window._m5fmtH(h):h+'h')+'</button>'; });
   var el=document.getElementById('day-quick-hours'); if(el) el.innerHTML=html;
-  var inp=document.getElementById('day-saisie-hours'); if(inp){ inp.value=''; inp.placeholder = hc ? 'ex: 2 (heures en plus)' : 'ex: 5.75 (= 5h45)'; }
+  var _ih=document.getElementById('day-saisie-hoursH'),_im=document.getElementById('day-saisie-hoursM'); if(_ih)_ih.value=''; if(_im)_im.value='';
   updateDayPreview();
 };
 function saveDaySaisie() {
   const dateStr=document.getElementById('day-saisie-date').value;
-  let worked=parseFloat(document.getElementById('day-saisie-hours').value);
+  let worked=window._hmVal('day-saisie-hoursH','day-saisie-hoursM');
   if(!dateStr||isNaN(worked)||worked<0||worked>24) {
     toast('Saisis un nombre d\'heures valide (0-24).','error'); return;
   }
@@ -1727,7 +1727,7 @@ function filterGlossaire(term) {
 
 // ── Auto-save sur fermeture modale ───────────────────────────────
 function saveDaySaisieOrClose() {
-  const worked=parseFloat(document.getElementById('day-saisie-hours')?.value);
+  const worked=window._hmVal('day-saisie-hoursH','day-saisie-hoursM');
   if(!isNaN(worked)&&worked>=0&&worked<=24) {
     saveDaySaisie();  // sauvegarde si une valeur est saisie
   } else {
