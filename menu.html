@@ -2078,9 +2078,18 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 
       <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;cursor:pointer;">
         <input type="checkbox" id="rp-hebdo-on" style="margin-top:3px;width:18px;height:18px;">
-        <span><b>Saisir mes heures</b><br><span style="color:#666;font-size:12px;">Chaque semaine, les jours choisis</span></span>
+        <span><b>Saisir mes heures</b><br><span style="color:#666;font-size:12px;">Une fois, chaque semaine ou chaque mois</span></span>
       </label>
-      <div id="rp-days" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px 28px;"></div>
+      <div style="margin:0 0 16px 28px;">
+        <div id="rp-freq" role="group" aria-label="Fréquence" style="display:flex;border:2px solid #3949ab;border-radius:10px;overflow:hidden;margin-bottom:10px;">
+          <button type="button" data-f="once" style="flex:1;padding:8px 4px;border:none;font-size:13px;font-weight:700;cursor:pointer;">Une fois</button>
+          <button type="button" data-f="week" style="flex:1;padding:8px 4px;border:none;border-left:2px solid #3949ab;border-right:2px solid #3949ab;font-size:13px;font-weight:700;cursor:pointer;">Chaque semaine</button>
+          <button type="button" data-f="month" style="flex:1;padding:8px 4px;border:none;font-size:13px;font-weight:700;cursor:pointer;">Chaque mois</button>
+        </div>
+        <div id="rp-days" style="display:flex;gap:6px;flex-wrap:wrap;"></div>
+        <label id="rp-once" style="display:none;align-items:center;gap:8px;">Le <input type="date" id="rp-date" style="font-size:15px;padding:6px 8px;border:1px solid #ccc;border-radius:8px;"></label>
+        <label id="rp-month" style="display:none;align-items:center;gap:8px;">Le <select id="rp-mday" style="font-size:15px;padding:6px 8px;border:1px solid #ccc;border-radius:8px;"></select> de chaque mois</label>
+      </div>
 
       <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;cursor:pointer;">
         <input type="checkbox" id="rp-periode-on" style="margin-top:3px;width:18px;height:18px;">
@@ -2103,6 +2112,9 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
         font-size:15px;font-weight:700;cursor:pointer;">
         Ajouter à mon calendrier
       </button>
+      <button id="rp-direct" onclick="rappelsOpenDirect()" style="display:none;width:100%;padding:11px;margin-top:10px;border:2px solid #3949ab;border-radius:12px;background:#fff;color:#283593;font-size:14px;font-weight:700;cursor:pointer;">
+        Calendrier absent de la liste ? Ouvrir directement
+      </button>
       <div style="font-size:11px;color:#888;text-align:center;margin-top:8px;">Pour arrêter un rappel, supprime-le dans ton calendrier.</div>
 
       <div id="rp-message" style="display:none;margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;"></div>
@@ -2114,8 +2126,15 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 /* ══ C2 — Rappels par le calendrier (.ics), sans notification ni serveur ══ */
 var RP_KEY='SH_RAPPELS';
 var RP_DAYS=[['MO','L'],['TU','M'],['WE','M'],['TH','J'],['FR','V'],['SA','S'],['SU','D']];
-function rpLoad(){var d={hebdo:{on:true,days:['FR']},periode:{on:true},bilan:{on:true},heure:'17:00',seq:0};
-  try{var s=JSON.parse(localStorage.getItem(RP_KEY)||'null');if(s){for(var k in s)d[k]=s[k];}}catch(e){}return d;}
+function rpLoad(){var d={hebdo:{on:true,freq:'week',days:['FR'],mday:-1,date:''},periode:{on:true},bilan:{on:true},heure:'17:00',seq:0};
+  try{var s=JSON.parse(localStorage.getItem(RP_KEY)||'null');if(s){for(var k in s)d[k]=s[k];}}catch(e){}
+  if(!d.hebdo.freq)d.hebdo.freq='week';if(d.hebdo.mday===undefined)d.hebdo.mday=-1;if(!d.hebdo.date)d.hebdo.date='';return d;}
+function rpIsIOS(){var u=navigator.userAgent||'';return /iPad|iPhone|iPod/.test(u)||(/Macintosh/.test(u)&&navigator.maxTouchPoints>1);}
+function rpSetFreq(f){[].slice.call(document.querySelectorAll('#rp-freq button')).forEach(function(b){var on=b.getAttribute('data-f')===f;b.setAttribute('aria-pressed',on?'true':'false');b.style.background=on?'#3949ab':'#fff';b.style.color=on?'#fff':'#3949ab';});
+  document.getElementById('rp-days').style.display=f==='week'?'flex':'none';
+  document.getElementById('rp-once').style.display=f==='once'?'flex':'none';
+  document.getElementById('rp-month').style.display=f==='month'?'flex':'none';}
+function rpGetFreq(){var b=document.querySelector('#rp-freq button[aria-pressed="true"]');return b?b.getAttribute('data-f'):'week';}
 function rpSave(o){try{localStorage.setItem(RP_KEY,JSON.stringify(o));}catch(e){}}
 function rpPad(n){return ('0'+n).slice(-2);}
 function rpISO(d){return d.getFullYear()+'-'+rpPad(d.getMonth()+1)+'-'+rpPad(d.getDate());}
@@ -2141,6 +2160,14 @@ function openRappelsPopup(){
     b.style.cssText='width:36px;height:36px;border-radius:50%;font-weight:700;font-size:13px;cursor:pointer;border:2px solid #3949ab;';
     rpDayStyle(b);b.onclick=function(){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');rpDayStyle(b);};
     box.appendChild(b);});
+  var ms=document.getElementById('rp-mday');ms.innerHTML='';
+  for(var j=1;j<=28;j++){var op=document.createElement('option');op.value=j;op.textContent=j===1?'1er':String(j);ms.appendChild(op);}
+  var ol=document.createElement('option');ol.value=-1;ol.textContent='dernier jour';ms.appendChild(ol);
+  ms.value=String(s.hebdo.mday);
+  var dt=document.getElementById('rp-date');var tmr=new Date();tmr.setDate(tmr.getDate()+1);dt.min=rpISO(new Date());dt.value=(s.hebdo.date&&s.hebdo.date>=dt.min)?s.hebdo.date:rpISO(tmr);
+  [].slice.call(document.querySelectorAll('#rp-freq button')).forEach(function(b){b.onclick=function(){rpSetFreq(b.getAttribute('data-f'));};});
+  rpSetFreq(s.hebdo.freq);
+  document.getElementById('rp-direct').style.display='none';
   document.getElementById('rp-hebdo-on').checked=!!s.hebdo.on;
   document.getElementById('rp-periode-on').checked=!!s.periode.on;
   document.getElementById('rp-bilan-on').checked=!!s.bilan.on;
@@ -2173,7 +2200,16 @@ function rpBuildICS(s){
     if(rrule)ev.push('RRULE:'+rrule);
     ev.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+rpEsc(sum),'END:VALARM','END:VEVENT');}
   var today=new Date();today.setHours(0,0,0,0);
-  if(s.hebdo.on&&s.hebdo.days.length){
+  if(s.hebdo.on&&s.hebdo.freq==='once'&&s.hebdo.date){
+    add('sh-saisie-hebdo',s.hebdo.date,'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures.');
+  }
+  else if(s.hebdo.on&&s.hebdo.freq==='month'){
+    var md=Number(s.hebdo.mday)||-1,dm;
+    if(md===-1)dm=new Date(today.getFullYear(),today.getMonth()+1,0);
+    else{dm=new Date(today.getFullYear(),today.getMonth(),md);if(dm<today)dm=new Date(today.getFullYear(),today.getMonth()+1,md);}
+    add('sh-saisie-hebdo',rpISO(dm),'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures du mois.','FREQ=MONTHLY;BYMONTHDAY='+md);
+  }
+  else if(s.hebdo.on&&s.hebdo.days.length){
     /* premier jour choisi à partir d'aujourd'hui */
     var codes=['SU','MO','TU','WE','TH','FR','SA'],d=new Date(today);
     for(var i=0;i<7;i++){if(s.hebdo.days.indexOf(codes[d.getDay()])>=0)break;d.setDate(d.getDate()+1);}
@@ -2201,11 +2237,17 @@ function rappelsExport(){
   s.periode.on=document.getElementById('rp-periode-on').checked;
   s.bilan.on=document.getElementById('rp-bilan-on').checked;
   s.heure=document.getElementById('rp-heure').value||'17:00';
-  if(s.hebdo.on&&!s.hebdo.days.length){rpMsg('Choisis au moins un jour pour le rappel de saisie.',false);return;}
+  s.hebdo.freq=rpGetFreq();
+  s.hebdo.mday=Number(document.getElementById('rp-mday').value)||-1;
+  s.hebdo.date=document.getElementById('rp-date').value||'';
+  if(s.hebdo.on&&s.hebdo.freq==='week'&&!s.hebdo.days.length){rpMsg('Choisis au moins un jour pour le rappel de saisie.',false);return;}
+  if(s.hebdo.on&&s.hebdo.freq==='once'&&!s.hebdo.date){rpMsg('Choisis la date du rappel de saisie.',false);return;}
   s.seq=(Number(s.seq)||0)+1;
   var r=rpBuildICS(s);
   if(!r.n){rpMsg('Coche au moins un rappel.',false);return;}
   rpSave(s);
+  window._rpLast=r;
+  if(rpIsIOS())document.getElementById('rp-direct').style.display='block';
   var fn='simulheures-rappels.ics',shared=false;
   /* iOS : partage natif dans le geste (même modèle que taiko.html icsExport) */
   if(navigator.share){
@@ -2217,6 +2259,15 @@ function rappelsExport(){
         shared=true;}}catch(e){}
   }
   if(!shared)rpFallback(r,fn);
+}
+/* iOS : la feuille de partage ne propose pas Calendrier. Ouvrir le .ics
+   directement dans Safari affiche l'aperçu « Ajouter tout ». */
+function rappelsOpenDirect(){
+  var r=window._rpLast;if(!r)return;
+  var url='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);
+  var w=null;try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){try{location.href=url;}catch(e){}}
+  rpMsg('Si l\u2019aperçu s\u2019ouvre, touche « Ajouter tout ». Sinon : Partager → Enregistrer dans Fichiers, puis touche le fichier dans Fichiers.',true);
 }
 function rpFallback(r,fn){
   try{var a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);a.download=fn;a.target='_blank';
