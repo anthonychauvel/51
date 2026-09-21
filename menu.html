@@ -2241,6 +2241,10 @@ function openRappelsPopup(){
 function rpDayStyle(b){var on=b.getAttribute('aria-pressed')==='true';b.style.background=on?'#3949ab':'#fff';b.style.color=on?'#fff':'#3949ab';}
 function closeRappelsPopup(){var o=document.getElementById('rappels-popup-overlay');if(!o)return;o.style.display='none';
   if(typeof unlockScroll==='function')unlockScroll();else document.body.style.overflow='';}
+function rpMsgPartage(n){
+  if(window._rpIosAutre){window._rpIosAutre=false;
+    rpMsg('Ce navigateur ne sait pas ouvrir Calendrier sur iPhone. Le plus simple : ouvre SimulHeures dans Safari. Sinon, envoie-toi le fichier par Mail et touche la pièce jointe.',false);return true;}
+  return false;}
 function rpMsg(t,ok){var m=document.getElementById('rp-message');if(!m)return;m.style.display='block';
   m.style.background=ok?'#e8f5e9':'#fdecea';m.style.color=ok?'#2e7d32':'#c0392b';m.textContent=t;}
 function rpEsc(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
@@ -2303,7 +2307,10 @@ function rappelsExport(){
   if(!r.n){rpMsg('Coche au moins un rappel.',false);return;}
   rpSave(s);
   window._rpLast=r;
-  if(rpIsIOS()&&!window._rpShare){rappelsOpenDirect();document.getElementById('rp-direct').style.display='block';return;}
+  /* Chrome, Firefox, Edge… sur iPhone n'ouvrent pas Calendrier (page blanche) : on passe par le partage */
+  var iosAutre=rpIsIOS()&&/CriOS|FxiOS|EdgiOS|OPiOS/.test(navigator.userAgent||'');
+  if(rpIsIOS()&&!iosAutre&&!window._rpShare){rappelsOpenDirect();document.getElementById('rp-direct').style.display='block';return;}
+  if(iosAutre&&!window._rpShare)window._rpIosAutre=true;
   window._rpShare=false;
   var fn='simulheures-rappels.ics',shared=false;
   /* iOS : partage natif dans le geste (même modèle que taiko.html icsExport) */
@@ -2311,8 +2318,8 @@ function rappelsExport(){
     try{var f=new File([r.txt],fn,{type:'text/calendar'});
       if(navigator.canShare&&navigator.canShare({files:[f]})){
         navigator.share({files:[f],title:'Rappels SimulHeures'})
-          .then(function(){rpMsg(r.n+' rappel(s) prêt(s). Choisis Calendrier ou Agenda pour les ajouter.',true);})
-          .catch(function(err){if(err&&err.name==='AbortError')rpMsg('Ajout annulé.',false);else rpFallback(r,fn);});
+          .then(function(){if(!rpMsgPartage())rpMsg(r.n+' rappel(s) prêt(s). Choisis Calendrier ou Agenda pour les ajouter.',true);})
+          .catch(function(err){if(err&&err.name==='AbortError'){if(!rpMsgPartage())rpMsg('Ajout annulé.',false);}else rpFallback(r,fn);});
         shared=true;}}catch(e){}
   }
   if(!shared)rpFallback(r,fn);
@@ -2332,7 +2339,7 @@ function rappelsOpenDirect(){
 function rpFallback(r,fn){
   try{var a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);a.download=fn;a.target='_blank';
     document.body.appendChild(a);a.click();document.body.removeChild(a);}catch(e){}
-  rpMsg(r.n+' rappel(s) prêt(s). Ouvre le fichier simulheures-rappels.ics pour les ajouter à ton calendrier.',true);
+  if(!rpMsgPartage())rpMsg(r.n+' rappel(s) prêt(s). Ouvre le fichier simulheures-rappels.ics pour les ajouter à ton calendrier.',true);
 }
 (function(){function go(){if(location.hash==='#rappels'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openRappelsPopup();}}
   if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();})();
