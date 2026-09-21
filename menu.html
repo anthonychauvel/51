@@ -1929,14 +1929,14 @@ function bkWeeks(data){ /* semaines distinctes saisies dans le compteur annuel (
   return Object.keys(s).length;
 }
 function bkAgeDays(){var v=localStorage.getItem(BK_KEY);if(!v)return null;var t=Date.parse(v);if(isNaN(t))return null;return Math.max(0,Math.floor((Date.now()-t)/86400000));}
-function bkAgeText(n){if(n===null)return 'jamais';if(n===0)return "aujourd'hui";if(n===1)return 'hier';return 'il y a '+n+' jours';}
+function bkAgeText(n){if(n===null)return 'aucune pour l\'instant';if(n===0)return "aujourd'hui";if(n===1)return 'hier';return 'il y a '+n+' jours';}
 function bkRefresh(){
   var n=bkAgeDays(),late=(n===null||n>30);
   var st=document.getElementById('backup-last');
-  if(st){st.textContent='Dernière sauvegarde : '+bkAgeText(n);
+  if(st){st.textContent='Dernière copie de sauvegarde : '+bkAgeText(n);
     st.style.background=late?'#fff3e0':'#e8f5e9';st.style.color=late?'#e65100':'#2e7d32';st.style.borderColor=late?'#ffb74d':'#a5d6a7';}
   var b=document.getElementById('backupAgeBadge');
-  if(b){b.textContent=n===null?'jamais':(n===0?'auj.':n+' j');b.style.background=late?'#ef6c00':'#2e7d32';b.style.display='block';}
+  if(b){b.textContent=n===null?'aucune copie':(n===0?'auj.':n+' j');b.style.background=late?'#ef6c00':'#2e7d32';b.style.display='block';}
 }
 function bkMarkDone(){try{localStorage.setItem(BK_KEY,new Date().toISOString());}catch(e){}bkRefresh();}
 function exportAllData() {
