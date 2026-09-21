@@ -40,6 +40,7 @@ const M6_Storage = {
     if (!localStorage.getItem(dk)) {
       localStorage.setItem(dk, JSON.stringify({}));
       this._log(regime, year, 'SYSTEM', `Exercice ${year} créé`);
+      if (window.hsBackupNudge) window.hsBackupNudge('year');
     }
   },
 
