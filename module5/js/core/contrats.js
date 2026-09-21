@@ -67,14 +67,17 @@ function renderStrip(){
 function renderModal(){
   var m=document.querySelector('#modal-contract .m5-modal');if(!m)return;
   var d=document.createElement('div');
-  d.style.cssText='margin-top:16px;padding-top:14px;border-top:1px solid rgba(0,0,0,0.08);font-size:13px';
-  var h='<div style="font-weight:700;margin-bottom:4px">Plusieurs employeurs ?</div>'
+  d.id='m5-multi-contrat';
+  d.style.cssText='margin-top:16px;padding:14px 12px;border-radius:12px;background:rgba(108,63,197,0.06);border:1.5px solid rgba(108,63,197,0.25);font-size:13px';
+  var h='<div style="font-weight:700;margin-bottom:4px">👥 Plusieurs employeurs ?</div>'
     +'<div style="opacity:.75;font-size:12px;margin-bottom:10px">Chaque contrat a ses heures, sa convention et ses heures complémentaires, calculées séparément.</div>';
   if(existing().length<MAX&&exists(ACTIVE))h+='<button type="button" class="m5-btn m5-btn-full" data-add="1" style="margin-bottom:8px">+ Ajouter un contrat</button>';
   if(ACTIVE!==1)h+='<button type="button" class="m5-btn m5-btn-full" data-del="1" style="color:#c0392b">Supprimer « '+esc(nom(ACTIVE))+' »</button>';
   d.innerHTML=h;
   d.addEventListener('click',function(e){if(e.target.closest('[data-add]'))add();if(e.target.closest('[data-del]'))remove(ACTIVE);});
-  m.appendChild(d);
+  /* Juste sous « Enregistrer », avant la zone danger : visible sans tout faire défiler */
+  var save=m.querySelector('button[onclick*="saveContract"]');
+  if(save&&save.parentNode)save.parentNode.insertBefore(d,save.nextSibling);else m.appendChild(d);
 }
 
 /* ── Vue d'ensemble (dès 2 contrats) : heures saisies par contrat + total + repère 48 h ── */
