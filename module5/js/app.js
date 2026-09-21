@@ -1872,7 +1872,7 @@ function createNewYear() {
   const yr=parseInt(y);
   if(yr<2020||yr>2050) { toast('Année invalide','error'); return; }
   // Créer un jeu de données vide
-  const key='M5_DATA_'+y;
+  const key=M5_key('M5_DATA_')+y;
   if(!localStorage.getItem(key)) localStorage.setItem(key,JSON.stringify({}));
   switchYear(y);
 }
@@ -2316,7 +2316,7 @@ window.M5_refreshUI=refreshUI;
 window.M5_getCurrentPeriode=function(){ return _currentPeriode; };
 // ── Verrouillage par période : gèle la SAISIE d'une période donnée ──
 // (les autres périodes restent modifiables ; la navigation n'est jamais bloquée)
-function _lockMap(){ try{ return JSON.parse(localStorage.getItem('M5_PERIODE_LOCKS')||'{}'); }catch(e){ return {}; } }
+function _lockMap(){ try{ return JSON.parse(localStorage.getItem(M5_key('M5_PERIODE_LOCKS'))||'{}'); }catch(e){ return {}; } }
 window.M5_isDayLocked=function(dk){ if(!dk) return false; var m=_lockMap(); for(var k in m){ if(dk>=k && dk<=m[k]) return true; } return false; };
 // Période "active" = celle qui contient calendarMonday (= ce qu'affiche la barre)
 function _activePeriode(){
@@ -2338,7 +2338,7 @@ window.M5togglePeriodeLock=function(){
   if(!p){ toast('Aucune période à verrouiller ici','info'); return; }
   var m=_lockMap(), on=!m[p.debutStr];
   if(on) m[p.debutStr]=p.finStr; else delete m[p.debutStr];
-  try{ localStorage.setItem('M5_PERIODE_LOCKS', JSON.stringify(m)); }catch(e){}
+  try{ localStorage.setItem(M5_key('M5_PERIODE_LOCKS'), JSON.stringify(m)); }catch(e){}
   // Retour visuel IMMÉDIAT (le re-render lourd est différé → 1 seul tap suffit)
   var b=document.getElementById('periode-lock-btn');
   if(b){ b.textContent=on?'🔒':'🔓'; b.classList.toggle('locked', on); b.setAttribute('aria-pressed', on?'true':'false'); }
@@ -2413,7 +2413,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     }catch(e){}
     return null;
   }
-  function _getPaidMap(){ try{ return JSON.parse(localStorage.getItem('M5_HC_PAID')||'{}'); }catch(e){ return {}; } }
+  function _getPaidMap(){ try{ return JSON.parse(localStorage.getItem(M5_key('M5_HC_PAID'))||'{}'); }catch(e){ return {}; } }
   function _periodKey(){
     try{
       var m=_mode();
@@ -2426,7 +2426,7 @@ document.addEventListener('DOMContentLoaded',()=>{
   function _savePaid(tranche, v){
     var m=_getPaidMap(), k=_periodKey(); if(!m[k]||typeof m[k]!=='object') m[k]={};
     m[k][tranche]=Math.round(_parseHM(v)*100)/100;
-    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
+    try{ localStorage.setItem(M5_key('M5_HC_PAID'), JSON.stringify(m)); }catch(e){}
   }
   function _fmtH(h){ var s=h<0?'-':''; h=Math.abs(h); var hh=Math.floor(h+1e-9), mm=Math.round((h-hh)*60); if(mm===60){hh++;mm=0;} return s+hh+'h'+(mm?String(mm).padStart(2,'0'):''); }
   window._m5fmtH=_fmtH;
@@ -2547,7 +2547,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     if(part==='h') h=Math.max(0,parseInt(String(v),10)||0);
     else min=Math.max(0,Math.min(59,parseInt(String(v),10)||0));
     m[k][tranche]=Math.round((h+min/60)*100)/100;
-    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(m)); }catch(e){}
+    try{ localStorage.setItem(M5_key('M5_HC_PAID'), JSON.stringify(m)); }catch(e){}
   }
   window.M5setHCPaid10h=function(v){ _savePaidHM('h10','h',v); window._m5UpdateNet(); };
   window.M5setHCPaid10m=function(v){ _savePaidHM('h10','m',v); window._m5UpdateNet(); };
@@ -2566,7 +2566,7 @@ document.addEventListener('DOMContentLoaded',()=>{
     var newDk=Math.max(0, Math.round((newTotal-other)*100)/100);
     var k='week:'+debutStr; if(!pm[k]||typeof pm[k]!=='object') pm[k]={};
     pm[k][tranche]=newDk;
-    try{ localStorage.setItem('M5_HC_PAID', JSON.stringify(pm)); }catch(e){}
+    try{ localStorage.setItem(M5_key('M5_HC_PAID'), JSON.stringify(pm)); }catch(e){}
     if(window.M5_refreshUI) requestAnimationFrame(window.M5_refreshUI);
   };
   window.M5toggleEuro=function(){ var sh=localStorage.getItem('M5_EURO_SHOWN')==='1'; sh=!sh; try{localStorage.setItem('M5_EURO_SHOWN',sh?'1':'0');}catch(e){}
