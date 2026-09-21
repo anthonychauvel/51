@@ -2320,8 +2320,12 @@ function rappelsOpenDirect(){
   var r=window._rpLast;if(!r)return;
   if(!(navigator.serviceWorker&&navigator.serviceWorker.controller)){
     rpMsg('Ouverture directe indisponible (appli pas encore prête hors ligne). Utilise « Envoyer le fichier » → Mail vers toi, puis touche le fichier.',false);return;}
-  rpMsg('Ouverture de Calendrier… touche « Ajouter tout ».',true);
-  location.href='rappels.ics?c='+rpB64(r.txt);
+  var url='rappels.ics?c='+rpB64(r.txt);
+  /* Fenêtre à part (avec son bouton de fermeture) plutôt que de quitter le menu :
+     dans l'appli installée, il n'y a pas de bouton retour pour revenir. */
+  var w=null;try{w=window.open(url,'_blank');}catch(e){}
+  if(!w){location.href=url;return;}
+  rpMsg('Touche « Ajouter tout », puis ferme la fenêtre (✕ ou Terminé) pour revenir ici.',true);
 }
 function rpFallback(r,fn){
   try{var a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);a.download=fn;a.target='_blank';
