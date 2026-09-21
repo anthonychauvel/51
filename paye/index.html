@@ -734,6 +734,7 @@ function confirmSwitchYear(){
   registerYear(y);
   if(Object.keys(loadYearData(y)||{}).length === 0) saveYearData(y, {});
   switchYear(y);
+  if(window.hsBackupNudge) hsBackupNudge("year");
 }
 
 const STORAGE_PREFIX="CA_HS_TRACKER_V1",APP_VERSION="1.5.0",SNAP_KEY=`${STORAGE_PREFIX}_SNAPSHOTS`,SNAP_LIMIT=5,DATA_VERSION="1.0";
@@ -1048,7 +1049,7 @@ function autoLockPastPeriods(){
     const hasActivity = (Number(m.paid)||0)>0 || (m.days && Object.values(m.days).some(h=>(Number(h)||0)>0));
     if(hasActivity){ m.locked = true; changed = true; }
   });
-  if(changed) saveYearData(currentYear, yd);
+  if(changed){ saveYearData(currentYear, yd); if(window.hsBackupNudge) hsBackupNudge("period"); }
 }
 
 function syncClosingDate(){if(!DATA[currentKey])return;const[y,m]=currentKey.split("-").map(Number),day=DATA[currentKey].closing||31;closingDate.value=`${y}-${String(m).padStart(2,"0")}-${String(day).padStart(2,"0")}`}
@@ -1578,6 +1579,7 @@ function togglePeriodLock(){
     renderCalendar();
     renderPaidInputs(getCCNRules());
     toast("🔒 Période verrouillée", "success");
+    if(window.hsBackupNudge) hsBackupNudge("period");
   } else {
     // Déverrouillage : confirmation légère pour éviter déverrouillage accidentel
     DATA[currentKey].locked = false;
@@ -3090,6 +3092,7 @@ function closeTip(){
 })();
 </script>
 <script>window._hmToDec=function(hId,mId){var he=document.getElementById(hId),me=document.getElementById(mId);var h=Number(he&&he.value)||0,m=Number(me&&me.value)||0;if(h<0)h=0;if(m<0)m=0;return h+m/60;};window._decToHM=function(dec,hId,mId){dec=Number(dec)||0;var he=document.getElementById(hId),me=document.getElementById(mId);var tot=Math.round(dec*60);if(tot<=0){if(he)he.value='';if(me)me.value='';return;}if(he)he.value=Math.floor(tot/60);if(me)me.value=tot%60;};window._hmVal=function(hId,mId){var he=document.getElementById(hId),me=document.getElementById(mId);var hv=he?he.value:'',mv=me?me.value:'';if((hv===''||hv==null)&&(mv===''||mv==null))return NaN;var h=Number(hv)||0,m=Number(mv)||0;if(h<0)h=0;if(m<0)m=0;return h+m/60;};</script>
+<script src="../js/rappel-sauvegarde.js"></script>
 </body>
 </html>
 
