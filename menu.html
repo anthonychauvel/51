@@ -2073,7 +2073,7 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
     </div>
     <div style="padding:18px 20px 20px;font-size:13px;line-height:1.5;">
       <div style="background:#eef0fb;border-left:3px solid #3949ab;border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:16px;font-size:12px;">
-        L'appli crée un fichier de rappels que tu ajoutes à ton calendrier (Calendrier, Google Agenda…). Tu les modifies ou les supprimes toi-même, depuis ton calendrier.
+        Chez nous, on trouve qu'il y a déjà trop de notifications sur les téléphones. Alors ici, pas de notification : c'est toi qui gères tes rappels comme tu veux, dans ton calendrier. Tu les modifies ou les supprimes quand tu veux.
       </div>
 
       <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;cursor:pointer;">
@@ -2201,31 +2201,31 @@ function rpBuildICS(s){
     ev.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+rpEsc(sum),'END:VALARM','END:VEVENT');}
   var today=new Date();today.setHours(0,0,0,0);
   if(s.hebdo.on&&s.hebdo.freq==='once'&&s.hebdo.date){
-    add('sh-saisie-hebdo',s.hebdo.date,'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures.');
+    add('sh-saisie-hebdo',s.hebdo.date,'Coucou, c\'est l\'heure de checker tes heures !','Ouvre SimulHeures pour saisir tes heures.');
   }
   else if(s.hebdo.on&&s.hebdo.freq==='month'){
     var md=Number(s.hebdo.mday)||-1,dm;
     if(md===-1)dm=new Date(today.getFullYear(),today.getMonth()+1,0);
     else{dm=new Date(today.getFullYear(),today.getMonth(),md);if(dm<today)dm=new Date(today.getFullYear(),today.getMonth()+1,md);}
-    add('sh-saisie-hebdo',rpISO(dm),'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures du mois.','FREQ=MONTHLY;BYMONTHDAY='+md);
+    add('sh-saisie-hebdo',rpISO(dm),'Coucou, c\'est l\'heure de checker tes heures !','Ouvre SimulHeures pour saisir tes heures du mois.','FREQ=MONTHLY;BYMONTHDAY='+md);
   }
   else if(s.hebdo.on&&s.hebdo.days.length){
     /* premier jour choisi à partir d'aujourd'hui */
     var codes=['SU','MO','TU','WE','TH','FR','SA'],d=new Date(today);
     for(var i=0;i<7;i++){if(s.hebdo.days.indexOf(codes[d.getDay()])>=0)break;d.setDate(d.getDate()+1);}
     var order=RP_DAYS.map(function(p){return p[0];}).filter(function(c){return s.hebdo.days.indexOf(c)>=0;});
-    add('sh-saisie-hebdo',rpISO(d),'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures de la semaine.','FREQ=WEEKLY;BYDAY='+order.join(','));
+    add('sh-saisie-hebdo',rpISO(d),'Coucou, c\'est l\'heure de checker tes heures !','Ouvre SimulHeures pour saisir tes heures de la semaine.','FREQ=WEEKLY;BYDAY='+order.join(','));
   }
   if(s.periode.on){
     var cl=rpClosures();
-    if(cl.length)cl.forEach(function(iso){add('sh-cloture-'+iso,iso,'SimulHeures : fin de période','Dernier jour de la période. Vérifie ta saisie avant la clôture.');});
+    if(cl.length)cl.forEach(function(iso){add('sh-cloture-'+iso,iso,'Coucou, c\'est l\'heure de checker tes heures : fin de période','Dernier jour de la période. Vérifie ta saisie avant la clôture.');});
     else{var e=new Date(today.getFullYear(),today.getMonth()+1,0);
-      add('sh-fin-mois',rpISO(e),'SimulHeures : fin de période','Dernier jour du mois. Vérifie ta saisie avant la clôture.','FREQ=MONTHLY;BYMONTHDAY=-1');}
+      add('sh-fin-mois',rpISO(e),'Coucou, c\'est l\'heure de checker tes heures : fin de période','Dernier jour du mois. Vérifie ta saisie avant la clôture.','FREQ=MONTHLY;BYMONTHDAY=-1');}
   }
   if(s.bilan.on){
     var bd=rpBilanDate(),p=bd.iso.split('-'),b=new Date(today.getFullYear(),+p[1]-1,+p[2]);
     if(b<today)b.setFullYear(b.getFullYear()+1);
-    add('sh-bilan-annuel',rpISO(b),'SimulHeures : bilan annuel','Fin de ton année de référence : fais ton bilan dans SimulHeures, puis une copie de sauvegarde.','FREQ=YEARLY');
+    add('sh-bilan-annuel',rpISO(b),'Coucou, c\'est l\'heure de checker tes heures : bilan annuel','Fin de ton année de référence : fais ton bilan dans SimulHeures, puis une copie de sauvegarde.','FREQ=YEARLY');
   }
   var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SimulHeures//Rappels//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:SimulHeures'].concat(ev,['END:VCALENDAR']);
   return {txt:L.join('\r\n'),n:n};
