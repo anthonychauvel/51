@@ -1546,38 +1546,56 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
      publié : un utilisateur qui n'a jamais ouvert Taiko ne doit voir aucune
      trace de cette fonctionnalité. -->
 <div id="taikoRecap" style="display:none;margin:0 0 14px;"></div>
-  <!-- ══ C4 : saisie rapide ══ -->
-  <div id="qsWrap" style="margin:0 0 14px;">
+  <!-- ══ C4 : saisie rapide (masquée tant qu'aucun module de saisie n'est configuré) ══ -->
+  <div id="qsWrap" style="display:none;margin:0 0 10px;">
     <div style="display:flex;gap:8px;">
-      <button id="qsGo" onclick="qsGo()" style="flex:1;padding:14px 16px;border:none;border-radius:16px;cursor:pointer;
-        background:linear-gradient(135deg,#f9a825,#ef6c00);color:#fff;font-size:15px;font-weight:800;
-        display:flex;align-items:center;justify-content:center;gap:9px;box-shadow:0 6px 18px rgba(0,0,0,0.28);font-family:inherit;">
-        <span style="font-size:20px;">⚡</span><span id="qsLbl">Saisir aujourd'hui</span>
+      <button id="qsGo" onclick="qsGo()" style="flex:1;min-width:0;padding:8px 14px;border:none;border-radius:12px;cursor:pointer;
+        background:linear-gradient(135deg,#f9a825,#ef6c00);color:#fff;font-family:inherit;
+        display:flex;align-items:center;gap:8px;box-shadow:0 3px 10px rgba(0,0,0,0.22);">
+        <span style="font-size:16px;line-height:1;">⚡</span>
+        <span style="font-size:14px;font-weight:800;white-space:nowrap;">Saisir aujourd'hui</span>
+        <span id="qsLbl" style="margin-left:auto;font-size:11.5px;font-weight:600;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;"></span>
       </button>
-      <button onclick="qsToggleChoice()" aria-label="Choisir le module de saisie rapide" style="width:52px;border:none;border-radius:16px;cursor:pointer;
-        background:rgba(255,255,255,0.12);color:#fff;font-size:20px;">⚙️</button>
+      <button id="qsGear" onclick="qsToggleChoice()" aria-label="Changer de module pour la saisie rapide" style="width:40px;border:none;border-radius:12px;cursor:pointer;
+        background:rgba(255,255,255,0.12);color:#fff;font-size:15px;">⚙️</button>
     </div>
     <div id="qsChoice" style="display:none;margin-top:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:10px;">
       <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:8px;">Où saisis-tu tes heures ?</div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
-        <button onclick="qsSet('heures')" class="qs-opt">⏱️ Compteur annuel (M1)</button>
-        <button onclick="qsSet('paye')" class="qs-opt">📅 Suivi mensuel (M2)</button>
-        <button onclick="qsSet('module5')" class="qs-opt">🌸 Temps partiel (M5)</button>
-        <button onclick="qsSet('module6')" class="qs-opt">💼 Cadres (M6)</button>
-      </div>
+      <div id="qsOpts" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
     </div>
   </div>
-  <style>.qs-opt{padding:10px 8px;border:1px solid rgba(255,255,255,0.25);border-radius:10px;background:rgba(0,0,0,0.2);color:#fff;font-size:12.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}.qs-opt[aria-pressed="true"]{background:#ef6c00;border-color:#ef6c00}</style>
+  <style>.qs-opt{padding:11px 12px;border:1px solid rgba(255,255,255,0.25);border-radius:10px;background:rgba(0,0,0,0.2);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}.qs-opt[aria-pressed="true"]{background:#ef6c00;border-color:#ef6c00}</style>
   <script>
-  /* C4 — saisie rapide : ouvre la saisie du jour dans le module choisi (clé SH_SAISIE_RAPIDE) */
-  var QS_KEY='SH_SAISIE_RAPIDE',QS_NOMS={heures:'M1',paye:'M2',module5:'M5',module6:'M6'};
-  function qsGet(){try{var v=localStorage.getItem(QS_KEY);return QS_NOMS[v]?v:'';}catch(e){return '';}}
-  function qsRefresh(){var v=qsGet();document.getElementById('qsLbl').textContent=v?"Saisir aujourd'hui · "+QS_NOMS[v]:"Saisir aujourd'hui";
-    [].slice.call(document.querySelectorAll('#qsChoice .qs-opt')).forEach(function(b){b.setAttribute('aria-pressed',(b.getAttribute('onclick')||'').indexOf("'"+v+"'")>0?'true':'false');});}
+  /* C4 — saisie rapide : ouvre la saisie du jour dans le module choisi (clé SH_SAISIE_RAPIDE).
+     N'apparaît que si au moins un module de saisie est configuré ; ne propose que ceux-là. */
+  var QS_KEY='SH_SAISIE_RAPIDE';
+  var QS_MODS=[
+    {id:'heures', nom:'⏱️ Compteur annuel', ok:function(){return qsHasPrefix('EXERCISE_START_');}},
+    {id:'paye',   nom:'📅 Heures mensualisées', ok:function(){return localStorage.getItem('CA_HS_TRACKER_V1_ONBOARDING')==='1';}},
+    {id:'module5',nom:'🦊 Mizuki — Temps partiel', ok:function(){try{var c=JSON.parse(localStorage.getItem('M5_CONTRACT')||'null');return !!(c&&c.hoursBase);}catch(e){return false;}}},
+    {id:'module6',nom:'⚖️ Zenji — Cadres', ok:function(){var r=localStorage.getItem('M6_REGIME');return !!(r&&localStorage.getItem('M6_'+r+'_CONTRACT'));}}
+  ];
+  function qsHasPrefix(p){try{for(var i=0;i<localStorage.length;i++){var k=localStorage.key(i);if(k.indexOf(p)===0&&localStorage.getItem(k))return true;}}catch(e){}return false;}
+  function qsConfigured(){return QS_MODS.filter(function(m){try{return m.ok();}catch(e){return false;}});}
+  function qsGet(){var c=qsConfigured(),v='';try{v=localStorage.getItem(QS_KEY)||'';}catch(e){}
+    if(c.some(function(m){return m.id===v;}))return v;
+    return c.length===1?c[0].id:'';}
+  function qsRefresh(){
+    var c=qsConfigured(),w=document.getElementById('qsWrap');
+    if(!c.length){w.style.display='none';return;}
+    w.style.display='block';
+    var v=qsGet(),m=c.filter(function(x){return x.id===v;})[0];
+    document.getElementById('qsLbl').textContent=m?m.nom.replace(/^\S+\s/,''):'Choisis ton module';
+    document.getElementById('qsGear').style.display=c.length>1?'block':'none';
+    var box=document.getElementById('qsOpts');box.innerHTML='';
+    c.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='qs-opt';b.textContent=x.nom;
+      b.setAttribute('aria-pressed',x.id===v?'true':'false');b.onclick=function(){qsSet(x.id);};box.appendChild(b);});
+  }
   function qsToggleChoice(){var c=document.getElementById('qsChoice');c.style.display=c.style.display==='none'?'block':'none';}
   function qsSet(m){try{localStorage.setItem(QS_KEY,m);}catch(e){}document.getElementById('qsChoice').style.display='none';qsRefresh();qsGo();}
   function qsGo(){var v=qsGet();if(!v){document.getElementById('qsChoice').style.display='block';return;}location.href=v+'/index.html#saisie-aujourdhui';}
   qsRefresh();
+  window.addEventListener('pageshow',qsRefresh);
   </script>
   <!-- ══ Zone épinglés + catégories déroulantes (tuiles déplacées par JS) ══ -->
   <div id="pinnedWrap" style="display:none;">
