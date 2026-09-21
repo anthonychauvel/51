@@ -909,6 +909,7 @@ body {
 <!-- Scripts (ordre inchangé) -->
 <script src="../ccn/conventions-collectives.js"></script>
 <script src="../legi-ref.js"></script>
+<script src="../js/rappel-sauvegarde.js"></script>
 <script src="js/articles-loi.js"></script>
 <script src="js/storage.js"></script>
 <script src="js/config.js"></script>
@@ -4930,6 +4931,7 @@ function _checkAndResetXpCapYear() {
     localStorage.removeItem('FOX_NIGHT_WEEKEND_COUNT');
     console.log('🦊 XP cap reset : exercice ' + (prevYear||'?') + ' → ' + activeYear
       + ' (précédent: ' + prevUsed + 'h utilisées, clôture: ' + resetDate + ')');
+    if (prevYear && window.hsBackupNudge) hsBackupNudge('year');
     return newState;
   }
   return capState;
