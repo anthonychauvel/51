@@ -1532,39 +1532,24 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
       border-radius:999px;padding:12px 8px;font-family:inherit;font-weight:700;font-size:12px;
       cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);">✅ Ma to-do list</button>
   </div>
-</div>
-
-<div style="width:92%;max-width:420px;margin:6px auto 2px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;">
-  <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;">Tes modules</span>
-  <button id="proSwitch" onclick="toggleModePro()" aria-pressed="false">Sobre</button>
-<button id="profChip" onclick="cycleGridProfile()"
-    style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;
-    border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
-    👤 <span id="profChipLbl">Temps plein</span> ▾</button>
-</div>
-<!-- Récap du jour, alimenté par Taiko. Vide et masqué tant que Taiko n'a rien
-     publié : un utilisateur qui n'a jamais ouvert Taiko ne doit voir aucune
-     trace de cette fonctionnalité. -->
-<div id="taikoRecap" style="display:none;margin:0 0 14px;"></div>
   <!-- ══ C4 : saisie rapide (masquée tant qu'aucun module de saisie n'est configuré) ══ -->
-  <div id="qsWrap" style="display:none;margin:0 0 10px;">
-    <div style="display:flex;gap:8px;">
-      <button id="qsGo" onclick="qsGo()" style="flex:1;min-width:0;padding:8px 14px;border:none;border-radius:12px;cursor:pointer;
-        background:linear-gradient(135deg,#f9a825,#ef6c00);color:#fff;font-family:inherit;
-        display:flex;align-items:center;gap:8px;box-shadow:0 3px 10px rgba(0,0,0,0.22);">
-        <span style="font-size:16px;line-height:1;">⚡</span>
-        <span style="font-size:14px;font-weight:800;white-space:nowrap;">Saisir aujourd'hui</span>
-        <span id="qsLbl" style="margin-left:auto;font-size:11.5px;font-weight:600;opacity:.9;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;"></span>
+  <div id="qsWrap" style="display:none;width:100%;margin-top:10px;">
+    <div style="display:flex;flex-wrap:nowrap;gap:10px;width:100%;">
+      <button id="qsGo" onclick="qsGo()" style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
+        border-radius:999px;padding:12px 16px;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);
+        display:flex;align-items:center;justify-content:center;gap:8px;">
+        <span style="font-weight:700;font-size:12px;white-space:nowrap;">⚡ Saisir aujourd'hui</span>
+        <span id="qsLbl" style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;"></span>
       </button>
-      <button id="qsGear" onclick="qsToggleChoice()" aria-label="Changer de module pour la saisie rapide" style="width:40px;border:none;border-radius:12px;cursor:pointer;
-        background:rgba(255,255,255,0.12);color:#fff;font-size:15px;">⚙️</button>
+      <button id="qsGear" onclick="qsToggleChoice()" aria-label="Changer de module pour la saisie rapide" style="flex:0 0 44px;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
+        border-radius:999px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);font-size:14px;">⚙️</button>
     </div>
-    <div id="qsChoice" style="display:none;margin-top:8px;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);border-radius:14px;padding:10px;">
+    <div id="qsChoice" style="display:none;margin-top:8px;background:#0a0a0c;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,0.45);">
       <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:8px;">Où saisis-tu tes heures ?</div>
       <div id="qsOpts" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
     </div>
   </div>
-  <style>.qs-opt{padding:11px 12px;border:1px solid rgba(255,255,255,0.25);border-radius:10px;background:rgba(0,0,0,0.2);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}.qs-opt[aria-pressed="true"]{background:#ef6c00;border-color:#ef6c00}</style>
+  <style>.qs-opt{padding:11px 14px;border:1px solid rgba(255,255,255,0.16);border-radius:999px;background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}.qs-opt[aria-pressed="true"]{background:#ef6c00;border-color:#ef6c00}</style>
   <script>
   /* C4 — saisie rapide : ouvre la saisie du jour dans le module choisi (clé SH_SAISIE_RAPIDE).
      N'apparaît que si au moins un module de saisie est configuré ; ne propose que ceux-là. */
@@ -1586,7 +1571,7 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
     w.style.display='block';
     var v=qsGet(),m=c.filter(function(x){return x.id===v;})[0];
     document.getElementById('qsLbl').textContent=m?m.nom.replace(/^\S+\s/,''):'Choisis ton module';
-    document.getElementById('qsGear').style.display=c.length>1?'block':'none';
+    document.getElementById('qsGear').style.display=c.length>1?'':'none';
     var box=document.getElementById('qsOpts');box.innerHTML='';
     c.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='qs-opt';b.textContent=x.nom;
       b.setAttribute('aria-pressed',x.id===v?'true':'false');b.onclick=function(){qsSet(x.id);};box.appendChild(b);});
@@ -1597,6 +1582,20 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
   qsRefresh();
   window.addEventListener('pageshow',qsRefresh);
   </script>
+</div>
+
+<div style="width:92%;max-width:420px;margin:6px auto 2px;display:flex;flex-wrap:nowrap;align-items:center;justify-content:space-between;gap:8px;">
+  <span style="font-size:12px;font-weight:700;color:rgba(255,255,255,0.55);letter-spacing:.5px;text-transform:uppercase;flex-shrink:0;">Tes modules</span>
+  <button id="proSwitch" onclick="toggleModePro()" aria-pressed="false">Sobre</button>
+<button id="profChip" onclick="cycleGridProfile()"
+    style="flex-shrink:0;background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.18);color:#fff;
+    border-radius:999px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;font-family:inherit;">
+    👤 <span id="profChipLbl">Temps plein</span> ▾</button>
+</div>
+<!-- Récap du jour, alimenté par Taiko. Vide et masqué tant que Taiko n'a rien
+     publié : un utilisateur qui n'a jamais ouvert Taiko ne doit voir aucune
+     trace de cette fonctionnalité. -->
+<div id="taikoRecap" style="display:none;margin:0 0 14px;"></div>
   <!-- ══ Zone épinglés + catégories déroulantes (tuiles déplacées par JS) ══ -->
   <div id="pinnedWrap" style="display:none;">
     <div id="pinnedHead">📌 Épinglés</div>
