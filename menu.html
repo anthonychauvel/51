@@ -2112,8 +2112,8 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
         font-size:15px;font-weight:700;cursor:pointer;">
         Ajouter à mon calendrier
       </button>
-      <button id="rp-direct" onclick="rappelsOpenDirect()" style="display:none;width:100%;padding:11px;margin-top:10px;border:2px solid #3949ab;border-radius:12px;background:#fff;color:#283593;font-size:14px;font-weight:700;cursor:pointer;">
-        Calendrier absent de la liste ? Ouvrir directement
+      <button id="rp-direct" onclick="window._rpShare=true;rappelsExport()" style="display:none;width:100%;padding:11px;margin-top:10px;border:2px solid #3949ab;border-radius:12px;background:#fff;color:#283593;font-size:14px;font-weight:700;cursor:pointer;">
+        Rien ne s'ouvre ? Envoyer le fichier (Mail, Fichiers…)
       </button>
       <div style="font-size:11px;color:#888;text-align:center;margin-top:8px;">Pour arrêter un rappel, supprime-le dans ton calendrier.</div>
 
@@ -2247,7 +2247,8 @@ function rappelsExport(){
   if(!r.n){rpMsg('Coche au moins un rappel.',false);return;}
   rpSave(s);
   window._rpLast=r;
-  if(rpIsIOS())document.getElementById('rp-direct').style.display='block';
+  if(rpIsIOS()&&!window._rpShare){rappelsOpenDirect();document.getElementById('rp-direct').style.display='block';return;}
+  window._rpShare=false;
   var fn='simulheures-rappels.ics',shared=false;
   /* iOS : partage natif dans le geste (même modèle que taiko.html icsExport) */
   if(navigator.share){
@@ -2262,12 +2263,15 @@ function rappelsExport(){
 }
 /* iOS : la feuille de partage ne propose pas Calendrier. Ouvrir le .ics
    directement dans Safari affiche l'aperçu « Ajouter tout ». */
+function rpB64(txt){var b=btoa(unescape(encodeURIComponent(txt)));return b.replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');}
+/* iOS : ouvre une vraie adresse https (rappels.ics), fabriquée par le service worker
+   sur le téléphone, pour que Calendrier propose « Ajouter tout ». */
 function rappelsOpenDirect(){
   var r=window._rpLast;if(!r)return;
-  var url='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);
-  var w=null;try{w=window.open(url,'_blank');}catch(e){}
-  if(!w){try{location.href=url;}catch(e){}}
-  rpMsg('Si l\u2019aperçu s\u2019ouvre, touche « Ajouter tout ». Sinon : Partager → Enregistrer dans Fichiers, puis touche le fichier dans Fichiers.',true);
+  if(!(navigator.serviceWorker&&navigator.serviceWorker.controller)){
+    rpMsg('Ouverture directe indisponible (appli pas encore prête hors ligne). Utilise « Envoyer le fichier » → Mail vers toi, puis touche le fichier.',false);return;}
+  rpMsg('Ouverture de Calendrier… touche « Ajouter tout ».',true);
+  location.href='rappels.ics?c='+rpB64(r.txt);
 }
 function rpFallback(r,fn){
   try{var a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);a.download=fn;a.target='_blank';
