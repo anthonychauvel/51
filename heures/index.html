@@ -2473,5 +2473,16 @@ function closeTip(){
 </script>
 <script src="../js/rappel-sauvegarde.js"></script>
 <script>try{hsBackupCheckDates(JSON.parse(localStorage.getItem("CLOSURES_REPORT_"+(localStorage.getItem("ACTIVE_YEAR_SUFFIX")||new Date().getFullYear()))||"[]"));}catch(e){}</script>
+<!-- C4 saisie rapide : #saisie-aujourdhui ouvre la saisie du jour (lien depuis le menu) -->
+<script>
+(function(){
+  if(location.hash!=='#saisie-aujourdhui')return;
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  function go(){try{
+    var w=document.getElementById('wizardModal');if(w&&w.style.display&&w.style.display!=='none')return;
+    if(typeof openPopup==='function')openPopup(dateKeyLocal(new Date()));}catch(e){}}
+  if(document.readyState==='complete')setTimeout(go,400);else window.addEventListener('load',function(){setTimeout(go,400);});
+})();
+</script>
 </body>
 </html>
