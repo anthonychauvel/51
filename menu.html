@@ -1707,6 +1707,7 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
   <div id="nidAbeille" style="position:relative;width:300px;height:196px;margin:0 auto;">
     <button onclick="openBackupPopup()" style="position:absolute;top:0;left:0;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#2196a6,#0d7a8a);">
       <span style="font-size:26px;line-height:1;">💾</span>Sauvegarde
+      <span id="backupAgeBadge" style="display:none;position:absolute;bottom:2px;left:50%;transform:translateX(-50%);color:#fff;border-radius:7px;font-size:9px;padding:1px 6px;font-weight:700;white-space:nowrap;text-shadow:none;"></span>
     </button>
     <button onclick="window.location.href='nouveautes.html'" style="position:absolute;top:0;left:107px;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#e65c00,#f9a825);">
       <span style="font-size:26px;line-height:1;">🆕</span>Nouveautés
@@ -1819,6 +1820,9 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
         Vos données restent <b>100 % sur votre appareil</b>. Cette sauvegarde crée un fichier que vous gardez vous-même — pratique pour changer de téléphone ou éviter toute perte. Aucune donnée n'est envoyée sur internet.
       </div>
 
+      <!-- Date dernière sauvegarde (C1) -->
+      <div id="backup-last" style="text-align:center;font-size:14px;font-weight:700;padding:10px;border:1px solid #ddd;border-radius:10px;margin-bottom:12px;"></div>
+
       <!-- Stats données -->
       <div id="backup-stats" style="text-align:center;font-size:12px;color:#666;margin-bottom:16px;"></div>
 
@@ -1829,7 +1833,7 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
         font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
         📤 Exporter toutes mes données
       </button>
-      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:18px;">Télécharge un fichier <b>.json</b> contenant l'ensemble de vos modules</div>
+      <div style="font-size:11px;color:#888;text-align:center;margin-bottom:18px;">Crée un fichier <b>.json</b> avec tous tes modules, à ranger où tu veux (Fichiers, Drive…)</div>
 
       <hr style="border:0;border-top:1px solid #eee;margin:0 0 18px;">
 
@@ -1874,6 +1878,7 @@ function openBackupPopup() {
       (modCount > 0 ? ' · <span style="color:#4CAF50"><b>' + modCount + '</b> données modules</span>' : '') +
       '<br><small style="color:#888">Couvre les 54 modules outils + réglages</small>';
   } catch(e) {}
+  bkRefresh();
   const msg = document.getElementById('backup-message');
   if (msg) msg.style.display = 'none';
   o.style.display = 'flex';
@@ -1895,76 +1900,151 @@ function backupShowMessage(text, ok) {
   m.style.color = ok ? '#2e7d32' : '#c0392b';
   m.innerHTML = text;
 }
+/* ══ C1 — Sauvegarde : date, empreinte, contrôle d'intégrité ══ */
+var BK_KEY='SH_LAST_BACKUP';
+/* Clés jamais restaurées : état technique propre à l'appareil */
+var BK_SKIP=/^(APP_CRASH_STATE|SH_LAST_BACKUP)$/;
+/* Clés conservées depuis cet appareil (consentement donné ici) */
+var BK_KEEP=/^SH_CONSENT/;
+function bkHash(str){ /* empreinte cyrb53, synchrone (iOS exige le partage dans le geste) */
+  var h1=0xdeadbeef,h2=0x41c6ce57;
+  for(var i=0,ch;i<str.length;i++){ch=str.charCodeAt(i);h1=Math.imul(h1^ch,2654435761);h2=Math.imul(h2^ch,1597334677);}
+  h1=Math.imul(h1^(h1>>>16),2246822507)^Math.imul(h2^(h2>>>13),3266489909);
+  h2=Math.imul(h2^(h2>>>16),2246822507)^Math.imul(h1^(h1>>>13),3266489909);
+  return (4294967296*(2097151&h2)+(h1>>>0)).toString(16);
+}
+function bkCanon(data){var o={};Object.keys(data).sort().forEach(function(k){o[k]=data[k];});return JSON.stringify(o);}
+function bkWeeks(data){ /* semaines distinctes saisies dans le compteur annuel (DATA_REPORT_*) */
+  var s={};
+  Object.keys(data).forEach(function(k){
+    if(k.indexOf('DATA_REPORT_')!==0)return;
+    var d;try{d=JSON.parse(data[k])||{};}catch(e){return;}
+    Object.keys(d).forEach(function(iso){
+      var m=/^(\d{4})-(\d{2})-(\d{2})$/.exec(iso);if(!m)return;
+      var t=new Date(Date.UTC(+m[1],+m[2]-1,+m[3]));var dn=(t.getUTCDay()+6)%7;
+      t.setUTCDate(t.getUTCDate()-dn+3);var y=t.getUTCFullYear();
+      var w=1+Math.round((t-Date.UTC(y,0,4))/604800000);s[y+'-'+w]=1;
+    });
+  });
+  return Object.keys(s).length;
+}
+function bkAgeDays(){var v=localStorage.getItem(BK_KEY);if(!v)return null;var t=Date.parse(v);if(isNaN(t))return null;return Math.max(0,Math.floor((Date.now()-t)/86400000));}
+function bkAgeText(n){if(n===null)return 'jamais';if(n===0)return "aujourd'hui";if(n===1)return 'hier';return 'il y a '+n+' jours';}
+function bkRefresh(){
+  var n=bkAgeDays(),late=(n===null||n>30);
+  var st=document.getElementById('backup-last');
+  if(st){st.textContent='Dernière sauvegarde : '+bkAgeText(n);
+    st.style.background=late?'#fff3e0':'#e8f5e9';st.style.color=late?'#e65100':'#2e7d32';st.style.borderColor=late?'#ffb74d':'#a5d6a7';}
+  var b=document.getElementById('backupAgeBadge');
+  if(b){b.textContent=n===null?'jamais':(n===0?'auj.':n+' j');b.style.background=late?'#ef6c00':'#2e7d32';b.style.display='block';}
+}
+function bkMarkDone(){try{localStorage.setItem(BK_KEY,new Date().toISOString());}catch(e){}bkRefresh();}
 function exportAllData() {
   try {
     const data = {};
     for (let i = 0; i < localStorage.length; i++) {
       const k = localStorage.key(i);
+      if (BK_SKIP.test(k)) continue;
       data[k] = localStorage.getItem(k);
     }
     const payload = {
       app: 'SimulHeures',
       type: 'backup-complet',
-      version: 1,
+      version: 2,
       date: new Date().toISOString(),
       nbCles: Object.keys(data).length,
+      nbSemaines: bkWeeks(data),
+      empreinte: bkHash(bkCanon(data)),
       data: data
     };
-    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
+    const txt = JSON.stringify(payload, null, 2);
     const d = new Date();
-    const stamp = d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
-    a.href = url;
-    a.download = 'simulheures-sauvegarde-' + stamp + '.json';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
-    if(window.hsIsAndroid&&window.hsIsAndroid())window.hsFileSnack(blob,a.download,{kind:'backup',accent:'#2196a6'});
-    backupShowMessage('✅ Sauvegarde téléchargée (' + payload.nbCles + ' entrées). Conservez ce fichier en lieu sûr.', true);
+    const fn = 'simulheures-sauvegarde-' + d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0') + '.json';
+    const okMsg = '✅ Sauvegarde créée (' + payload.nbCles + ' entrées, ' + payload.nbSemaines + ' semaines saisies). Range-la dans Fichiers, Drive ou ta messagerie.';
+    const isAnd = window.hsIsAndroid && window.hsIsAndroid();
+    /* iOS / navigateurs compatibles : partage natif, appelé dans le geste */
+    if (!isAnd && navigator.share) {
+      try {
+        const f = new File([txt], fn, { type: 'application/json' });
+        if (navigator.canShare && navigator.canShare({ files: [f] })) {
+          navigator.share({ files: [f], title: 'Sauvegarde SimulHeures' })
+            .then(function(){ bkMarkDone(); backupShowMessage(okMsg, true); })
+            .catch(function(err){
+              if (err && err.name === 'AbortError') backupShowMessage('Sauvegarde annulée : aucun fichier enregistré.', false);
+              else bkDownload(txt, fn, okMsg);
+            });
+          return;
+        }
+      } catch(e) {}
+    }
+    bkDownload(txt, fn, okMsg);
   } catch(e) {
     backupShowMessage('❌ Erreur lors de l\'export : ' + e.message, false);
   }
+}
+function bkDownload(txt, fn, okMsg){
+  const blob = new Blob([txt], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = fn;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  if (window.hsIsAndroid && window.hsIsAndroid()) window.hsFileSnack(blob, fn, { kind:'backup', accent:'#2196a6' });
+  bkMarkDone();
+  backupShowMessage(okMsg, true);
+}
+/* Contrôle complet AVANT de toucher au stockage. Renvoie {ok, err, data, info} */
+function bkCheck(parsed){
+  if (!parsed || parsed.app !== 'SimulHeures' || !parsed.data || typeof parsed.data !== 'object')
+    return { ok:false, err:'ce n\'est pas une sauvegarde SimulHeures.' };
+  const v = Number(parsed.version);
+  if (v !== 1 && v !== 2) return { ok:false, err:'version ' + parsed.version + ' inconnue — mets l\'appli à jour.' };
+  const data = parsed.data, keys = Object.keys(data);
+  for (let i = 0; i < keys.length; i++) if (typeof data[keys[i]] !== 'string') return { ok:false, err:'entrée « ' + keys[i] + ' » illisible.' };
+  if (typeof parsed.nbCles === 'number' && parsed.nbCles !== keys.length)
+    return { ok:false, err:'fichier incomplet : ' + keys.length + ' entrées sur ' + parsed.nbCles + ' annoncées.' };
+  if (v === 2) {
+    if (bkHash(bkCanon(data)) !== parsed.empreinte) return { ok:false, err:'le contenu ne correspond pas à son empreinte (fichier modifié ou abîmé).' };
+    const w = bkWeeks(data);
+    if (typeof parsed.nbSemaines === 'number' && w !== parsed.nbSemaines)
+      return { ok:false, err:'fichier incomplet : ' + w + ' semaines saisies sur ' + parsed.nbSemaines + ' annoncées.' };
+  }
+  return { ok:true, data:data, info:{ v:v, nb:keys.length, sem:bkWeeks(data) } };
 }
 function importAllData(event) {
   const file = event.target.files && event.target.files[0];
   if (!file) return;
   const reader = new FileReader();
   reader.onload = function(e) {
+    let parsed;
+    try { parsed = JSON.parse(e.target.result); }
+    catch(err) { backupShowMessage('❌ Fichier illisible ou tronqué. Rien n\'a été modifié.', false); event.target.value=''; return; }
+    const chk = bkCheck(parsed);
+    if (!chk.ok) { backupShowMessage('❌ Restauration refusée : ' + chk.err + '<br>Rien n\'a été modifié.', false); event.target.value=''; return; }
+    const dateTxt = parsed.date ? new Date(parsed.date).toLocaleDateString('fr-FR') : 'inconnue';
+    const warnV1 = chk.info.v === 1 ? '\n\nAncien format : pas d\'empreinte, contrôle partiel seulement.' : '';
+    if (!confirm('Restaurer cette sauvegarde ?\n\nDate : ' + dateTxt + '\nEntrées : ' + chk.info.nb + '\nSemaines saisies : ' + chk.info.sem + warnV1 + '\n\n⚠️ Tes données actuelles seront remplacées. L\'application va se recharger.')) { event.target.value=''; return; }
+    /* Copie de l'état actuel, pour revenir en arrière si l'écriture échoue */
+    const before = {};
+    for (let i = 0; i < localStorage.length; i++) { const k = localStorage.key(i); before[k] = localStorage.getItem(k); }
     try {
-      const parsed = JSON.parse(e.target.result);
-      const data = parsed && parsed.data ? parsed.data : null;
-      if (!data || typeof data !== 'object') {
-        backupShowMessage('❌ Fichier invalide : ce n\'est pas une sauvegarde SimulHeures.', false);
-        event.target.value = '';
-        return;
-      }
-      const nb = Object.keys(data).length;
-      const dateTxt = parsed.date ? new Date(parsed.date).toLocaleDateString('fr-FR') : 'inconnue';
-      if (!confirm('Restaurer cette sauvegarde ?\n\nDate : ' + dateTxt + '\nEntrées : ' + nb + '\n\n⚠️ Vos données actuelles seront remplacées. L\'application va se recharger.')) {
-        event.target.value = '';
-        return;
-      }
       localStorage.clear();
-      for (const k in data) {
-        if (Object.prototype.hasOwnProperty.call(data, k)) {
-          localStorage.setItem(k, data[k]);
-        }
-      }
-      backupShowMessage('✅ Sauvegarde restaurée. Rechargement…', true);
-      setTimeout(function(){ location.reload(); }, 1200);
+      Object.keys(chk.data).forEach(function(k){ if (!BK_SKIP.test(k) && !BK_KEEP.test(k)) localStorage.setItem(k, chk.data[k]); });
+      Object.keys(before).forEach(function(k){ if (BK_KEEP.test(k)) localStorage.setItem(k, before[k]); });
+      if (parsed.date) localStorage.setItem(BK_KEY, parsed.date);
     } catch(err) {
-      backupShowMessage('❌ Impossible de lire le fichier : ' + err.message, false);
-      event.target.value = '';
+      try { localStorage.clear(); Object.keys(before).forEach(function(k){ localStorage.setItem(k, before[k]); }); } catch(_) {}
+      backupShowMessage('❌ Écriture impossible (' + err.name + ') : tes données d\'avant ont été remises.', false);
+      event.target.value=''; return;
     }
+    backupShowMessage('✅ Sauvegarde restaurée. Rechargement…', true);
+    setTimeout(function(){ location.reload(); }, 1200);
   };
-  reader.onerror = function() {
-    backupShowMessage('❌ Erreur de lecture du fichier.', false);
-    event.target.value = '';
-  };
+  reader.onerror = function() { backupShowMessage('❌ Erreur de lecture du fichier.', false); event.target.value=''; };
   reader.readAsText(file);
 }
+function bkInit(){bkRefresh();if(location.hash==='#sauvegarde'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openBackupPopup();}}
+if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bkInit); else bkInit();
 </script>
 
 <!-- ══ POPUP PARTAGE ══════════════════════════════════════════ -->
