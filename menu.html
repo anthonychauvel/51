@@ -1703,6 +1703,16 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
     <span style="font-size:20px;">📱</span> Partager en QR code
   </button>
 
+  <!-- Barre bouton : Rappels calendrier (C2) -->
+  <button onclick="openRappelsPopup()" style="
+    width:100%;padding:13px 16px;border:none;border-radius:16px;cursor:pointer;
+    background:linear-gradient(135deg,#283593,#3949ab);
+    color:#fff;font-size:14px;font-weight:700;
+    display:flex;align-items:center;justify-content:center;gap:9px;
+    box-shadow:0 6px 18px rgba(0,0,0,0.28);letter-spacing:.01em;">
+    <span style="font-size:20px;">📅</span> Rappels dans mon calendrier
+  </button>
+
   <!-- Nid d'abeille : 5 cercles colorés -->
   <div id="nidAbeille" style="position:relative;width:300px;height:196px;margin:0 auto;">
     <button onclick="openBackupPopup()" style="position:absolute;top:0;left:0;width:86px;height:86px;border-radius:50%;border:none;cursor:pointer;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:4px;color:#fff;font-size:10.5px;font-weight:700;text-shadow:0 1px 3px rgba(0,0,0,.3);box-shadow:0 6px 20px rgba(0,0,0,.28);padding:0;background:linear-gradient(145deg,#2196a6,#0d7a8a);">
@@ -2045,6 +2055,176 @@ function importAllData(event) {
 }
 function bkInit(){bkRefresh();if(location.hash==='#sauvegarde'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openBackupPopup();}}
 if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bkInit); else bkInit();
+</script>
+
+<!-- ══ POPUP RAPPELS CALENDRIER (C2) ═══════════════════════════ -->
+<div id="rappels-popup-overlay" style="
+  display:none;position:fixed;inset:0;z-index:9999;
+  background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);
+  align-items:center;justify-content:center;padding:16px;"
+  onclick="closeRappelsPopup()">
+  <div onclick="event.stopPropagation()" style="
+    background:#fff;border-radius:20px;max-width:440px;width:100%;
+    max-height:90vh;overflow-y:auto;box-shadow:0 16px 56px rgba(0,0,0,0.35);color:#1a1a2e;">
+    <div style="background:linear-gradient(135deg,#283593,#3949ab);padding:20px;position:relative;">
+      <div style="font-size:20px;font-weight:700;color:#fff;">📅 Rappels dans mon calendrier</div>
+      <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;">Pas de notification : c'est ton calendrier qui te prévient</div>
+      <button onclick="closeRappelsPopup()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
+    </div>
+    <div style="padding:18px 20px 20px;font-size:13px;line-height:1.5;">
+      <div style="background:#eef0fb;border-left:3px solid #3949ab;border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:16px;font-size:12px;">
+        L'appli crée un fichier de rappels que tu ajoutes à ton calendrier (Calendrier, Google Agenda…). Tu les modifies ou les supprimes toi-même, depuis ton calendrier.
+      </div>
+
+      <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:8px;cursor:pointer;">
+        <input type="checkbox" id="rp-hebdo-on" style="margin-top:3px;width:18px;height:18px;">
+        <span><b>Saisir mes heures</b><br><span style="color:#666;font-size:12px;">Chaque semaine, les jours choisis</span></span>
+      </label>
+      <div id="rp-days" style="display:flex;gap:6px;flex-wrap:wrap;margin:0 0 16px 28px;"></div>
+
+      <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;cursor:pointer;">
+        <input type="checkbox" id="rp-periode-on" style="margin-top:3px;width:18px;height:18px;">
+        <span><b>Fin de période</b><br><span id="rp-periode-src" style="color:#666;font-size:12px;"></span></span>
+      </label>
+
+      <label style="display:flex;gap:10px;align-items:flex-start;margin-bottom:16px;cursor:pointer;">
+        <input type="checkbox" id="rp-bilan-on" style="margin-top:3px;width:18px;height:18px;">
+        <span><b>Bilan annuel</b><br><span id="rp-bilan-src" style="color:#666;font-size:12px;"></span></span>
+      </label>
+
+      <label style="display:flex;gap:10px;align-items:center;margin-bottom:18px;">
+        <span style="flex:1;"><b>Heure des rappels</b></span>
+        <input type="time" id="rp-heure" value="17:00" style="font-size:15px;padding:6px 8px;border:1px solid #ccc;border-radius:8px;">
+      </label>
+
+      <button onclick="rappelsExport()" style="
+        width:100%;padding:14px;border:none;border-radius:12px;
+        background:linear-gradient(135deg,#283593,#3949ab);color:#fff;
+        font-size:15px;font-weight:700;cursor:pointer;">
+        Ajouter à mon calendrier
+      </button>
+      <div style="font-size:11px;color:#888;text-align:center;margin-top:8px;">Pour arrêter un rappel, supprime-le dans ton calendrier.</div>
+
+      <div id="rp-message" style="display:none;margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;"></div>
+    </div>
+  </div>
+</div>
+
+<script>
+/* ══ C2 — Rappels par le calendrier (.ics), sans notification ni serveur ══ */
+var RP_KEY='SH_RAPPELS';
+var RP_DAYS=[['MO','L'],['TU','M'],['WE','M'],['TH','J'],['FR','V'],['SA','S'],['SU','D']];
+function rpLoad(){var d={hebdo:{on:true,days:['FR']},periode:{on:true},bilan:{on:true},heure:'17:00',seq:0};
+  try{var s=JSON.parse(localStorage.getItem(RP_KEY)||'null');if(s){for(var k in s)d[k]=s[k];}}catch(e){}return d;}
+function rpSave(o){try{localStorage.setItem(RP_KEY,JSON.stringify(o));}catch(e){}}
+function rpPad(n){return ('0'+n).slice(-2);}
+function rpISO(d){return d.getFullYear()+'-'+rpPad(d.getMonth()+1)+'-'+rpPad(d.getDate());}
+/* Clôtures futures du compteur annuel (M1), exercice actif */
+function rpClosures(){
+  try{var y=localStorage.getItem('ACTIVE_YEAR_SUFFIX')||String(new Date().getFullYear());
+    var l=JSON.parse(localStorage.getItem('CLOSURES_REPORT_'+y)||'[]')||[],t=rpISO(new Date());
+    return l.filter(function(d){return /^\d{4}-\d{2}-\d{2}$/.test(d)&&d>=t;}).sort();}catch(e){return [];}
+}
+/* Date de bilan du compteur annuel (M1), sinon 31/12 */
+function rpBilanDate(){
+  try{var y=localStorage.getItem('ACTIVE_YEAR_SUFFIX')||String(new Date().getFullYear());
+    var a=localStorage.getItem('ANNUAL_DATE_'+y)||'';if(/^\d{4}-\d{2}-\d{2}$/.test(a))return {iso:a,src:'m1'};}catch(e){}
+  return {iso:new Date().getFullYear()+'-12-31',src:'defaut'};
+}
+function rpFr(iso){return iso.split('-').reverse().join('/');}
+function openRappelsPopup(){
+  var o=document.getElementById('rappels-popup-overlay');if(!o)return;
+  var s=rpLoad();
+  var box=document.getElementById('rp-days');box.innerHTML='';
+  RP_DAYS.forEach(function(p){var b=document.createElement('button');b.type='button';b.textContent=p[1];b.setAttribute('data-d',p[0]);
+    var on=s.hebdo.days.indexOf(p[0])>=0;b.setAttribute('aria-pressed',on?'true':'false');
+    b.style.cssText='width:36px;height:36px;border-radius:50%;font-weight:700;font-size:13px;cursor:pointer;border:2px solid #3949ab;';
+    rpDayStyle(b);b.onclick=function(){b.setAttribute('aria-pressed',b.getAttribute('aria-pressed')==='true'?'false':'true');rpDayStyle(b);};
+    box.appendChild(b);});
+  document.getElementById('rp-hebdo-on').checked=!!s.hebdo.on;
+  document.getElementById('rp-periode-on').checked=!!s.periode.on;
+  document.getElementById('rp-bilan-on').checked=!!s.bilan.on;
+  document.getElementById('rp-heure').value=s.heure||'17:00';
+  var cl=rpClosures();
+  document.getElementById('rp-periode-src').textContent=cl.length
+    ?'Le jour de chacune des '+cl.length+' prochaines clôtures de ton compteur annuel'
+    :'Le dernier jour de chaque mois (aucune clôture à venir dans ton compteur annuel)';
+  var bd=rpBilanDate();
+  document.getElementById('rp-bilan-src').textContent=(bd.src==='m1'?'Chaque année le ':'Chaque année le 31/12 — ')+(bd.src==='m1'?rpFr(bd.iso).slice(0,5)+' (date de ton compteur annuel)':'pas de date de bilan dans ton compteur annuel');
+  var m=document.getElementById('rp-message');if(m)m.style.display='none';
+  o.style.display='flex';
+  if(typeof lockScroll==='function')lockScroll();else document.body.style.overflow='hidden';
+}
+function rpDayStyle(b){var on=b.getAttribute('aria-pressed')==='true';b.style.background=on?'#3949ab':'#fff';b.style.color=on?'#fff':'#3949ab';}
+function closeRappelsPopup(){var o=document.getElementById('rappels-popup-overlay');if(!o)return;o.style.display='none';
+  if(typeof unlockScroll==='function')unlockScroll();else document.body.style.overflow='';}
+function rpMsg(t,ok){var m=document.getElementById('rp-message');if(!m)return;m.style.display='block';
+  m.style.background=ok?'#e8f5e9':'#fdecea';m.style.color=ok?'#2e7d32':'#c0392b';m.textContent=t;}
+function rpEsc(t){return String(t).replace(/\\/g,'\\\\').replace(/;/g,'\\;').replace(/,/g,'\\,').replace(/\n/g,'\\n');}
+function rpStamp(iso,hm){return iso.replace(/-/g,'')+'T'+hm.replace(':','')+'00';}
+function rpUtcNow(){var d=new Date();return d.getUTCFullYear()+rpPad(d.getUTCMonth()+1)+rpPad(d.getUTCDate())+'T'+rpPad(d.getUTCHours())+rpPad(d.getUTCMinutes())+rpPad(d.getUTCSeconds())+'Z';}
+function rpEndHM(hm){var p=hm.split(':'),m=(+p[0])*60+(+p[1])+15;if(m>=1440)m=1439;return rpPad(Math.floor(m/60))+':'+rpPad(m%60);}
+/* Construit le calendrier. Les UID sont stables : réimporter met à jour au lieu de doubler. */
+function rpBuildICS(s){
+  var hm=/^\d{2}:\d{2}$/.test(s.heure)?s.heure:'17:00',end=rpEndHM(hm),now=rpUtcNow(),ev=[],n=0;
+  function add(uid,iso,sum,desc,rrule){n++;
+    ev.push('BEGIN:VEVENT','UID:'+uid+'@simulheures','SEQUENCE:'+s.seq,'DTSTAMP:'+now,
+      'DTSTART:'+rpStamp(iso,hm),'DTEND:'+rpStamp(iso,end),'SUMMARY:'+rpEsc(sum),'DESCRIPTION:'+rpEsc(desc));
+    if(rrule)ev.push('RRULE:'+rrule);
+    ev.push('BEGIN:VALARM','TRIGGER:PT0M','ACTION:DISPLAY','DESCRIPTION:'+rpEsc(sum),'END:VALARM','END:VEVENT');}
+  var today=new Date();today.setHours(0,0,0,0);
+  if(s.hebdo.on&&s.hebdo.days.length){
+    /* premier jour choisi à partir d'aujourd'hui */
+    var codes=['SU','MO','TU','WE','TH','FR','SA'],d=new Date(today);
+    for(var i=0;i<7;i++){if(s.hebdo.days.indexOf(codes[d.getDay()])>=0)break;d.setDate(d.getDate()+1);}
+    var order=RP_DAYS.map(function(p){return p[0];}).filter(function(c){return s.hebdo.days.indexOf(c)>=0;});
+    add('sh-saisie-hebdo',rpISO(d),'SimulHeures : saisir mes heures','Ouvre SimulHeures pour saisir tes heures de la semaine.','FREQ=WEEKLY;BYDAY='+order.join(','));
+  }
+  if(s.periode.on){
+    var cl=rpClosures();
+    if(cl.length)cl.forEach(function(iso){add('sh-cloture-'+iso,iso,'SimulHeures : fin de période','Dernier jour de la période. Vérifie ta saisie avant la clôture.');});
+    else{var e=new Date(today.getFullYear(),today.getMonth()+1,0);
+      add('sh-fin-mois',rpISO(e),'SimulHeures : fin de période','Dernier jour du mois. Vérifie ta saisie avant la clôture.','FREQ=MONTHLY;BYMONTHDAY=-1');}
+  }
+  if(s.bilan.on){
+    var bd=rpBilanDate(),p=bd.iso.split('-'),b=new Date(today.getFullYear(),+p[1]-1,+p[2]);
+    if(b<today)b.setFullYear(b.getFullYear()+1);
+    add('sh-bilan-annuel',rpISO(b),'SimulHeures : bilan annuel','Fin de ton année de référence : fais ton bilan dans SimulHeures, puis une copie de sauvegarde.','FREQ=YEARLY');
+  }
+  var L=['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//SimulHeures//Rappels//FR','CALSCALE:GREGORIAN','METHOD:PUBLISH','X-WR-CALNAME:SimulHeures'].concat(ev,['END:VCALENDAR']);
+  return {txt:L.join('\r\n'),n:n};
+}
+function rappelsExport(){
+  var s=rpLoad();
+  s.hebdo.on=document.getElementById('rp-hebdo-on').checked;
+  s.hebdo.days=[].slice.call(document.querySelectorAll('#rp-days button')).filter(function(b){return b.getAttribute('aria-pressed')==='true';}).map(function(b){return b.getAttribute('data-d');});
+  s.periode.on=document.getElementById('rp-periode-on').checked;
+  s.bilan.on=document.getElementById('rp-bilan-on').checked;
+  s.heure=document.getElementById('rp-heure').value||'17:00';
+  if(s.hebdo.on&&!s.hebdo.days.length){rpMsg('Choisis au moins un jour pour le rappel de saisie.',false);return;}
+  s.seq=(Number(s.seq)||0)+1;
+  var r=rpBuildICS(s);
+  if(!r.n){rpMsg('Coche au moins un rappel.',false);return;}
+  rpSave(s);
+  var fn='simulheures-rappels.ics',shared=false;
+  /* iOS : partage natif dans le geste (même modèle que taiko.html icsExport) */
+  if(navigator.share){
+    try{var f=new File([r.txt],fn,{type:'text/calendar'});
+      if(navigator.canShare&&navigator.canShare({files:[f]})){
+        navigator.share({files:[f],title:'Rappels SimulHeures'})
+          .then(function(){rpMsg(r.n+' rappel(s) prêt(s). Choisis Calendrier ou Agenda pour les ajouter.',true);})
+          .catch(function(err){if(err&&err.name==='AbortError')rpMsg('Ajout annulé.',false);else rpFallback(r,fn);});
+        shared=true;}}catch(e){}
+  }
+  if(!shared)rpFallback(r,fn);
+}
+function rpFallback(r,fn){
+  try{var a=document.createElement('a');a.href='data:text/calendar;charset=utf-8,'+encodeURIComponent(r.txt);a.download=fn;a.target='_blank';
+    document.body.appendChild(a);a.click();document.body.removeChild(a);}catch(e){}
+  rpMsg(r.n+' rappel(s) prêt(s). Ouvre le fichier simulheures-rappels.ics pour les ajouter à ton calendrier.',true);
+}
+(function(){function go(){if(location.hash==='#rappels'){try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}openRappelsPopup();}}
+  if(document.readyState==='loading')document.addEventListener('DOMContentLoaded',go);else go();})();
 </script>
 
 <!-- ══ POPUP PARTAGE ══════════════════════════════════════════ -->
