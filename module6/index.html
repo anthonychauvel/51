@@ -129,5 +129,21 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 <script>window._hmToDec=function(hId,mId){var he=document.getElementById(hId),me=document.getElementById(mId);var h=Number(he&&he.value)||0,m=Number(me&&me.value)||0;if(h<0)h=0;if(m<0)m=0;return h+m/60;};window._decToHM=function(dec,hId,mId){dec=Number(dec)||0;var he=document.getElementById(hId),me=document.getElementById(mId);var tot=Math.round(dec*60);if(tot<=0){if(he)he.value='';if(me)me.value='';return;}if(he)he.value=Math.floor(tot/60);if(me)me.value=tot%60;};window._hmVal=function(hId,mId){var he=document.getElementById(hId),me=document.getElementById(mId);var hv=he?he.value:'',mv=me?me.value:'';if((hv===''||hv==null)&&(mv===''||mv==null))return NaN;var h=Number(hv)||0,m=Number(mv)||0;if(h<0)h=0;if(m<0)m=0;return h+m/60;};window._m6fmtH=function(h){h=Number(h);if(!h||isNaN(h))return '0h';var s=h<0?'-':'';h=Math.abs(h);var e=Math.floor(h),m=Math.round((h-e)*60);if(m===60){e++;m=0;}return s+e+'h'+(m>0?String(m).padStart(2,'0'):'');};</script>
+<!-- C4 saisie rapide : #saisie-aujourdhui ouvre la saisie du jour (lien depuis le menu) -->
+<script>
+(function(){
+  if(location.hash!=='#saisie-aujourdhui')return;
+  try{history.replaceState(null,'',location.pathname+location.search);}catch(e){}
+  function go(){try{
+    /* M6 : les vues se construisent après coup ; on attend le bouton de saisie du régime */
+    var n=0,t=setInterval(function(){
+      var b=document.querySelector('#vfj-saisir,#fh-saisir,#fh-add,#cd-saisir');
+      if(b){clearInterval(t);b.click();
+        if(b.id==='cd-saisir')setTimeout(function(){try{var d=new Date();M6_Calendar._openPopup(d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0'));}catch(e){}},400);}
+      else if(++n>30)clearInterval(t);
+    },200);}catch(e){}}
+  if(document.readyState==='complete')setTimeout(go,400);else window.addEventListener('load',function(){setTimeout(go,400);});
+})();
+</script>
 </body>
 </html>
