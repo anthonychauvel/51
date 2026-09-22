@@ -1519,40 +1519,64 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
     <span class="ccn-edit">✎ modifier</span>
   </div>
 
-  <!-- 2 pills noires, côte à côte : Personnaliser (fonction existante) + Ma to-do list (Taiko)
-       flex-wrap:nowrap + min-width:0 sur chaque bouton : même correctif que .row2 dans taiko.html,
-       pour éviter le bug déjà rencontré (rangée qui s'empile sur Android au lieu de rester côte à côte) -->
-  <div style="display:flex;flex-wrap:nowrap;gap:10px;width:100%;">
-    <button id="btnPersoTop" onclick="togglePersoMode()"
-      style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
-      border-radius:999px;padding:12px 8px;font-family:inherit;font-weight:700;font-size:12px;
-      cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);">✏️ Personnaliser le menu</button>
-    <button onclick="location.href='taiko.html'"
-      style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
-      border-radius:999px;padding:12px 8px;font-family:inherit;font-weight:700;font-size:12px;
-      cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);">✅ Ma to-do list</button>
-  </div>
-  <!-- ══ C4 : saisie rapide (masquée tant qu'aucun module de saisie n'est configuré) ══ -->
-  <div id="qsWrap" style="display:none;width:100%;margin-top:10px;">
-    <div style="display:flex;flex-wrap:nowrap;gap:10px;width:100%;">
-      <button id="qsGo" onclick="qsGo()" style="flex:1;min-width:0;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
-        border-radius:999px;padding:12px 16px;font-family:inherit;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);
-        display:flex;align-items:center;justify-content:center;gap:8px;">
-        <span style="font-weight:700;font-size:12px;white-space:nowrap;">⚡ Saisir aujourd'hui</span>
-        <span id="qsLbl" style="font-size:11px;font-weight:600;color:rgba(255,255,255,0.6);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;"></span>
-      </button>
-      <button id="qsGear" onclick="qsToggleChoice()" aria-label="Changer de module pour la saisie rapide" style="flex:0 0 44px;background:#0a0a0c;color:#fff;border:1px solid rgba(255,255,255,0.16);
-        border-radius:999px;cursor:pointer;box-shadow:0 4px 14px rgba(0,0,0,0.45);font-size:14px;">⚙️</button>
+  <!-- ══ Mes outils du quotidien (maquette 22/09) : 4 pills noires en 2 × 2 dans une carte ══
+       Personnaliser le menu · Ma to-do list (Taiko) · Saisir aujourd'hui (C4) · Paramètres = choix du
+       module de saisie rapide. grid + min-width:0 : pas d'empilement sur Android. -->
+  <style>
+  .mo-card{width:100%;box-sizing:border-box;background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.35);
+    border-radius:26px;padding:14px 12px 16px 16px;-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);
+    box-shadow:0 8px 24px rgba(0,0,0,0.12);position:relative;z-index:0}
+  .mo-head{display:flex;align-items:center;gap:8px;margin:2px 4px 14px}
+  .mo-title{flex:1;min-width:0;color:#fff;font-weight:800;font-size:15px;line-height:1.2}
+  .mo-quick{color:rgba(255,255,255,0.85);font-size:11.5px;font-weight:700;white-space:nowrap}
+  .mo-grid{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);gap:14px 10px}
+  .mo-pill{position:relative;min-width:0;display:flex;align-items:center;gap:8px;background:#0a0a0c;color:#fff;
+    border:1px solid rgba(255,255,255,0.12);border-radius:999px;padding:6px 12px 6px 6px;min-height:52px;
+    font-family:inherit;cursor:pointer;text-align:left;
+    box-shadow:0 8px 18px rgba(0,0,0,0.35)}
+  /* Reflet coloré : seulement en bas à gauche, il s'efface avant la droite (comme la maquette) */
+  .mo-pill::before{content:"";position:absolute;left:-5px;top:8px;bottom:-6px;width:48%;z-index:-1;
+    border-radius:999px 0 0 999px;background:linear-gradient(90deg,var(--c) 55%,transparent)}
+  .mo-pill:active{transform:translateY(1px)}
+  .mo-ic{flex:0 0 34px;width:34px;height:34px;border-radius:50%;background:var(--c);display:flex;align-items:center;justify-content:center;
+    box-shadow:inset 0 -3px 6px rgba(0,0,0,0.18),inset 0 3px 6px rgba(255,255,255,0.25)}
+  .mo-t{flex:1;min-width:0;font-weight:800;font-size:12px;line-height:1.2;letter-spacing:-0.1px;hyphens:none}
+  .mo-ch{flex:0 0 auto;font-size:17px;font-weight:700;opacity:.9}
+  .qs-opt{padding:11px 14px;border:1px solid rgba(255,255,255,0.16);border-radius:999px;background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}
+  .qs-opt[aria-pressed="true"]{background:#7c4dff;border-color:#7c4dff}
+  </style>
+  <div class="mo-card">
+    <div class="mo-head">
+      <span style="font-size:20px">✨</span>
+      <span class="mo-title">Mes outils du quotidien</span>
+      <span class="mo-quick">Accès rapide ›</span>
     </div>
-    <div id="qsChoice" style="display:none;margin-top:8px;background:#0a0a0c;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,0.45);">
-      <div style="color:#fff;font-size:13px;font-weight:700;margin-bottom:8px;">Où saisis-tu tes heures ?</div>
+    <div class="mo-grid">
+      <button type="button" id="btnPersoTop" onclick="togglePersoMode()" class="mo-pill" style="--c:#f9b233">
+        <span class="mo-ic"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M4 20h4L19 9l-4-4L4 16v4z"/><path d="M14 6l4 4"/></svg></span>
+        <span class="mo-t" id="btnPersoTopLbl">Personnaliser<br>le menu</span>
+      </button>
+      <button type="button" onclick="location.href='taiko.html'" class="mo-pill" style="--c:#2fbf4a">
+        <span class="mo-ic"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="16" height="16" rx="3"/><path d="M8 12l3 3 5-6"/></svg></span>
+        <span class="mo-t">Ma to-do list</span>
+      </button>
+      <button type="button" id="qsGo" onclick="qsGo()" class="mo-pill" style="--c:#7c4dff">
+        <span class="mo-ic"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><path d="M13 2L5 14h6l-1 8 8-12h-6l1-8z" fill="#fff" stroke="none"/></svg></span>
+        <span class="mo-t">Saisir aujourd’hui</span>
+      </button>
+      <button type="button" id="qsGear" onclick="qsToggleChoice()" class="mo-pill" style="--c:#2f8cff">
+        <span class="mo-ic"><svg viewBox="0 0 24 24" width="19" height="19" fill="none" stroke="#fff" stroke-width="2.1" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-1.8-.3 1.7 1.7 0 0 0-1 1.5V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-1.1-1.5 1.7 1.7 0 0 0-1.8.3l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0 .3-1.8 1.7 1.7 0 0 0-1.5-1H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.5-1.1 1.7 1.7 0 0 0-.3-1.8l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 1 1.5 1.7 1.7 0 0 0 1.8-.3l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z"/></svg></span>
+        <span class="mo-t">Paramètres</span>
+      </button>
+    </div>
+    <div id="qsChoice" style="display:none;margin-top:14px;background:#0a0a0c;border:1px solid rgba(255,255,255,0.16);border-radius:18px;padding:12px;box-shadow:0 4px 14px rgba(0,0,0,0.45);">
+      <div id="qsChoiceTitle" style="color:#fff;font-size:13px;font-weight:700;margin-bottom:8px;">Où saisis-tu tes heures ?</div>
       <div id="qsOpts" style="display:grid;grid-template-columns:1fr;gap:8px;"></div>
     </div>
   </div>
-  <style>.qs-opt{padding:11px 14px;border:1px solid rgba(255,255,255,0.16);border-radius:999px;background:rgba(255,255,255,0.06);color:#fff;font-size:13.5px;font-weight:700;cursor:pointer;font-family:inherit;text-align:left}.qs-opt[aria-pressed="true"]{background:#ef6c00;border-color:#ef6c00}</style>
   <script>
-  /* C4 — saisie rapide : ouvre la saisie du jour dans le module choisi (clé SH_SAISIE_RAPIDE).
-     N'apparaît que si au moins un module de saisie est configuré ; ne propose que ceux-là. */
+  /* C4 — saisie rapide : « Saisir aujourd'hui » ouvre la saisie du jour dans le module choisi
+     (clé SH_SAISIE_RAPIDE) ; « Paramètres » ouvre le choix. Seuls les modules configurés sont proposés. */
   var QS_KEY='SH_SAISIE_RAPIDE';
   var QS_MODS=[
     {id:'heures', nom:'⏱️ Compteur annuel', ok:function(){return qsHasPrefix('EXERCISE_START_');}},
@@ -1566,19 +1590,19 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
     if(c.some(function(m){return m.id===v;}))return v;
     return c.length===1?c[0].id:'';}
   function qsRefresh(){
-    var c=qsConfigured(),w=document.getElementById('qsWrap');
-    if(!c.length){w.style.display='none';return;}
-    w.style.display='block';
-    var v=qsGet(),m=c.filter(function(x){return x.id===v;})[0];
-    document.getElementById('qsLbl').textContent=m?m.nom.replace(/^\S+\s/,''):'Choisis ton module';
-    document.getElementById('qsGear').style.display=c.length>1?'':'none';
-    var box=document.getElementById('qsOpts');box.innerHTML='';
+    var c=qsConfigured(),v=qsGet();
+    var box=document.getElementById('qsOpts'),t=document.getElementById('qsChoiceTitle');box.innerHTML='';
+    if(!c.length){
+      t.textContent='Aucun module de saisie configuré pour l\u2019instant';
+      box.innerHTML='<div style="color:rgba(255,255,255,0.75);font-size:12.5px;line-height:1.45">Ouvre d\u2019abord le module où tu saisis tes heures (Compteur annuel, Heures mensualisées, Mizuki ou Zenji) et termine sa configuration. Il apparaîtra ensuite ici.</div>';
+      return;}
+    t.textContent='Où saisis-tu tes heures ?';
     c.forEach(function(x){var b=document.createElement('button');b.type='button';b.className='qs-opt';b.textContent=x.nom;
       b.setAttribute('aria-pressed',x.id===v?'true':'false');b.onclick=function(){qsSet(x.id);};box.appendChild(b);});
   }
-  function qsToggleChoice(){var c=document.getElementById('qsChoice');c.style.display=c.style.display==='none'?'block':'none';}
+  function qsToggleChoice(){qsRefresh();var c=document.getElementById('qsChoice');c.style.display=c.style.display==='none'?'block':'none';}
   function qsSet(m){try{localStorage.setItem(QS_KEY,m);}catch(e){}document.getElementById('qsChoice').style.display='none';qsRefresh();qsGo();}
-  function qsGo(){var v=qsGet();if(!v){document.getElementById('qsChoice').style.display='block';return;}location.href=v+'/index.html#saisie-aujourdhui';}
+  function qsGo(){var v=qsGet();if(!v){qsRefresh();document.getElementById('qsChoice').style.display='block';return;}location.href=v+'/index.html#saisie-aujourdhui';}
   qsRefresh();
   window.addEventListener('pageshow',qsRefresh);
   </script>
@@ -4292,7 +4316,8 @@ function hasConsent(){
       btn.classList.toggle('active', persoActive);
     }
     var btnTop = document.getElementById('btnPersoTop');
-    if(btnTop){ btnTop.textContent = persoActive ? '✅ Terminer la personnalisation' : '✏️ Personnaliser le menu'; }
+    var btnTopL = document.getElementById('btnPersoTopLbl');
+    if(btnTopL){ btnTopL.innerHTML = persoActive ? 'Terminer' : 'Personnaliser<br>le menu'; }
     // Réafficher temporairement les modules cachés en mode perso (atténués)
     if(persoActive){
       var h = getHidden();
