@@ -1885,23 +1885,23 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
 <div id="backup-popup-overlay" style="
   display:none;position:fixed;inset:0;z-index:9999;
   background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);
-  align-items:center;justify-content:center;padding:16px;"
+  align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 12px);"
   onclick="closeBackupPopup()">
   <div onclick="event.stopPropagation()" style="
     background:#fff;border-radius:20px;max-width:440px;width:100%;
-    max-height:90vh;overflow-y:auto;box-shadow:0 16px 56px rgba(0,0,0,0.35);">
+    max-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 56px rgba(0,0,0,0.35);">
 
-    <div style="background:linear-gradient(135deg,#4FB3C2,#2196a6);padding:20px;position:relative;">
+    <div style="background:linear-gradient(135deg,#4FB3C2,#2196a6);padding:16px 20px;position:relative;flex-shrink:0;">
       <div style="font-size:20px;font-weight:700;color:#fff;">💾 Sauvegarde générale</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;">Sauvegardez ou restaurez toutes vos données</div>
-      <button onclick="closeBackupPopup()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
+      <button onclick="closeBackupPopup()" aria-label="Fermer" style="position:absolute;top:50%;transform:translateY(-50%);right:14px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
     </div>
 
-    <div style="padding:20px;">
+    <div style="padding:16px 18px 18px;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;">
 
       <!-- Info -->
       <div style="background:#f0f8ff;border-left:3px solid #4FB3C2;border-radius:0 10px 10px 0;padding:12px 14px;margin-bottom:16px;font-size:12px;color:#1a1a2e;line-height:1.5;">
-        Vos données restent <b>100 % sur votre appareil</b>. Cette sauvegarde crée un fichier que vous gardez vous-même — pratique pour changer de téléphone ou éviter toute perte. Aucune donnée n'est envoyée sur internet.
+        Tes données restent <b>sur ton téléphone</b>. La sauvegarde crée un fichier que tu gardes toi-même, pour changer de téléphone ou ne rien perdre. Rien n'est envoyé sur internet.
       </div>
 
       <!-- Date dernière sauvegarde (C1) -->
@@ -1928,9 +1928,8 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
         📥 Restaurer une sauvegarde
       </button>
       <input type="file" id="backup-import-input" style="display:none;" onchange="importAllData(event)">
-      <div id="backup-ou" style="font-size:12px;color:#444;background:#f3f8f9;border:1px solid #d6e8eb;border-radius:10px;padding:10px 12px;margin-bottom:10px;line-height:1.45;">
-        🔎 <b>Où est mon fichier ?</b> Dans le sélecteur, touche l'onglet <b>Récents</b> plutôt que la recherche.
-        Ton fichier s'appelle <b id="backup-nom">simulheures-sauvegarde-AAAA-MM-JJ.json</b>.
+      <div id="backup-ou" style="font-size:11.5px;color:#444;background:#f3f8f9;border:1px solid #d6e8eb;border-radius:10px;padding:8px 11px;margin-bottom:8px;line-height:1.4;">
+        🔎 Onglet <b>Récents</b> du sélecteur · fichier <b id="backup-nom" style="word-break:break-all;">simulheures-sauvegarde-AAAA-MM-JJ.json</b>
       </div>
       <div style="font-size:11px;color:#c0392b;text-align:center;margin-bottom:6px;">⚠️ La restauration remplace vos données actuelles par celles du fichier</div>
 
@@ -2140,17 +2139,17 @@ if (document.readyState === 'loading') document.addEventListener('DOMContentLoad
 <div id="rappels-popup-overlay" style="
   display:none;position:fixed;inset:0;z-index:9999;
   background:rgba(0,0,0,0.60);backdrop-filter:blur(6px);
-  align-items:center;justify-content:center;padding:16px;"
+  align-items:center;justify-content:center;padding:calc(env(safe-area-inset-top,0px) + 12px) 14px calc(env(safe-area-inset-bottom,0px) + 12px);"
   onclick="closeRappelsPopup()">
   <div onclick="event.stopPropagation()" style="
     background:#fff;border-radius:20px;max-width:440px;width:100%;
-    max-height:90vh;overflow-y:auto;box-shadow:0 16px 56px rgba(0,0,0,0.35);color:#1a1a2e;">
-    <div style="background:linear-gradient(135deg,#283593,#3949ab);padding:20px;position:relative;">
+    max-height:calc(100vh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px);max-height:calc(100dvh - env(safe-area-inset-top,0px) - env(safe-area-inset-bottom,0px) - 24px);display:flex;flex-direction:column;overflow:hidden;box-shadow:0 16px 56px rgba(0,0,0,0.35);color:#1a1a2e;">
+    <div style="background:linear-gradient(135deg,#283593,#3949ab);padding:16px 56px 16px 20px;position:relative;flex-shrink:0;">
       <div style="font-size:20px;font-weight:700;color:#fff;">📅 Rappels dans mon calendrier</div>
       <div style="font-size:12px;color:rgba(255,255,255,0.85);margin-top:2px;">Pas de notification : c'est ton calendrier qui te prévient</div>
-      <button onclick="closeRappelsPopup()" style="position:absolute;top:14px;right:16px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
+      <button onclick="closeRappelsPopup()" aria-label="Fermer" style="position:absolute;top:50%;transform:translateY(-50%);right:14px;background:rgba(255,255,255,0.2);border:none;border-radius:50%;width:32px;height:32px;font-size:18px;color:#fff;cursor:pointer;">✕</button>
     </div>
-    <div style="padding:18px 20px 20px;font-size:13px;line-height:1.5;">
+    <div style="padding:16px 18px 18px;font-size:13px;line-height:1.5;overflow-y:auto;-webkit-overflow-scrolling:touch;flex:1;min-height:0;">
       <div style="background:#eef0fb;border-left:3px solid #3949ab;border-radius:0 10px 10px 0;padding:10px 12px;margin-bottom:16px;font-size:12px;">
         Chez nous, on trouve qu'il y a déjà trop de notifications sur les téléphones. Alors ici, pas de notification : c'est toi qui gères tes rappels comme tu veux, dans ton calendrier. Tu les modifies ou les supprimes quand tu veux.
       </div>
