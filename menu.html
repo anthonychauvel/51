@@ -1927,7 +1927,11 @@ try{var _eco=sessionStorage.getItem('ecoBack')==='1';sessionStorage.removeItem('
         background:#fff;color:#2196a6;font-size:15px;font-weight:700;cursor:pointer;margin-bottom:10px;">
         📥 Restaurer une sauvegarde
       </button>
-      <input type="file" id="backup-import-input" accept=".json,application/json" style="display:none;" onchange="importAllData(event)">
+      <input type="file" id="backup-import-input" style="display:none;" onchange="importAllData(event)">
+      <div id="backup-ou" style="font-size:12px;color:#444;background:#f3f8f9;border:1px solid #d6e8eb;border-radius:10px;padding:10px 12px;margin-bottom:10px;line-height:1.45;">
+        🔎 <b>Où est mon fichier ?</b> Dans le sélecteur, touche l'onglet <b>Récents</b> plutôt que la recherche.
+        Ton fichier s'appelle <b id="backup-nom">simulheures-sauvegarde-AAAA-MM-JJ.json</b>.
+      </div>
       <div style="font-size:11px;color:#c0392b;text-align:center;margin-bottom:6px;">⚠️ La restauration remplace vos données actuelles par celles du fichier</div>
 
       <div id="backup-message" style="display:none;margin-top:14px;padding:12px;border-radius:10px;font-size:13px;text-align:center;"></div>
@@ -1987,7 +1991,7 @@ function backupShowMessage(text, ok) {
 /* ══ C1 — Sauvegarde : date, empreinte, contrôle d'intégrité ══ */
 var BK_KEY='SH_LAST_BACKUP';
 /* Clés jamais restaurées : état technique propre à l'appareil */
-var BK_SKIP=/^(APP_CRASH_STATE|SH_LAST_BACKUP)$/;
+var BK_SKIP=/^(APP_CRASH_STATE|SH_LAST_BACKUP|SH_LAST_BACKUP_NAME)$/;
 /* Clés conservées depuis cet appareil (consentement donné ici) */
 var BK_KEEP=/^SH_CONSENT/;
 function bkHash(str){ /* empreinte cyrb53, synchrone (iOS exige le partage dans le geste) */
@@ -2019,10 +2023,11 @@ function bkRefresh(){
   var st=document.getElementById('backup-last');
   if(st){st.textContent='Dernière copie de sauvegarde : '+bkAgeText(n);
     st.style.background=late?'#fff3e0':'#e8f5e9';st.style.color=late?'#e65100':'#2e7d32';st.style.borderColor=late?'#ffb74d':'#a5d6a7';}
+  var bn=document.getElementById('backup-nom');if(bn){var nm='';try{nm=localStorage.getItem('SH_LAST_BACKUP_NAME')||'';}catch(e){}bn.textContent=nm||'simulheures-sauvegarde-AAAA-MM-JJ.json';}
   var b=document.getElementById('backupAgeBadge');
   if(b){b.textContent=n===null?'aucune copie':(n===0?'auj.':n+' j');b.style.background=late?'#ef6c00':'#2e7d32';b.style.display='block';}
 }
-function bkMarkDone(){try{localStorage.setItem(BK_KEY,new Date().toISOString());}catch(e){}bkRefresh();}
+function bkMarkDone(nom){try{localStorage.setItem(BK_KEY,new Date().toISOString());if(nom)localStorage.setItem('SH_LAST_BACKUP_NAME',nom);}catch(e){}bkRefresh();}
 function exportAllData() {
   try {
     const data = {};
@@ -2052,7 +2057,7 @@ function exportAllData() {
         const f = new File([txt], fn, { type: 'application/json' });
         if (navigator.canShare && navigator.canShare({ files: [f] })) {
           navigator.share({ files: [f], title: 'Sauvegarde SimulHeures' })
-            .then(function(){ bkMarkDone(); backupShowMessage(okMsg, true); })
+            .then(function(){ bkMarkDone(fn); backupShowMessage(okMsg, true); })
             .catch(function(err){
               if (err && err.name === 'AbortError') backupShowMessage('Sauvegarde annulée : aucun fichier enregistré.', false);
               else bkDownload(txt, fn, okMsg);
@@ -2074,7 +2079,7 @@ function bkDownload(txt, fn, okMsg){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
   if (window.hsIsAndroid && window.hsIsAndroid()) window.hsFileSnack(blob, fn, { kind:'backup', accent:'#2196a6' });
-  bkMarkDone();
+  bkMarkDone(fn);
   backupShowMessage(okMsg, true);
 }
 /* Contrôle complet AVANT de toucher au stockage. Renvoie {ok, err, data, info} */
@@ -2102,7 +2107,7 @@ function importAllData(event) {
   reader.onload = function(e) {
     let parsed;
     try { parsed = JSON.parse(e.target.result); }
-    catch(err) { backupShowMessage('❌ Fichier illisible ou tronqué. Rien n\'a été modifié.', false); event.target.value=''; return; }
+    catch(err) { backupShowMessage('❌ Ce fichier n\'est pas une sauvegarde lisible (il doit s\'appeler simulheures-sauvegarde-….json), ou il est tronqué. Rien n\'a été modifié.', false); event.target.value=''; return; }
     const chk = bkCheck(parsed);
     if (!chk.ok) { backupShowMessage('❌ Restauration refusée : ' + chk.err + '<br>Rien n\'a été modifié.', false); event.target.value=''; return; }
     const dateTxt = parsed.date ? new Date(parsed.date).toLocaleDateString('fr-FR') : 'inconnue';
