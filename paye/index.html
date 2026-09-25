@@ -527,6 +527,7 @@ document.addEventListener("DOMContentLoaded", function(){
 <div style="max-width:900px;margin:8px auto;padding:0 12px;text-align:center">
   <button onclick="openYearsPopup()" style="background:#2a2f3a;border-radius:20px;padding:9px 20px;font-size:14px;font-weight:600;letter-spacing:.3px;width:auto">&#x1F4C5; Exercice <span id="activeYearLabel">...</span></button>
 </div>
+<div id="m2NouvelleAnnee" style="display:none;max-width:900px;margin:8px auto;padding:12px 14px;border-radius:14px;background:#fff8e6;border:1.5px solid #f0c040;font-size:13.5px;line-height:1.45;color:#5a4300;text-align:left"></div>
 
 <div class="main">
   <h1>&#x23F1;&#xFE0F; Heures supplémentaires</h1>
@@ -3105,6 +3106,55 @@ function closeTip(){
     if(isDateLocked(d)){toast('🔒 Période verrouillée','warn');return;}
     openHours(d.getDate());}catch(e){}}
   if(document.readyState==='complete')setTimeout(go,400);else window.addEventListener('load',function(){setTimeout(go,400);});
+})();
+</script>
+<script>
+/* ═══ Passage à l'année suivante — heures mensualisées (24/09/2026) ═══════
+   Ce module suit l'année civile (12 mois, un contingent par année).
+   Deux cas au changement d'année :
+   - une année avait été choisie à la main (📅 Exercice) : elle restait active
+     pour toujours — en janvier on saisissait dans l'année précédente. Un
+     bandeau propose maintenant d'ouvrir la nouvelle année ;
+   - sinon le module passe seul à la nouvelle année : un bandeau l'annonce
+     une fois en janvier (contingent remis à zéro, ancienne année consultable).
+   Rien ne bascule sans que l'utilisateur le voie. */
+(function(){
+  function iso(d){return d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');}
+  function bouton(txt,fn,principal){return '<button onclick="'+fn+'" style="'+(principal?'flex:1;background:#2196a6;color:#fff;border:none;':'width:auto;background:#fff;color:#5a4300;border:1px solid #d8c48a;')+'margin:0;padding:10px 12px;border-radius:10px;font-weight:800">'+txt+'</button>';}
+  window.m2OuvrirNouvelleAnnee=function(){
+    var y=String(new Date().getFullYear());
+    try{ registerYear(y); if(Object.keys(loadYearData(y)||{}).length===0) saveYearData(y,{}); }catch(e){}
+    switchYear(y);
+    try{ localStorage.setItem('M2_NOUVELLE_ANNEE_VU',y); }catch(e){}
+    if(window.hsBackupNudge) hsBackupNudge('year');
+    verifier();
+  };
+  window.m2PlusTardAnnee=function(){try{localStorage.setItem('M2_ANNEE_PLUS_TARD',iso(new Date()));}catch(e){}verifier();};
+  window.m2VuNouvelleAnnee=function(){try{localStorage.setItem('M2_NOUVELLE_ANNEE_VU',String(new Date().getFullYear()));}catch(e){}verifier();};
+  function verifier(){
+    var el=document.getElementById('m2NouvelleAnnee');if(!el)return;
+    var now=new Date(),y=now.getFullYear(),cur=parseInt(currentYear,10);
+    var choisie=!!localStorage.getItem(ACTIVE_YEAR_KEY);
+    if(cur<y){
+      if(localStorage.getItem('M2_ANNEE_PLUS_TARD')===iso(now)){el.style.display='none';return;}
+      el.innerHTML='📅 <b>L\'année '+cur+' est terminée.</b> Tu consultes encore '+cur+' : les heures de '+y+' doivent aller dans l\'exercice '+y+', avec un contingent remis à zéro.'+
+        '<div style="display:flex;gap:8px;margin-top:10px">'+bouton('Ouvrir '+y,'m2OuvrirNouvelleAnnee()',true)+bouton('Plus tard','m2PlusTardAnnee()',false)+'</div>'+
+        '<div style="font-size:11.5px;margin-top:6px;color:#7a6520">L\'année '+cur+' reste consultable avec le bouton 📅 Exercice.</div>';
+      el.style.display='block';return;
+    }
+    var prec=String(y-1),aDesDonnees=false;
+    try{aDesDonnees=Object.keys(loadYearData(prec)||{}).length>0;}catch(e){}
+    if(cur===y&&!choisie&&now.getMonth()===0&&aDesDonnees&&localStorage.getItem('M2_NOUVELLE_ANNEE_VU')!==String(y)){
+      el.innerHTML='🎉 <b>Nouvelle année : ton suivi est passé en '+y+'.</b> Le contingent annuel repart à zéro. Tes heures de '+prec+' restent consultables avec le bouton 📅 Exercice.'+
+        '<div style="display:flex;gap:8px;margin-top:10px">'+bouton('C\'est noté','m2VuNouvelleAnnee()',true)+'</div>';
+      el.style.display='block';
+      if(window.hsBackupNudge) hsBackupNudge('year');
+      return;
+    }
+    el.style.display='none';
+  }
+  window.m2VerifierAnnee=verifier;
+  if(document.readyState==='complete')setTimeout(verifier,500);else window.addEventListener('load',function(){setTimeout(verifier,500);});
 })();
 </script>
 </body>
