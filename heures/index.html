@@ -2502,13 +2502,16 @@ function closeTip(){
   function fr(s){var d=jour(s);return d.toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});}
   function lire(k,def){try{var v=localStorage.getItem(k);return v===null?def:JSON.parse(v);}catch(e){return def;}}
   function suivant(){ return /^\d{4}$/.test(String(currentSuffix)) ? String(Number(currentSuffix)+1) : null; }
-  // Même jour de la semaine que l'exercice précédent si toutes les clôtures
-  // tombent le même jour (ex. le dimanche) : on décale de 52 semaines. Sinon,
-  // même date l'année suivante (fins de mois, dates fixes).
+  // Si toutes les clôtures tombent le même jour de la semaine (ex. le
+  // dimanche) : même règle l'année suivante (« dernier dimanche », « 3e
+  // dimanche »). Sinon : même date l'année suivante (fins de mois, dates fixes).
   function decaleur(dates){
     var j=dates.map(function(x){return jour(x).getDay();});
     var memeJour=j.length>1&&j.every(function(v){return v===j[0];});
-    return memeJour?function(x){return plus(x,364);}:plusUnAn;
+    // Même règle l'an prochain : « dernier dimanche du mois » reste le dernier
+    // dimanche, « 3e dimanche » reste le 3e. Aucune dérive d'une année sur
+    // l'autre (2028, 2029…), contrairement à un simple « +52 semaines ».
+    return memeJour?function(x){var d=jour(x),wd=d.getDay(),m=d.getMonth(),y=d.getFullYear()+1,nb=new Date(y,m+1,0).getDate(),dernier=d.getDate()+7>new Date(d.getFullYear(),m+1,0).getDate(),r;if(dernier){r=new Date(y,m,nb);while(r.getDay()!==wd)r.setDate(r.getDate()-1);}else{var n=Math.ceil(d.getDate()/7);r=new Date(y,m,1);while(r.getDay()!==wd)r.setDate(r.getDate()+1);r.setDate(r.getDate()+7*(n-1));}return iso(r);}:plusUnAn;
   }
   window.hsOuvrirExerciceSuivant=function(){
     var nx=suivant();if(!nx||!annualDate)return;
