@@ -2970,12 +2970,14 @@ document.addEventListener('DOMContentLoaded',()=>{
   function fr(s){return jour(s).toLocaleDateString('fr-FR',{day:'numeric',month:'long',year:'numeric'});}
   function cle(){return (window.M5_key?M5_key('M5_EXERCICES'):'M5_EXERCICES');}
   function histo(){try{return JSON.parse(localStorage.getItem(cle())||'{}')||{};}catch(e){return {};}}
-  // Décalage d'un an qui garde le rythme : même jour de semaine (+52 semaines)
-  // si toutes les clôtures tombent le même jour ; fin de mois si ce sont des
-  // fins de mois ; sinon même date l'année suivante.
+  // Décalage d'un an qui garde le rythme : même règle de jour de semaine
+  // (« dernier dimanche », « 3e dimanche ») si toutes les clôtures tombent le
+  // même jour ; fin de mois si ce sont des fins de mois ; sinon même date.
   function decaleur(dates){
     var j=dates.map(function(x){return jour(x).getDay();});
-    if(j.length>1&&j.every(function(v){return v===j[0];}))return function(x){return plus(x,364);};
+    // Même règle l'an prochain : « dernier dimanche du mois » reste le dernier
+    // dimanche, « 3e dimanche » reste le 3e — aucune dérive (2028, 2029…).
+    if(j.length>1&&j.every(function(v){return v===j[0];}))return function(x){var d=jour(x),wd=d.getDay(),m=d.getMonth(),y=d.getFullYear()+1,nb=new Date(y,m+1,0).getDate(),dernier=d.getDate()+7>new Date(d.getFullYear(),m+1,0).getDate(),r;if(dernier){r=new Date(y,m,nb);while(r.getDay()!==wd)r.setDate(r.getDate()-1);}else{var n=Math.ceil(d.getDate()/7);r=new Date(y,m,1);while(r.getDay()!==wd)r.setDate(r.getDate()+1);r.setDate(r.getDate()+7*(n-1));}return iso(r);};
     if(dates.length&&dates.every(finDeMois))return function(x){var d=jour(x);return iso(new Date(d.getFullYear()+1,d.getMonth()+1,0));};
     return plusUnAn;
   }
